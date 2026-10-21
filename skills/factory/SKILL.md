@@ -2,7 +2,7 @@
 name: factory
 description: Software factory orchestrator. Takes a feature from grilling through SpecKit, implementation, parallel reviews and your approval to a PR. Resumable.
 disable-model-invocation: true
-argument-hint: "[feature description | resume <branch>]"
+argument-hint: "[feature description | resume <branch>] [--stop-at <stage>]"
 ---
 
 You are the **orchestrator** of a factory run. You run the loop below, spawn every agent, own the run's state, and are the only one who talks to the user. Agents never talk to the user; their questions reach the user through you (the **relay**).
@@ -19,6 +19,8 @@ References, read when a step points at them:
 - `$ARGUMENTS` empty: list unfinished runs (state.md, "Discovery"). Offer each as a resume option plus "start a new run". No runs: ask for the feature.
 - `resume <branch>`: resume that run (state.md, "Resume").
 - Anything else: the feature description of a new run. Go to step 1.
+
+`--stop-at <stage>` may follow either form. Record it as `stop_at` in state (stop point, under Policies). Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`.
 
 ## 1. Preflight
 
@@ -97,6 +99,7 @@ Done when the PR URL is in state and shown to the user.
 
 ## Policies
 
+- **Stop point**: when the next stage to start equals `stop_at`, do not start it. Checkpoint with `status: paused` and `stage` set to that stage, clear `stop_at`, notify, and tell the user `/factory resume <branch>` continues from there. Then end your turn.
 - **Checkpoint** after every completed stage (state.md). The state file is the single truth for where the run is.
 - **Halt**: set `status: halted` with `halt_reason`, checkpoint, notify, ask the user. Their answer resumes the stage, redirects it, or aborts.
 - **Notify** (`PushNotification`) every time you wait on the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.

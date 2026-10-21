@@ -22,6 +22,7 @@ One run = one `state.json`. It is the single truth for where the run is; read it
   "status": "running",
   "stage": "plan",
   "halt_reason": null,
+  "stop_at": null,
   "skills": { "speckit-plan": "/abs/.../SKILL.md", "grilling": "/abs/.../SKILL.md" },
   "commands": { "build": "dotnet build", "test": "dotnet test" },
   "agents": { "spec_builder": "agent-id-or-null" },
@@ -33,7 +34,8 @@ One run = one `state.json`. It is the single truth for where the run is; read it
 }
 ```
 
-- `status`: `running` | `waiting_user` | `halted` | `aborted` | `pr-open`.
+- `status`: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
+- `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
 - `stage`: the stage in progress, or the next one to run: `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`.
 - `relay`: `null`, or the open question batch: `{ "stage": "clarify", "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": "..." } }`. Write each answer as it arrives.
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC.
@@ -66,3 +68,4 @@ Show each as: branch (or slug), stage, status, last `history` time.
    - `approver`: show the approver screen again.
    - `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded.
 3. `halted` or `aborted`: show `halt_reason` and ask the user how to continue before restarting the stage.
+4. `paused`: set `status: running` and start the recorded stage. A `--stop-at` on the resume command sets a new `stop_at`.

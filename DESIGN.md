@@ -91,6 +91,7 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - State lives at `specs/<branch>/factory/state.json` inside the worktree (schema: `skills/factory/references/state.md`).
 - One checkpoint commit per stage (`factory: <stage> complete`) plus a state update. Implement additionally resumes per task from the tasks.md checkboxes.
 - Resume restarts the interrupted stage from its beginning. A relay in progress resumes from the saved Q&A: a fresh spec-builder gets the answered questions and asks only the rest.
+- `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. `/factory resume <branch>` continues from that stage in any session.
 - Plain `/factory` lists unfinished runs in the current repo (scanning `git worktree list` plus `~/.claude/factory/pending/`) and offers to resume one. `/factory <feature>` starts a new run.
 
 ### Policies
@@ -100,4 +101,4 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 
 ## Validation plan
 
-Run end-to-end on a tiny real feature in WayUnoMcpTool. Kill the session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR.
+Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR.
