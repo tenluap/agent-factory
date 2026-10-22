@@ -8,9 +8,9 @@
   "branch": "001-tdd-engineering-rules",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/001-tdd-engineering-rules",
   "spec_dir": "specs/001-tdd-engineering-rules",
-  "status": "halted",
-  "stage": "remediate",
-  "halt_reason": "analyze pass 3: 1 HIGH (I8) remains after 2 loops",
+  "status": "pr-open",
+  "stage": "pr",
+  "halt_reason": null,
   "stop_at": null,
   "skills": {
     "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/001-tdd-engineering-rules/.claude/skills/speckit-specify/SKILL.md",
@@ -33,7 +33,6 @@
     "reports": [
       "factory/analyze-1.md",
       "factory/analyze-2.md",
-      "factory/analyze-3.md",
       "factory/analyze-3.md"
     ],
     "remediations": [
@@ -223,13 +222,22 @@
       "at": "2026-10-22T17:11:44Z",
       "stage": "analyze",
       "event": "complete",
-      "commit": null,
+      "commit": "b8ab227",
       "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-22T18:40:00Z",
+      "stage": "pr",
+      "event": "complete-skipped-no-remote",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "notes": [
     "git fetch origin failed: remote repository not found; base uses existing origin/main ref (029d7ec). PR step may fail.",
-    "2026-10-22: analyze pass 3 report (factory/analyze-3.md) found untracked on disk with no envelope returned; previous spawn presumed crashed. Retried with fresh spec-builder under opencode; report verified, one location label amended (U5 \u2192 research.md D10).",
-    "2026-10-22: user chose to proceed to implement with I8 (HIGH) + U5 (MEDIUM) + L10-L13 unremediated; findings carry into review."
+    "2026-10-22: analyze pass 3 report (factory/analyze-3.md) found untracked on disk with no envelope returned; previous spawn presumed crashed. Retried with fresh spec-builder under opencode; report verified, one location label amended (U5 → research.md D10).",
+    "2026-10-22: user chose to proceed to implement with I8 (HIGH) + U5 (MEDIUM) + L10-L13 unremediated; findings carry into review.",
+    "2026-10-22: run finished: implement 16/16 green, review round 2 pass (0 blocking), approver approved. PR skipped by user (option 3): remote github.com/tenluap/claude-factory does not exist; branch 001-tdd-engineering-rules is local-only. pr_url stays null.",
+    "2026-10-22: a stale claude-code orchestrator checkpoint (b8ab227, 17:11Z) overwrote state to halted/remediate after review had already passed; reconciled here to the true final position (duplicate analyze-3 report entry removed). Run is complete."
   ]
 }
