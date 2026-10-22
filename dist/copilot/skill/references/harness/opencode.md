@@ -24,3 +24,4 @@
 - Agent models are not set by default, so every agent uses the session's model. To pin them, set `models.opencode.deep` / `.standard` (as `provider/model-id`) in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness opencode`.
 - Never load the `speckit-*` skills or `grill-with-docs` with the `skill` tool: read the resolved file and follow it.
 - Invoke the factory as `/factory <args>` (the skill sets `opencode/slash`). `$ARGUMENTS` is whatever follows `/factory`.
+- Ledger (reported usage): `task` results expose no token usage — record `reported: null` and rely on the estimates.

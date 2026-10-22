@@ -25,6 +25,45 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 
 Only Claude Code pins agent models by default; on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`.
 
+## Usage
+
+Start a run from the repo you want the feature built in. On Claude Code, OpenCode and Copilot the skill is `/factory`; on Codex it is `$factory`.
+
+```
+/factory                          list unfinished runs; pick one to resume, or start a new run
+/factory resume <branch>          resume that run from where it stopped (any session, any harness)
+/factory <feature description>    start a new run
+```
+
+A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage, so a run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even from a different harness or machine that shares `${FACTORY_HOME}`.
+
+### Flags
+
+Flags follow the feature description or `resume <branch>` and may combine:
+
+| Flag | Effect |
+|---|---|
+| `--stop-at <stage>` | Pause the run cleanly before that stage and end the turn; resume later. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. |
+| `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. The two interactive spec stages (clarify, grill-with-docs) are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates the run to the full chain automatically. |
+| `--full` | Pin the **full chain**: specify → clarify → grill-with-docs → plan → tasks → analyze, with the analyze loop (max 2). |
+| `--fast` | Auto-accept every in-stage question round with the agent's recommended answer. Each accept is logged; the approver screen lists them all for veto before you approve. Never automated: questions a remediation defers to you (it would overturn one of your decisions), and every halt — loop exhaustion, red build, agent failure. Grilling at the top is always with you. |
+
+Without `--lite` / `--full`, the orchestrator judges the feature's size at the end of grilling, states which chain it picked in its closing summary, and your confirmation covers it — object once to flip it.
+
+### What the run asks of you
+
+- **Grilling** at the start: a relentless interview until you confirm shared understanding. The chain choice is settled here.
+- **Relays**: spec stages come back with their whole question queue at once (each with a recommended answer); `accept` takes every recommendation in one message. Under `--fast` this round-trip disappears.
+- **Halts**: trouble always reaches you — CRITICAL/HIGH findings left after 2 loop passes, a build that stays red, an agent that fails twice. Your answer resumes, redirects, or aborts.
+- **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, remaining advisory findings, and (under `--fast`) the auto-accepted answers. Approve opens the PR; request changes sends it back through a fix round; abort keeps the worktree.
+
+### Environment
+
+| Variable | Meaning |
+|---|---|
+| `FACTORY_HARNESS` | Force a specific adapter's `harness.md` in preflight instead of auto-recognition. |
+| `FACTORY_HOME` | Where pending runs and `config.json` live (default `~/.factory`). |
+
 ## Requirements
 
 - An agent harness with an adapter in `adapters/`, and Python 3 for the renderer.

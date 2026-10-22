@@ -25,3 +25,4 @@
 - In VS Code, user-level agents and skills may need to be enabled or pointed at `~/.copilot/` in settings; the Copilot CLI reads them as installed.
 - The cloud coding agent (assigning an issue to Copilot on github.com) is not supported: it cannot relay questions or wait for the approver.
 - Invoke the factory as `/factory <args>`. `$ARGUMENTS` is whatever follows `/factory`.
+- Ledger (reported usage): delegation exposes no token usage — record `reported: null`. Tier-2 fallback: the `copilot --agent` output usually prints token usage; take `reported` from there when it does.

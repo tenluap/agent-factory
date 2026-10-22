@@ -31,7 +31,7 @@ feature
   -> worktree on NNN-name branch    (orchestrator)
   -> specify -> clarify -> grill-with-docs -> plan -> tasks -> analyze     (spec-builder)
         ^                                                          |
-        +------ remediate, then loop (max 2 loops) ----------------+
+        +------ remediate (patch), then verify loop (max 2 loops) --+
   -> implement                      (code-build)
   -> build + test verified          (orchestrator)
   -> reviews in parallel            (5 reviewers, UI/UX conditional)
@@ -40,6 +40,8 @@ feature
   -> approver                       (user)
   -> PR                             (orchestrator)
 ```
+
+Lite chain (DESIGN, "Modes"): specify -> plan -> tasks -> analyze, one pass, no loop; any CRITICAL/HIGH escalates to the full chain from clarify.
 
 ## Agents
 
@@ -75,14 +77,19 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 - SpecKit extension hooks are skipped: the factory owns the branch and every commit.
 - Several runs may go at once in one repo, one per session. Branch creation reserves the number, so a later dry-run sees it.
 
+### Modes
+- **Chain** (`full` | `lite`), recorded in `state.mode.chain`. Default: the orchestrator judges the feature's size at the end of grilling and states which chain it picked; `--lite` / `--full` pin it. `lite` = specify → plan → tasks → analyze, one pass, no loop: clarify and grill-with-docs are skipped (the top grilling captured what they would have). Any CRITICAL/HIGH analyze finding escalates: the chain becomes `full` and continues from clarify (clarify, grill-with-docs, then plan and tasks re-derived, then analyze under the normal loop rules). MEDIUM/LOW: remediate once, then implement. Every stage keeps its checkpoints, so a lite run resumes like any other.
+- **Fast** (`state.mode.fast`, opt-in `--fast`): the orchestrator auto-accepts every relay round with the agent's recommended answers, recorded with `"auto": true` in `state.relay`, collapsing multi-round stages to agent-only turns. Never auto-answered: questions in `state.analyze.pending_clarify` (a patch that overturns a decision is the user's to make), and every halt — loop exhaustion, red build, agent failure, `--stop-at`. The approver screen lists the auto-accepted rounds for veto.
+
 ### Interactive steps (relay)
 - Grilling at the top runs in the orchestrator directly.
 - clarify, grill-with-docs, and specify's clarification markers run inside spec-builder. When spec-builder has questions it ends its turn with the **whole queue** (with recommended answers). The orchestrator asks the user in grilling-round format, saves every answer to state as it arrives, and then spawns a fresh spec-builder for the same stage. That agent reads every question round of the stage from `state.relay`, treats answered questions as settled, and asks only what is still open. A stage restarted after a relay round and a stage restarted on resume are the same path.
 
 ### Analyze loop
-- After analyze: if any CRITICAL or HIGH finding exists, spec-builder **fixes every finding at every severity** (remediation). Findings that need a user decision become clarify questions instead of silent fixes. Then the flow returns to clarify and re-runs clarify, grill-with-docs, plan, tasks, analyze. Plan and tasks receive the analyze report and remediation log so regeneration keeps the fixes.
+- After analyze: if any CRITICAL or HIGH finding exists, spec-builder **patches every finding at every severity in place** (remediation edits `spec.md`, `plan.md`, `tasks.md` and the other artifacts; it never regenerates them). Findings that need a user decision become clarify questions instead of silent fixes. Then analyze **re-runs against the patched artifacts** (pass + 1) to confirm the fixes.
+- clarify and grill-with-docs re-enter the loop only when a remediation finding was deferred to clarify (a decision-touching patch): the pending questions are answered, the settled decisions are edited into the artifacts, and analyze verifies again. A loop whose patches touched no decision re-runs analyze alone.
 - At most 2 loops. If CRITICAL/HIGH findings remain after the second loop, halt and ask the user: proceed, give guidance for one more pass, or abort.
-- If analyze reports only MEDIUM/LOW findings: remediate once, then go straight to implement (no loop).
+- If analyze reports only MEDIUM/LOW findings: remediate once (patches in place), then go straight to implement (no loop).
 
 ### Implement
 - code-build reads build and test commands from the repo's CLAUDE.md / AGENTS.md, falling back to detection.
@@ -91,10 +98,11 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 ### Review
 - Always: security, code-standards, spec-conformance.
 - Only when the diff touches UI files: UI (impeccable) and UX.
-- The judge merges, dedupes and verifies. Confirmed blocking findings go to the fixer; then build + test, then re-review. At most 2 fix rounds. Advisory findings go to the approver untouched.
+- Round 1 reviews the full diff. Every later round is a **delta review**: reviewers see the fix diff since the previous round's checkpoint together with the previous verdict, and check that the fixes landed and added nothing. The fixer declares every file it touches beyond the findings' own files as `Adjacent: <path> - <reason>` in its commit body; the judge checks the fix diff's file list against the findings' files and those lines, and its verdict can carry `escalate`, which re-runs the round once in full review.
+- The judge merges, dedupes and verifies. Confirmed blocking findings go to the fixer; then build + test, then a delta re-review. At most 2 fix rounds. Advisory findings go to the approver untouched.
 
 ### Approver
-Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining advisory findings, and the capability tier when it is not 1. Options:
+Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining advisory findings, the capability tier when it is not 1, and (when `mode.fast`) the auto-accepted relay rounds. Options:
 - **Approve**: push and open the PR.
 - **Request changes** (free text): fixer, build + test, re-review, back to the approver. No cap; the user drives it.
 - **Abort**: keep the worktree, state `aborted`.
@@ -109,6 +117,12 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - A run may be resumed on a different harness: the orchestrator re-resolves every skill path.
 - `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. `resume <branch>` (with the harness's invoke command, e.g. `/factory` or `$factory`) continues from that stage in any session, on any harness.
 - Plain `/factory` lists unfinished runs in the current repo (scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one. `/factory <feature>` starts a new run.
+
+### Cost ledger
+- Every `SPAWN` (each role of a `SPAWN_PARALLEL` counts as one) appends one entry to `state.ledger` (schema: `state.md`): stage, role, harness, input/output token estimates, harness-reported usage when available, duration.
+- Estimates are harness-neutral: 1.35 × word count of what the spawn was told to read (its role file, the resolved skill files, the artifacts its inputs name) and of what it wrote (the returned envelope plus new files under the spec's `factory/` folder).
+- `reported` is reserved for usage the harness exposes (today: none in tier 1; tier-2 CLI output where the harness prints it). Every efficiency change to the flow is measured against a prior run's ledger, not guessed.
+- The ledger's own cost is one `wc -w` and one state write per spawn.
 
 ### Policies
 - Agent failure (crash, unparseable output, timeout): retry once with the error attached, then halt and ask.

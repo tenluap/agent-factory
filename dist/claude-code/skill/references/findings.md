@@ -4,8 +4,8 @@
 
 Every factory reviewer works the same way; only its lens differs.
 
-- Inputs: `worktree`, `spec_dir`, `base` (the default branch), `round`.
-- Scope: the change set, `cd <worktree> && git diff <base>...HEAD`. Read surrounding code as needed; report only defects the change introduces or exposes.
+- Inputs: `worktree`, `spec_dir`, `base` (the default branch), `round`; on every round after the first also `delta_base` (the previous round's checkpoint commit) and the previous round's `verdict.json` path.
+- Scope: the change set. Without `delta_base`: `cd <worktree> && git diff <base>...HEAD`. With `delta_base` (a **delta review**): `cd <worktree> && git diff <delta_base>...HEAD`, reviewed together with the prior verdict — check that the fixes remove the verdict's `confirmed_blocking` findings and that the touched code introduces no new defect; findings from the prior round do not carry forward. Read surrounding code as needed; report only defects the in-scope change introduces or exposes.
 - Commit metadata: a reviewer whose lens needs commit messages reads the run's commit log as well as the diff — `cd <worktree> && git log --format='%H%n%s%n%b%n--' <base>..HEAD` — because the diff carries no commit messages.
 - Read-only: you edit nothing and commit nothing.
 - Each finding carries evidence from the code: a finding you cannot point at is not reported.
@@ -51,11 +51,13 @@ Every reviewer ends with one fenced `json` block:
   "verdict": "fix",
   "confirmed_blocking": [ { "severity": "high", "file": "...", "line": 42, "summary": "...", "evidence": "...", "fix": "...", "sources": ["SEC-1", "STD-3"] } ],
   "advisory": [ { "severity": "low", "file": "...", "line": 7, "summary": "...", "fix": "...", "sources": ["UX-1"] } ],
-  "rejected": [ { "id": "UX-2", "reason": "why it is not real" } ]
+  "rejected": [ { "id": "UX-2", "reason": "why it is not real" } ],
+  "escalate": { "reason": "the fix diff touches src/X.cs, named by no finding or Adjacent line" }
 }
 ```
 
 - `verdict`: `pass` (no confirmed blocking findings) or `fix`.
+- `escalate` (optional, delta reviews only): present when the fix diff touches a file named by no prior `confirmed_blocking[].file` and no fix commit's `Adjacent:` line. The orchestrator re-runs the round once in full review; a full review never carries `escalate`.
 - Every reviewer finding id appears exactly once across `confirmed_blocking[].sources`, `advisory[].sources`, and `rejected[].id`.
 - An `advisory[]` entry derived from an engineering finding keeps its `ENG-n` citation without any shape change: the id is named in the entry's existing `summary` (one token) and the reviewer finding carrying the full evidence is linked through its existing `sources`; no field is added to the verdict.
 - A finding capped at the ceiling is **advisory**: no **verdict-driven fix round** acts on it. It reaches the user in the verdict's `advisory[]` list with its `ENG-n` citation, and the user's route to having it fixed is the approver's existing "Request changes" — the fixing role implements such a request exactly as asked, like any other change request.

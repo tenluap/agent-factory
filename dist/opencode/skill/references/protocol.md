@@ -37,5 +37,6 @@ How the orchestrator carries an agent's questions to the user and back:
    ```
 
 3. As the user answers, write each answer into the last round's `answers`. "accept" means every recommended answer.
+   - **Fast mode** (`mode.fast` true): steps 1–2 collapse — take every question's `recommended` as the answer, write it into the round's `answers` as `{ "answer": "<recommended>", "auto": true }`, `NOTIFY` once ("auto-accepted N questions in <stage>"), and continue at step 4. Never auto-answered: anything stored in `state.analyze.pending_clarify` — those questions relay to the user normally.
 4. All answered: set `status: running` and `SPAWN` a fresh agent of the same role for the same stage, with the usual inputs and the `state.json` path. It reads every round in `state.relay` and asks only what is still open.
 5. The new agent either asks another round (normal for grilling and clarify) or returns `done`. `relay` is cleared when the stage completes (state.md, "Checkpoint").

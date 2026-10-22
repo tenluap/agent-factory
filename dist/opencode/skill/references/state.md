@@ -24,10 +24,12 @@ One run = one `state.json`. It is the single truth for where the run is; read it
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
+  "mode": { "chain": "full", "fast": false },
   "skills": { "speckit-plan": "/abs/.../SKILL.md", "grilling": "/abs/.../SKILL.md" },
   "commands": { "build": "dotnet build", "test": "dotnet test" },
   "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
   "relay": null,
+  "ledger": [ { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000 } ],
   "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
   "pr_url": null,
   "history": [ { "at": "2026-10-21T01:43:00Z", "stage": "specify", "event": "complete", "commit": "abc1234", "harness": "claude-code" } ]
@@ -38,8 +40,13 @@ One run = one `state.json`. It is the single truth for where the run is; read it
 - `skills`: keyed by logical name. Paths are only valid on the harness that resolved them.
 - `status`: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
+- `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
 - `stage`: the stage in progress, or the next one to run: `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`.
 - `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": "..." } } ] }`. The last round is the open one. Write each answer as it arrives. A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round.
+- `ledger`: one entry per agent spawn, appended when the spawn returns (each role of a `SPAWN_PARALLEL` gets its own entry): `{ "at", "stage", "role", "harness", "in_est", "out_est", "reported", "duration_ms" }`.
+  - `in_est` / `out_est`: word count × 1.35, rounded. Input words: the role file, the resolved skill files the inputs name, and the artifacts the inputs name. Output words: the returned envelope plus files created or modified under `<spec_dir>/factory/` during the spawn (`find <spec_dir>/factory -type f -newermt "<spawn start>" | xargs wc -w`).
+  - `reported`: `null`, or `{ "in", "out" }` taken from usage the harness exposes for the spawn (`harness.md` names the source; none exists in tier 1 today).
+  - `duration_ms`: orchestrator clock, spawn start to result. Append the entry before the checkpoint so the checkpoint commits it.
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC.
 
 ## Checkpoint

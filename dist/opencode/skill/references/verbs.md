@@ -4,7 +4,7 @@ The core never names a harness tool. It uses these verbs; `references/harness/<n
 
 | Verb | Meaning |
 |---|---|
-| `SPAWN(role, inputs)` | Run one role (its agent file is named in `harness.md`, usually `factory-<role>`) to completion in a fresh context. The prompt is the inputs plus `F` (this skill's base directory). Returns the role's final message. Roles keep nothing between spawns: whatever a later spawn needs is in `state.json` or on disk. |
+| `SPAWN(role, inputs)` | Run one role (its agent file is named in `harness.md`, usually `factory-<role>`) to completion in a fresh context. The prompt is the inputs plus `F` (this skill's base directory). Returns the role's final message. `harness.md` names where the harness exposes the spawn's reported token usage, if anywhere. Roles keep nothing between spawns: whatever a later spawn needs is in `state.json` or on disk. |
 | `SPAWN_PARALLEL([(role, inputs), ...])` | `SPAWN` several roles concurrently and collect every final message. |
 | `ASK(text, options?)` | Put a question or a choice to the user and wait for the answer. |
 | `NOTIFY(text)` | Tell the user the run is waiting on them. A no-op where the harness has no notification. |
@@ -16,7 +16,7 @@ The core never names a harness tool. It uses these verbs; `references/harness/<n
 `harness.md` names the tier its harness runs at.
 
 1. **Native subagents**: `SPAWN` starts a named custom agent with its own prompt, tools and model. `SPAWN_PARALLEL` starts them together.
-2. **Headless subprocess**: `SPAWN` runs the harness's non-interactive CLI with the role file and inputs as the prompt, captures stdout, and takes the final fenced `json` block. `SPAWN_PARALLEL` runs them as background processes and waits for all.
+2. **Headless subprocess**: `SPAWN` runs the harness's non-interactive CLI with the role file and inputs as the prompt, captures stdout, and takes the final fenced `json` block; the CLI's output may also expose token usage, and `harness.md` says where. `SPAWN_PARALLEL` runs them as background processes and waits for all.
 3. **Inline**: `SPAWN` means the orchestrator reads `F/roles/<role>.md` (where `<F>` means F) and does the work itself, then writes the envelope or report it would have returned. `SPAWN_PARALLEL` runs the roles one after another. Reviewers and the judge share the orchestrator's context, so the approver screen must say the run used tier 3.
 
 Whatever the tier, a role's output is its **final fenced `json` block** (protocol.md, findings.md). Parse that block; anything else in the message is commentary.

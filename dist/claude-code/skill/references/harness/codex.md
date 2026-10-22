@@ -25,3 +25,4 @@
 - If the review fan-out exceeds `agents.max_concurrent_threads_per_session`, spawn the rest as slots free up.
 - Never invoke the `speckit-*` skills or `grill-with-docs` as skills: read the resolved file and follow it.
 - Invoke the factory as `$factory <args>` (or pick it from `/skills`). `$ARGUMENTS` is whatever follows the skill name.
+- Ledger (reported usage): subagent results expose no token usage — record `reported: null` and rely on the estimates.
