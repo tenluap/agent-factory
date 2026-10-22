@@ -14,6 +14,7 @@ Red: not applicable - <existing test> already covers this
 - `<test name>` and `<existing test>` identify a test precisely enough to find it: the test function or case name, qualified by file or suite when the bare name is ambiguous.
 - The separator in the second form is a space, a hyphen-minus, a space.
 - No other wording counts as a red proof. "Tested manually", "covered by integration tests", a bare "Red: ok" and an empty value are all unparseable and are findings.
+- There is no third form for a test run that could not happen. Where the repository has a test runner whose test command cannot be run, the producing role writes no commit at all: it stops and returns a failure naming the task or fix, the un-runnable command and its error (FR-011b for `code-build`, FR-013b for `fixer`), and the orchestrator's existing failure policy halts the run.
 
 ## Placement
 
@@ -44,7 +45,15 @@ Implementation commits are those whose subject is `factory(implement): <task id>
 
 ### The fix commit (matched against the round's verdict, not `tasks.md`)
 
-A fix commit **is** checked (FR-013a would otherwise be unverifiable), and its `Red:` lines are matched against the judge verdict's `confirmed_blocking` findings for that review round, because a fix's test belongs to a finding and not to a task. The `tasks.md` "unmatched" rule above never applies to a fix commit.
+A fix commit **is** checked (FR-013a would otherwise be unverifiable), and its `Red:` lines are matched against the judge verdict's `confirmed_blocking` findings, because a fix's test belongs to a finding and not to a task. The `tasks.md` "unmatched" rule above never applies to a fix commit.
+
+The verdict is a file, named so a stateless reviewer can read it in one spawn (FR-015d, constitution IV):
+
+```text
+<spec_dir>/factory/reviews/round-<n-1>/verdict.json
+```
+
+where `n` is the review round the reviewer is running in, so `n-1` is the round whose verdict the fix commit answers. In round 1 there is no fix commit and no such file, and this whole section does not apply. The path is the one the orchestrator already writes (`core/skills/factory/SKILL.md`, review step 4); nothing new is persisted and no extra spawn input is needed.
 
 | Observation | Result |
 |---|---|
@@ -53,7 +62,9 @@ A fix commit **is** checked (FR-013a would otherwise be unverifiable), and its `
 | A `Red:` line that does not match either form, or whose value is empty | Finding (unparseable), naming the fix commit |
 | A fix confined to documentation, configuration or generated output, with no `Red:` line | No finding (not behaviour-changing) |
 
-Verification is textual: the reviewer matches the line against `tasks.md` (or the verdict), it does not replay the failing test run (ADR 0002).
+Verification is textual: the reviewer matches the line against `tasks.md` (or the verdict file), it does not replay the failing test run (ADR 0002).
+
+Advisory engineering findings (`ENG-7`..`ENG-10`) produce no fix work, so a fix commit never carries a `Red:` line for one and the absence of one is never a finding (FR-015g).
 
 ### Reporting a commit-level finding
 

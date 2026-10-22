@@ -6,9 +6,9 @@
 
 ## Summary
 
-Give the factory one shared, harness-neutral engineering rules reference (`core/skills/factory/references/engineering.md`) whose rules carry stable `ENG-n` ids, and point the code-writing, planning, reviewing and judging roles at it. The planning role's own stage instructions gain the test-first behaviour (a "Test seams" section in the plan, a failing-test task before each implementation task, a HIGH blocking seam-mapping check in analyze, seam questions in clarify only when seams are ambiguous). The implementing and fixing roles gain red-green-refactor, the `Red:` proof line in the task commit body, the bounded reuse search, and the stop-on-missing-seam failure. `DESIGN.md` records the discipline first (constitution I), then `core/` changes, then every harness is re-rendered and the generated `dist/` is committed with the source (constitution III).
+Give the factory one shared, harness-neutral engineering rules reference (`core/skills/factory/references/engineering.md`) whose rules carry stable `ENG-n` ids, and point the code-writing, planning, reviewing and judging roles at it. The planning role's own stage instructions gain the test-first behaviour (a "Test seams" section in the plan, a failing-test task before each implementation task, a HIGH blocking seam-mapping check in analyze, a MEDIUM non-blocking reason-line check for new files, abstractions and dependencies (FR-020b), seam questions in clarify only when seams are ambiguous). The implementing and fixing roles gain red-green-refactor, the `Red:` proof line in the task commit body, the bounded reuse search, the stop-on-missing-seam failure, and the same stop when the repository's test command cannot be run at all (FR-011b, FR-013b). Enforcement is tiered by rule: `ENG-6` duplication and untested added behaviour stay HIGH and blocking, while `ENG-7`..`ENG-10` are judgement calls capped at MEDIUM, never blocking and never fixed inside the run (FR-015f, FR-015g) — a cap that the shared findings reference must state as an override of its own default "critical and high are blocking" guidance. `DESIGN.md` records the discipline first (constitution I), then `core/` changes, then every harness is re-rendered and the generated `dist/` is committed with the source (constitution III).
 
-The change is instructions and generated output only: nine Markdown files under `DESIGN.md` and `core/`, plus the four rendered copies under `dist/`. No product code, no renderer change, no orchestrator flow stage, no new state field.
+The change is instructions and generated output only: nine Markdown files under `DESIGN.md` and `core/` (`DESIGN.md`, the new `engineering.md`, the shared `findings.md` and six role prompts), plus the four rendered copies under `dist/`. No product code, no renderer change, no orchestrator flow stage, no new state field, no new severity level and no new reviewer, gate or list.
 
 ## Technical Context
 
@@ -55,6 +55,21 @@ End-to-end behaviour (a real run producing red proofs and seam findings) is obse
 
 `Overridden: none` — no rule of the shared reference is overridden by this repository's constitution; the two agree (constitution V is the source of `ENG-10`). `Test runner:` is absent on purpose: this change creates no need for one (FR-018 does not apply).
 
+The whole-change exemption (FR-025) is unaffected by the stop added in FR-011b/FR-013b: that stop fires only where a repository has a test runner whose command cannot be run. This repository has no test runner and needs none here, so no task of this change ever tries to run one.
+
+## Reasons for new files, abstractions and dependencies (ENG-10, FR-020b)
+
+One line per new file, new abstraction and new dependency this change introduces, so the analyze stage's MEDIUM, non-blocking reason check (FR-020b, SC-003a) finds a stated reason for every one of them. This plan is the worked example of the artefact shape in [contracts/plan-artifact.md](./contracts/plan-artifact.md).
+
+| New thing | Kind | Reason |
+|---|---|---|
+| `core/skills/factory/references/engineering.md` | new file (source) | FR-001 requires the rules in exactly one harness-neutral place that six roles point at; inlining them in six prompts would duplicate them and let them drift (SC-004). Also recorded in the Constitution Check (V) and ADR 0001 |
+| `dist/<harness>/skill/references/engineering.md` (four files) | new files (generated) | Mandated, not chosen: constitution III requires the rendered copy of every `core/` file for every harness, written by `tools/render.py` and never by hand (FR-023) |
+| `CONTEXT.md`, `docs/adr/0001`..`0004` | new files (already committed in the grill-with-docs stage) | The repository had no glossary and no ADR trail; the four decisions with lasting consequences need a stable record the roles and future runs can cite (ADR 0004 carries the judgement-call ceiling of FR-015f/FR-015g). Documentation only; no role reads them at run time |
+| `specs/001-tdd-engineering-rules/contracts/*.md`, `research.md`, `data-model.md`, `quickstart.md`, `checklists/requirements.md` | new files (feature artefacts) | Produced by the spec stages themselves for this one feature; they write down contracts the change already implies and are not part of the shipped instruction set |
+| — | new abstraction | None. No new verb, role, stage, severity level, state field, finding type, gate or list is introduced; the change reuses the existing reference mechanism, the per-task commit, the existing failure policy, the existing verdict shape and the existing approver screen (FR-015g) |
+| — | new dependency | None. No package, tool or external skill is added; `tools/render.py` and the four adapters are unchanged, and the rules depend on no skill outside the factory (FR-002) |
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design.*
@@ -65,11 +80,11 @@ End-to-end behaviour (a real run producing red proofs and seam findings) is obse
 | II. Harness-Neutral Core | No file added or edited under `core/` names a harness tool, path or command | PASS - `engineering.md` and the role edits use only the `<F>/references/...` form and the neutral verbs; no adapter needs a change |
 | III. Generated Dist (NON-NEGOTIABLE) | Every `core/`/`adapters/` change is followed by a render of every harness, and `dist/` is committed with the source | PASS - every `core/`-editing task re-renders all four harnesses and commits the regenerated `dist/` in that task's own commit, so no commit in the run's history carries a stale `dist/`; the final render task plus `commands.test` prove no drift (SC-005). Because one render writes all four harness trees, no two `core/`-editing tasks run in parallel |
 | IV. Stateless Agents | No role relies on memory of an earlier turn | PASS - the rules are read from the shared reference each spawn; the red proof is read from the commit body and `tasks.md`; the seams are read from `plan.md`. The external `tdd` skill is rejected for exactly this reason (ADR 0001) |
-| V. Simplicity and Reuse | Smallest change; a new file needs a stated reason in the plan | PASS - one new file, `core/skills/factory/references/engineering.md`. **Reason**: FR-001 requires the rules in exactly one harness-neutral place that six roles point at; inlining them in six prompts would duplicate them and let them drift (SC-004). Nothing else is added: no new verb, no new state field, no new stage, no new commit type, no renderer change; the change reuses the existing reference mechanism, the existing per-task commit, and the existing failure policy |
+| V. Simplicity and Reuse | Smallest change; a new file needs a stated reason in the plan | PASS - one new source file, `core/skills/factory/references/engineering.md`. **Reason**: FR-001 requires the rules in exactly one harness-neutral place that six roles point at; inlining them in six prompts would duplicate them and let them drift (SC-004). Nothing else is added: no new verb, no new state field, no new stage, no new commit type, no new severity level, no new gate or list, no renderer change; the change reuses the existing reference mechanism, the existing per-task commit, the existing failure policy, the existing verdict shape and the existing approver screen (FR-015g). Every new file, abstraction and dependency is listed with its reason in "Reasons for new files, abstractions and dependencies" above (`ENG-10`, FR-020b, SC-003a) |
 | Writing Standards | Prompts and references short, imperative, unambiguous, one term per concept | PASS - the rules reference is one numbered rule per entry; terms come from the glossary in `CONTEXT.md`; the role edits add lines, not prose |
 | Development Workflow | Build renders every harness; `git diff --exit-code -- dist/` passes; flow changes validated per `DESIGN.md` | PASS - both commands are the stated verification; end-to-end validation is deferred to the next real run, as the design document's validation plan already prescribes |
 
-Post-design re-check (after Phase 1): unchanged, all PASS. The Phase 1 artifacts add no file to `core/`, no verb and no adapter change; `contracts/` only writes down the three textual contracts the change already implies.
+Post-design re-check (after Phase 1, re-run on analyze loop 1): unchanged, all PASS. The Phase 1 artifacts add no file to `core/`, no verb and no adapter change; `contracts/` only writes down the three textual contracts the change already implies. The requirements added in the loop (FR-011b, FR-013b, FR-015f, FR-015g, FR-020b) add instruction lines to files this plan already touches — `fixer.md`, `code-standards.md`, `review-judge.md`, `spec-builder.md` and the shared `findings.md` — and no new file, abstraction or dependency, so principles II, IV and V are untouched.
 
 ## Project Structure
 
@@ -90,7 +105,7 @@ specs/001-tdd-engineering-rules/
 └── factory/             # run state, brief, analyze and remediation logs
 ```
 
-Repository-level documentation already written in grill-with-docs: `CONTEXT.md` (glossary) and `docs/adr/0001-factory-owns-its-engineering-rules.md`, `docs/adr/0002-red-proof-lives-in-the-task-commit-body.md`, `docs/adr/0003-test-seams-are-settled-at-plan-time.md`. This plan changes none of them.
+Repository-level documentation already written in grill-with-docs: `CONTEXT.md` (glossary) and `docs/adr/0001-factory-owns-its-engineering-rules.md`, `docs/adr/0002-red-proof-lives-in-the-task-commit-body.md`, `docs/adr/0003-test-seams-are-settled-at-plan-time.md`, `docs/adr/0004-judgement-call-rules-advise-they-never-block.md` (the FR-015f/FR-015g ceiling). This plan changes none of them; their reasons are in "Reasons for new files, abstractions and dependencies" above.
 
 ### Source Code (repository root)
 
@@ -101,17 +116,17 @@ core/
 │   ├── SKILL.md                            # unchanged
 │   └── references/
 │       ├── engineering.md                  # NEW: ENG-1 .. ENG-11, the shared rules
-│       ├── findings.md                     # + reviewers needing commit metadata read the run's commit log; commit-level finding shape; engineering findings cite the ENG-n id
+│       ├── findings.md                     # + reviewers needing commit metadata read the run's commit log; commit-level finding shape; engineering findings cite the ENG-n id; the ENG-7..ENG-10 MEDIUM non-blocking ceiling, written as an override of this file's own default "critical and high are blocking" line (FR-015f); an advisory[] entry derived from an engineering finding keeps its ENG-n citation
 │       ├── protocol.md                     # unchanged
 │       ├── state.md                        # unchanged
 │       └── verbs.md                        # unchanged
 └── roles/
-    ├── spec-builder.md                     # plan/tasks/analyze/clarify test-first instructions
-    ├── code-build.md                       # red-green-refactor, Red: line, reuse search, missing-seam failure
-    ├── fixer.md                            # same rules; one Red: line per behaviour-changing fix
-    ├── code-standards.md                   # untested behaviour and duplication HIGH blocking, cite ENG-n
-    ├── spec-conformance.md                 # read the run's commit log; check each implementation commit body's Red: line against tasks.md, and the fix commit's against the verdict
-    ├── review-judge.md                     # reference the rules; rate engineering findings by id
+    ├── spec-builder.md                     # plan/tasks/analyze/clarify test-first instructions; + a reason line per new file, abstraction and dependency in the plan, and analyze's MEDIUM non-blocking check for a missing one (FR-020b)
+    ├── code-build.md                       # red-green-refactor, Red: line, reuse search, missing-seam failure, + stop on an un-runnable test command (FR-011b)
+    ├── fixer.md                            # same rules; one Red: line per behaviour-changing fix; + the same stop on an un-runnable test command (FR-013b); no fix work on advisory engineering findings (FR-015g)
+    ├── code-standards.md                   # untested behaviour and duplication HIGH blocking, cite ENG-n; + ENG-7..ENG-10 findings at most MEDIUM and never blocking (FR-015f)
+    ├── spec-conformance.md                 # read the run's commit log; check each implementation commit body's Red: line against tasks.md, and the fix commit's against <spec_dir>/factory/reviews/round-<n-1>/verdict.json
+    ├── review-judge.md                     # reference the rules; rate engineering findings by id; + the same ENG-7..ENG-10 ceiling, those findings routed to advisory[] keeping their ENG-n id
     ├── security-reviewer.md                # unchanged
     ├── ui-reviewer.md                      # unchanged
     └── ux-reviewer.md                      # unchanged

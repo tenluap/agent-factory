@@ -37,8 +37,22 @@ The interface this feature exposes to every role, and through the rendered outpu
 
 - **Behaviour-changing** (the trigger for `ENG-1` and `ENG-2`): a unit of work changes what an entry point returns or does. A change confined to documentation, configuration or generated output is not behaviour-changing.
 - **Shared utility locations** (the bound of `ENG-6`): the directories the repository's own conventions name as shared (for example `helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/`), plus any module the module being changed already imports for helpers. The search is a keyword-level text search over those locations, not a semantic review of the whole repository.
+- **When the red step cannot be observed at all** (`ENG-1`): a repository with a test runner whose test command cannot be run (missing dependency, broken configuration, no runner binary) is a stop, not an exemption. The role stops and reports the un-runnable command and its error as a failure, exactly as `ENG-4` handles a missing seam, and writes no behaviour-changing code and no third form of red proof (FR-011b, FR-013b). This binds the fixing role on the same terms as the implementing role.
 
-Eleven rules. `ENG-1`..`ENG-5` are test-first (FR-003, FR-007..FR-013a), `ENG-6` reuse (FR-014, FR-014a), `ENG-7`..`ENG-10` clean code, SOLID, functional style and no over-engineering, `ENG-11` precedence (FR-005, FR-006).
+Eleven rules. `ENG-1`..`ENG-5` are test-first (FR-003, FR-007..FR-013b), `ENG-6` reuse (FR-014, FR-014a), `ENG-7`..`ENG-10` clean code, SOLID, functional style and no over-engineering, `ENG-11` precedence (FR-005, FR-006).
+
+## Severity contract: which rules can block
+
+| Rules | Ceiling | Blocking? | Where it is enforced |
+|---|---|---|---|
+| `ENG-6` (duplication) and behaviour added with no asserting test (`ENG-1`) | HIGH | Yes | `code-standards.md`, confirmed by the judge (FR-015, FR-015a) |
+| `ENG-2`..`ENG-5` red-proof and seam defects | As the finding's own requirement states (HIGH for a missing, unparseable or unmatched `Red:` line; HIGH for an unlisted seam at artifact time) | Yes | `spec-conformance.md`, the analyze check (FR-015b, FR-015d, FR-020) |
+| `ENG-7`, `ENG-8`, `ENG-9`, `ENG-10` | MEDIUM | **Never** | The raising reviewer and the judge alike; a finding above the ceiling is lowered to MEDIUM, never dropped (FR-015f) |
+
+- A finding held at the `ENG-7`..`ENG-10` ceiling is advisory: no fix round acts on it, it travels to the user in the verdict's `advisory[]` list keeping its `ENG-n` citation, and the user's route to having it fixed is the approver's existing "Request changes" (FR-015g, SC-006b, SC-006c).
+- This ceiling is written into `core/skills/factory/references/findings.md` as an explicit **override of that file's own default severity guidance** ("`blocking`: the reviewer's call; `critical` and `high` are blocking unless the reviewer says why not"), so the two instructions in that file cannot be read as a conflict (FR-015f). `code-standards.md` and `review-judge.md` point at it and do not restate it.
+- `ENG-10` has an artifact-time counterpart with the same ceiling: a new file, abstraction or dependency the plan introduces with no stated reason is a MEDIUM, non-blocking analyze finding ([plan-artifact.md](./plan-artifact.md), FR-020b).
+- No new severity level and no new field carry any of this: `severity` and `blocking` of the existing reviewer-report and verdict shapes are enough.
 
 ## Role reference contract
 
@@ -46,11 +60,11 @@ Each of these six roles contains one reference to the file, and restates no rule
 
 | Role file | Use |
 |---|---|
-| `core/roles/code-build.md` | Follows every rule while implementing; writes the red proof |
-| `core/roles/fixer.md` | Follows every rule when a fix changes behaviour; one red proof line per such fix |
-| `core/roles/spec-builder.md` | Plans for the rules: test seams, exemptions, test task ordering, analyze's mapping check, clarify's seam questions, the override line |
-| `core/roles/code-standards.md` | Enforces the rules on the diff; cites the id in `evidence` |
-| `core/roles/spec-conformance.md` | Checks the red proofs against `tasks.md`; cites the id in `evidence` |
-| `core/roles/review-judge.md` | Verifies and rates engineering findings against the same rules, by id |
+| `core/roles/code-build.md` | Follows every rule while implementing; writes the red proof; stops on a missing seam or an un-runnable test command |
+| `core/roles/fixer.md` | Follows every rule when a fix changes behaviour; one red proof line per such fix; stops on an un-runnable test command; performs no work on advisory engineering findings |
+| `core/roles/spec-builder.md` | Plans for the rules: test seams, exemptions, test task ordering, the reason line per new file/abstraction/dependency, analyze's mapping and reason checks, clarify's seam questions, the override line |
+| `core/roles/code-standards.md` | Enforces the rules on the diff; cites the id in `evidence`; applies the severity ceiling above |
+| `core/roles/spec-conformance.md` | Checks the red proofs against `tasks.md`, and a fix commit's against the previous round's verdict; cites the id in `evidence` |
+| `core/roles/review-judge.md` | Verifies and rates engineering findings against the same rules, by id; applies the same ceiling and routes capped findings to `advisory[]` |
 
 Unchanged and holding no reference: `security-reviewer.md`, `ui-reviewer.md`, `ux-reviewer.md`, `core/skills/factory/SKILL.md`, every file under `adapters/`, `tools/render.py`.
