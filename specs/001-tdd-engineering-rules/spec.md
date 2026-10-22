@@ -35,6 +35,12 @@
 - Q: What severity may a review finding carry when it rests on the clean-code, SOLID, functional-style or over-engineering rules (`ENG-7`..`ENG-10`)? → A: At most MEDIUM, and never blocking: those rules are judgement calls, so they advise rather than halt a run. Only `ENG-6` duplication (FR-015) and behaviour added with no asserting test (FR-015a) stay HIGH and blocking. The judge applies the same ceiling when it rates an engineering finding.
 - Q: What does the implementing role do when the repository has a test runner but the test command cannot be run (missing dependency, broken configuration, no runner binary)? → A: It stops and returns a failure naming the un-runnable command, exactly as FR-011a handles a missing seam, so the orchestrator's existing failure policy halts the run and asks the user. It never writes implementation code without an observed red step, and the red proof keeps exactly its two accepted forms (FR-009, FR-009a) — "could not run the tests" is not a third form.
 
+### Session 2026-10-22 (grill-with-docs, analyze loop 1)
+
+- Q: Do advisory engineering findings (`ENG-7`..`ENG-10`, FR-015f) ever get fixed inside the run? → A: No. They are information for the user: they reach the user through the judge verdict's advisory list and the approver screen, and the fixing role performs no work on them. A user who wants one fixed uses the approver's existing "Request changes", which sends the run back with that finding named. No new gate, list or stage is added.
+- Q: Is there a plan-time gate for over-engineering (`ENG-10`), or is it review-only? → A: Plan-time too, but soft: `plan.md` MUST state a reason for each new file, new abstraction and new dependency it introduces, and the analyze stage reports a MEDIUM, **non-blocking** finding when a reason is missing. It never blocks, because the judgement-call ceiling of FR-015f applies to `ENG-10` at artifact time as well.
+- Q: Does FR-011b's un-runnable-test-command stop bind the fixing role as well as the implementing role? → A: Yes. The fixing role stops the same way and returns a failure naming the un-runnable command and its error; it never writes a behaviour-changing fix with no observed red step.
+
 ## User Scenarios & Testing *(mandatory)*
 
 The actors here are the factory's roles (the agents a `/factory` run spawns) and the user who starts a run. The "system" is the factory's instruction set: the design document, the shared engineering reference, the role prompts, and the rendered per-harness copies of them.
@@ -56,6 +62,7 @@ A user starts a `/factory` run on a feature. The implementing role works task by
 5. **Given** a task needing a seam the plan never listed, **When** the implementing role reaches it, **Then** it stops and reports the missing seam as a failure, the run halts, and the user is asked instead of a seam being invented.
 6. **Given** a fixing role resolving several behaviour-changing findings in one commit, **When** it commits, **Then** that commit body carries one `Red:` line per behaviour-changing fix.
 7. **Given** a repository whose test runner exists but whose test command cannot be run, **When** the implementing role tries to observe the red step, **Then** it stops and returns a failure naming the un-runnable command and its error, the run halts, and the user is asked instead of implementation code being written with no observed red step.
+8. **Given** that same un-runnable test command, **When** the fixing role tries to observe the red step for a behaviour-changing fix, **Then** it stops and returns a failure naming the un-runnable command and its error, exactly as the implementing role does, instead of committing the fix with no red proof.
 
 ---
 
@@ -74,6 +81,7 @@ Before any code is written, the planning artefacts already say what will be test
 3. **Given** the tasks stage, **When** the task list is written, **Then** each implementation task is immediately preceded by a task that writes a failing test for the seam that task implements.
 4. **Given** seams that the feature description leaves ambiguous, **When** the clarify stage runs, **Then** it asks the user about those seams; when the seams are clear, it asks nothing about them.
 5. **Given** a written plan and task list, **When** the analyze stage runs, **Then** it reports a HIGH, blocking finding for any non-exempt implementation task with no mapped seam, with no test task immediately before it, or naming a seam the plan does not list, and reports nothing for tasks the plan declares exempt.
+6. **Given** a plan that introduces a new file, a new abstraction or a new dependency without stating why, **When** the analyze stage runs, **Then** it reports a MEDIUM, non-blocking finding naming that file, abstraction or dependency, so the run continues and the user sees the omission.
 
 ---
 
@@ -94,6 +102,7 @@ The reviewing roles check the run's diff against the same written rules the impl
 5. **Given** any engineering-rule finding, **When** it is written and when the judge rates it, **Then** both cite the rule's id (`ENG-n`) from the shared reference.
 6. **Given** a fix commit carrying one `Red:` line per behaviour-changing fix, **When** the spec-conformance review runs, **Then** it matches each line against the round's confirmed blocking findings and raises nothing, instead of reporting the lines as unmatched against `tasks.md`.
 7. **Given** a diff whose only engineering weakness rests on clean code, SOLID, functional style or over-engineering (`ENG-7`..`ENG-10`), **When** the review runs and the judge rates the finding, **Then** it is at most MEDIUM and non-blocking, so it advises the user without halting the run, while an `ENG-6` duplication or untested-behaviour finding in the same diff stays HIGH and blocking.
+8. **Given** such an advisory engineering finding in the verdict, **When** the fix round runs and the approver screen is shown, **Then** no fix work is performed on it and the user reads it in the verdict's advisory list, able to send it back with the approver's existing "Request changes".
 
 ---
 
@@ -121,8 +130,10 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - A behaviour whose test cannot be made to fail first (for example, behaviour already covered by an existing passing test): the commit body records `Red: not applicable - <existing test> already covers this`, rather than silently skipping the red step.
 - A seam the plan did not list but a task clearly needs: the implementing role does not invent it; analyze should have caught the gap beforehand, and if it reaches implementation the role returns a failure naming the missing seam and the run halts for the user.
 - A fix commit's red proofs: they name tests written for confirmed findings, not for tasks, so the spec-conformance reviewer matches them against the round's verdict and never reports them as unmatched against `tasks.md` (FR-015d).
-- A repository whose test runner exists but whose test command cannot be run: the implementing role stops and returns a failure naming the un-runnable command and its error (FR-011b), the run halts for the user, and no implementation code is written without an observed red step. This is the same stop-and-report pattern as a missing seam (FR-011a), not a new halt reason.
+- A repository whose test runner exists but whose test command cannot be run: the implementing role, and equally the fixing role (FR-013b), stops and returns a failure naming the un-runnable command and its error (FR-011b), the run halts for the user, and no behaviour-changing code is written without an observed red step. This is the same stop-and-report pattern as a missing seam (FR-011a), not a new halt reason.
 - A weakness that is only a judgement call (clean code, SOLID, functional style, over-engineering): the finding is raised at most MEDIUM and non-blocking (FR-015f), so the run is not halted on taste; duplication and untested behaviour stay HIGH and blocking.
+- An advisory engineering finding the user wants fixed: no fix round acts on it (FR-015g); the user names it at the approver gate with "Request changes", which is the existing route back into the run.
+- A plan that introduces a new file, abstraction or dependency with no stated reason: analyze reports it MEDIUM and non-blocking (FR-020b), so the run continues and the omission is visible rather than silently accepted or treated as a halt.
 - A reuse search that finds nothing in the changed module or the shared utility locations: the role writes the new function; the search is bounded on purpose and is not widened to the whole repository.
 - An existing function that is close but not an exact fit: extending it is preferred over a near-duplicate; a genuinely different concern may be new code, with the difference stated.
 - A language or repository whose idiom is not functional (for example, a framework demanding inheritance): the functional preferences yield to the language's and repository's idiom.
@@ -158,6 +169,7 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - **FR-012**: A task exempt from test-first (documentation or configuration only) MUST be exempt only where the plan states the exemption and its reason; skipping the test-first steps without a stated reason MUST NOT happen.
 - **FR-013**: The fixing role MUST follow the same rules as the implementing role when its fix changes behaviour.
 - **FR-013a**: The fixing role commits its fixes as one commit and MUST record one `Red:` line in that commit body per behaviour-changing fix, in the same wording as FR-009 and FR-009a.
+- **FR-013b**: FR-011b binds the fixing role as well: when the test command cannot be run, the fixing role MUST stop and return a failure naming the un-runnable command and the error it produced, so the orchestrator's existing failure policy halts the run and asks the user. It MUST NOT commit a behaviour-changing fix without an observed red step and MUST NOT record any third form of red proof.
 
 **Reuse**
 
@@ -165,11 +177,12 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - **FR-014a**: That search MUST be bounded, not repository-wide: the module being changed plus the repository's shared utility locations, searched by the concept's keywords, once per new function. **Shared utility locations** means the directories the repository's own conventions name as shared (for example `helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/`), plus any module the module being changed already imports for helpers. The search is a keyword-level text search (`grep`-level) over those locations, not a semantic review of the whole repository.
 - **FR-015**: The code-standards reviewer MUST flag new code that duplicates an existing helper, and MUST rate real duplication HIGH and blocking.
 - **FR-015a**: The code-standards reviewer MUST rate behaviour added with no asserting test HIGH and blocking, the same weight as real duplication.
-- **FR-015f**: A review finding that rests on the clean-code, SOLID, functional-style or over-engineering rules (`ENG-7`..`ENG-10`) MUST be rated at most MEDIUM and MUST NOT be blocking, by both the reviewer that raises it and the judge that rates it; only the duplication rule (`ENG-6`, FR-015) and behaviour added with no asserting test (FR-015a) carry HIGH and blocking weight. A finding above the ceiling MUST be lowered to MEDIUM rather than dropped, so the user still sees it.
 - **FR-015b**: The spec-conformance reviewer MUST read the run's commit log (`git log <base>..HEAD`, subjects and bodies) in addition to the run's diff, and MUST check each implementation commit body's `Red:` line against `tasks.md`, raising a finding when the line is missing (and the commit's task is not plan-exempt), unparseable, or names a test that no task in `tasks.md` maps to.
-- **FR-015d**: The spec-conformance reviewer MUST apply the same check to the fixing role's fix commit, matching each `Red:` line in it against the judge verdict's `confirmed_blocking` findings for that round instead of against `tasks.md`; an unmatched-against-`tasks.md` finding MUST NOT be raised for a fix commit.
 - **FR-015c**: The review judge MUST reference the shared rules file so it verifies and rates engineering findings against the same written rules, by id.
+- **FR-015d**: The spec-conformance reviewer MUST apply the same check to the fixing role's fix commit, matching each `Red:` line in it against the judge verdict's `confirmed_blocking` findings for that round instead of against `tasks.md`; an unmatched-against-`tasks.md` finding MUST NOT be raised for a fix commit.
 - **FR-015e**: The shared findings reference MUST state that a reviewer whose lens needs commit metadata reads the run's commit log as well as the diff, and that a commit-level finding puts the commit sha (with the task id where one applies) in the report's `file` field and omits `line` or sets it to `0`.
+- **FR-015f**: A review finding that rests on the clean-code, SOLID, functional-style or over-engineering rules (`ENG-7`..`ENG-10`) MUST be rated at most MEDIUM and MUST NOT be blocking, by both the reviewer that raises it and the judge that rates it; only the duplication rule (`ENG-6`, FR-015) and behaviour added with no asserting test (FR-015a) carry HIGH and blocking weight. A finding above the ceiling MUST be lowered to MEDIUM rather than dropped, so the user still sees it. This ceiling MUST override any higher severity the shared findings reference's default severity guidance would give the same finding.
+- **FR-015g**: An engineering finding held at or below the FR-015f ceiling is advisory: the run MUST NOT perform fix work on it. It MUST reach the user through the judge verdict's advisory list and the orchestrator's existing approver screen, and the user's route to having it fixed is the approver's existing "Request changes". No new gate, list, severity or stage is introduced for it.
 
 **Planning for test-first**
 
@@ -179,6 +192,7 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - **FR-019**: The task list MUST place a failing-test task immediately before each implementation task, naming the seam it targets; grouping test tasks ahead of a block of implementation tasks does not satisfy this.
 - **FR-020**: The analyze stage MUST report a HIGH, blocking finding when an implementation task has no mapped seam, has no test task immediately before it, or names a seam the plan does not list, so the finding triggers the remediation loop; CRITICAL stays reserved for constitution violations.
 - **FR-020a**: Tasks the plan declares exempt from test-first (documentation or configuration only, with the reason stated) MUST be excluded from the FR-020 check, not reported at a lower severity.
+- **FR-020b**: The plan MUST state a reason for each new file, new abstraction and new dependency it introduces (`ENG-10`), and the analyze stage MUST report a MEDIUM, **non-blocking** finding naming any one of them whose reason is missing. This finding MUST NOT block the run or by itself trigger the remediation loop's blocking path.
 - **FR-021**: The clarify stage MUST ask the user about test seams only when the seams are ambiguous.
 
 **Carrying the change through the repository**
@@ -206,12 +220,14 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - **SC-001**: In a run on a repository with a test runner, 100% of behaviour-changing tasks have a commit body carrying either a red proof (the test that failed as expected) or a stated exemption (the existing test that already covers the behaviour); a run whose test command cannot be run halts (FR-011b) instead of producing such a commit with no proof.
 - **SC-002**: In a generated task list, 100% of non-exempt implementation tasks are immediately preceded by a test task naming a seam listed in the plan.
 - **SC-003**: Every plan produced after this change contains a test-seams section, and every part of a change not covered by a seam has a stated exemption reason.
+- **SC-003a**: In a plan produced after this change, 100% of the new files, new abstractions and new dependencies it introduces carry a stated reason, and any that do not appear in the analyze report as MEDIUM, non-blocking findings.
 - **SC-004**: The engineering rules appear in exactly one source file; each of the code-writing, planning and reviewing roles and the judge reaches them by reference, with zero inline restatements.
 - **SC-004a**: Every rule in the reference has a unique `ENG-n` id, and every engineering-rule finding and plan override names one of those ids.
 - **SC-005**: After the change, the repository's build and test commands pass, with the generated output showing no difference from its source for every harness.
 - **SC-006**: A diff that adds untested behaviour or duplicates an existing helper produces at least one HIGH, blocking review finding naming it, in a trial review.
-- **SC-006b**: In that same trial review, every finding resting on `ENG-7`..`ENG-10` is MEDIUM or lower and none is blocking, so zero runs halt on a clean-code, SOLID, functional-style or over-engineering finding alone.
 - **SC-006a**: In a trial review of a run whose implementation commit bodies lack a `Red:` line, the spec-conformance report names every such commit, with zero findings on commits whose proof matches a task in `tasks.md`.
+- **SC-006b**: In the SC-006 trial review, every finding resting on `ENG-7`..`ENG-10` is MEDIUM or lower and none is blocking, so zero runs halt on a clean-code, SOLID, functional-style or over-engineering finding alone.
+- **SC-006c**: In the SC-006 trial review, zero fix-round changes are made for advisory engineering findings, and every one of them is readable by the user in the verdict's advisory list with its `ENG-n` id.
 - **SC-007**: A user reading a finished run can tell, from the plan and the commits alone and without reading the code, which seams were tested and which steps were exempt.
 
 ## Assumptions
@@ -219,12 +235,14 @@ The rules exist once, in a single harness-neutral reference. Every role that wri
 - The shared rules live at `core/skills/factory/references/engineering.md` and are reached through the roles' existing reference mechanism, as settled in the brief.
 - Scope of roles: the implementing and fixing roles follow the rules; the planning role plans for them in its own stage instructions (plan's test-seams section, test task before each implementation task, analyze's mapping check, clarify's seam questions); the code-standards reviewer enforces them on the code, the spec-conformance reviewer checks the red proofs in commit bodies, and the review judge rates both against the shared rules. The security, UI and UX reviewers and the orchestrator's flow are unchanged.
 - The approver screen is unchanged: engineering-rule findings reach the user through the judge verdict and the fixed/unresolved lists already shown there, and the positive evidence is in `plan.md` and the commit bodies.
-- A missing seam at implementation time, and a test command that exists but cannot be run, both ride the orchestrator's existing failure policy (retry once, then halt and ask); no new halt reason or stage is introduced.
+- A missing seam at implementation time, and a test command that exists but cannot be run, both ride the orchestrator's existing failure policy (retry once, then halt and ask); no new halt reason or stage is introduced, and the stop binds the fixing role on the same terms as the implementing role (FR-013b).
+- Advisory engineering findings (`ENG-7`..`ENG-10`, FR-015f) are information for the user, not work the run performs: no fix round acts on them. They travel to the user in the judge verdict's advisory list and the existing approver screen, and the user sends any of them back into the run with the approver's existing "Request changes" (FR-015g). No new gate, list, severity or stage is added.
+- The over-engineering gate at plan time is soft on purpose (FR-020b): a missing reason for a new file, abstraction or dependency is a MEDIUM, non-blocking analyze finding, because `ENG-10` is a judgement call and the FR-015f ceiling applies to artifacts as well as to diffs.
 - Severity for engineering findings has a ceiling by rule, not by reviewer judgement: `ENG-7`..`ENG-10` advise at MEDIUM, `ENG-6` duplication and untested behaviour block at HIGH. The existing judge verdict shape carries both; no new severity level or field is introduced.
 - The external `tdd` skill is deliberately not used; the factory owns self-contained rules because its agents are stateless and cannot confirm seams with the user mid-loop.
 - Functional style is a preference, not a mandate: pure functions, immutable data, side effects at the edges, composition over inheritance, within the language's idiom.
 - Red proof is a line in the existing task commit body; no new commit type, state field or artefact is introduced.
 - This change edits instructions only (design document, source roles, the new reference, and the regenerated per-harness output). No orchestrator flow stage is added or removed.
 - Verification of this feature is by inspection of the changed instruction files plus the repository's existing build and test commands; the end-to-end behaviour is observed on the next real run, per the design document's validation plan.
-- Terminology for this feature is fixed in the repository glossary (`CONTEXT.md`); the three decisions with lasting consequences are recorded as `docs/adr/0001-factory-owns-its-engineering-rules.md`, `docs/adr/0002-red-proof-lives-in-the-task-commit-body.md` and `docs/adr/0003-test-seams-are-settled-at-plan-time.md`.
+- Terminology for this feature is fixed in the repository glossary (`CONTEXT.md`); the three decisions with lasting consequences are recorded as `docs/adr/0001-factory-owns-its-engineering-rules.md`, `docs/adr/0002-red-proof-lives-in-the-task-commit-body.md` and `docs/adr/0003-test-seams-are-settled-at-plan-time.md` and `docs/adr/0004-judgement-call-rules-advise-they-never-block.md`.
 - The repository's constitution continues to apply unchanged; rule overrides are expressed in the consuming repository's own constitution, never by editing the factory's rules per-run.

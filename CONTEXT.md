@@ -74,6 +74,14 @@ _Avoid_: skip, waiver, opt-out
 A consuming repository's own documented rule winning over a factory rule, recorded in `plan.md` as `Overridden: ENG-n - <repo rule that wins>`.
 _Avoid_: exception, opt-out, local rule
 
+**Advisory finding**:
+An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. The run performs no fix work on it; it reaches the user in the verdict's advisory list and on the approver screen, and the user sends it back into the run with the approver's "Request changes".
+_Avoid_: nit, suggestion, soft finding, warning
+
+**Reason line**:
+The sentence a plan carries for each new file, new abstraction or new dependency it introduces, saying why it is needed (`ENG-10`); a missing one is a MEDIUM, non-blocking analyze finding.
+_Avoid_: justification, rationale note
+
 **Reuse search**:
 The bounded look for an existing function to reuse or extend before writing a new one: the module being changed plus the repository's shared utility locations, by the concept's keywords, once per new function.
 _Avoid_: duplication check, grep
