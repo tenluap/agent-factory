@@ -58,7 +58,7 @@ For each implementation task in `tasks.md`, and for each new file, abstraction a
 
 HIGH, never CRITICAL: CRITICAL stays reserved for constitution violations. A HIGH finding feeds the orchestrator's existing remediation loop (FR-020, FR-020a). All three blocking conditions above — no mapped seam, no immediately preceding test task, a seam the plan does not list — are the ones FR-019, FR-020 and SC-002 state, so the gate and the requirement cannot diverge.
 
-The reason-line row is the one non-blocking condition in this table: it is MEDIUM and never blocking, and it never by itself triggers the remediation loop's blocking path, because `ENG-10` is a judgement call and the FR-015f severity ceiling applies at artifact time as well as to diffs (FR-020b, SC-003a). The run continues with the omission visible to the user.
+The reason-line row is the one non-blocking condition in this table: it is MEDIUM and never blocking, and it never by itself triggers the remediation loop's blocking path, because `ENG-10` is a judgement call and the FR-015f severity ceiling applies at artifact time as well as to diffs (FR-020b, SC-003a). The run is never halted by it and the analyze loop's blocking path is never triggered by it alone; like any other MEDIUM finding it is remediated once, and it reaches the user through the analyze report rather than by surviving into the approved plan.
 
 ## Clarify check
 

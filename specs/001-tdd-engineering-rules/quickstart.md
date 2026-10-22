@@ -67,7 +67,13 @@ grep -n 'Engineering discipline' DESIGN.md
 git log --oneline -- DESIGN.md core/ | head
 ```
 
-Expected: `DESIGN.md` has the "Engineering discipline" section describing the rules reference, the red proof, the seams and the enforcement; and its change is part of this feature's commits, not a later afterthought.
+Expected: `DESIGN.md` has the "Engineering discipline" section describing the rules reference, the red proof, the seams, the enforcement and the override line, and also the `ENG-7`..`ENG-10` severity ceiling with its advisory route, the stop on a test command that cannot be run, and the plan-time reason line with analyze's MEDIUM non-blocking check, linking `docs/adr/0001`..`0004`; and its change is part of this feature's commits, not a later afterthought.
+
+```bash
+grep -n 'ENG-7\|advisory\|cannot be run\|reason\|adr/000' DESIGN.md
+```
+
+Expected: every one of those three additions and all four ADR links appear in that section (constitution I: `core/` carries no behaviour the design document does not record).
 
 ## 8. The planning instructions carry the test-first behaviour (FR-006a)
 
@@ -85,7 +91,7 @@ grep -n 'ENG-7\|ENG-10\|blocking' core/skills/factory/references/findings.md
 grep -n 'engineering.md\|ENG-' core/roles/code-standards.md core/roles/review-judge.md core/roles/fixer.md
 ```
 
-Expected: `findings.md` states the `ENG-7`..`ENG-10` ceiling (at most MEDIUM, never blocking, lowered rather than dropped) **next to and as an explicit override of** its own default line "`critical` and `high` are blocking unless the reviewer says why not", so a reviewer reading the file cannot follow the default for those ids; it also states that an `advisory[]` entry derived from an engineering finding keeps its `ENG-n` citation. `code-standards.md` and `review-judge.md` point at the ceiling and do not restate the rules; `fixer.md` states that no fix work is done on an advisory engineering finding and that "Request changes" at the approver gate is the user's route. No new severity value appears anywhere (`grep -n 'advisory' core/skills/factory/references/findings.md` shows the existing list only).
+Expected: `findings.md` states the `ENG-7`..`ENG-10` ceiling (at most MEDIUM, never blocking, lowered rather than dropped) **next to and as an explicit override of** its own default line "`critical` and `high` are blocking unless the reviewer says why not", so a reviewer reading the file cannot follow the default for those ids; it also states the limit of the ceiling — it reaches those four ids only, and a finding citing `ENG-1`..`ENG-6` keeps the severity its own requirement states — and that an `advisory[]` entry derived from an engineering finding keeps its `ENG-n` citation in the entry's existing `summary`, with `sources` as the link to the full evidence and no field added to the verdict shape. `code-standards.md` and `review-judge.md` point at the ceiling and do not restate the rules; `fixer.md`'s existing "Advisory findings stay untouched" sentence is extended, not duplicated: it scopes the no-fix rule to a fix round driven by a verdict, says a user change request naming an advisory finding is implemented exactly as asked, and points at `findings.md` for the lifecycle. No new severity value and no new verdict field appear anywhere (`grep -n 'advisory' core/skills/factory/references/findings.md` shows the existing list and its existing entry shape only).
 
 ## 10. The plan-time reason check and the un-runnable-command stop (FR-020b, FR-011b, FR-013b)
 
@@ -105,7 +111,7 @@ These need a diff to review, so they are observed on the next real factory run r
 - Hand `spec-conformance` a round-2 run with a correct `factory(fix):` commit carrying one `Red:` line per behaviour-changing fix: expect it to read `specs/<branch>/factory/reviews/round-1/verdict.json`, match the lines against its `confirmed_blocking` entries, and raise nothing — in particular no "unmatched against `tasks.md`" finding (FR-015d).
 - Confirm the judge's verdict entries keep the `ENG-n` citations when it merges and rates those findings.
 - In the same trial review, confirm every finding citing `ENG-7`..`ENG-10` is MEDIUM or lower with `blocking: false`, so no run halts on a clean-code, SOLID, functional-style or over-engineering finding alone, while the `ENG-6` and untested-behaviour findings in the same diff stay HIGH and blocking (SC-006b).
-- Confirm the fix round changes nothing for those advisory findings and that each is readable in the verdict's `advisory[]` with its `ENG-n` id (SC-006c).
+- Confirm the verdict-driven fix round changes nothing for those advisory findings and that each is readable in the verdict's `advisory[]` with its `ENG-n` id in the entry's `summary` (SC-006c), and that a "Request changes" naming one is nonetheless implemented as asked.
 
 ## 12. End-to-end (DESIGN.md validation plan)
 

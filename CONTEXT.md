@@ -75,7 +75,7 @@ A consuming repository's own documented rule winning over a factory rule, record
 _Avoid_: exception, opt-out, local rule
 
 **Advisory finding**:
-An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. The run performs no fix work on it; it reaches the user in the verdict's advisory list and on the approver screen, and the user sends it back into the run with the approver's "Request changes".
+An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. A fix round driven by a verdict performs no fix work on it; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
 _Avoid_: nit, suggestion, soft finding, warning
 
 **Reason line**:

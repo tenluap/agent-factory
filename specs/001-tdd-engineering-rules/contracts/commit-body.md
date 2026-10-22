@@ -20,7 +20,7 @@ Red: not applicable - <existing test> already covers this
 
 - One commit per task carries the task's test and implementation changes; the commit subject stays `factory(implement): <task id> <task title>`, and the `Red:` line goes in that commit's body.
 - No separate red commit is created, so the history stays bisectable.
-- The fixing role commits all its fixes once (`factory(fix): <finding ids>`) and that body carries one `Red:` line per behaviour-changing fix, in the same two forms.
+- The fixing role commits all its fixes once (`factory(fix): <finding ids, or "user changes">`) and that body carries one `Red:` line per behaviour-changing fix, in the same two forms.
 - A task or fix the plan exempts (documentation or configuration only) carries no `Red:` line; the exemption lives in the plan, not in the commit.
 
 ## Verification by spec-conformance
@@ -31,7 +31,7 @@ The run's squashed diff carries no commit messages, so the reviewer reads the co
 cd <worktree> && git log --format='%H%n%s%n%b%n--' <base>..HEAD
 ```
 
-Implementation commits are those whose subject is `factory(implement): <task id> <task title>`; the fix commit is the one whose subject is `factory(fix): <finding ids>`. This scope line belongs in `core/skills/factory/references/findings.md` ("Reviewing") so any reviewer whose lens needs commit metadata has it (FR-015e).
+Implementation commits are those whose subject is `factory(implement): <task id> <task title>`; the fix commit is the one whose subject is `factory(fix): <finding ids, or "user changes">`. This scope line belongs in `core/skills/factory/references/findings.md` ("Reviewing") so any reviewer whose lens needs commit metadata has it (FR-015e).
 
 ### Implementation commits (matched against `tasks.md`)
 
@@ -61,10 +61,14 @@ where `n` is the review round the reviewer is running in, so `n-1` is the round 
 | A behaviour-changing confirmed finding fixed with no `Red:` line for it | Finding, naming the fix commit and the finding id |
 | A `Red:` line that does not match either form, or whose value is empty | Finding (unparseable), naming the fix commit |
 | A fix confined to documentation, configuration or generated output, with no `Red:` line | No finding (not behaviour-changing) |
+| A fix commit whose subject names `user changes`, or whose round's verdict carries no `confirmed_blocking` entries | Grammar only: each `Red:` line it carries must be in an accepted form, and the diff's behaviour-changing fixes must each have one. It is matched against neither `tasks.md` nor the verdict |
+| An empty `confirmed_blocking` list for the round | No finding by itself |
+
+The approver's "Request changes" produces the second kind of fix commit (`factory(fix): user changes`), which re-runs review and is behaviour-changing often enough that FR-013a still demands a `Red:` line per behaviour-changing fix. Because it answers the user and not a verdict, the `confirmed_blocking` matching above does not apply to it: the reviewer checks grammar and per-fix presence from the diff alone, so two reviewers reach the same result on the same commit.
 
 Verification is textual: the reviewer matches the line against `tasks.md` (or the verdict file), it does not replay the failing test run (ADR 0002).
 
-Advisory engineering findings (`ENG-7`..`ENG-10`) produce no fix work, so a fix commit never carries a `Red:` line for one and the absence of one is never a finding (FR-015g).
+Advisory engineering findings (`ENG-7`..`ENG-10`) produce no verdict-driven fix work, so a verdict-driven fix commit never carries a `Red:` line for one and the absence of one is never a finding (FR-015g). Where the user sent one back with "Request changes", the fix lands in a user-changes commit and is checked by the row above.
 
 ### Reporting a commit-level finding
 
