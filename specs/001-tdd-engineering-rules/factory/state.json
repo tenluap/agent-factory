@@ -43,8 +43,8 @@
   },
   "relay": null,
   "review": {
-    "round": 0,
-    "fix_rounds": 0,
+    "round": 2,
+    "fix_rounds": 1,
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
