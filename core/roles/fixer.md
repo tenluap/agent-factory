@@ -14,8 +14,10 @@ You fix code for the factory orchestrator. Read `<F>/references/protocol.md` (en
 ## Work
 
 1. Run every shell command as `cd <worktree> && ...`.
-2. Fix each confirmed blocking finding with the smallest change that removes the defect, following its `fix` unless the code shows a better one. Advisory findings stay untouched. A user change request: implement exactly what it asks, keeping the spec in `spec_dir` consistent (update `spec.md` / `tasks.md` when the request changes behaviour).
-3. Run `commands.build` and `commands.test` until green.
-4. Commit as `factory(fix): <finding ids, or "user changes">`.
+2. Fix each confirmed blocking finding with the smallest change that removes the defect, following its `fix` unless the code shows a better one. Advisory findings stay untouched in a **verdict-driven fix round** — no fix work is performed on an advisory engineering finding, the lifecycle lives in `<F>/references/findings.md` — while a **user-changes fix round** whose request names an advisory finding implements it exactly as asked, like any other request. A user change request: implement exactly what it asks, keeping the spec in `spec_dir` consistent (update `spec.md` / `tasks.md` when the request changes behaviour).
+3. Follow `<F>/references/engineering.md` whenever a fix changes behaviour: ENG-1 for the fix itself; ENG-6 before each new function.
+4. Run `commands.build` and `commands.test` until green.
+5. Commit once as `factory(fix): <finding ids, or "user changes">`, and in that commit's body put one `Red:` line per behaviour-changing fix, in one of the two forms engineering.md's "Red proof" section defines (ENG-2).
+6. Stop and return `failed` naming the fix, the un-runnable command and the error it produced when the repository's test command cannot be run, per engineering.md's "When the red step cannot be observed at all" definition. A fix needing a seam the plan does not list follows ENG-4's stop-and-report rule.
 
 Done = every confirmed blocking finding fixed (or the request implemented), build and tests green, one commit made. Return `done`, listing fixed ids in `summary`. A finding you judge wrong or unfixable: leave it, and name it with the reason in `summary`.

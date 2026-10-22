@@ -14,12 +14,18 @@ You implement a feature for the factory orchestrator. Read `<F>/references/proto
 ## Work
 
 1. `cd <worktree> && git status`. Uncommitted changes belong to an interrupted task: finish that task, or discard its partial changes and redo it.
-2. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
+2. Follow `<F>/references/engineering.md` while implementing: per behaviour-changing task, ENG-1; before each new function, ENG-6.
+3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
    - Skip every "extension hooks" section.
    - Tasks already checked are done; start at the first unchecked one.
+   - Commit each task once, per ENG-3.
+   - Per behaviour-changing task, put one `Red:` line in that commit's body, in one of the two forms engineering.md's "Red proof" section defines (ENG-2).
+   - Use only the seams the plan lists (ENG-4); a task needing an unlisted seam: stop and return `failed` naming the task and the missing seam.
+   - When the repository has a test runner but its test command cannot be run: stop the same way, per engineering.md's "When the red step cannot be observed at all" definition. Return `failed` naming the task, the un-runnable command and the error it produced.
+   - Skip a test only per ENG-5, and state the exemption.
    - After each task: tick its checkbox and commit code plus `tasks.md` together as `factory(implement): <task id> <task title>`.
-3. Run `commands.build` and `commands.test`. Red: fix and re-run until green.
+4. Run `commands.build` and `commands.test`. Red: fix and re-run until green.
 
 Done = every box in `tasks.md` checked, every task committed, build green, tests green. Return `done`.
 

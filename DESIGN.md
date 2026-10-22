@@ -115,6 +115,18 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - Notification (`NOTIFY`, a no-op where the harness has none) on every wait for the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.
 - `speckit.checklist` and `speckit.taskstoissues` are not part of the flow.
 
+## Engineering discipline
+
+The factory's coding discipline lives in one shared, harness-neutral reference: `core/skills/factory/references/engineering.md`, addressed by roles as `<F>/references/engineering.md`, carrying the stable rule ids `ENG-1`..`ENG-11` ([ADR 0001](docs/adr/0001-factory-owns-its-engineering-rules.md)). Every role that writes, plans, reviews or judges code points at it and restates no rule inline.
+
+- **Red proof**: the red step is recorded as one `Red:` line in the task's own commit body, in one of the two accepted forms; there is no separate red commit, so history stays bisectable ([ADR 0002](docs/adr/0002-red-proof-lives-in-the-task-commit-body.md)).
+- **Test seams**: the plan settles, at plan time, the public seams put under test and any test-first exemption with its reason; an implementing or fixing role never invents a seam — it stops and reports a missing one as a failure ([ADR 0003](docs/adr/0003-test-seams-are-settled-at-plan-time.md)).
+- **Enforcement**: `code-standards` enforces the rules on the code (diff), `spec-conformance` checks red proofs against `tasks.md` (and fix commits against the prior round's verdict), and the judge verifies and rates findings by rule id.
+- **Precedence**: a consuming repository's constitution or documented conventions win; the plan records `Overridden: ENG-n - <repo rule that wins>`.
+- **Judgement-call ceiling and advisory route**: a finding whose cited id is `ENG-7`..`ENG-10` is at most MEDIUM and never blocking, lowered rather than dropped, while a finding citing `ENG-1`..`ENG-6` keeps the severity its own rule states. A capped finding is advisory: no verdict-driven fix round acts on it, it reaches the user in the verdict's advisory list, and the approver's existing "Request changes" is the user's route to having it fixed ([ADR 0004](docs/adr/0004-judgement-call-rules-advise-they-never-block.md)).
+- **Stop on an un-runnable test command**: a repository with a test runner whose test command cannot be run is a stop, not an exemption. Both code-writing roles return a failure naming the command and its error and ride the orchestrator's existing failure policy, writing no behaviour-changing code and no third form of red proof.
+- **Plan-time reason line**: the plan states a reason for each new file, new abstraction and new dependency it introduces; analyze reports a MEDIUM, non-blocking finding for a missing one.
+
 ## Validation plan
 
 Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR. Repeat for each new adapter; once two adapters exist, start a run on one harness with `--stop-at implement` and resume it on the other.

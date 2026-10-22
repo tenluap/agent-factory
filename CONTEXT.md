@@ -1,0 +1,99 @@
+# Software Factory
+
+This repository builds `/factory`: one orchestrator skill plus the role prompts and per-harness adapters it runs on. The language below is the vocabulary of a factory run and of the engineering discipline its roles follow.
+
+## Language
+
+**Factory run**:
+One pass of the orchestrator loop over a single feature, from grilling to an open PR, on its own branch and worktree.
+_Avoid_: session, job, pipeline
+
+**Orchestrator**:
+The agent session running the `/factory` skill: it owns the run's state, spawns every role and is the only participant that talks to the user.
+_Avoid_: driver, coordinator, main agent
+
+**Role**:
+A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, fixer, reviewers, judge).
+_Avoid_: agent type, persona, worker
+
+**Stage**:
+One named step of the run that a role performs in a single spawn (specify, clarify, grill-with-docs, plan, tasks, analyze, remediate, implement, review, fix).
+_Avoid_: step, phase, task
+
+**Harness**:
+The agent product a run executes in (Claude Code, OpenCode, Codex, Copilot).
+_Avoid_: platform, client, host
+
+**Adapter**:
+The per-harness translation of the neutral verbs and install locations into that harness's mechanisms.
+_Avoid_: plugin, backend
+
+**Relay**:
+The orchestrator carrying a role's whole question batch to the user and the answers back to a fresh agent for the same stage.
+_Avoid_: round trip, handoff, callback
+
+**Envelope**:
+The single fenced JSON block a role ends every turn with, carrying its status, files, questions and counts.
+_Avoid_: result, payload, response
+
+**Finding**:
+One reviewable defect a reviewer reports, with a severity and the rule or artefact it rests on.
+_Avoid_: issue, comment, violation
+
+**Verdict**:
+The judge's merged, deduplicated, verified ruling over a review round's findings.
+_Avoid_: report, summary
+
+## Engineering discipline
+
+**Engineering rules reference**:
+The factory's single harness-neutral statement of its coding discipline (test-first, clean code, SOLID, functional preference, reuse), pointed at by every role that writes, plans, reviews or judges code.
+_Avoid_: coding standards, style guide, TDD doc
+
+**Rule id**:
+The stable `ENG-n` label of one rule in that reference; the token findings, verdicts and plan overrides use to name a rule.
+_Avoid_: rule number, rule name
+
+**Test seam**:
+A public entry point of a change that is put under test, agreed in the plan and named by the tasks that test and implement it.
+_Avoid_: interface, boundary, hook, test point
+
+**Red proof**:
+The line in a task's commit body recording the test that was seen failing before the implementation existed (`Red: <test name> failed as expected`) or, where an existing passing test already covers the behaviour, the line naming that test instead (`Red: not applicable - <existing test> already covers this`). Both lines are red proofs; no other wording is.
+_Avoid_: red commit, evidence, test log
+
+**Behaviour-changing**:
+What makes a unit of work (a task or a fix) need a red proof: it changes what an entry point returns or does. A change confined to documentation, configuration or generated output is not behaviour-changing.
+_Avoid_: functional change, real change
+
+**Test-first exemption**:
+A documentation- or configuration-only part of a change that the plan declares, with its reason, as not requiring a test.
+_Avoid_: skip, waiver, opt-out
+
+**Rule override**:
+A consuming repository's own documented rule winning over a factory rule, recorded in `plan.md` as `Overridden: ENG-n - <repo rule that wins>`.
+_Avoid_: exception, opt-out, local rule
+
+**Advisory finding**:
+An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. A fix round driven by a verdict performs no fix work on it; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
+_Avoid_: nit, suggestion, soft finding, warning
+
+**Verdict-driven fix round**:
+A fix round the orchestrator runs to answer a judge verdict: its work is that verdict's confirmed blocking findings, and its commit's red proofs are matched against them.
+_Avoid_: review fix, blocking fix round
+
+**User-changes fix round**:
+A fix round the orchestrator runs to answer the user's "Request changes" at the approver gate: its work is the request's own text, including any advisory finding the request names, and its commit's red proofs are matched against neither the task list nor a verdict.
+_Avoid_: manual fix, approver fix, rework
+
+**Reason line**:
+The sentence a plan carries for each new file, new abstraction or new dependency it introduces, saying why it is needed (`ENG-10`); a missing one is a MEDIUM, non-blocking analyze finding.
+_Avoid_: justification, rationale note
+
+**Reuse search**:
+The bounded look for an existing function to reuse or extend before writing a new one: the module being changed plus the repository's shared utility locations, by the concept's keywords, once per new function.
+_Avoid_: duplication check, grep
+
+**Shared utility locations**:
+The bound of a reuse search beyond the module being changed: the directories the repository's own conventions name as shared (`helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/` and the like), plus any module the module being changed already imports for helpers. The search over them is keyword-level text matching, not a review of the whole repository.
+_Avoid_: helpers, common code, the codebase
