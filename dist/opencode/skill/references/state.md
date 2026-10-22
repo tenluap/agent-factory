@@ -7,11 +7,14 @@ One run = one `state.json`. It is the single truth for where the run is; read it
 - **Pending state** (steps 1-3, before the worktree exists): `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<short-slug>.json`, with `brief.md` beside it as `<same-name>.brief.md`.
 - **Run state** (step 3 onward): `<worktree>/specs/<branch>/factory/state.json`, committed with every checkpoint.
 
+The pending file uses this same schema from the moment the run is created: `started_at` is set then, and `relay` and `timeline` capture the grilling rounds too. Step 3 writes both into the run state unchanged.
+
 ## Schema
 
 ```json
 {
-  "version": 2,
+  "version": 3,
+  "started_at": "2026-10-22T14:00:00Z",
   "harness": "claude-code",
   "feature": "the user's feature text",
   "repo": "/abs/path/to/main/checkout",
@@ -29,8 +32,10 @@ One run = one `state.json`. It is the single truth for where the run is; read it
   "commands": { "build": "dotnet build", "test": "dotnet test" },
   "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
   "relay": null,
+  "timeline": [],
   "ledger": [ { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000 } ],
   "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
+  "ended_at": null,
   "pr_url": null,
   "history": [ { "at": "2026-10-21T01:43:00Z", "stage": "specify", "event": "complete", "commit": "abc1234", "harness": "claude-code" } ]
 }
@@ -42,17 +47,23 @@ One run = one `state.json`. It is the single truth for where the run is; read it
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
 - `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
 - `stage`: the stage in progress, or the next one to run: `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`.
-- `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": "..." } } ] }`. The last round is the open one. Write each answer as it arrives. A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round.
+- `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": { "answer": "...", "at": "2026-10-22T14:07:30Z", "auto": false } } } ] }`. Each answer is an object: the user's text, the time it arrived, and `auto: true` when fast mode chose it. The last round is the open one. Write each answer as it arrives (protocol.md, "Relay"). A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round; a version 2 string answer is read as `{ "answer": <string>, "at": null }`.
+- `timeline`: every user wait of the run, oldest first (protocol.md, "Timeline"): `{ "at", "kind", "stage", "summary", "answered_at": null, "latency_ms": null }`. `kind` is `questions` (a relay round), `notice` (any other `NOTIFY` that ends the turn), `approver`, or `halt`. Append the entry when the message is shown; when the user answers, set `answered_at` and `latency_ms` (orchestrator clock, shown → answered) in place. Append-only for the whole run: never cleared at checkpoint, never rewritten. A round with several answers closes on its last answer; a wait the run never came back from keeps its nulls.
+- `started_at` / `ended_at`: set `started_at` when the run is created; `ended_at` when the run reaches `pr-open` or `aborted`.
 - `ledger`: one entry per agent spawn, appended when the spawn returns (each role of a `SPAWN_PARALLEL` gets its own entry): `{ "at", "stage", "role", "harness", "in_est", "out_est", "reported", "duration_ms" }`.
   - `in_est` / `out_est`: word count × 1.35, rounded. Input words: the role file, the resolved skill files the inputs name, and the artifacts the inputs name. Output words: the returned envelope plus files created or modified under `<spec_dir>/factory/` during the spawn (`find <spec_dir>/factory -type f -newermt "<spawn start>" | xargs wc -w`).
   - `reported`: `null`, or `{ "in", "out" }` taken from usage the harness exposes for the spawn (`harness.md` names the source; none exists in tier 1 today).
   - `duration_ms`: orchestrator clock, spawn start to result. Append the entry before the checkpoint so the checkpoint commits it.
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC.
 
+## Totals
+
+The approver screen and the final `NOTIFY` each carry one totals line, computed from the state: total wall clock (`ended_at - started_at`), human wait (sum of `timeline.latency_ms`, with the wait count), agent time (sum of `ledger.duration_ms`, with the spawn count), and the residual (wall clock minus the other two). One shared sentence format, e.g. `Run took 2h 14m: 38m you (12 waits), 1h 12m agents (23 spawns), 24m overhead.`
+
 ## Checkpoint
 
 After a stage completes:
-1. Set `stage` to the next stage, clear `relay`, append a `history` entry (`commit` left `null`, `harness` set).
+1. Set `stage` to the next stage, clear `relay` (`timeline` is never cleared), append a `history` entry (`commit` left `null`, `harness` set).
 2. `cd <worktree> && git add -A && git commit -m "factory: <stage> complete"`.
 
 The commit that carries a `history` entry is the entry's commit: `git log --grep "factory: <stage> complete"` finds it. Pending state has no git: just write the file.

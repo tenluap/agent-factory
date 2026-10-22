@@ -102,19 +102,19 @@ Done when the verdict has no confirmed blocking findings, or `review.fix_rounds 
 
 ## 7. Approver
 
-`NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. `ASK` with the options **Approve**, **Request changes**, **Abort**.
+`NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
 - Approve: step 8.
 - Request changes: take the user's text, `SPAWN` `fixer` with it, verify (step 5), re-run step 6 from 1 (the fix-round cap does not apply here), then return to this step.
-- Abort: set `status: aborted`, checkpoint, keep the worktree, stop.
+- Abort: set `status: aborted` and `ended_at`, checkpoint, keep the worktree, stop.
 
 ## 8. PR
 
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings.
 3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
-4. Set `status: pr-open` and `pr_url`, checkpoint, push.
-5. Offer (do not do) any after-PR extras `harness.md` lists.
+4. Set `status: pr-open`, `pr_url`, and `ended_at`, checkpoint, push.
+5. `NOTIFY` the run totals (state.md, "Totals") and offer (do not do) any after-PR extras `harness.md` lists.
 
 Done when the PR URL is in state and shown to the user.
 
@@ -124,7 +124,7 @@ Done when the PR URL is in state and shown to the user.
 - **Cost ledger**: after every `SPAWN` (each role of a `SPAWN_PARALLEL` is one entry), append an entry to `state.ledger` (state.md, "Schema"): word-count estimates of what the spawn read and wrote, harness-reported usage when `harness.md` names a source, duration. Entries ride the next checkpoint.
 - **Checkpoint** after every completed stage (state.md). The state file is the single truth for where the run is.
 - **Halt**: set `status: halted` with `halt_reason`, checkpoint, `NOTIFY`, ask the user. Their answer resumes the stage, redirects it, or aborts.
-- **Notify** (`NOTIFY`) every time you wait on the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.
+- **Notify** (`NOTIFY`) every time you wait on the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver. Every wait is recorded as a `timeline` entry (protocol.md, "Timeline"): appended when shown, closed with `answered_at` and `latency_ms` when answered.
 - **Failure policy**: an agent crashes, times out, or returns no parseable envelope: retry once with a fresh agent, same inputs plus the error and current state; second failure: halt.
 - **Skills that block model invocation** (every `speckit-*`, and `grill-with-docs`): never invoke them through the harness's skill or command mechanism. Agents read the resolved file and follow it. `grill-with-docs` runs as `grilling` then `domain-modeling`.
 - **SpecKit hooks** (`.specify/extensions.yml`): skipped for the whole run. The factory owns the branch and every commit.

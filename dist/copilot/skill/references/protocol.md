@@ -27,7 +27,7 @@ Reviewers and the judge return their report or verdict (findings.md) as their fi
 
 How the orchestrator carries an agent's questions to the user and back:
 
-1. Append the batch to `state.relay.rounds` as `{ "questions": [...], "answers": {} }` (creating `relay` for this stage if it is null), set `status: waiting_user`, `NOTIFY`.
+1. Append the batch to `state.relay.rounds` as `{ "questions": [...], "answers": {} }` (creating `relay` for this stage if it is null), append a `timeline` entry for it (below), set `status: waiting_user`, `NOTIFY`.
 2. Ask in grilling-round format, all questions in one message:
 
    ```
@@ -36,7 +36,11 @@ How the orchestrator carries an agent's questions to the user and back:
    ➡️ <recommended>
    ```
 
-3. As the user answers, write each answer into the last round's `answers`. "accept" means every recommended answer.
-   - **Fast mode** (`mode.fast` true): steps 1–2 collapse — take every question's `recommended` as the answer, write it into the round's `answers` as `{ "answer": "<recommended>", "auto": true }`, `NOTIFY` once ("auto-accepted N questions in <stage>"), and continue at step 4. Never auto-answered: anything stored in `state.analyze.pending_clarify` — those questions relay to the user normally.
+3. As the user answers, write each into the last round's `answers` as `{ "answer": "<text>", "at": "<now>" }` (add `"auto": true` where fast mode chose it). "accept" means every recommended answer.
+   - **Fast mode** (`mode.fast` true): steps 1–2 collapse — take every question's `recommended` as the answer, write it into the round's `answers` as `{ "answer": "<recommended>", "at": "<now>", "auto": true }`, `NOTIFY` once ("auto-accepted N questions in <stage>"), and continue at step 4. Never auto-answered: anything stored in `state.analyze.pending_clarify` — those questions relay to the user normally.
 4. All answered: set `status: running` and `SPAWN` a fresh agent of the same role for the same stage, with the usual inputs and the `state.json` path. It reads every round in `state.relay` and asks only what is still open.
 5. The new agent either asks another round (normal for grilling and clarify) or returns `done`. `relay` is cleared when the stage completes (state.md, "Checkpoint").
+
+## Timeline
+
+Every wait on the user is one `timeline` entry (state.md, "Schema"). Append `{ "at": "<now>", "kind": ..., "stage": ..., "summary": "<one line>" }` when the message is shown — `kind` is `questions` for a relay round, `notice` for any other `NOTIFY` that ends your turn, `approver` for the gate, `halt`. When the user answers, set that entry's `answered_at` and `latency_ms` in place (for a round with several answers, latency runs from the round's `at` to the last answer). Never clear or rewrite earlier entries; a wait the run never came back from keeps its nulls.
