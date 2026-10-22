@@ -9,7 +9,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/001-tdd-engineering-rules",
   "spec_dir": "specs/001-tdd-engineering-rules",
   "status": "running",
-  "stage": "review",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "skills": {
@@ -207,6 +207,13 @@
     {
       "at": "2026-10-22T15:10:00Z",
       "stage": "implement",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-22T15:55:00Z",
+      "stage": "review",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
