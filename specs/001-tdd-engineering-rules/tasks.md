@@ -32,7 +32,7 @@ Source lives in `core/` (harness-neutral) and `adapters/`; `dist/<harness>/` is 
 
 **Purpose**: confirm the worktree renders cleanly before anything changes, so a later build failure is attributable to this change.
 
-- [ ] T001 Run `for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done` then `git diff --exit-code -- dist/` from the worktree root and record that both pass on the unmodified tree (baseline for SC-005). This task produces no deliverable and changes no file: it exists only so that a later build or drift failure is attributable to this change rather than to the pre-existing tree (the standing build-and-check guarantee is the implementing role's own, constitution V). Exempt: documentation/configuration-only change, per plan.md "Test seams".
+- [x] T001 Run `for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done` then `git diff --exit-code -- dist/` from the worktree root and record that both pass on the unmodified tree (baseline for SC-005). This task produces no deliverable and changes no file: it exists only so that a later build or drift failure is attributable to this change rather than to the pre-existing tree (the standing build-and-check guarantee is the implementing role's own, constitution V). Exempt: documentation/configuration-only change, per plan.md "Test seams".
 
 **Checkpoint**: baseline green; `tools/render.py --list` reports `claude-code`, `codex`, `copilot`, `opencode`.
 
