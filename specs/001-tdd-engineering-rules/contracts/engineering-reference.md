@@ -46,7 +46,7 @@ Eleven rules. `ENG-1`..`ENG-5` are test-first (FR-003, FR-007..FR-013b), `ENG-6`
 | Rules | Ceiling | Blocking? | Where it is enforced |
 |---|---|---|---|
 | `ENG-6` (duplication) and behaviour added with no asserting test (`ENG-1`) | HIGH | Yes | `code-standards.md`, confirmed by the judge (FR-015, FR-015a) |
-| `ENG-2`..`ENG-5` red-proof and seam defects | As the finding's own requirement states (HIGH for a missing, unparseable or unmatched `Red:` line; HIGH for an unlisted seam at artifact time) | Yes | `spec-conformance.md`, the analyze check (FR-015b, FR-015d, FR-020) |
+| `ENG-2`..`ENG-5` red-proof and seam defects | As the finding's own requirement states (HIGH for a missing, unparseable or unmatched `Red:` line; HIGH for an unlisted seam at artifact time) | Yes | `spec-conformance.md`, the analyze check (FR-015b, FR-015d, FR-020). "Unmatched" has no meaning for a user-changes fix round's commit, which is matched against neither the verdict nor `tasks.md` |
 | `ENG-7`, `ENG-8`, `ENG-9`, `ENG-10` | MEDIUM | **Never** | The raising reviewer and the judge alike; a finding above the ceiling is lowered to MEDIUM, never dropped (FR-015f). The ceiling is keyed on the cited id and reaches these four only: a finding citing `ENG-1`..`ENG-6` keeps the severity of its own row above |
 
 - A finding held at the `ENG-7`..`ENG-10` ceiling is advisory: no verdict-driven fix round acts on it, it travels to the user in the verdict's `advisory[]` list keeping its `ENG-n` citation in that entry's existing `summary` (its `sources` still link the reviewer finding with the full evidence, so no verdict field is added), and the user's route to having it fixed is the approver's existing "Request changes" — a change request naming an advisory finding is implemented exactly as asked, like any other request (FR-015g, SC-006b, SC-006c).
@@ -64,7 +64,7 @@ Each of these six roles contains one reference to the file, and restates no rule
 | `core/roles/fixer.md` | Follows every rule when a fix changes behaviour; one red proof line per such fix; stops on an un-runnable test command; performs no verdict-driven fix work on advisory engineering findings, while implementing a user change request that names one exactly as asked |
 | `core/roles/spec-builder.md` | Plans for the rules: test seams, exemptions, test task ordering, the reason line per new file/abstraction/dependency, analyze's mapping and reason checks, clarify's seam questions, the override line |
 | `core/roles/code-standards.md` | Enforces the rules on the diff; cites the id in `evidence`; applies the severity ceiling above |
-| `core/roles/spec-conformance.md` | Checks the red proofs against `tasks.md`, and a fix commit's against the previous round's verdict; cites the id in `evidence` |
+| `core/roles/spec-conformance.md` | Checks the red proofs against `tasks.md`, a verdict-driven fix round's commit against the previous round's verdict, and a user-changes fix round's commit for grammar and per-fix presence only; cites the id in `evidence` |
 | `core/roles/review-judge.md` | Verifies and rates engineering findings against the same rules, by id; applies the same ceiling and routes capped findings to `advisory[]` |
 
 Unchanged and holding no reference: `security-reviewer.md`, `ui-reviewer.md`, `ux-reviewer.md`, `core/skills/factory/SKILL.md`, every file under `adapters/`, `tools/render.py`.
