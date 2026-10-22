@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "harness": "claude-code",
+  "harness": "opencode",
   "feature": "I want the code bnild and coding process to always use a TDD approach of writing code. Use the best coding practise, clean code, follow solid princples, fucntional programming, and it should do its best not to over engineer stuff by always resusing functions/methods if they exist.",
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
   "default_branch": "main",
@@ -188,9 +188,17 @@
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-22T14:20:00Z",
+      "stage": "analyze",
+      "event": "resume-harness-opencode",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "notes": [
-    "git fetch origin failed: remote repository not found; base uses existing origin/main ref (029d7ec). PR step may fail."
+    "git fetch origin failed: remote repository not found; base uses existing origin/main ref (029d7ec). PR step may fail.",
+    "2026-10-22: analyze pass 3 report (factory/analyze-3.md) found untracked on disk with no envelope returned; previous spawn presumed crashed. Retrying with fresh spec-builder under opencode."
   ]
 }
