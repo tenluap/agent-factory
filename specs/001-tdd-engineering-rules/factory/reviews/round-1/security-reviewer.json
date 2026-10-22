@@ -1,0 +1,27 @@
+{
+  "reviewer": "security",
+  "round": 1,
+  "summary": "Vendored Spec Kit scaffold scripts are defensively written (quoted eval payloads, JSON escaping, list-arg subprocess, re.escape); only two low, non-blocking findings: blanket 'git add .' commits and unthrottled 'git fetch' without credential-prompt suppression.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": ".specify/extensions/git/scripts/bash/auto-commit.sh",
+      "line": 208,
+      "summary": "Auto-commit and repo-init scripts stage every untracked file with 'git add .' before committing, so secrets that happen to sit in the worktree (.env, tokens, key files) are swept into a commit with no denylist check.",
+      "evidence": "auto-commit.sh:208 `_git_out=$(git add . 2>&1)` followed by `git commit -q -m \"$_commit_msg\"`; same pattern in auto-commit.ps1:219, auto_commit.py:180, initialize-repo.sh:51 (`git add .` then initial commit). The untracked-file check at auto-commit.sh:181 uses `git ls-files --others --exclude-standard`, which only honors .gitignore — a secret not yet ignored (or a repo with no .gitignore, the exact initialize-repo case) is committed into history on the first run. Mitigated by safe default: git-config.yml sets `auto_commit.default: false` and missing config exits 0, and both flows are config-gated, hence non-blocking.",
+      "fix": "Before staging, refuse (or skip with a warning) when files matching typical secret patterns (.env, *.pem, *.key, id_rsa, credentials*) are present and not git-ignored, or stage only the paths the Spec Kit command actually produced; in initialize-repo.sh, require a non-empty .gitignore before the initial `git add .`."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "low",
+      "blocking": false,
+      "file": ".specify/extensions/git/scripts/bash/create-new-feature-branch.sh",
+      "line": 194,
+      "summary": "Branch auto-numbering runs 'git fetch --all --prune' without GIT_TERMINAL_PROMPT=0 or a timeout, so against a remote requiring credentials the agent-driven script blocks indefinitely on an interactive prompt.",
+      "evidence": "create-new-feature-branch.sh:194 `git fetch --all --prune >/dev/null 2>&1 || true` — no env guard. Same in create_new_feature_branch.py:269-274 (plain subprocess.run, no env override, no timeout) and create-new-feature-branch.ps1:166. The sibling ls-remote call in the same scripts (bash:172, python:252) deliberately sets `GIT_TERMINAL_PROMPT=0` for the side-effect-free path, showing the authors knew the guard was needed; the fetch path missed it. The prompt then hangs the whole branch-creation flow (agent runs it non-interactively), which the '|| true' cannot rescue.",
+      "fix": "Set GIT_TERMINAL_PROMPT=0 (and a subprocess timeout in the Python twin) for the fetch call, matching the ls-remote treatment, so an unauthenticated remote fails fast instead of hanging."
+    }
+  ]
+}
