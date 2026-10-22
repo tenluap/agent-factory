@@ -9,7 +9,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/001-tdd-engineering-rules",
   "spec_dir": "specs/001-tdd-engineering-rules",
   "status": "running",
-  "stage": "analyze",
+  "stage": "remediate",
   "halt_reason": null,
   "stop_at": null,
   "skills": {
@@ -30,7 +30,9 @@
   "analyze": {
     "pass": 1,
     "loops": 0,
-    "reports": [],
+    "reports": [
+      "factory/analyze-1.md"
+    ],
     "remediations": [],
     "pending_clarify": []
   },
@@ -95,6 +97,13 @@
     {
       "at": "2026-10-22T12:51:05Z",
       "stage": "tasks",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-22T12:56:28Z",
+      "stage": "analyze",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
