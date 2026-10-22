@@ -1,14 +1,27 @@
 # Software Factory: Design
 
-Source of truth for how `/factory` behaves. `skills/factory/SKILL.md` and the agent files in `agents/` are built from this document; when they disagree, fix them to match this one (or change this one first, deliberately).
+Source of truth for how `/factory` behaves. `core/` and the adapters in `adapters/` are built from this document; when they disagree, fix them to match this one (or change this one first, deliberately).
 
-Agreed in a grilling session on 2026-10-21.
+Agreed in a grilling session on 2026-10-21. Harness model and stateless agents agreed on 2026-10-22.
 
 ## What it is
 
-`/factory` is one user-invoked skill. Whichever Claude Code session runs it becomes the **orchestrator**: it runs the loop below, spawns every agent, owns the run's state, and is the only thing that talks to the user. Agents never talk to the user directly.
+`/factory` is one user-invoked skill. Whichever agent session runs it becomes the **orchestrator**: it runs the loop below, spawns every agent, owns the run's state, and is the only thing that talks to the user. Agents never talk to the user directly.
 
-The skill is global (symlinked into `~/.claude/skills/factory`) and works in any git repo that has SpecKit (`.specify/`) installed.
+The skill is global (installed into the harness's skill directory) and works in any git repo that has SpecKit (`.specify/`) installed.
+
+## Harness model
+
+The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copilot, ...). It is split into a portable core and thin per-harness adapters.
+
+- **Core** (`core/`): the orchestrator `SKILL.md`, its references, and the role prompts in `core/roles/`. Core files never name a harness tool. They use the neutral **verbs** defined in `core/skills/factory/references/verbs.md`: `SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`.
+- **Adapter** (`adapters/<harness>/`): `harness.md`, which tells the orchestrator how to recognise the harness, how to perform each verb there, where skills and SpecKit commands live, and the harness's setup values; and `adapter.json`, which tells the renderer where to install and how to write native agent files (Markdown or TOML, fields, access, models).
+- **One skill for every harness.** The installed skill is byte-identical on every harness and carries every adapter's `harness.md` under `references/harness/`. In preflight the orchestrator picks its own (`$FACTORY_HARNESS`, else the file whose "Recognise it by" line fits). This matters because harnesses read each other's skill directories (OpenCode reads `~/.claude/skills`, Copilot and Codex read `~/.agents/skills`): whichever copy a harness finds, it is the same skill. Only the agent files are generated per harness, by `tools/render.py`.
+- **Adapters today**: `claude-code`, `opencode`, `codex`, `copilot` (CLI and VS Code agent mode; the github.com cloud agent is out of scope since it cannot relay questions). Agent models are pinned only on Claude Code (opus/sonnet); elsewhere agents inherit the session's model unless `${FACTORY_HOME}/config.json` pins them.
+- **Roles** carry neutral metadata (`tier`: `deep` | `standard`; `access`: `read` | `write`). The adapter maps tiers to models and access to tool lists. Users override models in `${FACTORY_HOME}/config.json`.
+- **Capability tiers.** An adapter declares the tier its harness runs at: 1 native subagents, 2 headless CLI subprocesses, 3 inline (the orchestrator plays each role itself). The approver screen states the tier when it is not 1, since tier 3 weakens reviewer independence.
+- **Factory home.** Harness-neutral files live in `${FACTORY_HOME:-~/.factory}`: pending runs, user config. Every harness shares it, so discovery finds runs started anywhere.
+- **Agents are stateless.** Every agent turn is a fresh `SPAWN`; nothing relies on continuing a live agent. Whatever a later turn needs is in `state.json` or on disk. This is what lets every harness, and a resume on a different harness, run the same flow.
 
 ## Flow
 
@@ -30,31 +43,33 @@ feature
 
 ## Agents
 
-| Agent | Model | Role |
-|---|---|---|
-| `factory-spec-builder` | opus | Runs specify through analyze, one stage per turn; remediates analyze findings |
-| `factory-code-build` | sonnet | Runs speckit.implement against tasks.md; must finish green |
-| `factory-security-reviewer` | sonnet | Security review of the diff |
-| `factory-code-standards` | sonnet | Diff vs the repo's documented conventions |
-| `factory-spec-conformance` | sonnet | Diff vs spec, plan, tasks |
-| `factory-ui-reviewer` | sonnet | impeccable audit + critique of changed UI (UI diffs only) |
-| `factory-ux-reviewer` | sonnet | UX flows, states, copy (UI diffs only) |
-| `factory-review-judge` | opus | Merges, dedupes, verifies findings; one verdict |
-| `factory-fixer` | sonnet | Fixes confirmed findings or the user's requested changes |
+| Agent | Tier | Access | Role |
+|---|---|---|---|
+| `factory-spec-builder` | deep | write | Runs specify through analyze, one stage per spawn; remediates analyze findings |
+| `factory-code-build` | standard | write | Runs speckit.implement against tasks.md; must finish green |
+| `factory-security-reviewer` | standard | read | Security review of the diff |
+| `factory-code-standards` | standard | read | Diff vs the repo's documented conventions |
+| `factory-spec-conformance` | standard | read | Diff vs spec, plan, tasks |
+| `factory-ui-reviewer` | standard | read | impeccable audit + critique of changed UI (UI diffs only) |
+| `factory-ux-reviewer` | standard | read | UX flows, states, copy (UI diffs only) |
+| `factory-review-judge` | deep | read | Merges, dedupes, verifies findings; one verdict |
+| `factory-fixer` | standard | write | Fixes confirmed findings or the user's requested changes |
 
-Subagents cannot spawn subagents, so the "reviewer agent" is the **judge**: the orchestrator fans out the reviewers and hands their output to the judge.
+On Claude Code, `deep` is opus and `standard` is sonnet.
 
-All reviewers return the same findings shape (`skills/factory/references/findings.md`).
+Agents cannot spawn agents, so the "reviewer agent" is the **judge**: the orchestrator fans out the reviewers and hands their output to the judge.
+
+All reviewers return the same findings shape (`core/skills/factory/references/findings.md`).
 
 ## Decisions
 
 ### Setup
-- **Missing `.specify/`**: offer to run `specify init --here --ai claude`, then the constitution step. Ask once.
-- **impeccable missing**: ask once, then `npx impeccable install --providers=claude --scope=global`.
-- **Skills that block model invocation**: every `speckit-*` skill and `grill-with-docs` set `disable-model-invocation: true`, so no agent can call them via the Skill tool. Agents `Read` the resolved `SKILL.md` and follow it as instructions. `grill-with-docs` runs as its two parts: `grilling` + `domain-modeling`.
+- **Missing `.specify/`**: offer to run `specify init --here <harness.speckit_init>` (`--ai <harness>`, plus `--ai-skills` outside Claude Code so SpecKit's commands land as skills), then the constitution step. Ask once.
+- **impeccable missing**: ask once, then `npx impeccable install --providers=<harness.impeccable_provider> --scope=global`.
+- **Skills that block model invocation**: every `speckit-*` skill and `grill-with-docs` set `disable-model-invocation: true` (or are commands rather than skills on some harnesses), so no agent invokes them. Agents read the resolved file and follow it as instructions. `grill-with-docs` runs as its two parts: `grilling` + `domain-modeling`.
 
 ### Isolation
-- Grilling runs in the invoking checkout and writes nothing to the repo. Its output (`brief.md`) and pre-run state live under `~/.claude/factory/pending/` until the worktree exists.
+- Grilling runs in the invoking checkout and writes nothing to the repo. Its output (`brief.md`) and pre-run state live under `${FACTORY_HOME}/pending/` until the worktree exists.
 - The branch name comes from SpecKit's git script in `--dry-run` mode. The factory creates a git worktree on that branch, and everything after grilling runs inside it.
 - The spec directory is passed explicitly (`SPECIFY_FEATURE_DIRECTORY=specs/<branch>`), so branch and spec folder always match.
 - SpecKit extension hooks are skipped: the factory owns the branch and every commit.
@@ -62,7 +77,7 @@ All reviewers return the same findings shape (`skills/factory/references/finding
 
 ### Interactive steps (relay)
 - Grilling at the top runs in the orchestrator directly.
-- clarify, grill-with-docs, and specify's clarification markers run inside spec-builder. When spec-builder has questions it ends its turn with the **whole queue** (with recommended answers). The orchestrator asks the user in grilling-round format, saves every answer to state as it arrives, and sends the answers back with `SendMessage`.
+- clarify, grill-with-docs, and specify's clarification markers run inside spec-builder. When spec-builder has questions it ends its turn with the **whole queue** (with recommended answers). The orchestrator asks the user in grilling-round format, saves every answer to state as it arrives, and then spawns a fresh spec-builder for the same stage. That agent reads every question round of the stage from `state.relay`, treats answered questions as settled, and asks only what is still open. A stage restarted after a relay round and a stage restarted on resume are the same path.
 
 ### Analyze loop
 - After analyze: if any CRITICAL or HIGH finding exists, spec-builder **fixes every finding at every severity** (remediation). Findings that need a user decision become clarify questions instead of silent fixes. Then the flow returns to clarify and re-runs clarify, grill-with-docs, plan, tasks, analyze. Plan and tasks receive the analyze report and remediation log so regeneration keeps the fixes.
@@ -71,7 +86,7 @@ All reviewers return the same findings shape (`skills/factory/references/finding
 
 ### Implement
 - code-build reads build and test commands from the repo's CLAUDE.md / AGENTS.md, falling back to detection.
-- Done = every task in tasks.md checked, build green, tests green. The orchestrator re-runs build and tests itself to verify. Still red after code-build's own attempts: halt and ask.
+- Done = every task in tasks.md checked, build green, tests green. The orchestrator re-runs build and tests itself to verify. Still red after code-build's own attempts: one fresh code-build gets the failing output; still red: halt and ask.
 
 ### Review
 - Always: security, code-standards, spec-conformance.
@@ -79,26 +94,27 @@ All reviewers return the same findings shape (`skills/factory/references/finding
 - The judge merges, dedupes and verifies. Confirmed blocking findings go to the fixer; then build + test, then re-review. At most 2 fix rounds. Advisory findings go to the approver untouched.
 
 ### Approver
-Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining advisory findings. Options:
+Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining advisory findings, and the capability tier when it is not 1. Options:
 - **Approve**: push and open the PR.
 - **Request changes** (free text): fixer, build + test, re-review, back to the approver. No cap; the user drives it.
 - **Abort**: keep the worktree, state `aborted`.
 
 ### PR
-Push the branch, open a ready-for-review PR against the default branch with a body written via the `pr` skill (links the spec, includes the review summary). State becomes `pr-open` with the URL. The worktree is kept until the branch merges. Binding the PR to the desktop app's Auto-fix monitor is offered, not automatic.
+Push the branch, open a ready-for-review PR against the default branch with a body written via the `pr` skill (links the spec, includes the review summary). State becomes `pr-open` with the URL. The worktree is kept until the branch merges. Harness-specific extras (on Claude Code, offering the desktop app's Auto-fix binding) come from `harness.md` and are offered, not automatic.
 
 ### State and resume
-- State lives at `specs/<branch>/factory/state.json` inside the worktree (schema: `skills/factory/references/state.md`).
+- State lives at `specs/<branch>/factory/state.json` inside the worktree (schema: `core/skills/factory/references/state.md`). It records the `harness` running the run; each `history` entry records the harness that wrote it.
 - One checkpoint commit per stage (`factory: <stage> complete`) plus a state update. Implement additionally resumes per task from the tasks.md checkboxes.
 - Resume restarts the interrupted stage from its beginning. A relay in progress resumes from the saved Q&A: a fresh spec-builder gets the answered questions and asks only the rest.
-- `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. `/factory resume <branch>` continues from that stage in any session.
-- Plain `/factory` lists unfinished runs in the current repo (scanning `git worktree list` plus `~/.claude/factory/pending/`) and offers to resume one. `/factory <feature>` starts a new run.
+- A run may be resumed on a different harness: the orchestrator re-resolves every skill path.
+- `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. `resume <branch>` (with the harness's invoke command, e.g. `/factory` or `$factory`) continues from that stage in any session, on any harness.
+- Plain `/factory` lists unfinished runs in the current repo (scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one. `/factory <feature>` starts a new run.
 
 ### Policies
 - Agent failure (crash, unparseable output, timeout): retry once with the error attached, then halt and ask.
-- Push notification on every wait for the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.
+- Notification (`NOTIFY`, a no-op where the harness has none) on every wait for the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.
 - `speckit.checklist` and `speckit.taskstoissues` are not part of the flow.
 
 ## Validation plan
 
-Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR.
+Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR. Repeat for each new adapter; once two adapters exist, start a run on one harness with `--stop-at implement` and resume it on the other.

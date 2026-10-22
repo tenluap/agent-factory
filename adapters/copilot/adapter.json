@@ -1,0 +1,14 @@
+{
+  "name": "copilot",
+  "home": { "env": "COPILOT_HOME", "default": "~/.copilot" },
+  "skill_dir": "{home}/skills/factory",
+  "agent_dir": "{home}/agents",
+  "agent_file": "factory-{role}.agent.md",
+  "agent_format": "markdown",
+  "fields": [["name", "factory-{role}"], ["description", "{description}"]],
+  "access": {
+    "read": { "tools": ["read", "search", "execute"] },
+    "write": { "tools": ["read", "edit", "search", "execute"] }
+  },
+  "models": { "deep": "github-copilot/claude-opus-5.5", "standard": "github-copilot/gpt-6-luna" }
+}

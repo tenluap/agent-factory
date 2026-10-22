@@ -1,0 +1,37 @@
+{
+  "name": "opencode",
+  "home": {
+    "env": "XDG_CONFIG_HOME",
+    "default": "~/.config"
+  },
+  "skill_dir": "{home}/opencode/skills/factory",
+  "agent_dir": "{home}/opencode/agents",
+  "agent_file": "factory-{role}.md",
+  "agent_format": "markdown",
+  "fields": [
+    [
+      "description",
+      "{description}"
+    ]
+  ],
+  "extra": {
+    "mode": "subagent"
+  },
+  "access": {
+    "read": {
+      "permission": {
+        "edit": "deny",
+        "task": "deny"
+      }
+    },
+    "write": {
+      "permission": {
+        "task": "deny"
+      }
+    }
+  },
+  "models": {
+    "deep": "xiaomi-token-plan-sgp/mimo-v2.6-pro",
+    "standard": "zai-coding-plan/glm-5.3-flash"
+  }
+}

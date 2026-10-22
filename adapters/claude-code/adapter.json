@@ -1,0 +1,14 @@
+{
+  "name": "claude-code",
+  "home": { "env": "CLAUDE_HOME", "default": "~/.claude" },
+  "skill_dir": "{home}/skills/factory",
+  "agent_dir": "{home}/agents",
+  "agent_file": "factory-{role}.md",
+  "agent_format": "markdown",
+  "fields": [["name", "factory-{role}"], ["description", "{description}"]],
+  "access": {
+    "read": { "tools": "Read, Grep, Glob, Bash" },
+    "write": { "tools": "Read, Edit, Write, Bash, Grep, Glob" }
+  },
+  "models": { "deep": "anthropic/claude-opus-5-5", "standard": "anthropic/claude-sonnet-5-5" }
+}

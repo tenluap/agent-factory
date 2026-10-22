@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
-# Symlink the factory skill and agents into ~/.claude. Re-run after pulling; pass --uninstall to remove the links.
+# Render the factory for a harness and symlink it into that harness's directories.
+# Usage: ./install.sh [--harness <name>|all] [--uninstall]. Default harness: claude-code. Re-run after pulling.
+# Harnesses: see adapters/ (python3 tools/render.py --list).
 set -euo pipefail
 
 src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-claude="${CLAUDE_HOME:-$HOME/.claude}"
+harness="claude-code"
+uninstall=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --harness) harness="$2"; shift 2 ;;
+    --uninstall) uninstall=1; shift ;;
+    *) echo "unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
 
 link() {
   local from="$1" to="$2"
@@ -23,12 +33,34 @@ unlink_ours() {
   fi
 }
 
-if [ "${1:-}" = "--uninstall" ]; then
-  unlink_ours "$claude/skills/factory"
-  for f in "$src"/agents/*.md; do unlink_ours "$claude/agents/$(basename "$f")"; done
-  exit 0
-fi
+install_one() {
+  local paths dist skill_dir agent_dir
+  paths="$(python3 "$src/tools/render.py" "$1" --paths)"
+  eval "$paths"
+  echo "== $1"
+  if [ -n "$uninstall" ]; then
+    unlink_ours "$skill_dir"
+    for f in "$dist"/agents/*; do unlink_ours "$agent_dir/$(basename "$f")"; done
+    return
+  fi
+  mkdir -p "$(dirname "$skill_dir")" "$agent_dir"
+  link "$dist/skill" "$skill_dir"
+  for f in "$dist"/agents/*; do link "$f" "$agent_dir/$(basename "$f")"; done
+}
 
-mkdir -p "$claude/skills" "$claude/agents" "$claude/factory/pending"
-link "$src/skills/factory" "$claude/skills/factory"
-for f in "$src"/agents/*.md; do link "$f" "$claude/agents/$(basename "$f")"; done
+if [ "$harness" = "all" ]; then
+  harnesses="$(python3 "$src/tools/render.py" --list)"
+else
+  harnesses="$harness"
+fi
+for h in $harnesses; do install_one "$h"; done
+[ -n "$uninstall" ] && exit 0
+
+pending="${FACTORY_HOME:-$HOME/.factory}/pending"
+mkdir -p "$pending"
+# Pending runs from before the harness split lived under ~/.claude/factory/pending.
+old="$HOME/.claude/factory/pending"
+if [ -d "$old" ] && [ -n "$(ls -A "$old")" ]; then
+  mv -n "$old"/* "$pending"/
+  echo "moved: pending runs from $old to $pending"
+fi

@@ -1,0 +1,41 @@
+# Agent protocol
+
+## Envelope
+
+Every factory agent ends every turn with exactly one fenced `json` block, the **envelope**, as the last thing in its message:
+
+```json
+{
+  "status": "done",
+  "stage": "plan",
+  "summary": "one or two sentences on what changed",
+  "files": ["specs/016-x/plan.md"],
+  "questions": [],
+  "analyze": null,
+  "error": null
+}
+```
+
+- `status`: `done` (stage finished), `needs_input` (questions below; the agent stops, and a fresh one continues the stage once they are answered), `partial` (code-build only: context running low, progress committed), `failed` (`error` says why).
+- `questions` (with `needs_input`): the agent's **whole** queue for this stage, never one at a time: `[ { "id": "Q1", "title": "...", "text": "...", "options": ["A: ...", "B: ..."], "recommended": "B, because ..." } ]`. Ids are unique within a stage: a later round continues the numbering.
+- `analyze` (analyze stage only): `{ "report": "factory/analyze-<n>.md", "critical": 0, "high": 2, "medium": 1, "low": 0 }`.
+- `pending_clarify` (remediate stage only): findings that need a user decision, as clarify questions in the `questions` item shape. The orchestrator stores them in `state.analyze.pending_clarify` and hands them to the next `clarify`.
+
+Reviewers and the judge return their report or verdict (findings.md) as their final fenced block instead.
+
+## Relay
+
+How the orchestrator carries an agent's questions to the user and back:
+
+1. Append the batch to `state.relay.rounds` as `{ "questions": [...], "answers": {} }` (creating `relay` for this stage if it is null), set `status: waiting_user`, `NOTIFY`.
+2. Ask in grilling-round format, all questions in one message:
+
+   ```
+   ❓ **Q1** - **<title>**: <text and options>
+
+   ➡️ <recommended>
+   ```
+
+3. As the user answers, write each answer into the last round's `answers`. "accept" means every recommended answer.
+4. All answered: set `status: running` and `SPAWN` a fresh agent of the same role for the same stage, with the usual inputs and the `state.json` path. It reads every round in `state.relay` and asks only what is still open.
+5. The new agent either asks another round (normal for grilling and clarify) or returns `done`. `relay` is cleared when the stage completes (state.md, "Checkpoint").

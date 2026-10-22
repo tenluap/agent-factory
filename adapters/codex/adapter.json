@@ -1,0 +1,11 @@
+{
+  "name": "codex",
+  "home": { "env": "CODEX_HOME", "default": "~/.codex" },
+  "skill_dir": "~/.agents/skills/factory",
+  "agent_dir": "{home}/agents",
+  "agent_file": "factory_{role_}.toml",
+  "agent_format": "toml",
+  "fields": [["name", "factory_{role_}"], ["description", "{description}"]],
+  "access": { "read": {}, "write": {} },
+  "models": { "deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6-luna" }
+}
