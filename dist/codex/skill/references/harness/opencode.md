@@ -13,7 +13,7 @@
 |---|---|
 | `SPAWN(role, inputs)` | The `task` tool with subagent `factory-<role>` and the inputs as the prompt. Its result is the subagent's final message. |
 | `SPAWN_PARALLEL([...])` | One `task` call per role, all in **one message**. |
-| `ASK(text, options?)` | With options: the `question` tool when it is available. Otherwise, and for free text or a question batch: a plain message, then wait for the reply. |
+| `ASK(text, options?)` | Initial grilling and relays, even one question: a plain Markdown message using protocol.md, "Questions", then wait. Other asks with options: the `question` tool when available. Otherwise: a plain message, then wait. |
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.opencode/skills/`, `<repo>/.claude/skills/`, `<repo>/.agents/skills/`, `~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/`. For a `speckit-<stage>` name with no skill, take the command file `speckit.<stage>.md` under `<repo>/.opencode/`. |
 | `SHELL(cmd)` | The `bash` tool. |

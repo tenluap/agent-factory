@@ -41,7 +41,7 @@ Done when every skill path and both commands are recorded in the pending state (
 
 ## 2. Grill
 
-Follow the `grilling` skill on the feature description, here, with the user. Done when the user confirms shared understanding. Unless a flag pinned the chain, settle it here: state which chain the feature's size calls for (`lite` or `full`) in your closing summary — the user's confirmation covers it, an objection flips it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet, with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (chain, `fast` from the flags) and checkpoint the pending state with `stage: worktree`.
+Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive under `--fast`. Done when the frontier is empty and the user confirms shared understanding. Unless a flag pinned the chain, settle it here: state which chain the feature's size calls for (`lite` or `full`) in your closing summary — the user's confirmation covers it, an objection flips it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet, with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (chain, `fast` from the flags) and checkpoint the pending state with `stage: worktree`.
 
 ## 3. Worktree
 

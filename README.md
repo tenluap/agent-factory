@@ -52,8 +52,8 @@ Without `--lite` / `--full`, the orchestrator judges the feature's size at the e
 
 ### What the run asks of you
 
-- **Grilling** at the start: a relentless interview until you confirm shared understanding. The chain choice is settled here.
-- **Relays**: spec stages come back with their whole question queue at once (each with a recommended answer); `accept` takes every recommendation in one message. Under `--fast` this round-trip disappears.
+- **Grilling** at the start: a relentless interview until you confirm shared understanding. The chain choice is settled here. Grilling and relays share the same emoji-rich chat layout: 🧭 round progress, lettered options with descriptions, ✨ AI suggested markers, and 💡 suggested answers with a rationale and reply shortcut.
+- **Relays**: each round shows the whole frontier of questions whose prerequisites are settled; dependent questions wait for later rounds. Reply `Q7: B`, `Q7: <your answer>`, or `Q7: accept`; bare `accept` takes only unanswered suggestions and preserves your explicit answers. Choice questions include 💬 Something else; open-ended questions accept free text. Under `--fast`, eligible relay questions auto-accept; remediation questions still reach you. Existing saved runs use the new layout with their answers and IDs preserved.
 - **Halts**: trouble always reaches you — CRITICAL/HIGH findings left after 2 loop passes, a build that stays red, an agent that fails twice. Your answer resumes, redirects, or aborts.
 - **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, remaining advisory findings, and (under `--fast`) the auto-accepted answers. Approve opens the PR; request changes sends it back through a fix round; abort keeps the worktree.
 

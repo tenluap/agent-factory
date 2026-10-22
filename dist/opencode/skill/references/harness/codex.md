@@ -13,7 +13,7 @@
 |---|---|
 | `SPAWN(role, inputs)` | Spawn the custom agent `factory_<role>` (hyphens in the role become underscores, e.g. `factory_spec_builder`) with the inputs as its task, and wait for its result. This skill's instruction is your explicit request to spawn it. |
 | `SPAWN_PARALLEL([...])` | Spawn every listed agent at once, wait until all results are in, then continue. |
-| `ASK(text, options?)` | A plain message, then wait for the reply. |
+| `ASK(text, options?)` | A plain message, then wait for the reply. Initial grilling and relays, even one question, use the Markdown presentation in protocol.md, "Questions". |
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.agents/skills/`, `<repo>/.codex/skills/`, `~/.agents/skills/`, `~/.codex/skills/`, `/etc/codex/skills/`. For a `speckit-<stage>` name with no skill, take the prompt file `speckit.<stage>.md` under `<repo>/.codex/`. |
 | `SHELL(cmd)` | Your shell tool. |

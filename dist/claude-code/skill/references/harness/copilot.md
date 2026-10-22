@@ -13,7 +13,7 @@
 |---|---|
 | `SPAWN(role, inputs)` | Delegate to the custom agent `factory-<role>` with the inputs as its task (the agent/subagent tool), and wait for its result. **Tier 2 fallback** when you cannot delegate: `SHELL` `copilot --agent factory-<role> --prompt "<inputs>"`, with the tool-approval flags your setup needs for a non-interactive run, and take the final fenced `json` block from its output. |
 | `SPAWN_PARALLEL([...])` | Delegate to every listed agent at once if the harness runs subagents in parallel; otherwise one after another. In tier 2: background processes, then wait for all. |
-| `ASK(text, options?)` | A plain message, then wait for the reply. |
+| `ASK(text, options?)` | A plain message, then wait for the reply. Initial grilling and relays, even one question, use the Markdown presentation in protocol.md, "Questions". |
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.github/skills/`, `<repo>/.claude/skills/`, `<repo>/.agents/skills/`, `~/.copilot/skills/`, `~/.agents/skills/`. For a `speckit-<stage>` name with no skill, take `speckit.<stage>.agent.md` under `<repo>/.github/agents/` or `speckit.<stage>.prompt.md` under `<repo>/.github/prompts/`. |
 | `SHELL(cmd)` | Your shell/terminal tool. |
