@@ -78,6 +78,14 @@ _Avoid_: exception, opt-out, local rule
 An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. A fix round driven by a verdict performs no fix work on it; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
 _Avoid_: nit, suggestion, soft finding, warning
 
+**Verdict-driven fix round**:
+A fix round the orchestrator runs to answer a judge verdict: its work is that verdict's confirmed blocking findings, and its commit's red proofs are matched against them.
+_Avoid_: review fix, blocking fix round
+
+**User-changes fix round**:
+A fix round the orchestrator runs to answer the user's "Request changes" at the approver gate: its work is the request's own text, including any advisory finding the request names, and its commit's red proofs are matched against neither the task list nor a verdict.
+_Avoid_: manual fix, approver fix, rework
+
 **Reason line**:
 The sentence a plan carries for each new file, new abstraction or new dependency it introduces, saying why it is needed (`ENG-10`); a missing one is a MEDIUM, non-blocking analyze finding.
 _Avoid_: justification, rationale note
