@@ -14,4 +14,4 @@ Lens: the repo's own written standards. Collect them first: CLAUDE.md, AGENTS.md
 - Tests: behaviour added with no asserting test, tests that do not assert the behaviour. Behaviour added with no asserting test is HIGH and blocking, citing `ENG-1`.
 - Reuse: real duplication of an existing helper that should have been reused or extended is HIGH and blocking, naming that existing function and citing `ENG-6`.
 
-A style preference no document or neighbouring code supports is not a finding. A finding resting on `ENG-7`..`ENG-10` is at most MEDIUM and never blocking, lowered to MEDIUM rather than dropped: apply the severity ceiling in `<F>/references/findings.md`; do not restate the rules.
+A style preference no document or neighbouring code supports is not a finding. Rate findings resting on the judgement-call rules under the severity ceiling in `<F>/references/findings.md`.
