@@ -32,6 +32,13 @@ The change is instructions and generated output only: nine Markdown files under 
 
 ## Test seams
 
+Seams: none. The canonical lines this section must carry ([contracts/plan-artifact.md](./contracts/plan-artifact.md)), which the analyze and spec-conformance checks match textually:
+
+```text
+Exempt: whole change - Markdown instruction files and their generated per-harness copies only, no executable behaviour
+Overridden: none
+```
+
 **This change is documentation/configuration-exempt from test-first, in whole (FR-025).**
 
 **Reason**: the change adds and edits Markdown instruction files for agents (`DESIGN.md`, the new `core/skills/factory/references/engineering.md`, six role prompts, one shared reference) and the generated per-harness copies of them. It introduces no executable behaviour: there is no function, no entry point and no runtime path a test could call. The repository has no test runner and this change does not create a need for one, so FR-018's runner-setup task does not apply here.
@@ -46,7 +53,7 @@ The change is instructions and generated output only: nine Markdown files under 
 
 End-to-end behaviour (a real run producing red proofs and seam findings) is observed on the next factory run, per the "Validation plan" in `DESIGN.md`.
 
-**Overridden**: none. No rule of the shared reference is overridden by this repository's constitution; the two agree (constitution V is the source of `ENG-10`).
+`Overridden: none` — no rule of the shared reference is overridden by this repository's constitution; the two agree (constitution V is the source of `ENG-10`). `Test runner:` is absent on purpose: this change creates no need for one (FR-018 does not apply).
 
 ## Constitution Check
 
@@ -56,7 +63,7 @@ End-to-end behaviour (a real run producing red proofs and seam findings) is obse
 |---|---|---|
 | I. Design First | The behaviour change is recorded in `DESIGN.md` before `core/` and `adapters/` carry it, in this change | PASS - task order puts the `DESIGN.md` "Engineering discipline" section first (FR-022); `core/` edits follow |
 | II. Harness-Neutral Core | No file added or edited under `core/` names a harness tool, path or command | PASS - `engineering.md` and the role edits use only the `<F>/references/...` form and the neutral verbs; no adapter needs a change |
-| III. Generated Dist (NON-NEGOTIABLE) | Every `core/`/`adapters/` change is followed by a render of every harness, and `dist/` is committed with the source | PASS - the render task renders all four harnesses and commits `dist/`; `commands.test` proves no drift (SC-005) |
+| III. Generated Dist (NON-NEGOTIABLE) | Every `core/`/`adapters/` change is followed by a render of every harness, and `dist/` is committed with the source | PASS - every `core/`-editing task re-renders all four harnesses and commits the regenerated `dist/` in that task's own commit, so no commit in the run's history carries a stale `dist/`; the final render task plus `commands.test` prove no drift (SC-005). Because one render writes all four harness trees, no two `core/`-editing tasks run in parallel |
 | IV. Stateless Agents | No role relies on memory of an earlier turn | PASS - the rules are read from the shared reference each spawn; the red proof is read from the commit body and `tasks.md`; the seams are read from `plan.md`. The external `tdd` skill is rejected for exactly this reason (ADR 0001) |
 | V. Simplicity and Reuse | Smallest change; a new file needs a stated reason in the plan | PASS - one new file, `core/skills/factory/references/engineering.md`. **Reason**: FR-001 requires the rules in exactly one harness-neutral place that six roles point at; inlining them in six prompts would duplicate them and let them drift (SC-004). Nothing else is added: no new verb, no new state field, no new stage, no new commit type, no renderer change; the change reuses the existing reference mechanism, the existing per-task commit, and the existing failure policy |
 | Writing Standards | Prompts and references short, imperative, unambiguous, one term per concept | PASS - the rules reference is one numbered rule per entry; terms come from the glossary in `CONTEXT.md`; the role edits add lines, not prose |
@@ -94,7 +101,7 @@ core/
 │   ├── SKILL.md                            # unchanged
 │   └── references/
 │       ├── engineering.md                  # NEW: ENG-1 .. ENG-11, the shared rules
-│       ├── findings.md                     # + engineering findings cite the ENG-n id
+│       ├── findings.md                     # + reviewers needing commit metadata read the run's commit log; commit-level finding shape; engineering findings cite the ENG-n id
 │       ├── protocol.md                     # unchanged
 │       ├── state.md                        # unchanged
 │       └── verbs.md                        # unchanged
@@ -103,7 +110,7 @@ core/
     ├── code-build.md                       # red-green-refactor, Red: line, reuse search, missing-seam failure
     ├── fixer.md                            # same rules; one Red: line per behaviour-changing fix
     ├── code-standards.md                   # untested behaviour and duplication HIGH blocking, cite ENG-n
-    ├── spec-conformance.md                 # check each implementation commit body's Red: line against tasks.md
+    ├── spec-conformance.md                 # read the run's commit log; check each implementation commit body's Red: line against tasks.md, and the fix commit's against the verdict
     ├── review-judge.md                     # reference the rules; rate engineering findings by id
     ├── security-reviewer.md                # unchanged
     ├── ui-reviewer.md                      # unchanged

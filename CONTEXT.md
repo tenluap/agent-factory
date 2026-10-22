@@ -59,8 +59,12 @@ A public entry point of a change that is put under test, agreed in the plan and 
 _Avoid_: interface, boundary, hook, test point
 
 **Red proof**:
-The line in a task's commit body recording the test that was seen failing before the implementation existed.
+The line in a task's commit body recording the test that was seen failing before the implementation existed (`Red: <test name> failed as expected`) or, where an existing passing test already covers the behaviour, the line naming that test instead (`Red: not applicable - <existing test> already covers this`). Both lines are red proofs; no other wording is.
 _Avoid_: red commit, evidence, test log
+
+**Behaviour-changing**:
+What makes a unit of work (a task or a fix) need a red proof: it changes what an entry point returns or does. A change confined to documentation, configuration or generated output is not behaviour-changing.
+_Avoid_: functional change, real change
 
 **Test-first exemption**:
 A documentation- or configuration-only part of a change that the plan declares, with its reason, as not requiring a test.
@@ -71,5 +75,9 @@ A consuming repository's own documented rule winning over a factory rule, record
 _Avoid_: exception, opt-out, local rule
 
 **Reuse search**:
-The bounded look for an existing function to reuse or extend before writing a new one: the module being changed plus the repository's shared utility locations.
+The bounded look for an existing function to reuse or extend before writing a new one: the module being changed plus the repository's shared utility locations, by the concept's keywords, once per new function.
 _Avoid_: duplication check, grep
+
+**Shared utility locations**:
+The bound of a reuse search beyond the module being changed: the directories the repository's own conventions name as shared (`helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/` and the like), plus any module the module being changed already imports for helpers. The search over them is keyword-level text matching, not a review of the whole repository.
+_Avoid_: helpers, common code, the codebase

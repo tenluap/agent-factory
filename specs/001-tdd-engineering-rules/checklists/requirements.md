@@ -33,3 +33,4 @@
 
 - The feature's product is instruction text inside this repository, so the spec names repository artefacts (design document, shared reference, generated output) as the objects of the requirements. The single concrete path (`core/skills/factory/references/engineering.md`) is recorded in Assumptions as a decision settled in the brief, not inside a requirement.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`. All items pass on iteration 1.
+- Re-checked after analyze pass 1 remediation (`factory/remediation-1.md`): the spec gained the definitions of "behaviour-changing" (FR-007) and "shared utility locations" (FR-014a), one term per reviewer role, and FR-015d/FR-015e for the commit-log scope and the fix-commit check. Every item still passes.

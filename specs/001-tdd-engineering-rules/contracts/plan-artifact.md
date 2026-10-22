@@ -40,7 +40,7 @@ For each implementation task in `tasks.md`:
 | Covered by a plan exemption with a stated reason | Nothing (excluded from the check, not downgraded) |
 | Names a seam the plan does not list | HIGH, blocking: names the task and the unlisted seam |
 
-HIGH, never CRITICAL: CRITICAL stays reserved for constitution violations. A HIGH finding feeds the orchestrator's existing remediation loop (FR-020, FR-020a).
+HIGH, never CRITICAL: CRITICAL stays reserved for constitution violations. A HIGH finding feeds the orchestrator's existing remediation loop (FR-020, FR-020a). All three blocking conditions above — no mapped seam, no immediately preceding test task, a seam the plan does not list — are the ones FR-019, FR-020 and SC-002 state, so the gate and the requirement cannot diverge.
 
 ## Clarify check
 

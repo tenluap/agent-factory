@@ -28,10 +28,11 @@ Expected: exit 0. A non-empty diff means `dist/` was committed stale or hand-edi
 
 ```bash
 ls core/skills/factory/references/engineering.md
-grep -rl 'ENG-1\b' core/ | sort
+grep -rlE 'ENG-[0-9]+' core/ | sort
+grep -rnE 'ENG-[0-9]+' core/roles/ core/skills/factory/references/findings.md
 ```
 
-Expected: the file exists, and `core/skills/factory/references/engineering.md` is the only file under `core/` that states a rule. Role files may cite ids in instructions about citation, but no role restates a rule's content.
+Expected: the file exists; the first list is `core/skills/factory/references/engineering.md` plus only files whose `ENG-n` mentions are citation instructions; and every hit of the second command outside `engineering.md` instructs a role to cite an id (for example "cite the `ENG-n` id in `evidence`") rather than restating what a rule requires. Any line outside `engineering.md` that states a rule's content is a duplication and belongs in the reference (SC-004).
 
 ## 4. Every rule has a unique id (FR-004a, SC-004a)
 
@@ -82,7 +83,8 @@ Expected: the plan, tasks, analyze and clarify stage entries in `spec-builder.md
 These need a diff to review, so they are observed on the next real factory run rather than here:
 
 - Hand `code-standards` a diff that adds behaviour with no asserting test and a function duplicating an existing helper: expect two HIGH, blocking findings, each citing an `ENG-n` id (`ENG-1`, `ENG-6`).
-- Hand `spec-conformance` a run whose implementation commit bodies lack a `Red:` line: expect one finding per such commit and none for commits whose proof matches a task, per [contracts/commit-body.md](./contracts/commit-body.md).
+- Hand `spec-conformance` a run whose implementation commit bodies lack a `Red:` line: expect it to read the run's commit log (not just the diff), one finding per such commit with the sha in `file`, and none for commits whose proof matches a task, per [contracts/commit-body.md](./contracts/commit-body.md).
+- Hand `spec-conformance` a run with a correct `factory(fix):` commit carrying one `Red:` line per behaviour-changing fix: expect no finding, and in particular no "unmatched against `tasks.md`" finding (FR-015d).
 - Confirm the judge's verdict entries keep the `ENG-n` citations when it merges and rates those findings.
 
 ## 10. End-to-end (DESIGN.md validation plan)

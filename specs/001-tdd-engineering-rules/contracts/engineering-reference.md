@@ -22,7 +22,7 @@ The interface this feature exposes to every role, and through the rendered outpu
 | Id | Statement | Yields to |
 |---|---|---|
 | `ENG-1` | Write or extend a failing test for the behaviour before writing the code that implements it; then the smallest code that passes; then refactor only while tests are green, re-running them after. | A declared test-first exemption in the plan |
-| `ENG-2` | Record the red step in the task's commit body, in one of the two forms of [commit-body.md](./commit-body.md). | Nothing |
+| `ENG-2` | Record the red step in the task's commit body, in one of the two forms of [commit-body.md](./commit-body.md). | A declared test-first exemption in the plan (an exempt task's commit carries no `Red:` line) |
 | `ENG-3` | Commit a task once, test and implementation together; create no separate red commit. | Nothing |
 | `ENG-4` | Put under test only the seams the plan lists; never invent a seam. When a task needs an unlisted seam, stop and report the missing seam as a failure. | Nothing |
 | `ENG-5` | Skip a test only where the plan states the exemption and its reason (documentation or configuration only). | Nothing |
@@ -32,6 +32,11 @@ The interface this feature exposes to every role, and through the rendered outpu
 | `ENG-9` | Prefer functional style: pure functions, immutable data, side effects at the edges, composition over inheritance. | The language's and repository's idiom (a framework demanding inheritance wins) |
 | `ENG-10` | Add the smallest change that meets the need; do not over-engineer, and state the reason for any new file, abstraction or dependency in the plan. | Nothing |
 | `ENG-11` | Where the repository's own constitution or documented conventions contradict a rule above, the repository wins, and the run records `Overridden: ENG-n - <repo rule that wins>` in the plan. | Nothing |
+
+**Definitions the rule text carries** (so two agents draw the same boundary):
+
+- **Behaviour-changing** (the trigger for `ENG-1` and `ENG-2`): a unit of work changes what an entry point returns or does. A change confined to documentation, configuration or generated output is not behaviour-changing.
+- **Shared utility locations** (the bound of `ENG-6`): the directories the repository's own conventions name as shared (for example `helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/`), plus any module the module being changed already imports for helpers. The search is a keyword-level text search over those locations, not a semantic review of the whole repository.
 
 Eleven rules. `ENG-1`..`ENG-5` are test-first (FR-003, FR-007..FR-013a), `ENG-6` reuse (FR-014, FR-014a), `ENG-7`..`ENG-10` clean code, SOLID, functional style and no over-engineering, `ENG-11` precedence (FR-005, FR-006).
 

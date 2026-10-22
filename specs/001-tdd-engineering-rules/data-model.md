@@ -5,7 +5,7 @@ This feature stores no records. Its "entities" are textual artefacts that roles 
 ## Engineering rules reference
 
 - **Location**: `core/skills/factory/references/engineering.md` (rendered to `dist/<harness>/skill/references/engineering.md`; addressed by roles as `<F>/references/engineering.md`).
-- **Fields**: a short preamble (scope, and that the repository's documented conventions win); an ordered list of rules, each with an `ENG-n` id, a one-line imperative statement, and at most a sentence of qualification.
+- **Fields**: a short preamble (scope, and that the repository's documented conventions win); an ordered list of rules, each with an `ENG-n` id, a one-line imperative statement, and at most a sentence of qualification; and two one-sentence definitions the rules depend on — **behaviour-changing** (the trigger for `ENG-1` and `ENG-2`) and **shared utility locations** (the bound of `ENG-6`).
 - **Rules**: exactly one such file exists in `core/` (SC-004); it names no harness tool, path or command (constitution II); it depends on no skill outside the factory (FR-002); it covers test-first, clean code, SOLID, functional preference and reuse (FR-003); it states the repository-conventions-win rule (FR-006).
 - **Relationships**: referenced by six roles (below); cited by findings, verdicts and plan overrides through rule ids.
 - **Requirements**: FR-001, FR-002, FR-003, FR-006, FR-024.
@@ -44,9 +44,10 @@ This feature stores no records. Its "entities" are textual artefacts that roles 
 
 - **Location**: the body of the single commit carrying a task's test and implementation changes; for the fixing role, the body of its single fix commit.
 - **Fields**: one line per behaviour-changing unit of work, in one of exactly two forms (`Red: <test name> failed as expected`, or `Red: not applicable - <existing test> already covers this`).
-- **Rules**: no other wording stands in for a proof; the named test must map to a task in `tasks.md`; the fixing role writes one line per behaviour-changing fix (FR-009, FR-009a, FR-013a, FR-015b).
-- **Relationships**: checked by the spec-conformance reviewer against `tasks.md`; read by the user as the run's positive evidence (SC-007).
-- **Requirements**: FR-009, FR-009a, FR-010, FR-013a, FR-015b, SC-001, SC-006a. Grammar in [contracts/commit-body.md](./contracts/commit-body.md).
+- **Behaviour-changing** (when a line is required): the unit of work changes what an entry point returns or does. A unit confined to documentation, configuration or generated output is not behaviour-changing and carries no line.
+- **Rules**: no other wording stands in for a proof; in an implementation commit the named test must map to a task in `tasks.md`; in the single fix commit each line is matched against the round's verdict `confirmed_blocking` findings instead, so the `tasks.md` unmatched rule never fires on a fix commit; the fixing role writes one line per behaviour-changing fix (FR-009, FR-009a, FR-013a, FR-015b, FR-015d).
+- **Relationships**: checked by the spec-conformance reviewer, which reads the run's commit log (`git log <base>..HEAD`, subjects and bodies) because the squashed diff carries no commit messages; read by the user as the run's positive evidence (SC-007).
+- **Requirements**: FR-009, FR-009a, FR-010, FR-013a, FR-015b, FR-015d, FR-015e, SC-001, SC-006a. Grammar in [contracts/commit-body.md](./contracts/commit-body.md).
 
 ## Rule override
 
@@ -58,13 +59,13 @@ This feature stores no records. Its "entities" are textual artefacts that roles 
 ## Engineering finding
 
 - **Location**: a reviewer report (`STD-n`, `SPEC-n`) and then the judge verdict, in the shapes already defined in `core/skills/factory/references/findings.md`.
-- **Fields**: the existing finding fields; `evidence` additionally names the `ENG-n` id the finding rests on.
-- **Rules**: untested added behaviour and real duplication are HIGH and blocking (FR-015, FR-015a); a missing, unparseable or unmatched `Red:` line is a spec-conformance finding (FR-015b); the judge verifies and rates it against the same rule by id (FR-015c); style preference that no document or neighbouring code supports is not a finding.
-- **Requirements**: FR-015, FR-015a, FR-015b, FR-015c, FR-004a, SC-006, SC-006a.
+- **Fields**: the existing finding fields; `evidence` additionally names the `ENG-n` id the finding rests on. A commit-level finding (a red-proof finding) has no file and no line: `file` holds the commit sha with the task or finding id, and `line` is omitted or `0` (FR-015e). An `advisory[]` entry derived from an engineering finding keeps the `ENG-n` citation, so the verdict's advisory entry gains an `evidence` field (SC-004a).
+- **Rules**: untested added behaviour and real duplication are HIGH and blocking (FR-015, FR-015a); a missing, unparseable or unmatched `Red:` line is a spec-conformance finding (FR-015b, FR-015d); the judge verifies and rates it against the same rule by id (FR-015c); style preference that no document or neighbouring code supports is not a finding.
+- **Requirements**: FR-015, FR-015a, FR-015b, FR-015c, FR-015d, FR-015e, FR-004a, SC-006, SC-006a, SC-004a.
 
 ## Analyze seam-mapping finding
 
 - **Location**: the analyze report at `specs/<branch>/factory/analyze-<n>.md`, in the existing report shape.
-- **Fields**: the offending implementation task id, which condition failed (no mapped seam, or no preceding test task), severity HIGH, blocking.
+- **Fields**: the offending implementation task id, which of the three conditions failed (no mapped seam, no immediately preceding test task, or a named seam the plan does not list), severity HIGH, blocking.
 - **Rules**: HIGH, never CRITICAL (reserved for constitution violations); exempt tasks are excluded entirely; a HIGH finding feeds the existing remediation loop.
 - **Requirements**: FR-020, FR-020a.
