@@ -1,0 +1,26 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md",
+      "line": 9,
+      "summary": "The tracked-dist gate this change makes real (`git diff --exit-code -- dist/`) cannot detect untracked additions, so its documented claim of reporting any source/render divergence is false (ENG-1: the gate does not assert the behaviour it claims).",
+      "evidence": "Commit 4ed16a9 (T007) records the proof: `git diff --exit-code -- dist/` exited 0 while four `dist/<h>/skill/references/harness/zcode.md` files were untracked additions ('git status reports ?? dist/<h>/skill/references/harness/zcode.md'), yet this change states the gate catches all divergence — quickstart.md:33 'non-zero whenever source and render diverge', spec SC-003 'reports differences whenever the committed distribution and the render diverge', ADR 0005 'any divergence between source and render shows up as a dirty tree', constitution Development Workflow 'proving the committed dist/ matches its source' — and tasks.md T007 (lines 133-134) likewise claims 'the difference check reports the divergence and exits non-zero'. Every future new dist path (a new role file, a new adapter tree) reintroduces silent drift against Constitution III ('dist/ never drifts from its source') and breaks SC-003's acceptance check.",
+      "fix": "Strengthen the documented gate to cover untracked paths, e.g. `test -z \"$(git status --porcelain -- dist/)\"` or `git add -A -- dist/ && git diff --cached --exit-code -- dist/`, and record the corrected command everywhere this change states the gate (quickstart.md step 2, ADR 0005, the constitution's Development Workflow test line) and correct tasks.md T007's expectation text to match.",
+      "sources": ["STD-1", "SPEC-1"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "adapters/zcode/harness.md",
+      "line": 14,
+      "summary": "The ZCode verb table drops the canonical verb argument signatures every other adapter and core/skills/factory/references/verbs.md repeat (ENG-7 consistency with neighbouring code).",
+      "fix": "Write the first column exactly as the other adapters do — `SPAWN(role, inputs)`, `SPAWN_PARALLEL([...])`, `ASK(text, options?)`, `NOTIFY(text)`, `RESOLVE(name)`, `SHELL(cmd)` — then re-render every harness canonically and commit dist/ with the source (Constitution III).",
+      "sources": ["STD-2"]
+    }
+  ],
+  "rejected": []
+}

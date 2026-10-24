@@ -263,10 +263,50 @@
       "out_est": 250,
       "reported": null,
       "duration_ms": 125000
+    },
+    {
+      "at": "2026-10-24T02:28:49Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 1080,
+      "out_est": 405,
+      "reported": null,
+      "duration_ms": 240000
+    },
+    {
+      "at": "2026-10-24T02:28:49Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 2002,
+      "out_est": 608,
+      "reported": null,
+      "duration_ms": 270000
+    },
+    {
+      "at": "2026-10-24T02:28:49Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 4480,
+      "out_est": 608,
+      "reported": null,
+      "duration_ms": 270000
+    },
+    {
+      "at": "2026-10-24T02:28:49Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 2866,
+      "out_est": 608,
+      "reported": null,
+      "duration_ms": 150000
     }
   ],
   "review": {
-    "round": 0,
+    "round": 1,
     "fix_rounds": 0,
     "ui_diff": false,
     "ui_reviewer_skipped": false

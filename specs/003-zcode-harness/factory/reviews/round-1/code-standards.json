@@ -1,0 +1,27 @@
+{
+  "reviewer": "code-standards",
+  "round": 1,
+  "summary": "The adapter itself follows the repo's conventions and red proofs are in order, but the newly-real tracked-dist gate cannot detect untracked additions — a hole the run's own T007 commit demonstrated — and the ZCode verb table drops the canonical verb signatures every other adapter repeats.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md",
+      "line": 8,
+      "summary": "The Seam 4 gate this change makes real (`git diff --exit-code -- dist/`) does not assert the behaviour it claims: it cannot detect divergence for untracked additions, so a fresh render that adds new dist paths passes while the distribution drifts.",
+      "evidence": "Commit 4ed16a9 (T007) records the deviation: the gate 'git diff --exit-code -- dist/ exits 0 here because plain git diff reports only modifications to tracked files' while four skill-tree zcode.md files were missing from the committed tree ('git status reports ?? dist/<h>/skill/references/harness/zcode.md'). Yet this change adds the claims that the gate is an equality check: quickstart.md:33 'non-zero whenever source and render diverge', spec SC-003 'reports differences whenever the committed distribution and the render diverge', and ADR 0005 'any divergence between source and render shows up as a dirty tree' with this command as the check; the constitution's Development Workflow likewise says the command proves 'the committed dist/ matches its source'. ENG-1: the test does not assert the behaviour. Every future new dist path (a new role file or a new adapter's whole tree) reintroduces silent drift against Constitution III ('dist/ never drifts from its source').",
+      "fix": "Strengthen the documented gate to cover untracked paths, e.g. `test -z \"$(git status --porcelain -- dist/)\"` or `git add -A -- dist/ && git diff --cached --exit-code -- dist/`, and record the corrected command where this change states the gate (quickstart.md step 2, ADR 0005) and amend the constitution's Development Workflow test line to match."
+    },
+    {
+      "id": "STD-2",
+      "severity": "medium",
+      "blocking": false,
+      "file": "adapters/zcode/harness.md",
+      "line": 14,
+      "summary": "The ZCode verb table drops the canonical verb argument signatures that core/verbs.md defines and all four existing harness documents repeat in the first column.",
+      "evidence": "core/skills/factory/references/verbs.md defines `SPAWN(role, inputs)`, `SPAWN_PARALLEL([...])`, `ASK(text, options?)`, `NOTIFY(text)`, `RESOLVE(name)`, `SHELL(cmd)`; adapters/claude-code/harness.md:14-16, adapters/opencode/harness.md:14-15, adapters/copilot/harness.md:14-15 and adapters/codex/harness.md all repeat the signatures, while zcode's rows read bare `SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL` — breaking the constitution's Writing Standards 'one term for one concept everywhere' and ENG-7's consistency with neighbouring code (advisory ceiling, ADR 0004).",
+      "fix": "Write the first column exactly as the other adapters do: `SPAWN(role, inputs)`, `SPAWN_PARALLEL([...])`, `ASK(text, options?)`, `NOTIFY(text)`, `RESOLVE(name)`, `SHELL(cmd)`, then re-render every harness canonically and commit dist/ with the source (Constitution III)."
+    }
+  ]
+}
