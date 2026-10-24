@@ -208,7 +208,7 @@ invoke and agent-location details.
 
 - [X] T016 Verify FR-017: `git diff --name-only` shows no file under `core/` changed.
 
-- [ ] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end and confirm all four seams are
+- [X] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end and confirm all four seams are
       green: quickstart step 2's tracking checks still hold, full **canonical** render of every harness
       (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …`), Seam 1 (`--list` includes `zcode`), Seam 2 (`dist/zcode/`
       skill + 9 agents), Seam 3 (frontmatter assertion), and Seam 4 `git diff --exit-code -- dist/` on the
