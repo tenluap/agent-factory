@@ -10,6 +10,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | OpenCode | `./install.sh --harness opencode` | `/factory <feature>` | `~/.config/opencode/agents/factory-*.md` |
 | Codex | `./install.sh --harness codex` | `$factory <feature>` | `~/.codex/agents/factory_*.toml` |
 | GitHub Copilot (CLI, VS Code agent mode) | `./install.sh --harness copilot` | `/factory <feature>` | `~/.copilot/agents/factory-*.agent.md` |
+| ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |
 
 `./install.sh --harness all` installs every adapter. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
 
@@ -69,7 +70,7 @@ Without `--lite` / `--full`, the orchestrator judges the feature's size at the e
 - An agent harness with an adapter in `adapters/`, and Python 3 for the renderer.
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
 - Skills: `grilling`, `domain-modeling`, `pr`, in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
-- SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing.
+- SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
 - `impeccable` for UI reviews; the factory offers to install it the first time a run touches UI files.
 
 ## Layout

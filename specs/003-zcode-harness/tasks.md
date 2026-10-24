@@ -174,7 +174,7 @@ invoke and agent-location details.
 
 > No test tasks: every task below is covered by a plan exemption (documentation only).
 
-- [ ] T012 [P] [US3] `README.md`: add the harness-table row
+- [X] T012 [P] [US3] `README.md`: add the harness-table row
       ``| ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |``
       (backticked like `README.md:9-12`), and state ZCode's SpecKit setup as **its own sentence**
       after the requirement line (the "SpecKit set up for your harness" bullet) —
