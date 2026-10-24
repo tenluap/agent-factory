@@ -101,7 +101,7 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
       `Exempt: adapters/zcode/harness.md - documentation only - prose the orchestrator reads at runtime;
       its only build-time effect, being copied into every skill, is covered by Seam 2` (plan.md).
 
-- [ ] T005 [US1] Failing test for **Seam 3** (frontmatter of `dist/zcode/agents/factory-*.md`): run the
+- [X] T005 [US1] Failing test for **Seam 3** (frontmatter of `dist/zcode/agents/factory-*.md`): run the
       `python3 - <<'PY' … PY` block in quickstart.md step 3 — every file parses as YAML frontmatter with
       keys exactly `name`/`description`/`tools`, `name` equal to the filename stem, and no `<F>` left in
       the body. MUST fail now (no files to parse).
