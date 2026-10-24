@@ -106,7 +106,7 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
       keys exactly `name`/`description`/`tools`, `name` equal to the filename stem, and no `<F>` left in
       the body. MUST fail now (no files to parse).
 
-- [ ] T006 [US1] Generate the ZCode distribution: `python3 tools/render.py zcode`, confirm
+- [X] T006 [US1] Generate the ZCode distribution: `python3 tools/render.py zcode`, confirm
       `ls dist/zcode/agents | wc -l` equals `ls core/roles/*.md | wc -l` (9), re-run T005 until green. `Exempt: dist/** - generated output for every harness, produced by the render and
       guarded by Seam 4, never hand-written (the render rewrites every harness's skill tree, so the
       exemption covers all five)` (plan.md, "Test seams").
