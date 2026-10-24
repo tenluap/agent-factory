@@ -124,7 +124,7 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
 
 ### Tests for User Story 2
 
-- [ ] T007 [US2] Failing test for **Seam 2** (rendered skill content) and **Seam 4** (the tracked
+- [X] T007 [US2] Failing test for **Seam 2** (rendered skill content) and **Seam 4** (the tracked
       distribution matches a fresh render, so no harness drifts): after a full render in the canonical
       environment (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …`,
       T001), assert
