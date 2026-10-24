@@ -30,7 +30,7 @@
   },
   "commands": {
     "build": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done'",
-    "test": "git diff --exit-code -- dist/"
+    "test": "test -z \"$(git status --porcelain -- dist/)\""
   },
   "analyze": {
     "pass": 4,
@@ -303,11 +303,21 @@
       "out_est": 608,
       "reported": null,
       "duration_ms": 150000
+    },
+    {
+      "at": "2026-10-24T02:34:12Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 2799,
+      "out_est": 340,
+      "reported": null,
+      "duration_ms": 200000
     }
   ],
   "review": {
     "round": 1,
-    "fix_rounds": 0,
+    "fix_rounds": 1,
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
