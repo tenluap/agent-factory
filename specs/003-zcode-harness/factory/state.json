@@ -9,10 +9,10 @@
   "branch": "003-zcode-harness",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/003-zcode-harness",
   "spec_dir": "specs/003-zcode-harness",
-  "status": "running",
+  "status": "paused",
   "stage": "implement",
   "halt_reason": null,
-  "stop_at": "implement",
+  "stop_at": null,
   "mode": {
     "chain": "full",
     "fast": true
@@ -57,6 +57,14 @@
       "summary": "grilling round 1: 8 questions",
       "answered_at": "2026-10-24T00:19:53Z",
       "latency_ms": 203000
+    },
+    {
+      "at": "2026-10-24T01:30:09Z",
+      "kind": "notice",
+      "stage": "implement",
+      "summary": "paused before implement (--stop-at)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "ledger": [
