@@ -17,3 +17,11 @@
 | `NOTIFY` | no-op (no notification tool) |
 | `RESOLVE` | first `<name>/SKILL.md` in `<repo>/.zcode/skills/`, `<repo>/.agents/skills/`, `~/.zcode/skills/`, `~/.agents/skills/` |
 | `SHELL` | the Bash tool |
+
+## Notes
+
+- The factory's agents are Markdown files in `~/.zcode/agents/` (`factory-<role>.md`).
+- Agent models are not set by default, so every agent inherits the session's model. To pin them, set `models.zcode.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness zcode`.
+- Never invoke the `speckit-*` skills or `grill-with-docs` with the Skill tool: read the resolved file and follow it.
+- Invoke the factory as `/factory <args>`. `$ARGUMENTS` is whatever follows `/factory`.
+- Ledger (reported usage): Agent results expose no token usage — record `reported: null` and rely on the estimates.

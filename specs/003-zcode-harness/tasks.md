@@ -144,7 +144,7 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
       roots `<repo>/.zcode/skills/`, `<repo>/.agents/skills/`, `~/.zcode/skills/`, `~/.agents/skills/`
       (FR-010, research R2); `SHELL` = the Bash tool. Same exemption as T008.
 
-- [ ] T010 [US2] Add the Notes section to `adapters/zcode/harness.md` as data-model.md §2 states: agents
+- [X] T010 [US2] Add the Notes section to `adapters/zcode/harness.md` as data-model.md §2 states: agents
       in `~/.zcode/agents/factory-<role>.md`; models unpinned, pinned via `${FACTORY_HOME}/config.json`
       `models.zcode` then re-install (FR-006); never invoke `speckit-*` or `grill-with-docs` with the
       Skill tool — read the resolved file (FR-013); `$ARGUMENTS` is whatever follows `/factory` (FR-007);
