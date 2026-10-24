@@ -74,7 +74,7 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Create `adapters/zcode/adapter.json` (which creates the folder) with exactly the values
+- [X] T004 [US1] Create `adapters/zcode/adapter.json` (which creates the folder) with exactly the values
       in data-model.md §1:
       `name` `zcode`; `home` `{ "env": "ZCODE_HOME", "default": "~/.zcode" }`; `skill_dir`
       `{home}/skills/factory`; `agent_dir` `{home}/agents`; `agent_file` `factory-{role}.md`;
@@ -89,7 +89,7 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
       fails with `FileNotFoundError: adapters/zcode/harness.md`. T008 therefore follows immediately and is
       committed with T004 (plan.md, Seam 2).
 
-- [ ] T008 [US1] Create `adapters/zcode/harness.md` in the shape of `adapters/codex/harness.md`, with the
+- [X] T008 [US1] Create `adapters/zcode/harness.md` in the shape of `adapters/codex/harness.md`, with the
       header values in data-model.md §2: `name` `zcode`; `invoke` `/factory`; recognition line quoted
       verbatim — "you are ZCode (Z.ai's coding agent, desktop app or CLI): `ZCODE_HOME` is set or
       `~/.zcode` exists, and you have the Agent, Bash, Read, Edit and Skill tools." — the checkable
