@@ -1,0 +1,86 @@
+{
+  "version": 3,
+  "started_at": "2026-10-24T23:44:39Z",
+  "harness": "claude-code",
+  "feature": "Implement docs/superpowers/specs/2026-10-25-factory-skill-routing-design.md: route brainstorming, grilling, ponytail+tdd and impeccable to the right factory stage and role.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "dbce0c1b13902dc9c9705a482fc137d462a64a73",
+  "branch": "005-skill-routing",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
+  "spec_dir": "specs/005-skill-routing",
+  "status": "running",
+  "stage": "specify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md"
+  },
+  "commands": {
+    "build": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done'",
+    "test": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done' && git diff --exit-code -- dist/"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-10-24T23:45:00Z",
+      "kind": "notice",
+      "stage": "grill",
+      "summary": "preflight: dirty main + commands",
+      "answered_at": "2026-10-24T23:47:00Z",
+      "latency_ms": 120000
+    },
+    {
+      "at": "2026-10-24T23:52:00Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "grill round 1: 8 questions",
+      "answered_at": "2026-10-25T00:05:00Z",
+      "latency_ms": 780000
+    }
+  ],
+  "ledger": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-10-25T00:08:00Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T00:10:00Z",
+      "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    }
+  ]
+}
