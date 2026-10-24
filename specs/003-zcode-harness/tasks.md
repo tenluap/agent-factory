@@ -192,7 +192,7 @@ invoke and agent-location details.
       `--integration zcode --integration-options="--skills"`, research R4). No other adapter's recorded
       setup changes. `Exempt: DESIGN.md - documentation only` (plan.md).
 
-- [ ] T014 [P] [US3] `CONTEXT.md`: name ZCode in the **Harness** definition alongside the existing
+- [X] T014 [P] [US3] `CONTEXT.md`: name ZCode in the **Harness** definition alongside the existing
       harnesses. The domain-modeling step already added it, so this is a verification: confirm the line
       reads `(Claude Code, OpenCode, Codex, Copilot, ZCode)` and edit no further if it does.
       `Exempt: CONTEXT.md - documentation only` (plan.md).
