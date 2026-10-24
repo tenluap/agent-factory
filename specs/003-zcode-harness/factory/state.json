@@ -9,9 +9,9 @@
   "branch": "003-zcode-harness",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/003-zcode-harness",
   "spec_dir": "specs/003-zcode-harness",
-  "status": "running",
+  "status": "halted",
   "stage": "implement",
-  "halt_reason": null,
+  "halt_reason": "Implement spawn failed: OpenCode usage limit reached (5h window); the limit resets at 2026-10-24T13:50:51 per the harness. No agent ran. Resume the implement stage after the reset.",
   "stop_at": null,
   "mode": {
     "chain": "full",
@@ -65,6 +65,14 @@
       "summary": "paused before implement (--stop-at)",
       "answered_at": "2026-10-24T01:46:06Z",
       "latency_ms": 957000
+    },
+    {
+      "at": "2026-10-24T01:49:49Z",
+      "kind": "halt",
+      "stage": "implement",
+      "summary": "implement spawn blocked: usage limit, resets 2026-10-24T13:50:51",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "ledger": [
