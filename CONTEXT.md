@@ -21,12 +21,16 @@ One named step of the run that a role performs in a single spawn (specify, clari
 _Avoid_: step, phase, task
 
 **Harness**:
-The agent product a run executes in (Claude Code, OpenCode, Codex, Copilot).
+The agent product a run executes in (Claude Code, OpenCode, Codex, Copilot, ZCode).
 _Avoid_: platform, client, host
 
 **Adapter**:
 The per-harness translation of the neutral verbs and install locations into that harness's mechanisms.
 _Avoid_: plugin, backend
+
+**Rendered distribution**:
+The per-harness skill and agent files produced from the core and the adapters, tracked in the repository and installed from it.
+_Avoid_: build output, artifacts, dist
 
 **Relay**:
 The orchestrator carrying a role's whole question batch to the user and the answers back to a fresh agent for the same stage.

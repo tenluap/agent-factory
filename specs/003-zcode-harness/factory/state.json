@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/003-zcode-harness",
   "spec_dir": "specs/003-zcode-harness",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": "implement",
   "mode": {
@@ -112,6 +112,26 @@
       "out_est": 540,
       "reported": null,
       "duration_ms": 121166
+    },
+    {
+      "at": "2026-10-24T00:53:29Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 16200,
+      "out_est": 1215,
+      "reported": null,
+      "duration_ms": 175042
+    },
+    {
+      "at": "2026-10-24T00:55:42Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 16200,
+      "out_est": 2025,
+      "reported": null,
+      "duration_ms": 133484
     }
   ],
   "review": {
@@ -171,6 +191,13 @@
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-24T00:55:42Z",
+      "stage": "grill-with-docs",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "auto_accepted": [
@@ -225,6 +252,55 @@
           "Q3": {
             "answer": "A",
             "at": "2026-10-24T00:48:33Z",
+            "auto": true
+          }
+        }
+      }
+    },
+    {
+      "stage": "grill-with-docs",
+      "round": {
+        "questions": [
+          {
+            "id": "Q1",
+            "title": "Which harnesses' rendered distribution does this change commit? A: all five",
+            "recommended": "A"
+          },
+          {
+            "id": "Q2",
+            "title": "Extra ZCode agent metadata? A: mirror Claude Code",
+            "recommended": "A"
+          },
+          {
+            "id": "Q3",
+            "title": "UI-review provider? A: reuse codex",
+            "recommended": "A"
+          },
+          {
+            "id": "Q4",
+            "title": "Recognition vs Claude Code? A: checkable env/filesystem signal",
+            "recommended": "A"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A",
+            "at": "2026-10-24T00:53:29Z",
+            "auto": true
+          },
+          "Q2": {
+            "answer": "A",
+            "at": "2026-10-24T00:53:29Z",
+            "auto": true
+          },
+          "Q3": {
+            "answer": "A",
+            "at": "2026-10-24T00:53:29Z",
+            "auto": true
+          },
+          "Q4": {
+            "answer": "A",
+            "at": "2026-10-24T00:53:29Z",
             "auto": true
           }
         }
