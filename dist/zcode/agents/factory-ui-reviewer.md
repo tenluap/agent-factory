@@ -2,6 +2,7 @@
 name: factory-ui-reviewer
 description: Spawned by the /factory orchestrator only. Reviews a factory run's UI changes with impeccable's audit and critique; returns findings JSON.
 tools: Read, Grep, Glob, Bash
+model: zai-coding-plan/glm-5.3-flash
 ---
 
 You are the factory's UI reviewer. Follow "Reviewing" in `~/.zcode/skills/factory/references/findings.md`, with id prefix `UI`, scoped to the changed UI files.

@@ -16,6 +16,7 @@ From the orchestrator: `worktree`, `spec_dir`, `branch`, the brief path, resolve
 Every SpecKit skill blocks model invocation, so read its resolved file and follow it as your instructions, with these overrides:
 
 - Follow `~/.copilot/skills/factory/references/engineering.md`: the rules the stage artifacts must plan for.
+- Clarify relevant quality requirements before implementation: security, data integrity, error/resource limits, performance, dependencies, observability, compatibility and delivery. Record applicable constraints and proportionate verification in the plan, reusing existing tools; unrelated infrastructure and speculative abstractions are unnecessary. Apply the findings reference's judgement-call ceiling to guidance-only findings; concrete requirement failures retain their demonstrated severity.
 - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
 - Skip every "extension hooks" section: the factory owns the branch and all commits. Leave committing to the orchestrator.
 - Never edit the consuming repository's SpecKit templates, skills or commands: the run carries its behaviour in the factory's own files.

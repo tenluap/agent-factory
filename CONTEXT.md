@@ -51,7 +51,7 @@ _Avoid_: report, summary
 ## Engineering discipline
 
 **Engineering rules reference**:
-The factory's single harness-neutral statement of its coding discipline (test-first, clean code, SOLID, functional preference, reuse), pointed at by every role that writes, plans, reviews or judges code.
+The factory's single harness-neutral statement of its coding discipline: test-first delivery and proportionate practices for correctness, readability, maintainability, security and performance, pointed at by every role that writes, plans, reviews or judges code.
 _Avoid_: coding standards, style guide, TDD doc
 
 **Rule id**:
@@ -79,7 +79,7 @@ A consuming repository's own documented rule winning over a factory rule, record
 _Avoid_: exception, opt-out, local rule
 
 **Advisory finding**:
-An engineering finding resting on a judgement-call rule (`ENG-7`..`ENG-10`), rated at most MEDIUM and never blocking. A fix round driven by a verdict performs no fix work on it; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
+An engineering finding based only on a design or style judgement, including `ENG-7`..`ENG-10`, rated at most MEDIUM and never blocking. A concrete requirement or safety defect is rated by its consequence instead. A fix round driven by a verdict performs no fix work on an advisory finding; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
 _Avoid_: nit, suggestion, soft finding, warning
 
 **Verdict-driven fix round**:

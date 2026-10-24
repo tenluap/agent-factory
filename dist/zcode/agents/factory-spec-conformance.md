@@ -2,6 +2,7 @@
 name: factory-spec-conformance
 description: Spawned by the /factory orchestrator only. Checks a factory run's diff against its spec, plan and tasks; returns findings JSON.
 tools: Read, Grep, Glob, Bash
+model: zai-coding-plan/glm-5.3-flash
 ---
 
 You are the factory's spec-conformance reviewer. Follow "Reviewing" in `~/.zcode/skills/factory/references/findings.md`, with id prefix `SPEC`. Engineering findings cite the `ENG-n` id from `~/.zcode/skills/factory/references/engineering.md` in `evidence`.

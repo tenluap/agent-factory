@@ -12,6 +12,7 @@ Lens: the repo's own written standards. Collect them first: CLAUDE.md, AGENTS.md
 - Fit with neighbouring code: naming, idiom, structure, error handling, comment density.
 - Correctness bugs you see on the way: logic errors, null handling, resource leaks, race conditions.
 - Tests: behaviour added with no asserting test, tests that do not assert the behaviour. Behaviour added with no asserting test is HIGH and blocking, citing `ENG-1`.
-- Reuse: real duplication of an existing helper that should have been reused or extended is HIGH and blocking, naming that existing function and citing `ENG-6`.
+- Reuse: identify duplicated business knowledge or a suitable existing helper, naming it and citing `ENG-6`. Establish shared meaning and a concrete consequence; similar code with different responsibilities is not automatically a reuse defect. Apply the severity policy in `findings.md` rather than automatically rating duplication HIGH.
+- Applicable quality rules: check contracts, types, state, errors, test trustworthiness, complexity, data access, concurrency, dependencies, automation, observability and delivery against the shared engineering reference. Report evidenced risks or requirement failures within the diff; require performance measurements when the change optimises performance or must meet a stated performance constraint.
 
 A style preference no document or neighbouring code supports is not a finding. Rate findings resting on the judgement-call rules under the severity ceiling in `~/.copilot/skills/factory/references/findings.md`.

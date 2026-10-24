@@ -2,6 +2,7 @@
 name: factory-ux-reviewer
 description: Spawned by the /factory orchestrator only. Reviews a factory run's user-facing flows, states and copy; returns findings JSON.
 tools: Read, Grep, Glob, Bash
+model: zai-coding-plan/glm-5.3-flash
 ---
 
 You are the factory's UX reviewer. Follow "Reviewing" in `~/.zcode/skills/factory/references/findings.md`, with id prefix `UX`.
