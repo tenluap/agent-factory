@@ -8,6 +8,15 @@
 
 **Input**: User description: "add zcode harness to the software factory"
 
+## Clarifications
+
+### Session 2026-10-24
+
+- Q: Which skill locations does ZCode actually read, for FR-010? → A: Only the ZCode and shared-agent skill roots, project before user; the Claude roots are not read (verified against ZCode 3.16.3; FR-010 and the matching edge case corrected).
+- Q: How should the build prove that the committed distribution matches a fresh render? → A: Stop ignoring the distribution directory and commit it, so a plain difference check against the committed distribution after a render is a gate that can fail (FR-015, SC-003, SC-006).
+- Q: How far should the design record's spec-kit setup line change? → A: Generalise that one line so each adapter states its own setup arguments; no other adapter's recorded setup is corrected in this feature (FR-016).
+- Q: How should cross-harness resume be verified? → A: Add an explicit manual resume check in both directions to the feature's validation (SC-005).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Install the factory into ZCode (Priority: P1)
@@ -63,7 +72,7 @@ A prospective user reads the repository's documentation and learns that ZCode is
 ### Edge Cases
 
 - The ZCode home environment variable is unset: the default ZCode home is used.
-- A skill name exists in several readable locations: the first match in the documented order wins, and no second copy is consulted.
+- A skill name exists in several readable locations: the first match in the documented order (project ZCode skills, project shared agent skills, user ZCode skills, user shared agent skills) wins, and no second copy is consulted.
 - A subagent result carries no usage figures: the run's cost ledger records the usage as unreported and relies on its estimates, without failing the stage.
 - The project does not use ZCode's own skill folder but does carry the shared agent skills folder: resolution still finds the skill.
 - Automatic harness recognition is ambiguous: the user forces the adapter through the existing harness override variable.
@@ -82,14 +91,15 @@ A prospective user reads the repository's documentation and learns that ZCode is
 - **FR-007**: The harness document MUST state how the user starts a run in ZCode and how the run's arguments are supplied.
 - **FR-008**: The harness document MUST state how the user is asked questions: the factory's Markdown layout for grilling and relay rounds, the harness's question facility for other choice questions, and a plain message for free-text questions.
 - **FR-009**: The harness document MUST record that notification is unavailable on ZCode and is therefore a no-op for the run.
-- **FR-010**: The harness document MUST define skill resolution for ZCode as the first match over the project's ZCode skills, the project's shared agent skills, the project's Claude skills, then the same three under the user's home, in that order.
+- **FR-010**: The harness document MUST define skill resolution for ZCode as the first match over the project's ZCode skills, the project's shared agent skills, then the same two under the user's home, in that order. Claude-only skill locations are not part of the order: ZCode does not read them.
 - **FR-011**: The harness document MUST state the spec-kit initialisation arguments for ZCode, so the spec-kit skills land in a location ZCode reads.
 - **FR-012**: The harness document MUST state the recognition line by which a session identifies itself as ZCode, and the UI-review provider identifier for ZCode.
 - **FR-013**: The harness document MUST forbid invoking the spec-chain and doc-grilling skills through the harness's skill facility, requiring the resolved file to be read and followed instead.
 - **FR-014**: The harness document MUST record that subagent results expose no token usage, so the ledger records usage as unreported.
 - **FR-015**: Building the distribution MUST render ZCode alongside every existing harness, producing the ZCode skill and role agent files without altering any other harness's output.
-- **FR-016**: The repository documentation MUST present ZCode as a supported harness: the harness table (install command, start command, agent install location), the ZCode requirements, the design record's list of adapters, and the domain definition of a harness.
+- **FR-016**: The repository documentation MUST present ZCode as a supported harness: the harness table (install command, start command, agent install location), the ZCode requirements, the design record's list of adapters, and the domain definition of a harness. The design record's spec-kit setup line MUST be generalised to state that each adapter declares its own setup arguments; no other adapter's recorded setup is changed in this feature.
 - **FR-017**: No file in the harness-neutral core may be changed to name ZCode; all ZCode-specific behaviour lives in the ZCode adapter.
+- **FR-018**: The rendered distribution MUST be tracked in version control and committed with its source: the repository MUST stop excluding the distribution directory, so that comparing the working tree with the committed distribution after a fresh render is a check that can fail when the two diverge.
 
 ### Key Entities
 
@@ -103,15 +113,15 @@ A prospective user reads the repository's documentation and learns that ZCode is
 
 - **SC-001**: A ZCode user installs the factory with a single documented command and starts a run in a new session without editing any file by hand.
 - **SC-002**: Every factory role is available as a ZCode subagent after install: the count of installed role agents equals the number of roles the factory defines.
-- **SC-003**: A build renders all harnesses, including ZCode, with zero differences between the committed distribution and a fresh render.
+- **SC-003**: A build renders all harnesses, including ZCode, and a difference check of the tracked distribution against that fresh render reports zero differences — a check that reports differences whenever the committed distribution and the render diverge.
 - **SC-004**: 100% of the rendered ZCode agent files carry metadata ZCode accepts, with no file rejected at load.
-- **SC-005**: A run begun in ZCode can be resumed on another supported harness, and a run begun elsewhere can be resumed in ZCode, with no loss of recorded progress.
-- **SC-006**: Adding ZCode changes no behaviour of any existing harness: existing harness outputs are unchanged apart from additions required by shared documentation.
+- **SC-005**: A run begun in ZCode can be resumed on another supported harness, and a run begun elsewhere can be resumed in ZCode, with no loss of recorded progress — verified by a manual resume check performed in both directions.
+- **SC-006**: Adding ZCode changes no behaviour of any existing harness: after a fresh render, the tracked distribution for every existing harness differs only by the additions required by shared documentation, and the difference check of SC-003 reports a clean tree.
 
 ## Assumptions
 
-- ZCode's subagent, skill, shell, read and edit facilities behave as described in the feature brief (desktop app 3.16.x and its bundled CLI); the exact spec-kit initialisation flag is verified during planning.
+- ZCode's subagent, skill, shell, read and edit facilities behave as described in the feature brief (desktop app 3.16.x and its bundled CLI); the spec-kit initialisation arguments were verified during planning against the installed spec-kit CLI, which offers a native ZCode integration rather than the flag shape the brief assumed.
 - ZCode reads custom agent definitions with the same frontmatter conventions as the existing Markdown-agent harnesses, so the existing renderer shape suffices.
 - The run's base is the local default branch, because the remote is unreachable at run start.
-- The UI-review provider identifier for ZCode is confirmed against the review tool's own help output before it is relied on.
+- ZCode has no UI-review provider of its own; the provider identifier used for it was confirmed against the review tool's own help output during planning.
 - No change to the factory flow, roles, protocol or state model is in scope: this feature adds an adapter and the documentation that announces it.
