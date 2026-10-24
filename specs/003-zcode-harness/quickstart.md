@@ -13,11 +13,14 @@ python3 tools/render.py zcode                  # expect: unknown harness 'zcode'
 
 The render is environment-dependent: `tools/render.py` substitutes each adapter's resolved `{home}` into
 every agent body and merges `${FACTORY_HOME}/config.json` model overrides into the frontmatter. The
-committed distribution is therefore always produced with those variables unset — the **canonical render
-environment** (FR-018). Define it once:
+committed distribution is therefore always produced with every harness home variable unset *and*
+`FACTORY_HOME` pointed at a path that holds no `config.json` — the **canonical render environment**
+(FR-018). Unsetting `FACTORY_HOME` is not enough: the renderer falls back to `~/.factory/config.json`,
+which most contributors have, and still merges `models.<harness>` into the frontmatter. Define the
+wrapper once, and quote it identically everywhere:
 
 ```bash
-CANON='env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME'
+CANON='env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent'
 RENDER='for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done'
 
 grep -c '^/dist/$' .gitignore                  # expect: 0 — the ignore line is removed (FR-018)
@@ -30,8 +33,8 @@ $CANON sh -c "$RENDER"
 git diff --exit-code -- dist/                  # expect: clean; non-zero whenever source and render diverge
 ```
 
-Without `$CANON`, a contributor who has `XDG_CONFIG_HOME`, `CLAUDE_HOME`, `CODEX_HOME`, `ZCODE_HOME` or a
-`models.<harness>` override set rewrites paths and frontmatter in the rendered tree, and the gate fails
+Without `$CANON`, a contributor who has `XDG_CONFIG_HOME`, `CLAUDE_HOME`, `CODEX_HOME`, `COPILOT_HOME`,
+`ZCODE_HOME` or a `models.<harness>` override set rewrites paths and frontmatter in the rendered tree, and the gate fails
 spuriously. Recover with `git checkout -- dist/` and re-render canonically.
 
 `--list` must now include `zcode` (Seam 1) and `dist/zcode/` must exist (Seam 2).

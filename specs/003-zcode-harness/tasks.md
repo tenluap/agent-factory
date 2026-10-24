@@ -28,7 +28,7 @@ paths are relative to the repository root.
 - [ ] T001 Make the rendered distribution tracked (FR-018, ADR 0005, quickstart step 2): remove the
       `/dist/` line from `.gitignore`, run the full render **in the canonical render environment**
       (FR-018; plan.md, "Canonical render environment"):
-      `env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME sh -c 'for h in
+      `env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in
       $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done'`, then
       `git add dist/` and commit **all five** rendered trees (`dist/claude-code/`, `dist/codex/`,
       `dist/copilot/`, `dist/opencode/`, and `dist/zcode/` once T004 exists — at this point the four
@@ -126,7 +126,7 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
 
 - [ ] T007 [US2] Failing test for **Seam 2** (rendered skill content) and **Seam 4** (the tracked
       distribution matches a fresh render, so no harness drifts): after a full render in the canonical
-      environment (`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME …`,
+      environment (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …`,
       T001), assert
       `references/harness/zcode.md` exists under `dist/<h>/skill/` for every `h` in
       `python3 tools/render.py --list`, then run `git diff --exit-code -- dist/` against the tree T001
@@ -151,12 +151,12 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
       ledger `reported: null`, Agent results expose no token usage (FR-014). Same exemption as T008.
 
 - [ ] T011 [US2] Re-render every harness in the canonical environment and commit the result:
-      `env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME sh -c 'for h in
+      `env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in
       $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done'`, then
       `git add dist/` and commit all five trees (each now carries `references/harness/zcode.md`), then
       re-run the Seam 4 gate `git diff --exit-code -- dist/` on a clean tree: it must exit 0 because the
       committed distribution equals the fresh canonical render (Constitution III, FR-015, FR-018, SC-003,
-      SC-006). If an earlier local render or install ran with a harness home or `FACTORY_HOME` set, run
+      SC-006). If an earlier local render or install ran outside the canonical environment, run
       `git checkout -- dist/` and re-render canonically first. Turns T007 green. `Exempt: dist/** - generated output for every harness, produced by the render and guarded by
       Seam 4, never hand-written (the render rewrites every harness's skill tree, so the exemption covers
       all five)` (plan.md, "Test seams").
@@ -177,7 +177,7 @@ invoke and agent-location details.
 - [ ] T012 [P] [US3] `README.md`: add the harness-table row
       `| ZCode | ./install.sh --harness zcode | /factory <feature> | ~/.zcode/agents/factory-*.md |`, and
       state ZCode's SpecKit setup as **its own sentence** after the existing requirement line
-      (`README.md:72`) — "For ZCode: `specify init --here --integration zcode
+      (`README.md:71`, the "SpecKit set up" bullet) — "For ZCode: `specify init --here --integration zcode
       --integration-options="--skills"`" (research R4) — **not** as another value of that line's
       `--ai <...>` enumeration, a flag family specify-cli 1.1.0 no longer has. Note, as research R4 does,
       that the other harnesses' recorded form is out of scope here (FR-016).
@@ -208,9 +208,8 @@ invoke and agent-location details.
 - [ ] T016 Verify FR-017: `git diff --name-only` shows no file under `core/` changed.
 
 - [ ] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end and confirm all four seams are
-      green: `grep -c '^/dist/$' .gitignore` is 0 and `git ls-files dist/ | wc -l` > 0 (T001's tracking
-      holds), full **canonical** render of every harness
-      (`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME …`), Seam 1 (`--list` includes `zcode`), Seam 2 (`dist/zcode/`
+      green: quickstart step 2's tracking checks still hold, full **canonical** render of every harness
+      (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …`), Seam 1 (`--list` includes `zcode`), Seam 2 (`dist/zcode/`
       skill + 9 agents), Seam 3 (frontmatter assertion), and Seam 4 `git diff --exit-code -- dist/` on the
       tracked tree exiting 0. Also check the environment sensitivity: a *non-canonical* render (with
       `XDG_CONFIG_HOME` set) dirties `dist/`, and `git checkout -- dist/` restores a clean gate.
@@ -265,8 +264,8 @@ verbs and notes) → US3 (documentation) → polish. Each phase ends green with 
 - Never edit `dist/` by hand (Constitution III); always regenerate and commit with the source. From T001
   on, `dist/` is tracked (FR-018, ADR 0005), so `git diff --exit-code -- dist/` is a gate that fails.
 - Every render whose result is committed, and every run of the Seam 4 gate, is wrapped in
-  `env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME` (plan.md,
-  "Canonical render environment"). Any render or `install.sh` run with those set rewrites the tracked tree
+  `env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent` (plan.md,
+  "Canonical render environment"). Any non-canonical render or `install.sh` run rewrites the tracked tree
   and is undone with `git checkout -- dist/`.
 - Total tasks: 17 (T001-T018, T015 removed; T008 runs in Phase 3).
 - No file under `core/` may name ZCode (FR-017, Constitution II).

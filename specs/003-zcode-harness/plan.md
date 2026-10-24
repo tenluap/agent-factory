@@ -43,9 +43,16 @@ output must be unchanged apart from the new `references/harness/zcode.md` the sh
 environment variable and merges `${FACTORY_HOME}/config.json` model overrides into the frontmatter, so the
 output is environment-dependent. Every render whose result is committed, and every run of the Seam 4 gate,
 is therefore wrapped in
-`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME …` (FR-018). A local
-render or install with any of those set (for example the `ZCODE_HOME=/tmp/zc` override check) rewrites the
-tracked tree and must be followed by `git checkout -- dist/` or a canonical re-render.
+`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …` (FR-018).
+This is **the** wrapper: every command in tasks.md and quickstart.md quotes it character for character.
+Two details are load-bearing. `COPILOT_HOME` is in the list because `adapters/copilot/adapter.json`
+resolves `{home}` from it (default `~/.copilot`), so a contributor with it set rewrites every
+`dist/copilot/agents/factory-*.agent.md` body. And `FACTORY_HOME` is **pointed at a path with no
+`config.json`, not unset**: `tools/render.py` reads `os.environ.get("FACTORY_HOME", "~/.factory")`, so
+unsetting it falls back to `~/.factory/config.json` — which exists on most contributors' machines — and
+still merges `models.<harness>` into the frontmatter. A local render or install outside this environment
+(for example the `ZCODE_HOME=/tmp/zc` override check) rewrites the tracked tree and must be followed by
+`git checkout -- dist/` or a canonical re-render.
 
 **Scale/Scope**: one adapter folder (2 files), five rendered distributions first brought under version
 control (ZCode's 9 role agents + skill tree, plus the four existing harnesses' trees), `.gitignore` and
@@ -145,11 +152,12 @@ Seams put under test - the public seam of this change is the renderer's output f
   carrying exactly `name`, `description` and `tools` and no other key (FR-004), with the role's access
   list. Asserted over a canonical render: a `models.zcode` override in `${FACTORY_HOME}/config.json` would
   add a `model:` key and break the exact key-set assertion, which is one more reason the committed render
-  unsets `FACTORY_HOME`. Red before the adapter exists (no files to parse).
+  points `FACTORY_HOME` at a configuration-free path. Red before the adapter exists (no files to parse).
 - **Seam 4 - canonical render of every harness, then `git diff --exit-code -- dist/`**: the repository's own
   test, made real by FR-018. Every render in this seam runs in the canonical environment above
-  (`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME` around the render
-  loop); without it a contributor with any of those set sees spurious differences, because the rendered
+  (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent` around the render
+  loop); without it a contributor with any harness home variable set, or any `models.<harness>` entry in
+  their own factory config, sees spurious differences, because the rendered
   skill paths and any `models.<harness>` override are substituted into the output. The order is: remove
   `/dist/` from `.gitignore`, `git add dist/` and commit the current canonical
   render of all five harnesses, then re-render canonically and run the check. Because `dist/` is tracked, the command
