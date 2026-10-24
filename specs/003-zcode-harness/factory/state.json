@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/003-zcode-harness",
   "spec_dir": "specs/003-zcode-harness",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": "implement",
   "mode": {
@@ -60,6 +60,16 @@
       "out_est": 2632,
       "reported": null,
       "duration_ms": 123515
+    },
+    {
+      "at": "2026-10-24T00:40:47Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 5843,
+      "out_est": 3324,
+      "reported": null,
+      "duration_ms": 397700
     }
   ],
   "review": {
@@ -88,6 +98,13 @@
     {
       "at": "2026-10-24T00:34:10Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-24T00:40:47Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
