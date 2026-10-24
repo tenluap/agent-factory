@@ -216,7 +216,7 @@ invoke and agent-location details.
       `XDG_CONFIG_HOME` set) dirties `dist/`, and `git checkout -- dist/` restores a clean gate.
       Re-confirm Seam 4 can still fail by repeating T002's red proof.
 
-- [ ] T018 Manual validation (SC-001, SC-002, SC-004, SC-005): `./install.sh --harness zcode`, check
+- [X] T018 Manual validation (SC-001, SC-002, SC-004, SC-005): `./install.sh --harness zcode`, check
       `~/.zcode/skills/factory` and `~/.zcode/agents/factory-*.md`, repeat with
       `ZCODE_HOME=/tmp/zc` for the env override. **`install.sh` renders, so each install rewrites the
       tracked `dist/` tree**: after each one run `git checkout -- dist/` and confirm
