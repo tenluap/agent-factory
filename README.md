@@ -31,32 +31,37 @@ Only Claude Code pins agent models by default; on the other harnesses agents use
 Start a run from the repo you want the feature built in. On Claude Code, OpenCode and Copilot the skill is `/factory`; on Codex it is `$factory`.
 
 ```
-/factory                          list unfinished runs; pick one to resume, or start a new run
-/factory resume <branch>          resume that run from where it stopped (any session, any harness)
-/factory <feature description>    start a new run
+/factory                                      list unfinished runs; pick one to resume, or start a new run
+/factory resume <branch>                      resume that run from where it stopped (any session, any harness)
+/factory <feature description>                start a new run — lite chain and fast mode by default
+/factory <feature> --full                     start on the full chain instead
+/factory <feature> --no-fast                  ask every relay question instead of auto-accepting
+/factory <feature> --stop-at review           pause cleanly before the review stage
+/factory resume <branch> --full --no-fast     resume, switching mode before the stage restarts
 ```
 
 A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage, so a run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even from a different harness or machine that shares `${FACTORY_HOME}`.
 
 ### Flags
 
-Flags follow the feature description or `resume <branch>` and may combine:
+Flags follow the feature description or `resume <branch>` and may combine; when both flags of a pair appear, the last one wins:
 
 | Flag | Effect |
 |---|---|
-| `--stop-at <stage>` | Pause the run cleanly before that stage and end the turn; resume later. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. |
-| `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. The two interactive spec stages (clarify, grill-with-docs) are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates the run to the full chain automatically. |
+| `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. The two interactive spec stages (clarify, grill-with-docs) are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates the run to the full chain automatically. **This is the default.** |
 | `--full` | Pin the **full chain**: specify → clarify → grill-with-docs → plan → tasks → analyze, with the analyze loop (max 2). |
-| `--fast` | Auto-accept every in-stage question round with the agent's recommended answer. Each accept is logged; the approver screen lists them all for veto before you approve. Never automated: questions a remediation defers to you (it would overturn one of your decisions), and every halt — loop exhaustion, red build, agent failure. Grilling at the top is always with you. |
+| `--fast` | Relay rounds auto-accept the agent's recommended answer. Each accept is logged; the approver screen lists them all for veto before you approve. Never automated: questions a remediation defers to you (it would overturn one of your decisions), and every halt — loop exhaustion, red build, agent failure. Grilling at the top is always with you. **This is the default.** |
+| `--no-fast` | Turn fast mode off: every relay round reaches you for an answer. |
+| `--stop-at <stage>` | Pause the run cleanly before that stage and end the turn; resume later. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. |
 
-Without `--lite` / `--full`, the orchestrator judges the feature's size at the end of grilling, states which chain it picked in its closing summary, and your confirmation covers it — object once to flip it.
+The defaults are `--lite --fast`: a run with no flags uses the lite chain and auto-accepts relay rounds. Grilling's closing summary names the chain in effect and your confirmation covers it — object once to flip it to `full`. Flags also work on `resume <branch>` and update the run before the stage restarts; a `--stop-at` stage the chain skips (say `clarify` on a lite run that never escalates) simply never triggers.
 
 ### What the run asks of you
 
 - **Grilling** at the start: a relentless interview until you confirm shared understanding. The chain choice is settled here. Grilling and relays share the same emoji-rich chat layout: 🧭 round progress, lettered options with descriptions, ✨ AI suggested markers, and 💡 suggested answers with a rationale and reply shortcut.
-- **Relays**: each round shows the whole frontier of questions whose prerequisites are settled; dependent questions wait for later rounds. Reply `Q7: B`, `Q7: <your answer>`, or `Q7: accept`; bare `accept` takes only unanswered suggestions and preserves your explicit answers. Choice questions include 💬 Something else; open-ended questions accept free text. Under `--fast`, eligible relay questions auto-accept; remediation questions still reach you. Existing saved runs use the new layout with their answers and IDs preserved.
+- **Relays**: each round shows the whole frontier of questions whose prerequisites are settled; dependent questions wait for later rounds. Reply `Q7: B`, `Q7: <your answer>`, or `Q7: accept`; bare `accept` takes only unanswered suggestions and preserves your explicit answers. Choice questions include 💬 Something else; open-ended questions accept free text. Under fast mode (the default; `--no-fast` turns it off), eligible relay questions auto-accept; remediation questions still reach you. Existing saved runs use the new layout with their answers and IDs preserved.
 - **Halts**: trouble always reaches you — CRITICAL/HIGH findings left after 2 loop passes, a build that stays red, an agent that fails twice. Your answer resumes, redirects, or aborts.
-- **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, remaining advisory findings, and (under `--fast`) the auto-accepted answers. Approve opens the PR; request changes sends it back through a fix round; abort keeps the worktree.
+- **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, remaining advisory findings, and (with fast mode on) the auto-accepted answers. Approve opens the PR; request changes sends it back through a fix round; abort keeps the worktree.
 
 ### Environment
 
@@ -67,7 +72,7 @@ Without `--lite` / `--full`, the orchestrator judges the feature's size at the e
 
 ## Requirements
 
-- An agent harness with an adapter in `adapters/`, and Python 3 for the renderer.
+- An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
 - Skills: `grilling`, `domain-modeling`, `pr`, in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
 - SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
@@ -77,6 +82,7 @@ Without `--lite` / `--full`, the orchestrator judges the feature's size at the e
 
 - `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
+- `core/skills/factory/bin/factory`: read-only state CLI (`runs`, `show`); the orchestrator lists unfinished runs and builds resume digests with it instead of reading whole `state.json` files into context.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
 - `core/roles/`: spec-builder, code-build, five reviewers, review-judge, fixer, with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
