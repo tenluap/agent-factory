@@ -9,18 +9,30 @@ python3 tools/render.py --list                 # expect: no zcode line
 python3 tools/render.py zcode                  # expect: unknown harness 'zcode'
 ```
 
-## 2. Track dist/, build every harness, then gate
+## 2. Track dist/, build every harness canonically, then gate
+
+The render is environment-dependent: `tools/render.py` substitutes each adapter's resolved `{home}` into
+every agent body and merges `${FACTORY_HOME}/config.json` model overrides into the frontmatter. The
+committed distribution is therefore always produced with those variables unset — the **canonical render
+environment** (FR-018). Define it once:
 
 ```bash
+CANON='env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME'
+RENDER='for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done'
+
 grep -c '^/dist/$' .gitignore                  # expect: 0 — the ignore line is removed (FR-018)
-for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done
+$CANON sh -c "$RENDER"
 git add dist/ && git commit -m "render all five harnesses"
 git ls-files dist/ | wc -l                     # expect: > 0 — the distribution is tracked
 
 # the gate, run after any later render:
-for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done
+$CANON sh -c "$RENDER"
 git diff --exit-code -- dist/                  # expect: clean; non-zero whenever source and render diverge
 ```
+
+Without `$CANON`, a contributor who has `XDG_CONFIG_HOME`, `CLAUDE_HOME`, `CODEX_HOME`, `ZCODE_HOME` or a
+`models.<harness>` override set rewrites paths and frontmatter in the rendered tree, and the gate fails
+spuriously. Recover with `git checkout -- dist/` and re-render canonically.
 
 `--list` must now include `zcode` (Seam 1) and `dist/zcode/` must exist (Seam 2).
 
@@ -51,10 +63,16 @@ That block is Seam 3; step 2's `git diff --exit-code -- dist/` is Seam 4 (no oth
 
 ## 4. Install and run in ZCode (manual, SC-001/SC-002)
 
+`install.sh` renders before it installs, so each command below rewrites the tracked `dist/` tree with
+environment-dependent paths. Restore the canonical render after every one of them:
+
 ```bash
 ./install.sh --harness zcode
 ls ~/.zcode/skills/factory ~/.zcode/agents/factory-*.md
+git checkout -- dist/ && git diff --exit-code -- dist/        # back to the canonical render
+
 ZCODE_HOME=/tmp/zc ./install.sh --harness zcode && ls /tmp/zc/agents   # env override
+git checkout -- dist/ && git diff --exit-code -- dist/        # expect: clean again (FR-018)
 ```
 
 Start a fresh ZCode session in a target repository and run `/factory <feature>`. Expect: preflight

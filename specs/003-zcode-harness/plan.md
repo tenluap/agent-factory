@@ -26,9 +26,9 @@ Bash for `install.sh`. No code change to either.
 
 **Storage**: files only - `adapters/zcode/`, generated and now tracked `dist/` (all five harnesses).
 
-**Testing**: the repository's documented build and test commands: `python3 tools/render.py <harness>` for
-every harness, then `git diff --exit-code -- dist/` against the tracked distribution; plus a frontmatter
-parse check over `dist/zcode/agents/*.md`.
+**Testing**: the repository's documented build and test commands, run in the canonical render environment
+below: `python3 tools/render.py <harness>` for every harness, then `git diff --exit-code -- dist/` against
+the tracked distribution; plus a frontmatter parse check over `dist/zcode/agents/*.md`.
 
 **Target Platform**: developer machines running any supported harness; the rendered output targets ZCode.
 
@@ -39,6 +39,13 @@ parse check over `dist/zcode/agents/*.md`.
 **Constraints**: `core/` stays harness-neutral; `dist/` is generated and committed in the same change as its
 source, and must be tracked (not ignored) for the commit and the difference check to work; other harnesses'
 output must be unchanged apart from the new `references/harness/zcode.md` the shared skill carries.
+**Canonical render environment**: `tools/render.py` resolves each adapter's `{home}` from its home
+environment variable and merges `${FACTORY_HOME}/config.json` model overrides into the frontmatter, so the
+output is environment-dependent. Every render whose result is committed, and every run of the Seam 4 gate,
+is therefore wrapped in
+`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME …` (FR-018). A local
+render or install with any of those set (for example the `ZCODE_HOME=/tmp/zc` override check) rewrites the
+tracked tree and must be followed by `git checkout -- dist/` or a canonical re-render.
 
 **Scale/Scope**: one adapter folder (2 files), five rendered distributions first brought under version
 control (ZCode's 9 role agents + skill tree, plus the four existing harnesses' trees), `.gitignore` and
@@ -129,14 +136,23 @@ Seams put under test - the public seam of this change is the renderer's output f
   `adapters/zcode/adapter.json` exists.
 - **Seam 2 - `python3 tools/render.py zcode`**: exits 0 and produces `dist/zcode/skill/` plus one
   `dist/zcode/agents/factory-<role>.md` for every file in `core/roles/` (9). Red before the adapter exists
-  (`unknown harness 'zcode'`).
+  (`unknown harness 'zcode'`). **Both adapter files are written together**: `known()` counts any folder
+  holding `adapter.json`, and `render()` copies *every* known adapter's `harness.md` into *every* harness's
+  skill tree, so an `adapters/zcode/adapter.json` without `adapters/zcode/harness.md` makes every
+  harness's render fail with `FileNotFoundError`. Seam 2 goes green only once both files exist, and no
+  ordered step may leave the folder half-built (tasks.md, Phase 3).
 - **Seam 3 - frontmatter of `dist/zcode/agents/factory-*.md`**: every file has parseable YAML frontmatter
   carrying exactly `name`, `description` and `tools` and no other key (FR-004), with the role's access
-  list. Red before the adapter exists
-  (no files to parse).
-- **Seam 4 - render every harness, then `git diff --exit-code -- dist/`**: the repository's own test, made
-  real by FR-018. The order is: remove `/dist/` from `.gitignore`, `git add dist/` and commit the current
-  render of all five harnesses, then re-render and run the check. Because `dist/` is tracked, the command
+  list. Asserted over a canonical render: a `models.zcode` override in `${FACTORY_HOME}/config.json` would
+  add a `model:` key and break the exact key-set assertion, which is one more reason the committed render
+  unsets `FACTORY_HOME`. Red before the adapter exists (no files to parse).
+- **Seam 4 - canonical render of every harness, then `git diff --exit-code -- dist/`**: the repository's own
+  test, made real by FR-018. Every render in this seam runs in the canonical environment above
+  (`env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME` around the render
+  loop); without it a contributor with any of those set sees spurious differences, because the rendered
+  skill paths and any `models.<harness>` override are substituted into the output. The order is: remove
+  `/dist/` from `.gitignore`, `git add dist/` and commit the current canonical
+  render of all five harnesses, then re-render canonically and run the check. Because `dist/` is tracked, the command
   reports every divergence between the committed distribution and a fresh render and exits non-zero
   (SC-003, SC-006). Red proof: with the adapter built but `dist/` not re-rendered and re-committed (for
   example after editing `adapters/zcode/harness.md`, which every harness's skill copies), the same command
@@ -176,6 +192,11 @@ Exemptions (documentation, configuration or generated output only):
 - `abstraction - none - the existing Markdown agent format, fields, access and models mechanisms cover
   ZCode unchanged.`
 - `dependency - none.`
+
+Note: `docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md` and the ZCode line in `CONTEXT.md`
+were already written on this branch by the domain-modeling step, so no task creates them — T001 implements
+the ADR's decision and T014 verifies the `CONTEXT.md` line (tasks.md, Notes). They are listed here because
+they are outputs of this change, not because they are still to be written.
 
 ## Phase 1 outputs
 
