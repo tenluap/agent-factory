@@ -138,7 +138,7 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
 > T008 has moved into **Phase 3** beside T004 (analyze-2 B1): `adapter.json` without `harness.md` breaks
 > every harness's render. Its ID is unchanged; T009-T010 add the rest of that same file.
 
-- [ ] T009 [US2] Add the verb table to `adapters/zcode/harness.md` **exactly as data-model.md §2 states**,
+- [X] T009 [US2] Add the verb table to `adapters/zcode/harness.md` **exactly as data-model.md §2 states**,
       row for row: `SPAWN` and `SPAWN_PARALLEL` via the Agent tool with `subagent_type: factory-<role>`
       (FR-002); `ASK` (FR-008); `NOTIFY` = no-op (FR-009); `RESOLVE` = first `<name>/SKILL.md` in the four
       roots `<repo>/.zcode/skills/`, `<repo>/.agents/skills/`, `~/.zcode/skills/`, `~/.agents/skills/`
