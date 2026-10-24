@@ -2,7 +2,7 @@
 name: factory
 description: Software factory orchestrator. Takes a feature from grilling through SpecKit, implementation, parallel reviews and your approval to a PR. Resumable.
 disable-model-invocation: true
-argument-hint: "[feature description | resume <branch>] [--stop-at <stage>]"
+argument-hint: "[<feature description> | resume <branch>] [--lite | --full] [--fast | --no-fast] [--stop-at <stage>]"
 metadata:
   opencode/slash: "true"
   opencode/autoinvoke: "false"
@@ -23,11 +23,17 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 
 ## 0. Route
 
-- `$ARGUMENTS` empty: list unfinished runs (state.md, "Discovery"). Offer each as a resume option plus "start a new run". No runs: ask for the feature.
-- `resume <branch>`: resume that run (state.md, "Resume").
+- `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
+- `resume <branch>`: `SHELL: python3 <F>/bin/factory show <branch-or-name>` (state.md, "CLI"), then resume that run from the digest (state.md, "Resume").
 - Anything else: the feature description of a new run. Go to step 1.
 
-`--stop-at <stage>` may follow either form, as may `--fast` (relays auto-accept their recommended answers) and `--lite` / `--full` (pin the spec chain; DESIGN.md, "Modes"). Record `stop_at` in state (stop point, under Policies) and `mode` in state (state.md). Valid stop stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`.
+Flags are recognised wherever they appear in `$ARGUMENTS`, on either form, and may combine:
+
+- `--lite` / `--full`: pin the spec chain (step 4, "Stage order"). The last one wins.
+- `--fast` / `--no-fast`: whether relay rounds auto-accept their recommended answers. The last one wins.
+- `--stop-at <stage>`: pause the run cleanly before that stage (Policies, "Stop point"). Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`.
+
+The **default mode** is `lite` chain with `fast` on: wherever a flag did not pin it, that is what the run uses. Strip the flags from `$ARGUMENTS` before routing; flags alone (no feature text, no `resume`) route as empty `$ARGUMENTS`. On a new run record `stop_at` and `mode` in state (state.md) at creation; on a resume the flags update the same fields before the stage restarts. An unknown flag or a `--stop-at` value outside the list is never silently ignored: name it and ask the user to correct it or drop it.
 
 ## 1. Preflight
 
@@ -41,7 +47,7 @@ Done when every skill path and both commands are recorded in the pending state (
 
 ## 2. Grill
 
-Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive under `--fast`. Done when the frontier is empty and the user confirms shared understanding. Unless a flag pinned the chain, settle it here: state which chain the feature's size calls for (`lite` or `full`) in your closing summary — the user's confirmation covers it, an objection flips it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet, with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (chain, `fast` from the flags) and checkpoint the pending state with `stage: worktree`.
+Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive whatever the mode. Done when the frontier is empty and the user confirms shared understanding. Name the chain in effect in your closing summary — the user's confirmation covers it, an objection flips it. The chain is `lite` unless a flag pinned it; recommend `full` in the summary when the feature's size calls for it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet, with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (the settled chain and `fast`) and checkpoint the pending state with `stage: worktree`.
 
 ## 3. Worktree
 
@@ -59,11 +65,7 @@ Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, 
 - `done`: checkpoint (state.md), then spawn the next stage.
 - `failed`: failure policy (below).
 
-Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have). Each spawn ends with an envelope (protocol.md):
-
-- `needs_input`: run the relay (protocol.md); it spawns a fresh spec-builder for the same stage once every question is answered.
-- `done`: checkpoint (state.md), then spawn the next stage.
-- `failed`: failure policy (below).
+Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have).
 
 After `analyze`, read the severity counts in the envelope:
 
@@ -120,7 +122,7 @@ Done when the PR URL is in state and shown to the user.
 
 ## Policies
 
-- **Stop point**: when the next stage to start equals `stop_at`, do not start it. Checkpoint with `status: paused` and `stage` set to that stage, clear `stop_at`, `NOTIFY`, and tell the user `<invoke> resume <branch>` (`harness.md`) continues from there. Then end your turn.
+- **Stop point**: when the next stage to start equals `stop_at`, do not start it. Checkpoint with `status: paused` and `stage` set to that stage, clear `stop_at`, `NOTIFY`, and tell the user `<invoke> resume <branch>` (`harness.md`) continues from there. Then end your turn. A `stop_at` the chain never reaches (e.g. `clarify` on a lite run that never escalates) simply never triggers; the run finishes with the setting unset.
 - **Cost ledger**: after every `SPAWN` (each role of a `SPAWN_PARALLEL` is one entry), append an entry to `state.ledger` (state.md, "Schema"): word-count estimates of what the spawn read and wrote, harness-reported usage when `harness.md` names a source, duration. Entries ride the next checkpoint.
 - **Checkpoint** after every completed stage (state.md). The state file is the single truth for where the run is.
 - **Halt**: set `status: halted` with `halt_reason`, checkpoint, `NOTIFY`, ask the user. Their answer resumes the stage, redirects it, or aborts.

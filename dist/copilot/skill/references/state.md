@@ -27,7 +27,7 @@ The pending file uses this same schema from the moment the run is created: `star
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
-  "mode": { "chain": "full", "fast": false },
+  "mode": { "chain": "lite", "fast": true },
   "skills": { "speckit-plan": "/abs/.../SKILL.md", "grilling": "/abs/.../SKILL.md" },
   "commands": { "build": "dotnet build", "test": "dotnet test" },
   "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
@@ -45,7 +45,7 @@ The pending file uses this same schema from the moment the run is created: `star
 - `skills`: keyed by logical name. Paths are only valid on the harness that resolved them.
 - `status`: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
-- `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
+- `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A run is created with the default mode — `chain: "lite"`, `fast: true` — unless the command's flags pinned otherwise (SKILL.md, "Route"); a lite→full escalation rewrites `chain` later. A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
 - `stage`: the stage in progress, or the next one to run: `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`.
 - `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": { "answer": "...", "at": "2026-10-22T14:07:30Z", "auto": false } } } ] }`. Each answer is an object: the user's text, the time it arrived, and `auto: true` when fast mode chose it. The last round is the open one. Write each answer as it arrives (protocol.md, "Relay"). A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round; a version 2 string answer is read as `{ "answer": <string>, "at": null }`.
   - Question fields and rendering are defined in protocol.md, "Questions". Rich question fields are additive within version 3: accept structured options and legacy string options, retaining saved answers and IDs. Derive progress from each question's stored position in the round; keep the original positions when redisplaying unanswered questions. Accepted new-format answers store the option ID or proposed text, separate from the rationale; legacy recommendations remain verbatim.
@@ -69,17 +69,27 @@ After a stage completes:
 
 The commit that carries a `history` entry is the entry's commit: `git log --grep "factory: <stage> complete"` finds it. Pending state has no git: just write the file.
 
+## CLI
+
+`<F>/bin/factory` is the skill's read-only state CLI (stdlib Python 3). It does the mechanical state work — discovery and the resume digest — outside the orchestrator's context, so routing never reads a whole `state.json` into it: its token cost stays flat however large `relay`, `timeline`, `ledger` and `history` grow. It writes nothing.
+
+- `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
+- `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals_sentence` ("Totals"), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
+
+`<branch-or-name>` is the run's `branch`, or a pending file's name with or without its `<repo-name>-` prefix. Both commands exit non-zero with the reason on stderr (no match, ambiguous name, not a git repo). The orchestrator uses the manual paths below only when the script is missing or Python 3 is not installed.
+
 ## Discovery
 
-Unfinished runs of the current repo:
-1. `git worktree list --porcelain`; for each worktree, read `specs/*/factory/state.json`. Keep those whose `status` is not `pr-open`.
+Unfinished runs of the current repo, produced by `python3 <F>/bin/factory runs` ("CLI"). Its manual equivalent, and the definition of what the script does:
+
+1. `git worktree list --porcelain`; for each worktree, read `specs/*/factory/state.json`. Keep those whose `status` is not `pr-open`; a run whose state appears in several worktrees (copies branched after it) counts once.
 2. Pending files in `${FACTORY_HOME:-~/.factory}/pending/` whose `repo` is the current repo.
 
 Show each as: branch (or slug), stage, status, last `history` time.
 
 ## Resume
 
-1. Read the state. Work in `worktree` (pending runs: `repo`). When `state.harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage.
+1. `python3 <F>/bin/factory show <branch>` ("CLI"). Work in the digest's `worktree` (pending runs: `repo`). When `harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage. An open relay's unanswered questions are `relay.unanswered` in the digest, in stored order — redisplay exactly those.
 2. Restart the recorded `stage` from its beginning:
    - Pending `grill`: re-run grilling with the existing brief and saved relay answers as the starting point. Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `worktree`: run step 3.
@@ -89,4 +99,4 @@ Show each as: branch (or slug), stage, status, last `history` time.
    - `approver`: show the approver screen again.
    - `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded.
 3. `halted` or `aborted`: show `halt_reason` and ask the user how to continue before restarting the stage.
-4. `paused`: set `status: running` and start the recorded stage. A `--stop-at` on the resume command sets a new `stop_at`.
+4. `paused`: set `status: running` and start the recorded stage. Flags on the resume command update the state first: `--stop-at <stage>` sets a new `stop_at`, `--lite` / `--full` set `mode.chain`, `--fast` / `--no-fast` set `mode.fast`.
