@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/003-zcode-harness",
   "spec_dir": "specs/003-zcode-harness",
   "status": "running",
-  "stage": "analyze",
+  "stage": "remediate",
   "halt_reason": null,
   "stop_at": "implement",
   "mode": {
@@ -29,7 +29,7 @@
     "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md"
   },
   "commands": {
-    "build": "env -u CLAUDE_HOME -u CODEX_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME -u FACTORY_HOME sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done'",
+    "build": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done'",
     "test": "git diff --exit-code -- dist/"
   },
   "analyze": {
@@ -37,7 +37,8 @@
     "loops": 1,
     "reports": [
       "factory/analyze-1.md",
-      "factory/analyze-2.md"
+      "factory/analyze-2.md",
+      "factory/analyze-3.md"
     ],
     "remediations": [
       "factory/remediation-2.md"
@@ -175,6 +176,16 @@
       "out_est": 2025,
       "reported": null,
       "duration_ms": 579453
+    },
+    {
+      "at": "2026-10-24T01:20:34Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 24300,
+      "out_est": 2025,
+      "reported": null,
+      "duration_ms": 193785
     }
   ],
   "review": {
@@ -266,6 +277,13 @@
     {
       "at": "2026-10-24T01:17:21Z",
       "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-24T01:20:34Z",
+      "stage": "analyze",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
