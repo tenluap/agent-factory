@@ -25,7 +25,7 @@ paths are relative to the repository root.
 > The old empty-folder task is folded into T004 (git tracks no empty directory; analyze-1 N1). T001 is
 > the tracked-distribution setup that makes Seam 4 able to fail.
 
-- [ ] T001 Make the rendered distribution tracked (FR-018, ADR 0005, quickstart step 2): remove the
+- [X] T001 Make the rendered distribution tracked (FR-018, ADR 0005, quickstart step 2): remove the
       `/dist/` line from `.gitignore`, run the full render **in the canonical render environment**
       (FR-018; plan.md, "Canonical render environment"):
       `env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in
