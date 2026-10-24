@@ -66,7 +66,7 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
 
 ### Tests for User Story 1
 
-- [ ] T003 [US1] Failing test for **Seam 1** (`python3 tools/render.py --list` includes `zcode`) and
+- [X] T003 [US1] Failing test for **Seam 1** (`python3 tools/render.py --list` includes `zcode`) and
       **Seam 2** (`python3 tools/render.py zcode` exits 0 and writes `dist/zcode/skill/` plus one
       `dist/zcode/agents/factory-<role>.md` per `core/roles/*.md`): run the Seam 1 and Seam 2 commands
       already written in `specs/003-zcode-harness/quickstart.md` steps 2-3 and record their failure
