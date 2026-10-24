@@ -20,8 +20,9 @@ specify-cli 1.1.0 (`specify --version`) and impeccable (`npx impeccable install 
 - **Rationale**: the bundle's skill-root resolver uses exactly two directory constants, `.zcode` and
   `.agents`, with the subdirectory `skills`, resolved under the home base and under the project base
   (walking up to the git worktree root, depth 10). No `.claude` skill root exists in the bundle.
-- **Consequence**: this contradicts FR-010, which also lists `<repo>/.claude/skills/` and `~/.claude/skills/`.
-  Recorded as deviation D1 in `plan.md`; FR-010 should be corrected to the verified pair of roots.
+- **Consequence**: FR-010 originally also listed `<repo>/.claude/skills/` and `~/.claude/skills/`. It and
+  its edge case were corrected to these four roots during clarify, so spec, plan and adapter now agree and
+  no deviation is open.
 - **Alternatives**: keeping the `.claude` entries - rejected, ZCode never reads them, so they would send a
   reader to a location the harness ignores.
 
@@ -44,8 +45,10 @@ specify-cli 1.1.0 (`specify --version`) and impeccable (`npx impeccable install 
   chat as `$speckit-<name>`. `specify check` lists ZCode as a known integration.
 - **Alternatives**: the brief's `--ai codex --ai-skills` - rejected, the flags do not exist in the installed
   CLI and the codex integration would write `.agents/skills` when a native ZCode layout is available.
-- **Note (out of scope)**: the other four adapters and `README.md`/`DESIGN.md` still show the old `--ai`
-  flag shape. Only the ZCode-facing text is corrected by this feature.
+- **Note**: `DESIGN.md:69` states the setup as `--ai <harness>` plus `--ai-skills`, which the ZCode adapter
+  contradicts. This feature generalises that one line to `specify init --here <harness.speckit_init>`,
+  whose argument shape each adapter states, so Constitution I holds (FR-016). The other four adapters'
+  recorded setup values are left as they are: correcting them is out of scope.
 
 ## R5 - impeccable provider
 
@@ -71,3 +74,25 @@ specify-cli 1.1.0 (`specify --version`) and impeccable (`npx impeccable install 
   `load_adapter` updates `adapter["models"]` from `${FACTORY_HOME}/config.json`, so the key must exist for
   the user override path to work. Z.ai model ids are account-dependent, so pinning a default would break
   sessions on other plans.
+
+## R8 - Tracking the rendered distribution (FR-018)
+
+- **Decision**: remove the `/dist/` line from `.gitignore` and commit the rendered output of all five
+  harnesses; the build gate stays `git diff --exit-code -- dist/` after a full render.
+- **Rationale**: `git ls-files dist/` returned 0 files and `.gitignore` listed `/dist/`, so a plain
+  `git add dist/` was refused and the gate passed vacuously - Constitution III ("dist committed with its
+  source") was neither satisfied nor checked. Tracking the directory makes the commit normal and the check
+  able to fail. Recorded as `docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md`.
+- **Alternatives**: `git add -f dist/` with `git diff --cached --exit-code` - rejected, the gate then
+  depends on a step a contributor can forget; rendering into a scratch tree and comparing - rejected, it
+  leaves no installable distribution in the clone, which is what `install.sh` reads.
+- **Consequence**: the first commit is large (four existing harnesses' trees enter version control at
+  once) and every later render shows generated files in diffs; accepted in ADR 0005.
+
+## R9 - Cross-harness resume (SC-005)
+
+- **Decision**: resume needs no ZCode-specific mechanism - `state.json` under the worktree's spec folder is
+  harness-neutral - but SC-005 is verified by a manual check in both directions (start in ZCode, resume
+  elsewhere; start elsewhere, resume in ZCode).
+- **Rationale**: the adapter changes only dispatch, install paths and verb mappings; no run state is
+  harness-tagged beyond the `harness` field the resuming session re-reads.

@@ -28,8 +28,9 @@ knows; `access` has exactly the keys the roles declare (`read`, `write`); `model
 
 Same sections as every existing `harness.md`.
 
-- Header values: `name` `zcode`; `invoke` `/factory`; recognition line "you are ZCode (Z.ai's coding agent,
-  desktop app or CLI); you have the Agent, Bash, Read, Edit and Skill tools."; capability tier **1**;
+- Header values: `name` `zcode`; `invoke` `/factory`; recognition line resting on a checkable signal (FR-012)
+  - "you are ZCode (Z.ai's coding agent, desktop app or CLI): `ZCODE_HOME` is set or `~/.zcode` exists, and
+  you have the Agent, Bash, Read, Edit and Skill tools."; capability tier **1**;
   `speckit_init` `--integration zcode --integration-options="--skills"`; `impeccable_provider` `codex`
   (ZCode has no provider of its own; the codex provider installs to `~/.agents/skills/`, which ZCode reads).
 - Verb table:
@@ -61,8 +62,16 @@ tools: <access list for the role>
 <role body, with <F> replaced by the resolved skill_dir>
 ```
 
-Validation rules: frontmatter parses; `name` matches the filename stem; `tools` matches the role's
-`access`; no `model` key (models are empty); the body contains no `<F>` placeholder.
+Validation rules: frontmatter parses; the key set is exactly `name`, `description`, `tools` (FR-004);
+`name` matches the filename stem; `tools` matches the role's `access`; no `model`, `permissionMode`,
+`maxTurns` or `skills` key; the body contains no `<F>` placeholder.
+
+## 4. Tracked distribution - `dist/` (FR-018)
+
+Not a new shape: the existing rendered trees, now under version control. `.gitignore` loses its `/dist/`
+line, and `dist/<harness>/` for all five harnesses is committed with the source that produced it. State
+after the change: `git ls-files dist/` lists every rendered file, and `git diff --exit-code -- dist/` after
+a full render is clean exactly when source and render agree.
 
 ## Relationships
 
