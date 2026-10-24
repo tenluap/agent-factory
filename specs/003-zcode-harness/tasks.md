@@ -206,7 +206,7 @@ invoke and agent-location details.
 > T015 is removed (analyze-1 C2): FR-010 is already corrected in `spec.md` to research R2's four roots,
 > so no spec edit remains. IDs are not renumbered.
 
-- [ ] T016 Verify FR-017: `git diff --name-only` shows no file under `core/` changed.
+- [X] T016 Verify FR-017: `git diff --name-only` shows no file under `core/` changed.
 
 - [ ] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end and confirm all four seams are
       green: quickstart step 2's tracking checks still hold, full **canonical** render of every harness
