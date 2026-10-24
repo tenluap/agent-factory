@@ -183,7 +183,7 @@ invoke and agent-location details.
       recorded form is out of scope (FR-016, research R4).
       `Exempt: README.md - documentation only` (plan.md).
 
-- [ ] T013 [P] [US3] `DESIGN.md`: add `zcode` to "Harness model" (the harness list) and to "Adapters
+- [X] T013 [P] [US3] `DESIGN.md`: add `zcode` to "Harness model" (the harness list) and to "Adapters
       today", noting agents inherit the session model unless `${FACTORY_HOME}/config.json` pins them.
       **Also fix the spec-kit setup line at `DESIGN.md:69`** (Constitution I, FR-016): it already reads
       `specify init --here <harness.speckit_init>`; delete only the Claude-shaped parenthetical

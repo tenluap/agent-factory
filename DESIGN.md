@@ -12,12 +12,12 @@ The skill is global (installed into the harness's skill directory) and works in 
 
 ## Harness model
 
-The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copilot, ...). It is split into a portable core and thin per-harness adapters.
+The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copilot, ZCode, ...). It is split into a portable core and thin per-harness adapters.
 
 - **Core** (`core/`): the orchestrator `SKILL.md`, its references, and the role prompts in `core/roles/`. Core files never name a harness tool. They use the neutral **verbs** defined in `core/skills/factory/references/verbs.md`: `SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`.
 - **Adapter** (`adapters/<harness>/`): `harness.md`, which tells the orchestrator how to recognise the harness, how to perform each verb there, where skills and SpecKit commands live, and the harness's setup values; and `adapter.json`, which tells the renderer where to install and how to write native agent files (Markdown or TOML, fields, access, models).
 - **One skill for every harness.** The installed skill is byte-identical on every harness and carries every adapter's `harness.md` under `references/harness/`. In preflight the orchestrator picks its own (`$FACTORY_HARNESS`, else the file whose "Recognise it by" line fits). This matters because harnesses read each other's skill directories (OpenCode reads `~/.claude/skills`, Copilot and Codex read `~/.agents/skills`): whichever copy a harness finds, it is the same skill. Only the agent files are generated per harness, by `tools/render.py`.
-- **Adapters today**: `claude-code`, `opencode`, `codex`, `copilot` (CLI and VS Code agent mode; the github.com cloud agent is out of scope since it cannot relay questions). Agent models are pinned only on Claude Code (opus/sonnet); elsewhere agents inherit the session's model unless `${FACTORY_HOME}/config.json` pins them.
+- **Adapters today**: `claude-code`, `opencode`, `codex`, `copilot` (CLI and VS Code agent mode; the github.com cloud agent is out of scope since it cannot relay questions), `zcode` (Z.ai's coding agent, desktop app or CLI). Agent models are pinned only on Claude Code (opus/sonnet); elsewhere — including ZCode — agents inherit the session's model unless `${FACTORY_HOME}/config.json` pins them.
 - **Roles** carry neutral metadata (`tier`: `deep` | `standard`; `access`: `read` | `write`). The adapter maps tiers to models and access to tool lists. Users override models in `${FACTORY_HOME}/config.json`.
 - **Capability tiers.** An adapter declares the tier its harness runs at: 1 native subagents, 2 headless CLI subprocesses, 3 inline (the orchestrator plays each role itself). The approver screen states the tier when it is not 1, since tier 3 weakens reviewer independence.
 - **Factory home.** Harness-neutral files live in `${FACTORY_HOME:-~/.factory}`: pending runs, user config. Every harness shares it, so discovery finds runs started anywhere.
@@ -66,7 +66,7 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 ## Decisions
 
 ### Setup
-- **Missing `.specify/`**: offer to run `specify init --here <harness.speckit_init>` (`--ai <harness>`, plus `--ai-skills` outside Claude Code so SpecKit's commands land as skills), then the constitution step. Ask once.
+- **Missing `.specify/`**: offer to run `specify init --here <harness.speckit_init>` — each adapter states its own `speckit_init` arguments (ZCode's: `--integration zcode --integration-options="--skills"`) — then the constitution step. Ask once.
 - **impeccable missing**: ask once, then `npx impeccable install --providers=<harness.impeccable_provider> --scope=global`.
 - **Skills that block model invocation**: every `speckit-*` skill and `grill-with-docs` set `disable-model-invocation: true` (or are commands rather than skills on some harnesses), so no agent invokes them. Agents read the resolved file and follow it as instructions. `grill-with-docs` runs as its two parts: `grilling` + `domain-modeling`.
 
