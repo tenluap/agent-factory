@@ -43,7 +43,7 @@ paths are relative to the repository root.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T002 Record the red baseline from `specs/003-zcode-harness/quickstart.md` step 1: run
+- [X] T002 Record the red baseline from `specs/003-zcode-harness/quickstart.md` step 1: run
       `python3 tools/render.py --list` (no `zcode` line) and `python3 tools/render.py zcode`
       (`unknown harness 'zcode'`), and keep both outputs for the `Red:` lines of T003 and T005. Also
       record Seam 4's red proof, which T001 made possible: edit a source file the render copies, re-render,
