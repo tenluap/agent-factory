@@ -27,7 +27,19 @@ frontmatter assertion in quickstart.md. No runner is introduced.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the empty adapter folder `adapters/zcode/` (no file yet) so later tasks have a home.
+> The old "create the empty `adapters/zcode/` folder" task is folded into T004: git tracks no empty
+> directory and `tools/render.py:known()` only counts folders holding `adapter.json` (analyze-1 N1).
+> T001 is now the tracked-distribution setup that makes Seam 4 able to fail.
+
+- [ ] T001 Make the rendered distribution tracked (FR-018, ADR 0005, quickstart step 2): remove the
+      `/dist/` line from `.gitignore`, run the full render
+      `for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done`, then
+      `git add dist/` and commit **all five** rendered trees (`dist/claude-code/`, `dist/codex/`,
+      `dist/copilot/`, `dist/opencode/`, and `dist/zcode/` once T004 exists — at this point the four
+      existing ones). Confirm `grep -c '^/dist/$' .gitignore` is 0 and `git ls-files dist/ | wc -l` is > 0.
+      `Exempt: .gitignore - configuration only - one removed line; its effect is what makes Seam 4 able to
+      fail, and Seam 4 covers it` and `Exempt: dist/** - generated output for every harness, produced by
+      the render and guarded by Seam 4, never hand-written` (plan.md, "Test seams").
 
 ---
 
@@ -35,9 +47,12 @@ frontmatter assertion in quickstart.md. No runner is introduced.
 
 - [ ] T002 Record the red baseline from `specs/003-zcode-harness/quickstart.md` step 1: run
       `python3 tools/render.py --list` (no `zcode` line) and `python3 tools/render.py zcode`
-      (`unknown harness 'zcode'`), and keep both outputs for the `Red:` lines of T003 and T005.
+      (`unknown harness 'zcode'`), and keep both outputs for the `Red:` lines of T003 and T005. Also record
+      Seam 4's red proof, which T001 has just made possible: edit a source file the render copies, re-render,
+      and `git diff --exit-code -- dist/` exits non-zero (before T001 it passed vacuously on an ignored,
+      untracked directory); restore the edit afterwards.
 
-**Checkpoint**: baseline captured; story work can begin.
+**Checkpoint**: `dist/` is tracked and the baseline is captured; story work can begin.
 
 ---
 
@@ -60,7 +75,8 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Create `adapters/zcode/adapter.json` with exactly the values in data-model.md §1:
+- [ ] T004 [US1] Create the adapter folder `adapters/zcode/` and its `adapter.json` in one step (the folder
+      has no effect without the file) with exactly the values in data-model.md §1:
       `name` `zcode`; `home` `{ "env": "ZCODE_HOME", "default": "~/.zcode" }`; `skill_dir`
       `{home}/skills/factory`; `agent_dir` `{home}/agents`; `agent_file` `factory-{role}.md`;
       `agent_format` `markdown`; `fields` `[["name", "factory-{role}"], ["description", "{description}"]]`;
@@ -78,8 +94,9 @@ frontmatter; `./install.sh --harness zcode` places them under `~/.zcode`.
 
 - [ ] T006 [US1] Generate the ZCode distribution: `python3 tools/render.py zcode`, then confirm
       `ls dist/zcode/agents | wc -l` equals `ls core/roles/*.md | wc -l` (9) and re-run T005's assertion
-      until green. `Exempt: dist/zcode/** - generated output, produced by Seam 2 and guarded by Seam 4,
-      never hand-written` (plan.md, "Test seams").
+      until green. `Exempt: dist/** - generated output for every harness, produced by the render and
+      guarded by Seam 4, never hand-written (the render rewrites every harness's skill tree, so the
+      exemption covers all five)` (plan.md, "Test seams").
 
 **Checkpoint**: US1 complete - the adapter renders and installs.
 
@@ -96,10 +113,13 @@ selects it.
 
 ### Tests for User Story 2
 
-- [ ] T007 [US2] Failing test for **Seam 2** (rendered skill content) and **Seam 4** (no other harness
-      drifts): after a full render, assert `references/harness/zcode.md` exists under
-      `dist/<h>/skill/` for every `h` in `python3 tools/render.py --list`, then run
-      `git diff --exit-code -- dist/`. MUST fail now (`zcode.md` is in no skill tree).
+- [ ] T007 [US2] Failing test for **Seam 2** (rendered skill content) and **Seam 4** (the tracked
+      distribution matches a fresh render, so no harness drifts): after a full render, assert
+      `references/harness/zcode.md` exists under `dist/<h>/skill/` for every `h` in
+      `python3 tools/render.py --list`, then run `git diff --exit-code -- dist/` against the tree T001
+      committed. MUST fail now: `zcode.md` is in no skill tree, and because T001 made `dist/` tracked the
+      difference check is a gate that reports the divergence and exits non-zero rather than passing
+      vacuously.
 
 ### Implementation for User Story 2
 
@@ -130,9 +150,13 @@ selects it.
 
 - [ ] T011 [US2] Re-render every harness and commit the result:
       `for h in $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done`, then
-      `git diff --exit-code -- dist/` after staging, so `dist/` never drifts (Constitution III, FR-015,
-      SC-003). Turns T007 green. `Exempt: dist/** - generated output, produced by Seam 2 and guarded by
-      Seam 4, never hand-written` (plan.md).
+      `git add dist/` and commit all five trees (each now carries `references/harness/zcode.md`, and
+      `dist/zcode/` is added in full), and finally re-run the Seam 4 gate
+      `git diff --exit-code -- dist/` on a clean tree: it must exit 0 exactly because the committed
+      distribution equals the fresh render (Constitution III, FR-015, FR-018, SC-003, SC-006). Turns T007
+      green. `Exempt: dist/** - generated output for every harness, produced by the render and guarded by
+      Seam 4, never hand-written (the render rewrites every harness's skill tree, so the exemption covers
+      all five)` (plan.md, "Test seams").
 
 **Checkpoint**: US1 and US2 both work; the factory runs on ZCode.
 
@@ -156,10 +180,18 @@ invoke and agent-location details.
 
 - [ ] T013 [P] [US3] `DESIGN.md`: add `zcode` to "Harness model" (the harness list) and to "Adapters
       today", noting agents inherit the session model unless `${FACTORY_HOME}/config.json` pins them.
-      `Exempt: DESIGN.md - documentation only` (plan.md).
+      **Also generalise the spec-kit setup line at `DESIGN.md:69`** so the design record and the ZCode
+      adapter agree in this same change (Constitution I, FR-016): replace the Claude-shaped parenthetical
+      `(--ai <harness>, plus --ai-skills outside Claude Code ...)` with wording that defers to the adapter,
+      e.g. `specify init --here <harness.speckit_init>`, whose argument shape each adapter states (ZCode's
+      is `--integration zcode --integration-options="--skills"`, research R4). No other adapter's recorded
+      setup changes. `Exempt: DESIGN.md - documentation only` (plan.md).
 
 - [ ] T014 [P] [US3] `CONTEXT.md`: name ZCode in the **Harness** definition alongside the existing
-      harnesses. `Exempt: CONTEXT.md - documentation only` (plan.md).
+      harnesses. Note: the domain-modeling step of grill-with-docs already added ZCode to that definition,
+      so this task is a verification — confirm the line reads
+      `(Claude Code, OpenCode, Codex, Copilot, ZCode)` and make no further edit if it does.
+      `Exempt: CONTEXT.md - documentation only` (plan.md).
 
 **Checkpoint**: all three stories complete.
 
@@ -167,33 +199,41 @@ invoke and agent-location details.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T015 Correct `specs/003-zcode-harness/spec.md` FR-010 to the four roots verified in research R2
-      (`<repo>/.zcode/skills/`, `<repo>/.agents/skills/`, `~/.zcode/skills/`, `~/.agents/skills/`),
-      removing the `.claude` roots per plan deviation D1, so spec and adapter agree.
-      `Exempt: specs/**.md - documentation only` (plan.md, documentation exemption).
+> T015 is removed (analyze-1 C2): FR-010 has already been corrected in `spec.md` to the four roots
+> verified in research R2, so no spec edit remains for implementation to make. IDs are not renumbered.
 
 - [ ] T016 Verify FR-017: `git diff --name-only` shows no file under `core/` changed.
 
-- [ ] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end (full render, Seam 3
-      frontmatter assertion, `git diff --exit-code -- dist/`) and confirm all four seams are green.
+- [ ] T017 Run `specs/003-zcode-harness/quickstart.md` steps 2-3 end to end and confirm all four seams are
+      green: `grep -c '^/dist/$' .gitignore` is 0 and `git ls-files dist/ | wc -l` > 0 (T001's tracking
+      holds), full render of every harness, Seam 1 (`--list` includes `zcode`), Seam 2 (`dist/zcode/`
+      skill + 9 agents), Seam 3 (frontmatter assertion), and Seam 4 `git diff --exit-code -- dist/` on the
+      tracked tree exiting 0. Re-confirm Seam 4 can still fail by repeating T002's red proof.
 
 - [ ] T018 Manual validation (SC-001, SC-002, SC-004, SC-005): `./install.sh --harness zcode`, check
       `~/.zcode/skills/factory` and `~/.zcode/agents/factory-*.md`, repeat with
       `ZCODE_HOME=/tmp/zc` for the env override, start `/factory <feature>` in a fresh ZCode session, then
-      `./install.sh --harness zcode --uninstall` (quickstart steps 4 and 6).
+      `./install.sh --harness zcode --uninstall` (quickstart steps 4 and 6). **SC-005, both directions
+      explicitly** (quickstart step 5): (a) start a run in ZCode with `/factory <feature>`, answer
+      grilling, let it reach a checkpoint, stop the session, then run `/factory` in another installed
+      harness (e.g. Claude Code) and confirm it resumes at the stage recorded in
+      `specs/<branch>/factory/state.json` with nothing re-asked; (b) repeat in the opposite direction with
+      a second feature — start elsewhere, stop, resume in ZCode. Record both outcomes; a failure in either
+      direction blocks SC-005.
 
 ---
 
 ## Dependencies & Execution Order
 
-- **Phase 1 → Phase 2**: T001 before T002.
-- **Phase 2 blocks everything**: the red baseline (T002) is the evidence for T003 and T005.
+- **Phase 1 → Phase 2**: T001 before T002 — `dist/` must be tracked and committed before any red proof of
+  Seam 4 is possible.
+- **Phase 2 blocks everything**: the red baseline (T002) is the evidence for T003, T005 and T007.
 - **US1 (Phase 3)**: T003 → T004 → T005 → T006, strictly sequential (same adapter, same output tree).
 - **US2 (Phase 4)**: depends on T004 (the renderer must know `zcode` before its skill renders).
   T007 → T008 → T009 → T010 → T011; T008-T010 touch the same file, so none is `[P]`.
 - **US3 (Phase 5)**: independent of US1/US2 content; T012, T013 and T014 are different files and run in
   parallel.
-- **Polish (Phase 6)**: T015 any time after T009; T016-T018 after T011.
+- **Polish (Phase 6)**: T016-T018 after T011 (T018's resume check also needs T006's installed agents).
 
 ### Parallel Opportunities
 
@@ -214,5 +254,10 @@ invoke and agent-location details.
 
 - Commit each task once, test and implementation together, with a `Red: <check> failed as expected` line
   for T004 (from T003) and T006 (from T005); exempt tasks carry no `Red:` line.
-- Never edit `dist/` by hand (Constitution III); always regenerate and commit with the source.
+- Never edit `dist/` by hand (Constitution III); always regenerate and commit with the source. From T001
+  on, `dist/` is tracked (FR-018, ADR 0005), so `git diff --exit-code -- dist/` is a gate that fails.
+- Total tasks: 17 (T001-T018 with T015 removed; T001 repurposed from folder creation to dist tracking).
 - No file under `core/` may name ZCode (FR-017, Constitution II).
+- `docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md` and `CONTEXT.md`'s ZCode line were
+  already written by the domain-modeling step, so no task creates them; T001 implements the ADR's
+  decision and T014 verifies the CONTEXT.md line.
