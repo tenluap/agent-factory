@@ -71,7 +71,7 @@ The defaults are `--lite --fast`: a run with no flags uses the lite chain and au
 
 ## Requirements
 
-- An agent harness with an adapter in `adapters/`, and Python 3 for the renderer.
+- An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
 - Skills: `grilling`, `domain-modeling`, `pr`, in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
 - SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing.
@@ -81,6 +81,7 @@ The defaults are `--lite --fast`: a run with no flags uses the lite chain and au
 
 - `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
+- `core/skills/factory/bin/factory`: read-only state CLI (`runs`, `show`); the orchestrator lists unfinished runs and builds resume digests with it instead of reading whole `state.json` files into context.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
 - `core/roles/`: spec-builder, code-build, five reviewers, review-judge, fixer, with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.

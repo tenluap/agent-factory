@@ -69,17 +69,27 @@ After a stage completes:
 
 The commit that carries a `history` entry is the entry's commit: `git log --grep "factory: <stage> complete"` finds it. Pending state has no git: just write the file.
 
+## CLI
+
+`<F>/bin/factory` is the skill's read-only state CLI (stdlib Python 3). It does the mechanical state work — discovery and the resume digest — outside the orchestrator's context, so routing never reads a whole `state.json` into it: its token cost stays flat however large `relay`, `timeline`, `ledger` and `history` grow. It writes nothing.
+
+- `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
+- `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals_sentence` ("Totals"), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
+
+`<branch-or-name>` is the run's `branch`, or a pending file's name with or without its `<repo-name>-` prefix. Both commands exit non-zero with the reason on stderr (no match, ambiguous name, not a git repo). The orchestrator uses the manual paths below only when the script is missing or Python 3 is not installed.
+
 ## Discovery
 
-Unfinished runs of the current repo:
-1. `git worktree list --porcelain`; for each worktree, read `specs/*/factory/state.json`. Keep those whose `status` is not `pr-open`.
+Unfinished runs of the current repo, produced by `python3 <F>/bin/factory runs` ("CLI"). Its manual equivalent, and the definition of what the script does:
+
+1. `git worktree list --porcelain`; for each worktree, read `specs/*/factory/state.json`. Keep those whose `status` is not `pr-open`; a run whose state appears in several worktrees (copies branched after it) counts once.
 2. Pending files in `${FACTORY_HOME:-~/.factory}/pending/` whose `repo` is the current repo.
 
 Show each as: branch (or slug), stage, status, last `history` time.
 
 ## Resume
 
-1. Read the state. Work in `worktree` (pending runs: `repo`). When `state.harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage.
+1. `python3 <F>/bin/factory show <branch>` ("CLI"). Work in the digest's `worktree` (pending runs: `repo`). When `harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage. An open relay's unanswered questions are `relay.unanswered` in the digest, in stored order — redisplay exactly those.
 2. Restart the recorded `stage` from its beginning:
    - Pending `grill`: re-run grilling with the existing brief and saved relay answers as the starting point. Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `worktree`: run step 3.

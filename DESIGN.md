@@ -22,6 +22,7 @@ The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copi
 - **Capability tiers.** An adapter declares the tier its harness runs at: 1 native subagents, 2 headless CLI subprocesses, 3 inline (the orchestrator plays each role itself). The approver screen states the tier when it is not 1, since tier 3 weakens reviewer independence.
 - **Factory home.** Harness-neutral files live in `${FACTORY_HOME:-~/.factory}`: pending runs, user config. Every harness shares it, so discovery finds runs started anywhere.
 - **Agents are stateless.** Every agent turn is a fresh `SPAWN`; nothing relies on continuing a live agent. Whatever a later turn needs is in `state.json` or on disk. This is what lets every harness, and a resume on a different harness, run the same flow.
+- **State CLI.** The skill carries `bin/factory`, a read-only stdlib-Python CLI (`runs`, `show`). Discovery and the resume digest are mechanical state work: the orchestrator runs one command instead of reading whole `state.json` files into context, so routing cost stays flat as a run's relay, timeline, ledger and history grow. The manual paths in `state.md` remain as the fallback and the definition of what the script does.
 
 ## Flow
 
@@ -121,7 +122,7 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - Resume restarts the interrupted stage from its beginning. A relay in progress resumes from the saved Q&A: a fresh spec-builder gets the answered questions and asks only the rest.
 - A run may be resumed on a different harness: the orchestrator re-resolves every skill path.
 - `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. A `--stop-at` stage the chain never reaches (e.g. `clarify` on a lite run that never escalates) never triggers. `resume <branch>` (with the harness's invoke command, e.g. `/factory` or `$factory`) continues from that stage in any session, on any harness. Flags on a resume update the run before the stage restarts: `--lite` / `--full` rewrite `mode.chain`, `--fast` / `--no-fast` rewrite `mode.fast`.
-- Plain `/factory` lists unfinished runs in the current repo (scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one. `/factory <feature>` starts a new run.
+- Plain `/factory` lists unfinished runs in the current repo (`bin/factory runs`, scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one; `/factory <feature>` starts a new run. `resume <branch>` fetches a resume digest (`bin/factory show`) — scalars plus aggregates, never the whole state — and restarts the recorded stage from it.
 
 ### Cost ledger
 - Every `SPAWN` (each role of a `SPAWN_PARALLEL` counts as one) appends one entry to `state.ledger` (schema: `state.md`): stage, role, harness, input/output token estimates, harness-reported usage when available, duration.

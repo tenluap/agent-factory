@@ -23,8 +23,8 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 
 ## 0. Route
 
-- `$ARGUMENTS` empty: list unfinished runs (state.md, "Discovery"). Offer each as a resume option plus "start a new run". No runs: ask for the feature.
-- `resume <branch>`: resume that run (state.md, "Resume").
+- `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
+- `resume <branch>`: `SHELL: python3 <F>/bin/factory show <branch-or-name>` (state.md, "CLI"), then resume that run from the digest (state.md, "Resume").
 - Anything else: the feature description of a new run. Go to step 1.
 
 Flags are recognised wherever they appear in `$ARGUMENTS`, on either form, and may combine:
