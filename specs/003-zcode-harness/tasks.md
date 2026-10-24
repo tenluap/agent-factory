@@ -150,7 +150,7 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
       Skill tool — read the resolved file (FR-013); `$ARGUMENTS` is whatever follows `/factory` (FR-007);
       ledger `reported: null`, Agent results expose no token usage (FR-014). Same exemption as T008.
 
-- [ ] T011 [US2] Re-render every harness in the canonical environment and commit the result:
+- [X] T011 [US2] Re-render every harness in the canonical environment and commit the result:
       `env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in
       $(python3 tools/render.py --list); do python3 tools/render.py "$h" || exit 1; done'`, then
       `git add dist/` and commit all five trees (each now carries `references/harness/zcode.md`), then
