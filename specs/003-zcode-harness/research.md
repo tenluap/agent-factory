@@ -45,9 +45,10 @@ specify-cli 1.1.0 (`specify --version`) and impeccable (`npx impeccable install 
   chat as `$speckit-<name>`. `specify check` lists ZCode as a known integration.
 - **Alternatives**: the brief's `--ai codex --ai-skills` - rejected, the flags do not exist in the installed
   CLI and the codex integration would write `.agents/skills` when a native ZCode layout is available.
-- **Note**: `DESIGN.md:69` states the setup as `--ai <harness>` plus `--ai-skills`, which the ZCode adapter
-  contradicts. This feature generalises that one line to `specify init --here <harness.speckit_init>`,
-  whose argument shape each adapter states, so Constitution I holds (FR-016). The other four adapters'
+- **Note**: `DESIGN.md:69` already carries the generalised `specify init --here <harness.speckit_init>`,
+  but glosses it with a Claude-shaped parenthetical (`--ai <harness>` plus `--ai-skills`) that the ZCode
+  adapter contradicts. This feature deletes that parenthetical and keeps the generalised command, whose
+  argument shape each adapter states, so Constitution I holds (FR-016). The other four adapters'
   recorded setup values are left as they are: correcting them is out of scope.
 
 ## R5 - impeccable provider

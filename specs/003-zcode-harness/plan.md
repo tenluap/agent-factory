@@ -63,8 +63,10 @@ control (ZCode's 9 role agents + skill tree, plus the four existing harnesses' t
 *GATE: passed before Phase 0; re-checked after Phase 1 design - still passing.*
 
 - **I. Design First**: `DESIGN.md` is edited in the same change before the adapter is relied on: the
-  adapter lists gain ZCode, and the spec-kit setup line (`DESIGN.md:69`) is generalised to
-  `specify init --here <harness.speckit_init>`, whose argument shape each adapter states, so the record and
+  adapter lists gain ZCode, and the spec-kit setup line (`DESIGN.md:69`) loses its Claude-shaped
+  parenthetical (`--ai <harness>`, `--ai-skills`), leaving the generalised
+  `specify init --here <harness.speckit_init>` already on that line, whose argument shape each adapter
+  states, so the record and
   the ZCode adapter's `--integration zcode --integration-options="--skills"` agree. No other adapter's
   recorded setup changes (FR-016). Pass.
 - **II. Harness-Neutral Core**: no `core/` file is touched; every ZCode name lives in `adapters/zcode/`.
@@ -91,7 +93,7 @@ the spec says.
 - **R4 → FR-011 (closed)**: `speckit_init` is `--integration zcode --integration-options="--skills"`, not
   the brief's `--ai codex --ai-skills`: specify-cli 1.1.0 removed `--ai` and ships a native ZCode
   integration. FR-011 is worded neutrally and the spec's assumption now records the correction;
-  `DESIGN.md:69` is generalised in this change so the design record agrees (FR-016).
+  `DESIGN.md:69` loses its `--ai`/`--ai-skills` gloss in this change so the design record agrees (FR-016).
 
 ## Project Structure
 

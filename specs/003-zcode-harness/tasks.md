@@ -175,19 +175,20 @@ invoke and agent-location details.
 > No test tasks: every task below is covered by a plan exemption (documentation only).
 
 - [ ] T012 [P] [US3] `README.md`: add the harness-table row
-      `| ZCode | ./install.sh --harness zcode | /factory <feature> | ~/.zcode/agents/factory-*.md |`, and
-      state ZCode's SpecKit setup as **its own sentence** after the existing requirement line
-      (`README.md:71`, the "SpecKit set up" bullet) — "For ZCode: `specify init --here --integration zcode
-      --integration-options="--skills"`" (research R4) — **not** as another value of that line's
-      `--ai <...>` enumeration, a flag family specify-cli 1.1.0 no longer has. Note, as research R4 does,
-      that the other harnesses' recorded form is out of scope here (FR-016).
+      ``| ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |``
+      (backticked like `README.md:9-12`), and state ZCode's SpecKit setup as **its own sentence**
+      after the requirement line (the "SpecKit set up for your harness" bullet) —
+      "For ZCode: `specify init --here --integration zcode --integration-options="--skills"`" — **not** as another value of that line's
+      `--ai <...>` enumeration, a flag family specify-cli 1.1.0 no longer has. The other harnesses'
+      recorded form is out of scope (FR-016, research R4).
       `Exempt: README.md - documentation only` (plan.md).
 
 - [ ] T013 [P] [US3] `DESIGN.md`: add `zcode` to "Harness model" (the harness list) and to "Adapters
       today", noting agents inherit the session model unless `${FACTORY_HOME}/config.json` pins them.
-      **Also generalise the spec-kit setup line at `DESIGN.md:69`** (Constitution I, FR-016): replace the
-      Claude-shaped parenthetical `(--ai <harness>, plus --ai-skills outside Claude Code ...)` with
-      `specify init --here <harness.speckit_init>`, whose argument shape each adapter states (ZCode's is
+      **Also fix the spec-kit setup line at `DESIGN.md:69`** (Constitution I, FR-016): it already reads
+      `specify init --here <harness.speckit_init>`; delete only the Claude-shaped parenthetical
+      `(--ai <harness>, plus --ai-skills outside Claude Code ...)`, leaving a neutral gloss:
+      each adapter states its own `speckit_init` arguments (ZCode's:
       `--integration zcode --integration-options="--skills"`, research R4). No other adapter's recorded
       setup changes. `Exempt: DESIGN.md - documentation only` (plan.md).
 
