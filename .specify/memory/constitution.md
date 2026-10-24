@@ -49,8 +49,9 @@ envelope or report shape defined in `references/protocol.md` or `references/find
 
 - Build: render every harness with `tools/render.py` (`python3 tools/render.py --list`
   names them).
-- Test: after the build, `git diff --exit-code -- dist/` MUST pass, proving the committed
-  `dist/` matches its source.
+- Test: after the build, `test -z "$(git status --porcelain -- dist/)"` MUST pass, proving
+  the committed `dist/` matches its source; a bare `git diff --exit-code -- dist/` cannot
+  see untracked additions and is not the gate.
 - A change to the flow is validated end to end per the "Validation plan" in `DESIGN.md`
   before it is relied on.
 

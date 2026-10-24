@@ -129,9 +129,11 @@ carries the recognition line, tier 1, the verb table and the notes; a ZCode `/fa
       environment (`env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent …`,
       T001), assert
       `references/harness/zcode.md` exists under `dist/<h>/skill/` for every `h` in
-      `python3 tools/render.py --list`, then run `git diff --exit-code -- dist/` against the tree T001
-      committed. MUST fail now: `zcode.md` is in no skill tree, and because `dist/` is tracked the
-      difference check reports the divergence and exits non-zero rather than passing vacuously.
+      `python3 tools/render.py --list`, then run `test -z "$(git status --porcelain -- dist/)"`
+      against the tree T001 committed. MUST fail now: `zcode.md` is in no skill tree, and because
+      `dist/` is tracked the status gate reports the divergence — including the untracked additions
+      a bare `git diff --exit-code -- dist/` cannot see — and exits non-zero rather than passing
+      vacuously.
 
 ### Implementation for User Story 2
 

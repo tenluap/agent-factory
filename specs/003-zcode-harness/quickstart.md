@@ -30,7 +30,7 @@ git ls-files dist/ | wc -l                     # expect: > 0 — the distributio
 
 # the gate, run after any later render:
 $CANON sh -c "$RENDER"
-git diff --exit-code -- dist/                  # expect: clean; non-zero whenever source and render diverge
+test -z "$(git status --porcelain -- dist/)"   # expect: silent; non-zero whenever source and render diverge
 ```
 
 Without `$CANON`, a contributor who has `XDG_CONFIG_HOME`, `CLAUDE_HOME`, `CODEX_HOME`, `COPILOT_HOME`,
@@ -40,8 +40,10 @@ spuriously. Recover with `git checkout -- dist/` and re-render canonically.
 `--list` must now include `zcode` (Seam 1) and `dist/zcode/` must exist (Seam 2).
 
 Red proof for Seam 4: touch a source file the render copies (for example add a line to
-`adapters/zcode/harness.md`), re-render, and `git diff --exit-code -- dist/` exits non-zero. Before the
-`.gitignore` change the same command always exited 0 on an ignored, untracked directory.
+`adapters/zcode/harness.md`), re-render, and the gate exits non-zero. The gate checks
+`git status --porcelain -- dist/` rather than `git diff --exit-code -- dist/`, which cannot see
+untracked additions; before the `.gitignore` change that diff always exited 0 on an ignored,
+untracked directory.
 
 ## 3. Rendered output checks
 
@@ -62,7 +64,7 @@ print("frontmatter ok")
 PY
 ```
 
-That block is Seam 3; step 2's `git diff --exit-code -- dist/` is Seam 4 (no other harness drifts).
+That block is Seam 3; step 2's gate is Seam 4 (no other harness drifts).
 
 ## 4. Install and run in ZCode (manual, SC-001/SC-002)
 
@@ -72,10 +74,10 @@ environment-dependent paths. Restore the canonical render after every one of the
 ```bash
 ./install.sh --harness zcode
 ls ~/.zcode/skills/factory ~/.zcode/agents/factory-*.md
-git checkout -- dist/ && git diff --exit-code -- dist/        # back to the canonical render
+git checkout -- dist/ && test -z "$(git status --porcelain -- dist/)"   # back to the canonical render
 
 ZCODE_HOME=/tmp/zc ./install.sh --harness zcode && ls /tmp/zc/agents   # env override
-git checkout -- dist/ && git diff --exit-code -- dist/        # expect: clean again (FR-018)
+git checkout -- dist/ && test -z "$(git status --porcelain -- dist/)"   # expect: silent again (FR-018)
 ```
 
 Start a fresh ZCode session in a target repository and run `/factory <feature>`. Expect: preflight
