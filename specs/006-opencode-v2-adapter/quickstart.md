@@ -34,3 +34,8 @@ test -z "$(git status --porcelain -- dist/)"
 This post-commit gate includes untracked additions. Repeated generation must reproduce identical bytes.
 
 Record static, discovery, model-backed dispatch and runtime enforcement separately. Prior v2.1.4 discovery loaded nine symlinked agents and the factory skill with expected configuration. Dispatch/enforcement are unverified; no new model calls are required. Optional discovery bounds asynchronous registration waits and records version/errors. Observed permission/dispatch conflicts block delivery without weakening policy.
+
+## Performed checks (2026-10-25)
+
+- T002: Canonical baseline for all five harnesses retained outside tracked output at `/var/folders/jf/7n12j8rx31q29v6v_gd380wc0000gn/T/factory-v2-canonical-baseline-w1ul62yb/dist` (160 files). Generation introduced no tracked drift. The invoking checkout's status and diff digest were captured alongside it for the final preservation check.
+- Inspected the saved six-case test module and selected serializer/adapter/instruction diffs; imported no production changes, historical plan, or generated files. Standard-library unittest is runnable (zero tests before adopting the saved module).

@@ -12,7 +12,7 @@
 
 ## Phase 2: Foundational — preserve the baseline
 
-- [ ] T002 Inspect `specs/006-opencode-v2-adapter/factory/state.json` and its `prior_work.handoff`; capture canonically rendered baseline `dist/` bytes outside tracked output, following `specs/006-opencode-v2-adapter/quickstart.md`, and retain the location for T006. Inspect saved tests/source changes without applying production changes. Exempt: validation/planning artifacts only; no behavior change. Preserve the invoking checkout, all its edits and Codex setup. The handoff patch contains historical planning and generated files: do not import its plan, `dist/`, or apply it wholesale.
+- [x] T002 Inspect `specs/006-opencode-v2-adapter/factory/state.json` and its `prior_work.handoff`; capture canonically rendered baseline `dist/` bytes outside tracked output, following `specs/006-opencode-v2-adapter/quickstart.md`, and retain the location for T006. Inspect saved tests/source changes without applying production changes. Exempt: validation/planning artifacts only; no behavior change. Preserve the invoking checkout, all its edits and Codex setup. The handoff patch contains historical planning and generated files: do not import its plan, `dist/`, or apply it wholesale.
 
 **Checkpoint**: Design contract committed; baseline available; work remains confined to this worktree. Existing stdlib unittest is runnable. Do not proceed if the test command cannot run.
 
