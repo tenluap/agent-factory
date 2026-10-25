@@ -1,0 +1,33 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "Implementation conforms to all ten FRs, all acceptance scenarios, edge cases, contracts and all eight tasks with correct red proofs; one low advisory inaccuracy in the recorded evidence counts.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/006-opencode-v2-adapter/quickstart.md",
+      "line": 47,
+      "summary": "Recorded evidence counts (160 files compared, 146 byte-identical) do not match the tracked distribution (165 files, so 151 byte-identical plus the 14 expected changes), leaving the substantive compatibility conclusion intact but the arithmetic misrecorded.",
+      "evidence": "quickstart.md T002 records '(160 files)' and T006 'compared all 160 final files against T002: 146 byte-identical, exactly 14 changed' (146+14=160); git ls-tree -r origin/main and git ls-files dist/ both count 165 tracked dist files at base and HEAD, and git diff --diff-filter=A/D -- dist/ shows 0 additions and 0 deletions, so the identical-file count is 151, not 146. The substantive claim was independently verified true: exactly the nine dist/opencode/agents/*.md and the five skill/references/harness/opencode.md bundles changed, all five bundles byte-identical to adapters/opencode/harness.md, and git status --porcelain -- dist/ is empty. FR-009/T007 demand accurately reported evidence; only the file counts are off, no category outcome or contract result is affected.",
+      "fix": "Correct the two counts in quickstart.md to the tracked tree (165 files compared, 151 byte-identical, 14 changed), or record how the 160 count was derived (e.g. an exclusion used by the baseline snapshot) so the arithmetic is reproducible."
+    }
+  ],
+  "requirements_check": {
+    "FR-001": "met - adapter.json access uses ordered permissions (action/resource/effect), no legacy permission map or task action; all nine dist/opencode/agents render mode: subagent + permissions; tests assert NotIn('permission') and no 'task' action",
+    "FR-002": "met - read roles render edit-then-subagent deny on *, write roles render subagent-only deny (verified in all nine generated agents and asserted by test_opencode_roles_preserve_access_and_models)",
+    "FR-003": "met - harness.md SPAWN uses foreground subagent targeting factory-<role>, SPAWN_PARALLEL one call per role waiting for all, SHELL uses shell; named-role selection, RESOLVE paths, model defaults/overrides retained; syntax matches official V2 docs (provider/model optional #variant verified)",
+    "FR-004": "met - adapter.json home/skill_dir/agent_dir unchanged, RESOLVE and question relay unchanged, install.sh and core/ untouched",
+    "FR-005": "met - all five dist bundles carry the updated shared OpenCode reference byte-identical to adapters/opencode/harness.md; no other dist file changed (0 additions, 0 deletions)",
+    "FR-006": "met - yaml_value extended only for list-of-dicts; scalar, flat-map, string-list and TOML output byte-identical (tests + cross-harness byte comparison)",
+    "FR-007": "met - DESIGN.md contract committed first (0d82017) before the behavior commit (8372e9a); dist reproducible, post-commit porcelain gate empty",
+    "FR-008": "met - verification covers all nine roles' restrictions, unchanged legacy formats, complete five-harness generation, canonical reproducibility (T008 gate) and tier-to-model mapping incl. override/inheritance cases",
+    "FR-009": "met with SPEC-1 - quickstart separates V1 compatibility, native adoption, static checks, discovery (v2.1.4, loading-only), model-backed dispatch and enforcement; only the file-count arithmetic is misrecorded",
+    "FR-010": "met - mismatch-blocks-delivery policy recorded; no mismatch observed; rules not weakened",
+    "US1/US2/US3 acceptance scenarios": "met - all six scenarios plus all five edge cases evidenced in output, tests and quickstart",
+    "SC-001..SC-005": "met - nine roles correct, 100% non-OpenCode agent byte parity, zero distribution drift on rerender, four evidence categories recorded with unverified checks disclosed, zero operator migration",
+    "red_proofs": "clean - T003+T004 commit 8372e9a carries the exact required Red line matching tasks.md; T005 commit correctly carries none (task declares green regression-only commits); T001/T002/T006/T007/T008 are plan-exempt documentation/configuration/generated/verification tasks; no fix commit exists in round 1",
+    "unchecked_tasks": "none - all eight [x] tasks have corresponding committed changes and recorded outcomes; 8/8 unittest tests re-run green by this reviewer"
+  }
+}

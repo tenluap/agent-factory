@@ -1,8 +1,8 @@
 ---
 description: Spawned by the /factory orchestrator only. Runs one SpecKit stage per spawn (specify, clarify, grill-with-docs, plan, tasks, analyze, remediate) inside a factory worktree.
 mode: subagent
-permission:
-  task: deny
+permissions:
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: xiaomi-token-plan-sgp/mimo-v2.6-pro
 ---
 
