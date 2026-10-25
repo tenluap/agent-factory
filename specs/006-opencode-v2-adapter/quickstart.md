@@ -1,0 +1,36 @@
+# Validation guide
+
+Use Python 3, Git and Bash in the feature worktree on branch `006-opencode-v2-adapter`. No credentials or user config edits are needed.
+
+1. Before production adoption, copy only saved tests from state.prior_work.handoff. Run `python3 -m unittest discover -s tools -p 'test_*.py'`. Observe baseline failures for native permissions and record precise names in the implementation commit body. Existing legacy-format assertions should pass.
+2. After implementation, rerun unittest. Cover model overrides and empty-model inheritance through render() if absent from saved tests.
+3. Render all harnesses canonically with no override config and default homes:
+
+```bash
+python3 - <<'PY'
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+with tempfile.TemporaryDirectory() as tmp:
+    env = os.environ.copy()
+    env['FACTORY_HOME'] = str(Path(tmp) / 'factory-home')
+    for key in ('CLAUDE_HOME', 'CODEX_HOME', 'COPILOT_HOME', 'XDG_CONFIG_HOME', 'ZCODE_HOME'):
+        env.pop(key, None)
+    names = subprocess.check_output(['python3', 'tools/render.py', '--list'], env=env, text=True).splitlines()
+    for name in names:
+        subprocess.run(['python3', 'tools/render.py', name], env=env, check=True)
+PY
+```
+
+Retain canonical baseline bytes outside tracked output before changes. Compare final output: other native agents stay identical; other skill trees change only their bundled OpenCode reference. Inspect all nine roles against [the contract](contracts/opencode.md). Never copy saved dist output.
+
+4. Run `bash -n install.sh`, `git diff --check`, and changed local-link checks. Commit source plus generated output. Rerun canonical generation, then require:
+
+```bash
+test -z "$(git status --porcelain -- dist/)"
+```
+
+This post-commit gate includes untracked additions. Repeated generation must reproduce identical bytes.
+
+Record static, discovery, model-backed dispatch and runtime enforcement separately. Prior v2.1.4 discovery loaded nine symlinked agents and the factory skill with expected configuration. Dispatch/enforcement are unverified; no new model calls are required. Optional discovery bounds asynchronous registration waits and records version/errors. Observed permission/dispatch conflicts block delivery without weakening policy.

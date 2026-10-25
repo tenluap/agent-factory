@@ -9,7 +9,7 @@
   "branch": "006-opencode-v2-adapter",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/006-opencode-v2-adapter",
   "spec_dir": "specs/006-opencode-v2-adapter",
-  "status": "running",
+  "status": "waiting_user",
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
@@ -41,7 +41,39 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1",
+            "title": "Confirm render_agent(), agent_fields(), and render() as the test seams before implementation?",
+            "text": "These existing public functions cover native serialization, role permissions/model mapping, and complete distribution generation. Documentation, configuration and generated files carry explicit exemptions.",
+            "helper": "Confirm these seams, or describe the change you want.",
+            "options": [
+              {
+                "id": "A",
+                "label": "Confirm the three seams",
+                "description": "Proceed with tests through render_agent(), agent_fields(), and render().",
+                "emoji": "\ud83e\uddea"
+              },
+              {
+                "id": "B",
+                "label": "Something else",
+                "description": "Describe the test scope you want changed.",
+                "emoji": "\ud83d\udcac"
+              }
+            ],
+            "recommended": "A",
+            "rationale": "These functions expose the behaviors exercised by the saved renderer tests.",
+            "requires_user": true
+          }
+        ],
+        "answers": {}
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-25T19:16:25.441006Z",
@@ -50,6 +82,14 @@
       "summary": "Required Codex SpecKit skills missing at preflight.",
       "answered_at": "2026-10-25T19:19:07.951148Z",
       "latency_ms": 162510
+    },
+    {
+      "at": "2026-10-25T19:25:15.151572Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Q1: confirm render_agent(), agent_fields(), render() test seams.",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "ledger": [
@@ -61,7 +101,18 @@
       "in_est": 12000,
       "out_est": 1700,
       "reported": null,
-      "duration_ms": 150000
+      "duration_ms": 0,
+      "duration_note": "Exact spawn timing was not captured; omitted from agent-time totals."
+    },
+    {
+      "at": "2026-10-25T19:25:15.151572Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 13000,
+      "out_est": 2400,
+      "reported": null,
+      "duration_ms": 185522
     }
   ],
   "review": {
