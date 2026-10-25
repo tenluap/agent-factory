@@ -86,7 +86,7 @@ The commit that carries a `history` entry is the entry's commit: `git log --grep
 - `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
 - `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals_sentence` ("Totals"), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
 
-`<branch-or-name>` is the run's `branch`, or a pending file's name with or without its `<repo-name>-` prefix. Both commands exit non-zero with the reason on stderr (no match, ambiguous name, not a git repo). The orchestrator uses the manual paths below only when the script is missing or Python 3 is not installed.
+`<branch-or-name>` is the run's `branch`, or a pending file's name with or without its `<repo-name>-` prefix. Both commands exit non-zero with the reason on stderr (no match, ambiguous name, not a git repo, or for `show` a worktree run whose recorded `worktree` no longer exists: halt and ask rather than resume). The orchestrator uses the manual paths below only when the script is missing or Python 3 is not installed.
 
 ## Discovery
 

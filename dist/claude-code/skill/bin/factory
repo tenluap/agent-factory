@@ -2,7 +2,8 @@
 """The factory's read-only state CLI: mechanical state work, outside the orchestrator's context.
 
 Writes nothing. Stdlib Python 3 only. Exit 0 on success, non-zero with the
-reason on stderr otherwise (1 no match, 2 no git repo, 3 ambiguous match).
+reason on stderr otherwise (1 no match, 2 no git repo, 3 ambiguous match,
+4 the run's recorded worktree no longer exists).
 
 Usage: factory runs [--repo <path>]           unfinished runs of the repo, JSON
        factory show <run> [--repo <path>]     resume digest for one run, JSON
@@ -281,6 +282,10 @@ def cmd_show(repo, name):
         listed = ", ".join(str(p) for p, _, _ in matches)
         die(3, f"'{name}' matches several runs: {listed}")
     path, state, source = matches[0]
+    home = state.get("worktree")
+    if source == "worktree" and home and not os.path.isdir(home):
+        die(4, f"run '{name}' records worktree {home}, which no longer exists "
+               f"(state found at {path})")
     return digest(state, path, source)
 
 
