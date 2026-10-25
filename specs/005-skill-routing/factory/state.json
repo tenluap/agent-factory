@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
   "status": "running",
-  "stage": "analyze",
+  "stage": "remediate",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -35,7 +35,9 @@
   "analyze": {
     "pass": 1,
     "loops": 0,
-    "reports": [],
+    "reports": [
+      "factory/analyze-1.md"
+    ],
     "remediations": [],
     "pending_clarify": []
   },
@@ -88,6 +90,16 @@
       "out_est": 2669,
       "reported": null,
       "duration_ms": 400000
+    },
+    {
+      "at": "2026-10-25T00:14:46Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 12694,
+      "out_est": 2515,
+      "reported": null,
+      "duration_ms": 420000
     }
   ],
   "review": {
@@ -130,6 +142,13 @@
     {
       "at": "2026-10-25T00:10:29Z",
       "stage": "tasks",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T00:14:46Z",
+      "stage": "analyze",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
