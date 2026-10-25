@@ -71,7 +71,7 @@
       "in_est": 7744,
       "out_est": 4342,
       "reported": null,
-      "duration_ms": 900000
+      "duration_ms": 361021
     },
     {
       "at": "2026-10-25T00:07:31Z",
@@ -81,7 +81,7 @@
       "in_est": 9176,
       "out_est": 5755,
       "reported": null,
-      "duration_ms": 600000
+      "duration_ms": 376102
     },
     {
       "at": "2026-10-25T00:10:29Z",
@@ -91,7 +91,7 @@
       "in_est": 10080,
       "out_est": 2669,
       "reported": null,
-      "duration_ms": 400000
+      "duration_ms": 165100
     },
     {
       "at": "2026-10-25T00:14:46Z",
@@ -101,7 +101,7 @@
       "in_est": 12694,
       "out_est": 2515,
       "reported": null,
-      "duration_ms": 420000
+      "duration_ms": 242716
     },
     {
       "at": "2026-10-25T00:17:58Z",
@@ -111,7 +111,7 @@
       "in_est": 13206,
       "out_est": 733,
       "reported": null,
-      "duration_ms": 400000
+      "duration_ms": 178374
     },
     {
       "at": "2026-10-25T00:39:47Z",
@@ -161,7 +161,7 @@
       "in_est": 1246,
       "out_est": 554,
       "reported": null,
-      "duration_ms": 300000
+      "duration_ms": 96294
     },
     {
       "at": "2026-10-25T00:52:21Z",
@@ -171,7 +171,7 @@
       "in_est": 1011,
       "out_est": 554,
       "reported": null,
-      "duration_ms": 300000
+      "duration_ms": 263181
     },
     {
       "at": "2026-10-25T00:57:16Z",
@@ -211,7 +211,7 @@
       "in_est": 435,
       "out_est": 16,
       "reported": null,
-      "duration_ms": 90000
+      "duration_ms": 35112
     }
   ],
   "review": {
