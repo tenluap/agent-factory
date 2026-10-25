@@ -9,7 +9,7 @@
   "branch": "005-skill-routing",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -228,8 +228,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-25T06:57:21Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/1",
   "history": [
     {
       "at": "2026-10-25T00:08:00Z",
@@ -311,6 +311,13 @@
     {
       "at": "2026-10-25T06:56:00Z",
       "stage": "approver",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T06:57:21Z",
+      "stage": "pr",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
