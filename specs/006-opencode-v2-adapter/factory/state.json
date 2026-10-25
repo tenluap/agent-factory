@@ -9,8 +9,8 @@
   "branch": "006-opencode-v2-adapter",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/006-opencode-v2-adapter",
   "spec_dir": "specs/006-opencode-v2-adapter",
-  "status": "running",
-  "stage": "implement",
+  "status": "paused",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -60,6 +60,12 @@
       "summary": "Q1: confirm render_agent(), agent_fields(), render() test seams.",
       "answered_at": "2026-10-25T19:25:51.539783Z",
       "latency_ms": 36388
+    },
+    {
+      "at": "2026-10-25T19:52:00Z",
+      "kind": "approval",
+      "stage": "approver",
+      "summary": "User approved round 1 verdict; paused before publishing because PR creation was not authorized in this approval."
     }
   ],
   "ledger": [
@@ -116,7 +122,7 @@
     }
   ],
   "review": {
-    "round": 0,
+    "round": 1,
     "fix_rounds": 0,
     "ui_diff": false,
     "ui_reviewer_skipped": false
@@ -158,6 +164,20 @@
       "event": "complete",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-25T19:50:00Z",
+      "stage": "review",
+      "event": "round-1-complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-25T19:52:00Z",
+      "stage": "approver",
+      "event": "approved-paused-before-pr",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "prior_work": {
