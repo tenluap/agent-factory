@@ -48,6 +48,36 @@ _Avoid_: issue, comment, violation
 The judge's merged, deduplicated, verified ruling over a review round's findings.
 _Avoid_: report, summary
 
+## Skill routing
+
+**Intake intent**:
+Exploration or delivery, decided from the request's wording or, when ambiguous, by exactly one relay question; it decides whether a run's first stage is `brainstorm` or `grill`.
+_Avoid_: mode, category, request type
+
+**Exploration stage (`brainstorm`)**:
+The idea path's first stage, settling into `grill`: its confirmed direction lands in the pending brief and resumes from pending storage like any other pending stage.
+_Avoid_: idea stage, ideation
+
+**Skill map entry**:
+A logical skill name plus the path the active harness's adapter resolved for it, stored in `state.skills` and re-resolved when the harness changes.
+_Avoid_: skill reference, dependency
+
+**Protected question**:
+A relay question carrying `requires_user: true`, which fast mode must never auto-accept; the plan's seam confirmation is one.
+_Avoid_: manual question, forced question
+
+**Seam confirmation**:
+The user's agreement to a plan's proposed public test seams, persisted with the plan and invalidated when the seams or scope it names change.
+_Avoid_: test approval, sign-off
+
+**UI change signal**:
+A diff's classification as touching a user-visible surface: view markup and styles, design tokens and themes, UI assets, locale and string files, or user-visible copy inside UI code.
+_Avoid_: UI flag, frontend change
+
+**Shared integration reference**:
+The one compact document (`core/skills/factory/references/skills.md`) holding skill precedence and loading rules for the orchestrator and both code-writing roles, linked rather than restated.
+_Avoid_: skills doc, integration guide
+
 ## Engineering discipline
 
 **Engineering rules reference**:
