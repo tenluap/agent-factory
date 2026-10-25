@@ -77,6 +77,15 @@ The defaults are `--lite --fast`: a run with no flags uses the lite chain and au
 - Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd` (the last two before any code-delivery work starts), in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
 - SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
 - Conditionally resolved skills, only when relevant: `brainstorming` when a run starts from an exploratory idea rather than a settled feature, and `impeccable` for UI reviews — the factory offers to install the latter the first time a run touches UI files.
+- `pen-design` when a run creates, references, or updates a Pen design intended as an implementation reference. Missing skill/backend inspection or rendering capabilities are reported explicitly; they are not installed or assumed automatically.
+
+### Pen design references
+
+Pen reference work automatically follows the [design-code mapping contract](core/skills/factory/references/design-code-mapping.md), across frameworks, with [Avalonia guidance](core/skills/factory/references/design-code-mapping-avalonia.md) for that stack. The repository's `docs/design-code-map.json` (or existing equivalent) maps scoped design nodes, components, and instances to stable code anchors. Later requests such as “update the design” resolve the saved target and update code from the design; ambiguous targets are clarified. Editing the design source requires an explicit request.
+
+The reference governs visual decisions. Mapped implementation requires current build/runtime, mapping, and rendered-comparison evidence, independently of optional UI polish. Scoped sources, exports, captures, and metadata live under `specs/<branch>/factory/design/`; the permanent map points to them. Design-only tasks record source/targets until code implementation begins. Existing projects bootstrap the requested scope rather than migrating the whole application.
+
+Design repairs share the existing two automatic fix rounds. Missing or failed required evidence leaves the work partial/blocked; an explicit scoped exception can permit proceeding while retaining its unverified status. Ordinary approval and fast mode do not infer that exception. These are factory orchestration instructions, not a background synchronizer for standalone Pen invocations.
 
 ## Layout
 

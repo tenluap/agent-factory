@@ -18,10 +18,14 @@ re-resolved when `harness` changed.
 | `ponytail`, `tdd` | preflight, before a run commits to code delivery | every fresh `code-build`/`fixer` spawn gets both absolute paths |
 | `brainstorming` | preflight | idea path only; never resolved on the feature path |
 | `impeccable` | step 7, on a UI diff | existing install offer; declined install is a disclosed skip |
+| `pen-design` | when a Pen implementation reference is created, referenced, updated, or encountered on resume | affected roles receive its path and persisted `design` context |
 
 A required skill that cannot be resolved stops the affected work with setup guidance naming the logical name
 and the directories searched. Nothing is installed beyond the existing authorised `impeccable` offer, and no
 turn claims an unavailable skill was applied.
+
+Pen reference work loads [design-code-mapping.md](design-code-mapping.md), independently of optional UI
+evaluation. Framework guidance is conditional; the factory owns its mapping/fidelity gates and repair budget.
 
 ## Precedence
 

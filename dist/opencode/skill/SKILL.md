@@ -19,6 +19,7 @@ References, read when a step points at them:
 - [`references/protocol.md`](references/protocol.md): the envelope every agent returns, and the relay.
 - [`references/findings.md`](references/findings.md): reviewer findings and judge verdict shapes.
 - [`references/skills.md`](references/skills.md): skill-integration precedence and loading rules, shared with `code-build` and `fixer`.
+- [`references/design-code-mapping.md`](references/design-code-mapping.md): load whenever a run creates, references, or updates a Pen implementation reference, or encounters one on resume; governs source mapping and required fidelity evidence across frameworks.
 
 Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so it can read the references.
 
@@ -45,9 +46,12 @@ The **default mode** is `lite` chain with `fast` on: wherever a flag did not pin
 2. Confirm the current directory is inside a git repo. Record `repo` as the main checkout (the parent of `git rev-parse --path-format=absolute --git-common-dir`, so a run started from a worktree still anchors on the main checkout), the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `main`), and `base` = `origin/<default-branch>` after `git -C <repo> fetch origin <default-branch>`.
 3. `.specify/` missing: ask once to run `specify init --here <speckit_init>` (`harness.md`), then follow the resolved `speckit-constitution` file with the user. Declined: stop.
 4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing one: stop and name it. Also `RESOLVE` `ponytail` and `tdd` here, before the run ever commits to delivery; record whichever resolve in `skills`, but do not stop here if either is missing — code delivery (step 6, step 7) stops that work alone, naming the missing skill, when it is about to start. On the idea path only (intake intent is exploration), also `RESOLVE` `brainstorming`; missing there, stop and name it the same way as the always-required skills — it is never resolved on the feature path. `impeccable` is resolved later, only on a UI diff. On resume, `RESOLVE` any of these names still absent from `skills`, and every resolved path again when `harness` changed, before any role is spawned (state.md, "Resume").
-5. Read the repo's CLAUDE.md / AGENTS.md for build and test commands; record them as `commands.build` / `commands.test`. None documented: detect from the project files and confirm with the user once.
+5. Read the repo's CLAUDE.md / AGENTS.md for build and test commands; record them as `commands.build` / `commands.test`. None documented: detect from the project files and confirm with the user once. For a design-only task with no application yet, record non-applicable commands with reasons in the pending brief rather than inventing a build/runtime prerequisite; existing checks remain required where applicable.
+6. A Pen implementation reference is requested or encountered: read `design-code-mapping.md`, `RESOLVE pen-design`, and record the pending `design` context. Apply the same activation if the reference first appears later in the run; missing guidance/capabilities follow that contract's blocked/exception path. Do not impose this dependency on non-Pen runs.
 
-Done when every skill path and both commands are recorded in the pending state (state.md, "Pending state").
+Done when every required skill path and both applicable commands (or explicit design-only non-applicability reasons) are recorded in the pending state (state.md, "Pending state").
+
+For an active design run, settle source/target/scope and authority in the same intake, using `design-code-mapping.md`. Keep context in pending storage until step 4, and protect required design decisions from fast-mode acceptance.
 
 ## 2. Brainstorm (idea path only)
 
@@ -67,7 +71,7 @@ Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on t
 
 1. Pick a 2-4 word kebab `short-name`. Run from `repo`: `bash .specify/extensions/git/scripts/bash/create-new-feature.sh --json --dry-run --short-name <short-name> "<feature>"` and take `BRANCH_NAME`. No git extension: use `NNN-<short-name>` with the next free number across `specs/` and local branches.
 2. `git -C <repo> worktree add <repo>/../<repo-name>-factory/<branch> -b <branch> <base>`. This absolute path is `worktree`.
-3. Create `<worktree>/specs/<branch>/factory/`, move `brief.md` into it, write `state.json` from the pending state, delete the pending file, and commit `factory: start <branch>`.
+3. Create `<worktree>/specs/<branch>/factory/`, move `brief.md` into it, write `state.json` from the pending state, delete the pending file, and commit `factory: start <branch>`. For active Pen work, move pending design context into `factory/design/context.json` and update the relative `design` references before this commit; never leave a reference to the deleted pending file.
 
 From here every `SHELL` command runs as `cd <worktree> && ...`, and every agent gets `worktree` in its inputs.
 
@@ -78,6 +82,8 @@ Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, 
 - `needs_input`: run the relay (protocol.md); it spawns a fresh spec-builder for the same stage once every question is answered.
 - `done`: checkpoint (state.md), then spawn the next stage.
 - `failed`: failure policy (below).
+
+Pass `design` (when active) and the resolved `pen-design` path to every spec stage. Persist returned design references/results before checkpointing; a recorded missing design prerequisite follows the mapping contract rather than being retried as an agent crash. The plan must carry the mapping/runtime/fidelity gates and capture requirements into tasks.
 
 Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have).
 
@@ -102,34 +108,42 @@ Done when analyze is clean, MEDIUM/LOW were remediated, or the user chose to pro
 
 `ponytail` or `tdd` unresolved in `skills`: stop this work and tell the user the missing skill's setup guidance; nothing is spawned and no work is reported done.
 
-`SPAWN` `code-build` with `worktree`, `branch`, `spec_dir`, the `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands`. It commits each finished task. Envelope `partial` (context running low): `SPAWN` a fresh `code-build` with the same inputs; it resumes from the tasks.md checkboxes.
+`SPAWN` `code-build` with `worktree`, `branch`, `spec_dir`, the `speckit-implement` path, the resolved `ponytail` and `tdd` paths, `commands`, and (when active) `design` plus the resolved `pen-design` path. It commits each finished task. Envelope `partial` (context running low): `SPAWN` a fresh `code-build` with the same inputs; it resumes from the tasks.md checkboxes.
 
-Then **verify** yourself: run `commands.build` and `commands.test` in the worktree. Red: `SPAWN` a fresh `code-build` once with the failing output trimmed to the decisive lines; it resumes from the tasks.md checkboxes and fixes the build. Still red: halt.
+Then **verify** yourself: run applicable `commands.build` and `commands.test` in the worktree. Red: `SPAWN` a fresh `code-build` once with the failing output trimmed to the decisive lines; it resumes from the tasks.md checkboxes and fixes the build. Still red: halt.
 
-Done when every tasks.md box is checked and your own build and test runs are green.
+Done when every tasks.md box is checked, every implementation task is complete, and your own applicable build and test runs are green. A design verification task explicitly waived by a scoped exception is checked only with that decision labeled; it never claims successful verification.
+
+For active Pen implementation, also verify current source/code/capture identity, map/anchor coverage, and runtime/fidelity evidence yourself under `design-code-mapping.md`; persist actual gate results. Missing prerequisites halt for a protected decision; repairable design failures enter step 7's shared queue even if implementation is not yet verified. A valid design failure result is not a fresh code-build visual-repair retry. Design-only work runs applicable checks; app gates remain explicitly not applicable. A stage result never by itself claims verified product fidelity.
 
 ## 7. Review
 
 1. Diff: `git diff <base>...HEAD` in the worktree. The run is a **UI diff** (`review.ui_diff`) when any changed path is a UI file: view markup and styles (`*.axaml`, `*.xaml`, `*.html`, `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`, `*.scss`, SwiftUI/Compose views, or anything under `Views/`, `ViewModels/`, `components/`, `pages/`); design tokens and themes (token/theme/style resource files, token JSON, `Themes/`); UI assets shipped to the interface (icons, images, fonts); or locale and string files (`*.resx`, `*.strings`, `*.arb`, locale JSON/YAML catalogues). A diff confined to one of these files is still a UI diff even when its only change is literal user-visible copy. A diff touching none of these skips `ui-reviewer`, `ux-reviewer` and the `impeccable` install offer below (`review.ui_diff: false`).
 2. UI diff and `RESOLVE impeccable` finds nothing: ask once, then run `npx impeccable install --providers=<impeccable_provider> --scope=global` (`harness.md`). Declined: skip `ui-reviewer`, record `review.ui_reviewer_skipped: true`, and tell the approver (disclosed at step 8).
-3. `SPAWN_PARALLEL`: `security-reviewer`, `code-standards`, `spec-conformance`, plus `ui-reviewer` and `ux-reviewer` on a UI diff. Each gets `worktree`, `spec_dir`, `base`, the review round, and (UI reviewer) the impeccable SKILL.md path. Round 1 reviews the full diff. Every later round is a **delta review**: each reviewer also gets `delta_base` (the checkpoint commit of the previous round) and the previous round's `verdict.json` path, and reviews only the fix diff against that verdict (findings.md, "Reviewing"). Save each report to `<spec_dir>/factory/reviews/round-<n>/<agent>.json`.
-4. `SPAWN` `review-judge` with `worktree`, `spec_dir`, `base`, the round, the round folder, and (round > 1) `delta_base` and the previous verdict path. Save its verdict as `verdict.json` in the same folder. Checkpoint.
-5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `ponytail` or `tdd` unresolved: stop this fix round the same way as step 6. Else `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands`, the resolved `ponytail` and `tdd` paths and the verdict path, verify (step 6), increment `review.fix_rounds`, and repeat this step from 1 with the next round number.
+3. `SPAWN_PARALLEL`: `security-reviewer`, `code-standards`, `spec-conformance`, plus `ui-reviewer` and `ux-reviewer` on a UI diff. Each gets `worktree`, `spec_dir`, `base`, the review round, and (UI reviewer) the impeccable SKILL.md path. Pass active `design` and the `pen-design` path to each. Spec-conformance checks the mandatory design gates even when UI review is skipped or the diff is map/evidence-only. Round 1 reviews the full diff. Every later round is a **delta review**: each reviewer also gets `delta_base` (the checkpoint commit of the previous round) and the previous round's `verdict.json` path, and reviews only the fix diff against that verdict (findings.md, "Reviewing"). Save each report to `<spec_dir>/factory/reviews/round-<n>/<agent>.json`.
+4. `SPAWN` `review-judge` with `worktree`, `spec_dir`, `base`, the round, the round folder, active `design`/`pen-design` path, and (round > 1) `delta_base` and the previous verdict path. Save its verdict as `verdict.json` in the same folder. Checkpoint. Reconcile independent design-gate results against the verdict; have spec-conformance/judge account for any omitted failed gates in this round before deciding repair or approval. Missing proof cannot become a pass because a report omitted it.
+5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `ponytail` or `tdd` unresolved: stop this fix round the same way as step 6. Else `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands`, the resolved `ponytail` and `tdd` paths, the verdict path, and active `design`/`pen-design` path; verify (step 6), increment `review.fix_rounds`, and repeat this step from 1 with the next round number. For active design runs, reserve/persist that increment and `review.pending_design_fix` with `stage: fix` **before** spawning, instead of incrementing after verification; clear the completed reservation as `design-code-mapping.md` specifies. Resume continues an interrupted reservation, not a new attempt. Collect all repairable design/visual findings into this same round; no separate polish loop.
 
 Done when the verdict has no confirmed blocking findings, or `review.fix_rounds == 2` (remaining blockers go to the approver flagged as unresolved).
+
+For active design work, the mandatory gate/exception policy in `design-code-mapping.md` still applies after the cap or a judge pass. Keep unresolved evidence partial/blocked; only an explicit scoped user exception permits proceeding past named design gates.
 
 ## 8. Approver
 
 `NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. When `review.ui_diff` is true, disclose the UI evaluation's state: `review.ui_reviewer_skipped` (the install was declined), or, when `ui-reviewer` ran, whether its findings disclosed rendered or only static/evidence-limited evaluation. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
-- Approve: step 9.
-- Request changes: `ponytail` or `tdd` unresolved: stop the same way as step 6/7. Else take the user's text, `SPAWN` `fixer` with it and the resolved `ponytail` and `tdd` paths, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
+- Approve: step 9 only when active design gates pass or a current explicit scoped exception permits proceeding; ordinary Approve does not infer an exception. Otherwise use the protected decision path in `design-code-mapping.md`.
+- Request changes: `ponytail` or `tdd` unresolved: stop the same way as step 6/7. Else take the user's text, `SPAWN` `fixer` with it, the resolved `ponytail` and `tdd` paths, and active `design`/`pen-design` path, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
 - Abort: set `status: aborted` and `ended_at`, checkpoint, keep the worktree, stop.
+
+For active design work, also show source/target, canonical map path/status, current gate results and evidence links, remaining mismatches and shared impact, and explicit exceptions. Persist the user's protected design decisions with their evidence, not only in a relay that a checkpoint clears.
 
 ## 9. PR
 
+Before publishing active design work, recheck source/code/capture identity and current gate/exception status under `design-code-mapping.md`. Changed evidence returns to invalid checks; unwaived missing/failed gates halt publication.
+
 1. `git push -u origin <branch>`.
-2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings.
+2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include source/target, map status, evidence links, actual gate gaps, and explicit exceptions.
 3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
 4. Set `status: pr-open`, `pr_url`, and `ended_at`, checkpoint, push.
 5. `NOTIFY` the run totals (state.md, "Totals") and offer (do not do) any after-PR extras `harness.md` lists.

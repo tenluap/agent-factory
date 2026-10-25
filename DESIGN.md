@@ -4,6 +4,8 @@ Source of truth for how `/factory` behaves. `core/` and the adapters in `adapter
 
 Agreed in a grilling session on 2026-10-21. Harness model and stateless agents agreed on 2026-10-22. Skill routing agreed on 2026-10-25 (`docs/superpowers/specs/2026-10-25-factory-skill-routing-design.md`).
 
+Pen design-code mapping agreed on 2026-10-25 ([approved contract](docs/superpowers/specs/2026-10-25-pen-design-code-mapping-design.md)).
+
 ## What it is
 
 `/factory` is one user-invoked skill. Whichever agent session runs it becomes the **orchestrator**: it runs the loop below, spawns every agent, owns the run's state, and is the only thing that talks to the user. Agents never talk to the user directly.
@@ -76,6 +78,20 @@ Precedence when a skill's guidance and the factory's own rules could conflict: `
 ### Widened UI-change detection
 
 Step 6.1's UI classification (`SKILL.md`) widens from a short extension/directory list to: view markup and styles, design tokens and themes, UI assets (icons, images, fonts shipped to the interface), locale and string files, and a diff whose only change is user-visible copy inside UI code. A diff touching none of these skips the UI passes (`ui-reviewer`, `ux-reviewer`, the `impeccable` install offer). `ui-reviewer` follows `impeccable`'s audit-and-critique route explicitly, running its setup once in the reviewer's own context, staying read-only, and disclosing whether its evidence was rendered or static rather than describing static inspection as an observed interaction; a skipped or evidence-limited UI evaluation is disclosed at the approver gate. `ux-reviewer` keeps its distinct, complementary lens rather than repeating the UI pass.
+
+## Pen design references
+
+Whenever a factory run creates, references, or updates a Pen design intended as an implementation reference, activate the framework-independent [mapping contract](core/skills/factory/references/design-code-mapping.md). Resolve `pen-design` conditionally through the active adapter; a missing required skill or backend capability is a disclosed blocker, not an inferred API. Keep framework-specific guidance separate, starting with [Avalonia](core/skills/factory/references/design-code-mapping-avalonia.md). Standalone Pen invocations outside the factory are outside this boundary.
+
+The repository's canonical `docs/design-code-map.json` (or its existing equivalent) supports multiple sources, exhaustive scoped node coverage, canonical components/instances, stable code anchors, explicit removals/exceptions, and reverse lookup from the same records. A design-only task records source/targets without requiring code. Existing implementations bootstrap only the requested scope and dependencies. Persist context in pending storage before worktree creation and under the feature's `factory/design/` afterward; the permanent map references scoped committed sources, exports, captures, and comparison metadata.
+
+Design governs visual decisions. Default implementation updates to design → code; design edits require an explicit request. Resolve a unique target from the request or saved context/map, and ask on ambiguity. Check source freshness and code anchors on each new/resumed run. Inspect shared consumers, obtain agreement before expanding visual scope, and preserve application behavior when a design element is removed. Unsupported inspection, missing identifiers, or unavailable revisions must be reported honestly.
+
+Mapped implementations require current build/runtime, mapping, and rendered-fidelity evidence independently of optional impeccable evaluation. Exact supported design values and matching viewport/theme/state/DPI/scale comparison are required; no universal pixel threshold is imposed. Static desktop review cannot establish rendered fidelity. Treat a demonstrated violation of the approved reference as a requirement failure, rather than advisory styling preference.
+
+Mapping/visual findings share the existing two automatic fix rounds with all other findings; persist the counter before each design fix attempt so resume cannot reset it. A design gate failure goes through this queue, not a fresh code-build retry for visual repair. Missing prerequisites or exhausted rounds leave work partial/blocked. An explicit, scoped user exception may permit proceeding, while retaining the failed/missing gate and unverified status. Fast mode and ordinary publication approval cannot infer that exception. Non-Pen runs preserve their existing flow and UI policy.
+
+Fresh spec-builder, code-build, fixer, reviewers, and judge receive the saved `design` context reference. The orchestrator independently checks evidence identity/results, routes protected decisions, and reports design status and exceptions at approval and in the PR. No new agent role, harness verb, second map, or repair loop is introduced.
 
 ## Agents
 
@@ -198,3 +214,7 @@ Three machine-checkable seams, exact commands in `specs/005-skill-routing/quicks
 - **Seam 3 — state/question contract**: `bin/factory show` over throwaway fixtures passes `stage: "brainstorm"` and `requires_user` through verbatim, and version 1/2 fixtures still digest, with both named in `state.md`/`protocol.md`.
 
 Agent-driven manual checks (role behaviour, not machine-checkable): three intake trials routing correctly with exactly one question on the ambiguous case; stop-after-`brainstorm` then resume with no repository writes and no repeated questions; a fast-mode run showing and waiting on the seam confirmation, not re-asking it unchanged on resume; removing `ponytail`/`tdd` stopping the affected work with setup guidance; four UI-detection trials (tokens, locale string, user-visible copy, backend-only) classifying correctly with zero UI-reviewer edits; a pre-existing saved run resuming at its recorded stage; and a document read confirming `DESIGN.md`, the shared reference and the five dependent role/orchestrator files state each precedence rule once with no conflict.
+
+### Pen mapping validation
+
+Check relative links and JSON examples, unchanged native-agent metadata, canonical five-harness parity/reproducibility, and state-CLI pass-through for optional `design`, protected questions, consumed repairs, and a pending design-fix reservation; retain version-1/2 and ordinary-run compatibility. The [implementation plan](docs/superpowers/plans/2026-10-25-pen-design-code-mapping-plan.md) records the packaging results. Real Pen inspection and matched application capture are separate acceptance trials: exercise scoped bootstrap/update, a shared-component conflict, stale evidence/resume, interrupted reserved repair, two-round exhaustion, and explicit exceptions from the [approved scenarios](docs/superpowers/specs/2026-10-25-pen-design-code-mapping-design.md). Static packaging checks cannot establish rendered fidelity.

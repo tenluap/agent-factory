@@ -121,6 +121,7 @@ The following is the consolidated baseline a builder can recreate.
 | Relay automation | Fast mode is on by default; eligible recommended answers are accepted and marked automatic. |
 | Implementation | Execute tasks, commit completed work, resume from checkboxes, and hand over to a fresh role when context is low. |
 | Verification | The orchestrator runs build and tests independently after implementation and fixes. |
+| Pen references | Automatic cross-framework design-code mapping, persisted source/target context, scoped committed visual evidence, and mandatory mapping/runtime/fidelity gates independent of optional UI review. |
 | Review | Security, code standards, and specification conformance always run; UI and UX are conditional on the diff. |
 | Judgement | A separate judge verifies, deduplicates, and accounts for the reviewers' findings. |
 | Repair | Up to two automatic verdict-driven fix rounds; later reviews normally inspect the fix delta. |
@@ -149,6 +150,16 @@ Analysis checks whether the specification, plan, and tasks agree and are impleme
 ### Verify and review
 
 The implementing role completes the tasks and runs the checks. The orchestrator repeats the documented build and test commands. Reviewers examine the relevant diff through separate lenses; the judge decides which findings are confirmed, advisory, or rejected. Confirmed blockers can enter the bounded repair loop.
+
+### Pen design references (agreed 25 October 2026)
+
+Runs creating, referencing, or updating a Pen design as an implementation reference follow the [approved contract](superpowers/specs/2026-10-25-pen-design-code-mapping-design.md) and the shared [mapping workflow](../core/skills/factory/references/design-code-mapping.md). It applies across frameworks, with separate [Avalonia translation/capture guidance](../core/skills/factory/references/design-code-mapping-avalonia.md). Resolve `pen-design` conditionally; discover actual backend capabilities instead of assuming stable IDs, revisions, or a file format.
+
+Keep one permanent repository map, supporting multiple sources and every scoped node/component/instance through stable code anchors. Later update requests resolve a unique saved target and default to design → code. Preserve application behavior and obtain agreement before shared visual scope expands. Bootstrap existing implementations only within requested scope. Design-only tasks record source and targets until implementation exists.
+
+Design governs visuals. Current build/runtime, mapping, and matching rendered-comparison evidence are mandatory independently of optional impeccable evaluation. Static desktop inspection contributes findings but cannot establish rendered fidelity. Concrete reference violations cite their approved requirement and evidence rather than being dismissed as styling opinions. Reuse current surveys/evidence and invalidate affected results when source/code/capture identity changes.
+
+Mapping/visual findings share the same two automatic fix rounds. Missing prerequisites or exhausted repairs leave work partial/blocked; explicit scoped exceptions can permit proceeding while preserving unverified results. Fast mode and ordinary approval cannot infer an exception. Persist source context, scoped sources/exports/captures and comparison metadata under the feature's `factory/design/`, with references from the canonical map. Fresh roles and resumes receive these references and retain the original repair counter. Standalone Pen invocations are outside factory interception.
 
 ### Approve and publish
 
@@ -370,6 +381,7 @@ All tiers follow the same output contracts. Tier 3 provides weaker review indepe
 | `ponytail` and `tdd` skills | Supply reuse-first simplification and test-driven implementation technique for code-writing and fixing turns, bounded by the factory's own engineering rules and plan-time seam confirmation. Resolve before any run commits to code delivery. **Required**, every run that reaches delivery. |
 | `brainstorming` skill | Supports the idea-exploration path (intake intent: exploration). **Conditional**: resolve only on that path; never on the feature path. |
 | `impeccable` skill | Supports the UI review lens; resolve only when needed and disclose a skipped UI review. **Conditional**: resolve only on a UI diff. |
+| `pen-design` skill and supported backend | **Conditional**: Pen implementation references activate persistent mapping and mandatory fidelity checks; unavailable capabilities produce explicit gaps, not assumed success. |
 | Authenticated `gh` and a writable remote | Support GitHub repository lookup and approved PR publication. Confirm publication readiness before the final gate. |
 | Repository build/test tools | Execute the recorded verification commands. A missing or broken required tool is an actionable setup failure. |
 
@@ -403,7 +415,9 @@ target-worktree/
       state.json
       analyze-<pass>.md
       remediation-<pass>.md
+      design/{context.json,comparison.json,scoped-sources-and-captures}
       reviews/round-<n>/*.json
+  docs/design-code-map.json    # default canonical project map; reuse an existing equivalent
 ```
 
 Pending runs and user configuration live under `${FACTORY_HOME:-~/.factory}`. Detailed specifications may introduce additional research or design artifacts when relevant. A proposed durable decision archive can be embedded in state or stored beside it; choose one authoritative representation.
@@ -568,6 +582,8 @@ Run deterministic contract/helper checks separately from real agent-driven accep
 | AT-19 | Canonical rendering | Every advertised adapter renders; expected files exist; shared skill trees match; generated distribution has no tracked or untracked drift. |
 | AT-20 | State safety | Interrupted write leaves a valid prior/new state; invalid schema does not advance; a second orchestrator cannot mutate the same run concurrently. Recommended helper capabilities must be implemented before claiming this gate. |
 | AT-21 | Consuming-repository rules | A documented override is recorded and respected; an unavailable required test runner stops behaviour-changing work. |
+| AT-22 | Pen reference implementation/update | Scoped source-qualified mapping and actual matching runtime/reference evidence establish fidelity; a green build/full map alone cannot pass. Fresh roles/resume retain source context and shared repair count. |
+| AT-23 | Missing Pen evidence or exhausted design repair | Missing/failed gates remain partial/blocked independently of optional UI review. Only an explicit scoped exception permits proceeding; approval/fast mode cannot imply one. |
 
 At M3, prove AT-01, AT-04, AT-07 through AT-10, AT-12 through AT-15, and the relevant installation/contract checks. Before claiming full current-feature parity, prove the remaining workflow scenarios. Before advertising an adapter as supported, execute its adapter-specific checks and a small real feature through approval.
 

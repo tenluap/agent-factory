@@ -2,7 +2,7 @@
 
 **Date:** 25 October 2026
 
-**Status:** Decisions Q1–Q14 accepted during grilling; written specification awaiting review. Factory instructions are unchanged.
+**Status:** Decisions Q1–Q14 and written specification approved by the user on 25 October 2026.
 
 ## Purpose
 

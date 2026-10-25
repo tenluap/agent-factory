@@ -57,6 +57,16 @@ The pending file uses this same schema from the moment the run is created: `star
   - `duration_ms`: orchestrator clock, spawn start to result. Append the entry before the checkpoint so the checkpoint commits it.
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC.
 
+## Pen design context (additive)
+
+When a run creates, references, or updates a Pen implementation reference, add `design` as defined in [design-code-mapping.md](design-code-mapping.md). It holds only `mode`, context/map/evidence paths, and status; source/node inventory belongs in the canonical map, and detailed checks/decisions in the referenced artifacts. `commands` may add discovered launch/capture commands; the context records their target/configuration. Design-only runs record reasons for any non-applicable application commands/gates rather than inventing an application prerequisite.
+
+Use pending storage before the worktree exists. On worktree creation move context into `<spec_dir>/factory/design/context.json`, update paths, and remove references to the deleted pending files. Persist every returned `design` result before checkpointing. Repository artifact paths are relative to the worktree; externally hosted sources retain their source references and an exported baseline.
+
+This is optional within version 3: version 1/2 and older version-3 states without it remain readable and keep their existing behavior. If a resumed stage actually encounters a Pen reference, activate the contract and bootstrap scoped context/coverage. The read-only CLI already passes small unknown fields through verbatim, including `design`; it does not validate the map or claim fidelity.
+
+Use existing `review.fix_rounds` for all automatic design and other repairs. Before an active-design automatic fixer starts, increment/persist it with `stage: fix` and optional `review.pending_design_fix: { "attempt": 1, "round": 1, "verdict": "specs/016-feature/factory/reviews/round-1/verdict.json" }`. Clear the marker after the attempt completes; a crash/restart continues that reservation with the saved verdict and uncommitted work, not another increment. Neither resume nor the evidence's change of phase resets the limit. Save protected user decisions and explicit scoped exceptions in context/map/evidence as well as relay answers, because checkpoints clear `relay`. Changed source/code/capture identity invalidates affected evidence and exceptions, not the consumed repair counter. Failed/missing gates remain recorded even when the status is `exception-accepted`.
+
 ## Totals
 
 The approver screen and the final `NOTIFY` each carry one totals line, computed from the state: total wall clock (`ended_at - started_at`), human wait (sum of `timeline.latency_ms`, with the wait count), agent time (sum of `ledger.duration_ms`, with the spawn count), and the residual (wall clock minus the other two). One shared sentence format, e.g. `Run took 2h 14m: 38m you (12 waits), 1h 12m agents (23 spawns), 24m overhead.`
@@ -90,13 +100,14 @@ Show each as: branch (or slug), stage, status, last `history` time.
 ## Resume
 
 1. `python3 <F>/bin/factory show <branch>` ("CLI"). Work in the digest's `worktree` (pending runs: `repo`). When `harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage. An open relay's unanswered questions are `relay.unanswered` in the digest, in stored order — redisplay exactly those.
+   - For active `design`, read [design-code-mapping.md](design-code-mapping.md), its context and canonical map first. Resolve `pen-design` if absent (and again on harness change), verify source freshness, code anchors, capture configuration, evidence and exception identity, and retain consumed `review.fix_rounds`. Return to invalid checks/decisions before resuming approval or publication; keep valid cached design evidence instead of restarting full discovery. Apply the same activation to a newly encountered Pen reference on an older run.
 2. Restart the recorded `stage` from its beginning:
    - Pending `brainstorm`: re-run step 2 (brainstorm) with the existing brief and saved relay answers as the starting point, then continue into step 3 (grill). Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `grill`: re-run grilling with the existing brief and saved relay answers as the starting point. Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `worktree`: run step 4.
    - Spec stages: `SPAWN` a fresh `spec-builder` with the state and the stage. It reads `relay` from the state: answered questions are settled, the agent asks only the rest.
    - `implement`: `SPAWN` `code-build`; it continues from the tasks.md checkboxes and inspects any uncommitted work.
-   - `verify`, `review`, `fix`: re-run step 6's verify, then step 7 from its first sub-step for the current round.
+   - `verify`, `review`, `fix`: for an active design run with `review.pending_design_fix`, resume that saved fixer attempt first using its verdict/context and current uncommitted work, preserving the reservation and failure policy; clear it on completion, then verify/re-review. Otherwise re-run step 6's verify, then step 7 from its first sub-step for the current round.
    - `approver`: show the approver screen again.
    - `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded.
 3. `halted` or `aborted`: show `halt_reason` and ask the user how to continue before restarting the stage.

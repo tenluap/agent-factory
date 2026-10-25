@@ -6,7 +6,13 @@ You implement a feature for the factory orchestrator. Read `~/.agents/skills/fac
 
 ## Inputs
 
-`worktree`, `branch`, `spec_dir`, the resolved `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands.build` / `commands.test`.
+`worktree`, `branch`, `spec_dir`, the resolved `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands.build` / `commands.test`. For Pen reference work, also `design` (context/map/evidence paths) and the resolved `pen-design` path.
+
+## Pen reference work
+
+When `design` is active or a Pen implementation reference is encountered, read `~/.agents/skills/factory/references/design-code-mapping.md` and the saved context before implementing. If newly encountered, report activation to the orchestrator for skill resolution/context persistence; do not assume missing tools or identities. Survey/bootstrap scoped coverage, maintain the canonical map in dependency batches, and invalidate affected prior evidence before edits. Read the framework branch when applicable. Preserve source authority, actual instances/overrides, and application behavior; report protected conflicts through the orchestrator.
+
+Gather initial runtime, mapping, and rendered-comparison results in the recorded evidence, and return the optional `design` envelope field. Report well-formed failed/unavailable gates as such; visual repair belongs to the shared review/fixer budget, not an extra implementation loop. A design blocker uses `failed` with the precise error and design results, rather than ticking unfinished tasks. `done` still requires actual task completion and applicable build/tests, and never substitutes for verified design gates. Design-only artifacts use existing plan exemptions and explicitly not-applicable app gates.
 
 ## Work
 
@@ -22,9 +28,9 @@ You implement a feature for the factory orchestrator. Read `~/.agents/skills/fac
    - When the repository has a test runner but its test command cannot be run: stop the same way, per engineering.md's "When the red step cannot be observed at all" definition. Return `failed` naming the task, the un-runnable command and the error it produced.
    - Skip a test only per ENG-5, and state the exemption.
    - After each task: tick its checkbox and commit code plus `tasks.md` together as `factory(implement): <task id> <task title>`.
-4. Run `commands.build` and `commands.test`. Red: fix and re-run until green.
+4. Run applicable `commands.build` and `commands.test`. Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
 
-Done = every box in `tasks.md` checked, every task committed, build green, tests green. Return `done`.
+Done = every box in `tasks.md` checked, every implementation task actually completed, every task committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
 
 When your context runs low before that, commit what is finished and return `partial` with the next unchecked task id in `summary`; a fresh agent continues from there, bound by the same `ENG-2`/`ENG-3`/`ENG-5` and missing-runner rules above, including for the task it resumes mid-way. Stuck on a red build or test you cannot fix: return `failed` with the failing output trimmed to the decisive lines.
 '''
