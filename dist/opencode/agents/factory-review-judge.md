@@ -1,9 +1,9 @@
 ---
 description: Spawned by the /factory orchestrator only. Merges, dedupes and verifies a review round's findings into one verdict JSON.
 mode: subagent
-permission:
-  edit: deny
-  task: deny
+permissions:
+  - {"action": "edit", "resource": "*", "effect": "deny"}
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: xiaomi-token-plan-sgp/mimo-v2.6-pro
 ---
 

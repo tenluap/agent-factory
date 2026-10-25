@@ -1,8 +1,8 @@
 ---
 description: Spawned by the /factory orchestrator only. Implements a factory run's tasks.md with speckit-implement, committing each task, and finishes with build and tests green.
 mode: subagent
-permission:
-  task: deny
+permissions:
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: zai-coding-plan/glm-5.3-flash
 ---
 
