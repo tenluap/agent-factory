@@ -1,0 +1,17 @@
+{
+  "reviewer": "code-standards",
+  "round": 1,
+  "summary": "The change follows the repo's own constitution and engineering rules closely (clean canonical render across all five harnesses, passing link-integrity and state/CLI contract checks, declared and justified test exemptions), with only a stale pair of step-number cross-references in data-model.md left over from the SKILL.md renumbering.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/005-skill-routing/data-model.md",
+      "line": 30,
+      "summary": "data-model.md cites stale step numbers for Worktree and impeccable resolution that no longer match the renumbered core/skills/factory/SKILL.md.",
+      "evidence": "Line 30: \"...move into the worktree at step 3, unchanged from today's grilling (FR-004)\" and line 63: \"`impeccable` | step 6, only on a UI diff | ...\". core/skills/factory/SKILL.md's final headings are `## 2. Brainstorm`, `## 3. Grill`, `## 4. Worktree`, `## 6. Implement`, `## 7. Review` (impeccable resolution happens in step 7, item 2). So \"step 3\" should be step 4, and \"step 6\" should be step 7 (ENG-7: comments/documentation must state current behaviour accurately and be updated when behaviour changes).",
+      "fix": "Update data-model.md's two step references to step 4 (Worktree) and step 7 (impeccable/Review) to match core/skills/factory/SKILL.md's final numbering."
+    }
+  ]
+}
