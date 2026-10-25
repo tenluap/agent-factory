@@ -8,7 +8,7 @@
 
 ## Phase 1: Setup — design first
 
-- [ ] T001 Update `DESIGN.md` with the native OpenCode V2 subagent/shell and ordered permission contract, unchanged role access and models, supported V1 compatibility, and verification limits. Exempt: documentation only. Commit this task separately before changing adapter behavior; include the already prepared feature planning artifacts as appropriate.
+- [x] T001 Update `DESIGN.md` with the native OpenCode V2 subagent/shell and ordered permission contract, unchanged role access and models, supported V1 compatibility, and verification limits. Exempt: documentation only. Commit this task separately before changing adapter behavior; include the already prepared feature planning artifacts as appropriate.
 
 ## Phase 2: Foundational — preserve the baseline
 
