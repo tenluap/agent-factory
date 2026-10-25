@@ -153,11 +153,11 @@ The design record, shared integration reference, role instructions, decision rec
 ### Key Entities
 
 - **Intake intent**: exploration or delivery; decides the path, settled by wording or one question.
-- **Exploration stage**: the idea path's first stage; its confirmed direction is recorded in the pending brief and resumable from pending storage.
+- **Exploration stage** `brainstorm`: the idea path's first stage, settling into `grill`; its confirmed direction lands in the pending brief, resumable from pending storage.
 - **Skill map entry**: a logical skill name plus the path resolved for the active harness, stored in run state, re-resolved when the harness changes.
 - **Protected question**: a relay question flagged as requiring a user answer, which fast mode must not auto-accept; seam confirmation is one.
 - **Seam confirmation**: the agreed public test seams, persisted with the plan and invalidated when seams or scope change.
-- **UI change signal**: a diff's classification as affecting a user-visible surface, including tokens, themes, assets, locale strings and user-visible copy.
+- **UI change signal**: a diff's classification as affecting a user-visible surface: tokens, themes, assets, locale strings, user-visible copy.
 - **Shared integration reference**: the one compact document holding skill precedence and loading rules for the orchestrator and code-writing roles.
 
 ## Success Criteria *(mandatory)*

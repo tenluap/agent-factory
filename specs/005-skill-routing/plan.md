@@ -13,7 +13,7 @@ then the orchestrator `SKILL.md` (intake classification and the single intent qu
 stage, conditional `RESOLVE` of `brainstorming`/`ponytail`/`tdd`/`impeccable`, the two code-craft paths in
 `code-build` and `fixer` inputs, widened UI detection), then the two references (`state.md` gains the
 `brainstorm` stage and resume handling; `protocol.md` gains the optional `requires_user` question field that
-fast mode must not auto-answer), then four roles (`spec-builder` relays the plan's seams as a
+fast mode must not auto-answer), then five roles (`spec-builder` relays the plan's seams as a
 `requires_user` question; `code-build` and `fixer` read the shared reference and their new skill paths;
 `ui-reviewer` states impeccable's evaluation route and its evidence disclosure; `ux-reviewer` keeps its
 distinct lens), then the documents (ADR 0001 revised in place, `README.md` and `docs/product-brief.md`
@@ -56,7 +56,8 @@ context-cost constraint is below.
 - `dist/` is generated, never hand-edited, and committed with its source (Constitution III); no
   adapter-specific model setting changes in this feature (FR-029).
 - **Context cost**: `references/skills.md` loads into every `code-build` and `fixer` turn, so it stays
-  compact (target under 60 lines) and restates no `ENG-n` rule; roles link to it (ENG-6, Constitution V).
+  compact (under 60 lines) and restates no `ENG-n` rule - both asserted by Seam 2; roles link to it (ENG-6,
+  Constitution V).
 - **Compatibility** (FR-006, FR-017, SC-008): additive state and question fields only, version stays 3; old
   stage values, saved answers, question IDs and resume digests keep working.
 - **Security**: nothing installed or fetched beyond the existing authorised `impeccable` offer (FR-011); no
@@ -69,8 +70,8 @@ context-cost constraint is below.
 - **Delivery**: source and render land in the same commits, so revert of those commits is the rollback; no
   migration, since nothing persisted is rewritten.
 
-**Scale/Scope**: 1 new file; 11 edited source and document files (`DESIGN.md`, `SKILL.md`, `state.md`,
-`protocol.md`, 4 roles, ADR 0001, `README.md`, `docs/product-brief.md`, `CONTEXT.md`); 5 re-rendered
+**Scale/Scope**: 1 new file; 13 edited source and document files (`DESIGN.md`, `SKILL.md`, `state.md`,
+`protocol.md`, 5 roles, ADR 0001, `README.md`, `docs/product-brief.md`, `CONTEXT.md`); 5 re-rendered
 distributions.
 
 ## Constitution Check
@@ -148,19 +149,21 @@ checks. Exact commands: [quickstart.md](./quickstart.md).
 - **Seam 2 - relative-link integrity of the changed Markdown** (`python3 -` assertion over
   `core/skills/factory/**`, `core/roles/**`, `DESIGN.md`, `README.md`, `CONTEXT.md`, `docs/**`): every
   relative link target exists, and `references/skills.md` is linked from `SKILL.md`, `core/roles/code-build.md`
-  and `core/roles/fixer.md` (FR-026, SC-010). Red: the link added to `SKILL.md` before the reference file
-  exists fails the check.
+  and `core/roles/fixer.md` (FR-026, SC-010). The same assertion enforces the context-cost constraint:
+  `references/skills.md` is under 60 lines and contains no `ENG-` match. Red: the link added to `SKILL.md`
+  before the reference file exists fails the check.
 - **Seam 3 - state and question contract via `core/skills/factory/bin/factory show`**: over temporary
   pending-state fixtures (not committed) under a throwaway `FACTORY_HOME`, a run with `stage: "brainstorm"`
   and an unanswered question carrying `requires_user: true` digests with the stage and the field passed
   through verbatim, and version 1 (single `relay.questions` batch) and version 2 (string answer) fixtures
   still digest - with `brainstorm` named in `state.md`'s stage list and `requires_user` documented in
-  `protocol.md`'s question fields (FR-006, FR-017, SC-008). Red: before those two reference edits, the
+  `protocol.md`'s question fields and `state.md`'s fast-mode step (FR-006, FR-017, SC-008). Red: before those two reference edits, the
   documented-vocabulary half of the assertion fails.
 
 Exemptions (documentation or configuration only - prose that agents read at runtime, whose packaging is
 covered by Seam 1 and whose links are covered by Seam 2):
 
+- `Exempt: setup/environment steps - configuration only - no product file changes.`
 - `Exempt: DESIGN.md - documentation only - the design record.`
 - `Exempt: core/skills/factory/references/skills.md - documentation only - agent instructions; Seam 2 proves it exists and is linked, Seam 1 that it ships.`
 - `Exempt: core/skills/factory/SKILL.md - documentation only - orchestrator instructions.`

@@ -54,13 +54,21 @@ for name in linkers:
     text = (root / name).read_text()
     if ref not in text:
         bad.append(f'{name}: does not link {ref}')
+shared = root / 'core/skills/factory/references' / 'skills.md'
+if shared.exists():
+    lines = shared.read_text().splitlines()
+    if len(lines) >= 60:
+        bad.append(f'{shared}: {len(lines)} lines, must stay under 60 (context cost)')
+    if 'ENG-' in shared.read_text():
+        bad.append(f'{shared}: restates an ENG-n rule')
 print('\n'.join(bad) or 'links ok')
 sys.exit(1 if bad else 0)
 PY
 ```
 
 Expected: `links ok`, exit 0. Red while `SKILL.md` links `references/skills.md` before that file exists, or
-if either code-writing role omits the link.
+if either code-writing role omits the link, or if the shared reference grows past 60 lines or restates an
+`ENG-n` rule.
 
 ## Seam 3 - state and question contract
 
@@ -128,8 +136,10 @@ or question fields through. Delete `$SCRATCH/fh` afterwards; nothing here is com
 These need real agent-driven runs and are reported separately, per `DESIGN.md`'s validation plan and the
 spec's assumptions:
 
-1. Three intake trials - explicit exploration, explicit delivery, ambiguous wording: the path matches the
-   intent and only the ambiguous case asks one question (SC-001).
+1. Three intake trials, using the exact cue phrases recorded in `DESIGN.md`'s routing contract (T004) -
+   explicit exploration ("I have an idea for...", "explore whether we could..."), explicit delivery ("add a
+   `--no-fast` flag", "fix the resume path so..."), and ambiguous wording ("improve how resume works"): the
+   path matches the intent and only the ambiguous case asks one question (SC-001).
 2. Stop after exploration, then resume: the confirmed direction is in the pending brief, the invoking
    checkout has zero changed files, and feature settlement asks no already-answered question (SC-002,
    SC-003).
@@ -142,3 +152,8 @@ spec's assumptions:
    evidence was rendered or static (SC-006, SC-007).
 6. Resume a run saved before this change: it restarts at its recorded stage with its answers intact
    (SC-008).
+7. Single-source agreement (a document read, not an agent run; done in T021): read `DESIGN.md` and
+   `core/skills/factory/references/skills.md` against `core/skills/factory/SKILL.md`,
+   `core/roles/code-build.md`, `core/roles/fixer.md` and `core/roles/ui-reviewer.md`: each precedence and
+   skill-loading rule is stated once in the shared reference, every role links to it rather than restating
+   it, and no role states a rule that conflicts with it (SC-010).
