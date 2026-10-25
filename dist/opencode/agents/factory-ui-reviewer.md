@@ -1,9 +1,9 @@
 ---
 description: Spawned by the /factory orchestrator only. Reviews a factory run's UI changes with impeccable's audit and critique; returns findings JSON.
 mode: subagent
-permission:
-  edit: deny
-  task: deny
+permissions:
+  - {"action": "edit", "resource": "*", "effect": "deny"}
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: zai-coding-plan/glm-5.3-flash
 ---
 

@@ -49,7 +49,7 @@ def load_adapter(name):
 
 
 def agent_fields(adapter, meta, values):
-    """Ordered (key, value) pairs for one agent. A value is a string, a list, or a one-level dict."""
+    """Ordered (key, value) pairs for one agent's frontmatter."""
     fields = [(key, template.format(**values)) for key, template in adapter["fields"]]
     fields += list(adapter.get("extra", {}).items())
     fields += list(adapter["access"][meta["access"]].items())
@@ -63,6 +63,9 @@ def yaml_value(value):
     if isinstance(value, dict):
         return "".join(f"\n  {k}: {v}" for k, v in value.items())
     if isinstance(value, list):
+        if value and all(isinstance(item, dict) for item in value):
+            # JSON flow mappings are valid YAML; quoting protects wildcard resources.
+            return "".join(f"\n  - {json.dumps(item)}" for item in value)
         return " [" + ", ".join(value) + "]"
     return f" {value}"
 

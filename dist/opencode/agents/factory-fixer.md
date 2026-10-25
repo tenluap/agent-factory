@@ -1,8 +1,8 @@
 ---
 description: Spawned by the /factory orchestrator only. Fixes a judge verdict's confirmed blocking findings, or the user's requested changes, in a factory worktree.
 mode: subagent
-permission:
-  task: deny
+permissions:
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: zai-coding-plan/glm-5.3-flash
 ---
 

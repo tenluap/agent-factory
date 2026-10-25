@@ -1,9 +1,9 @@
 ---
 description: Spawned by the /factory orchestrator only. Reviews a factory run's diff against the repo's documented conventions; returns findings JSON.
 mode: subagent
-permission:
-  edit: deny
-  task: deny
+permissions:
+  - {"action": "edit", "resource": "*", "effect": "deny"}
+  - {"action": "subagent", "resource": "*", "effect": "deny"}
 model: zai-coding-plan/glm-5.3-flash
 ---
 
