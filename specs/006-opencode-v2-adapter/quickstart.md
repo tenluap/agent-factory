@@ -48,6 +48,8 @@ Record static, discovery, model-backed dispatch and runtime enforcement separate
 
 - T007: Evidence recorded in the four categories below. Optional fresh runtime discovery performed read-only against the installed tree; no model calls, no user configuration or service changes. No observed mismatch.
 
+- T008: `python3 -m unittest discover -s tools -p 'test_*.py'` — 8 tests, OK. `bash -n install.sh` — syntax OK. `git diff --check` — clean. Changed-Markdown local links — 19 relative links across the 27 Markdown files changed against `origin/main`, all resolve. Post-commit canonical rerender of all five harnesses (absent override config, default homes, temporary `FACTORY_HOME`): `git status --porcelain -- dist/` empty, catching untracked additions as well as tracked drift; a repeated generation reproduced identical bytes. Invoking checkout remains intact: status and diff digest match the T002 capture.
+
 ## Verification evidence categories (T007, 2026-10-25)
 
 The four evidence categories are recorded separately; zero unexecuted checks are reported as passed.

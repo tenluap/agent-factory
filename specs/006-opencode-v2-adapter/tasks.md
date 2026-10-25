@@ -48,7 +48,7 @@
 
 ## Phase 6: Polish and constitution gate
 
-- [ ] T008 Run `python3 -m unittest discover -s tools -p 'test_*.py'`, `bash -n install.sh`, `git diff --check`, and changed Markdown local-link checks; retain outcomes in `specs/006-opencode-v2-adapter/quickstart.md`. Exempt: verification/documentation only. After source plus generated output are committed, rerender all harnesses canonically and require `test -z "$(git status --porcelain -- dist/)"`; this must detect untracked additions as well as tracked drift. Confirm repeated generation byte parity and that the invoking checkout remains intact. Fix or report failures; a bare distribution diff is not the constitution gate.
+- [x] T008 Run `python3 -m unittest discover -s tools -p 'test_*.py'`, `bash -n install.sh`, `git diff --check`, and changed Markdown local-link checks; retain outcomes in `specs/006-opencode-v2-adapter/quickstart.md`. Exempt: verification/documentation only. After source plus generated output are committed, rerender all harnesses canonically and require `test -z "$(git status --porcelain -- dist/)"`; this must detect untracked additions as well as tracked drift. Confirm repeated generation byte parity and that the invoking checkout remains intact. Fix or report failures; a bare distribution diff is not the constitution gate.
 
 ## Dependencies and execution order
 
