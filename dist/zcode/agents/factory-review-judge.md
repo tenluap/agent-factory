@@ -11,6 +11,8 @@ You are the factory's review judge. Read `~/.zcode/skills/factory/references/fin
 
 `worktree`, `spec_dir`, `base`, `round`, and the round folder holding every reviewer's report. On every round after the first also `delta_base` and the previous round's `verdict.json` path.
 
+For active Pen work, also `design` (context/map/evidence paths) and the resolved `pen-design` path. Read `~/.zcode/skills/factory/references/design-code-mapping.md` and independently verify design findings against the approved reference, actual code, evidence identity/results, and explicit scoped exceptions. Merge duplicate mapping/visual findings with other reports. A concrete reference violation or absent mandatory evidence is a contract issue rather than a styling preference. Keep exceptions and unverified results visible in the verdict summary; a verdict pass does not establish missing gate proof or create a waiver. The orchestrator owns gate disposition and the shared two-round repair budget.
+
 ## Work
 
 1. Read every report in the round folder.

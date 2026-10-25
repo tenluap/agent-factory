@@ -2,7 +2,9 @@
 
 Source of truth for how `/factory` behaves. `core/` and the adapters in `adapters/` are built from this document; when they disagree, fix them to match this one (or change this one first, deliberately).
 
-Agreed in a grilling session on 2026-10-21. Harness model and stateless agents agreed on 2026-10-22.
+Agreed in a grilling session on 2026-10-21. Harness model and stateless agents agreed on 2026-10-22. Skill routing agreed on 2026-10-25 (`docs/superpowers/specs/2026-10-25-factory-skill-routing-design.md`).
+
+Pen design-code mapping agreed on 2026-10-25 ([approved contract](docs/superpowers/specs/2026-10-25-pen-design-code-mapping-design.md)).
 
 ## What it is
 
@@ -28,6 +30,8 @@ The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copi
 
 ```
 feature
+  -> intake: classify exploration vs delivery ("Skill routing"), one question if ambiguous
+  -> [idea path] brainstorm         (orchestrator, invoking checkout, writes nothing to the repo)
   -> grilling                       (orchestrator, invoking checkout, writes nothing to the repo)
   -> worktree on NNN-name branch    (orchestrator)
   -> specify -> clarify -> grill-with-docs -> plan -> tasks -> analyze     (spec-builder)
@@ -43,6 +47,51 @@ feature
 ```
 
 Lite chain (DESIGN, "Modes"): specify -> plan -> tasks -> analyze, one pass, no loop; any CRITICAL/HIGH escalates to the full chain from clarify.
+
+## Skill routing
+
+Agreed 2026-10-25 (`docs/superpowers/specs/2026-10-25-factory-skill-routing-design.md`). Uses the right externally-installed skill at the right point in the run, without weakening stateless roles, saved answers, worktree isolation, independent review or publication approval.
+
+### Routing contract
+
+| Trigger | Skill | Owner | First/applied stage |
+|---|---|---|---|
+| An exploratory idea without a settled solution — e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..." | `brainstorming` | Orchestrator | `brainstorm`, before `grill` |
+| A concrete feature, change, or an idea already ready to build — e.g. "add a `--no-fast` flag", "fix the resume path so...", a named existing spec | `grilling` | Orchestrator | `grill` (idea path's second stage, feature path's first) |
+| Neither set of cues, or both | — one intent question decides, then routes as above | Orchestrator | — |
+| Implementation or repair of code | `ponytail` and `tdd` | `code-build`, `fixer` | `implement`, `fix` |
+| A UI-related diff enters review | `impeccable` audit and critique | `ui-reviewer` | `review` |
+| A user-facing flow changes | existing UX lens (complementary, not a repeat of the UI pass) | `ux-reviewer` | `review` |
+
+Intake intent is not a stored field: step 0 of `SKILL.md` decides it from the request text, visible afterwards only in the run's first `stage` value and, when a question was needed, in that question's saved relay answer. The idea path is `brainstorm -> grill -> worktree -> the existing spec chain`; the feature path starts at `grill`. Stopping after `brainstorm` leaves the run paused with the confirmed direction in the pending brief and nothing written to the invoking checkout; resuming continues into `grill`, which treats brainstorming's settled decisions as inputs and asks only what is still open. A run saved before this routing existed keeps resuming at its recorded stage unchanged — `brainstorm` is additive to the stage vocabulary (`state.md`), not a replacement of any existing one.
+
+### Skill resolution and precedence
+
+Every lookup is the active adapter's `RESOLVE` operation; machine-specific paths never enter `core/`. `speckit-*`, `grilling`, `domain-modeling` and `pr` resolve at preflight as today. `brainstorming` resolves only on the idea path. `ponytail` and `tdd` resolve at preflight, before a run commits to code delivery, and their absolute paths go to every fresh `code-build`/`fixer` spawn. `impeccable` resolves later, only on a UI diff, through the existing install offer with a disclosed skip. A resume re-resolves any name never resolved and, when `harness` changed, every path. A required missing skill stops the affected work with setup guidance naming it; nothing is installed beyond the existing authorised `impeccable` offer.
+
+Precedence when a skill's guidance and the factory's own rules could conflict: `core/skills/factory/references/engineering.md` always wins. In particular, the external `tdd` skill defers refactoring to review, while `ENG-1` permits small behaviour-preserving refactoring while tests stay green — the engineering rules govern. A skill's own guidance applies only inside the approved specification: it removes no requirement, security control, accessibility behaviour, planned test, repository tooling or `ENG-n` evidence, and never replaces a role's required result envelope. A skill's own companion references (e.g. `tdd`'s `tests.md`/`mocking.md`) resolve from that skill's own directory, never from the factory or the consuming repository. These rules are stated once, compactly, in `core/skills/factory/references/skills.md`, and `SKILL.md`, `code-build.md` and `fixer.md` link to it rather than restating it.
+
+### Protected confirmations
+
+`tdd` requires user-confirmed test seams before writing tests, and factory roles never talk to the user directly, so `spec-builder` relays the plan's proposed public seams as one question at the end of `plan`, before implementation starts. Relay questions gain an optional `requires_user: true` field (`protocol.md`): fast mode must never auto-answer such a question, alongside the existing `pending_clarify` exclusion; a question saved without the field keeps today's behaviour. The seam confirmation is persisted with the plan (`plan.md`, "Test seams", `Confirmed: <date> - <Qid> accepted - seams: ...`) and reused only while the seams and scope it names match; a changed seam list requires a new confirmation, and a plan whose every part is exempt skips the question entirely. `code-build` and `fixer` read the plan's seams, never the confirmation line, and never ask the user: a task needing an unlisted seam is `ENG-4`'s existing stop-and-report failure, not a question.
+
+### Widened UI-change detection
+
+Step 6.1's UI classification (`SKILL.md`) widens from a short extension/directory list to: view markup and styles, design tokens and themes, UI assets (icons, images, fonts shipped to the interface), locale and string files, and a diff whose only change is user-visible copy inside UI code. A diff touching none of these skips the UI passes (`ui-reviewer`, `ux-reviewer`, the `impeccable` install offer). `ui-reviewer` follows `impeccable`'s audit-and-critique route explicitly, running its setup once in the reviewer's own context, staying read-only, and disclosing whether its evidence was rendered or static rather than describing static inspection as an observed interaction; a skipped or evidence-limited UI evaluation is disclosed at the approver gate. `ux-reviewer` keeps its distinct, complementary lens rather than repeating the UI pass.
+
+## Pen design references
+
+Whenever a factory run creates, references, or updates a Pen design intended as an implementation reference, activate the framework-independent [mapping contract](core/skills/factory/references/design-code-mapping.md). Resolve `pen-design` conditionally through the active adapter; a missing required skill or backend capability is a disclosed blocker, not an inferred API. Keep framework-specific guidance separate, starting with [Avalonia](core/skills/factory/references/design-code-mapping-avalonia.md). Standalone Pen invocations outside the factory are outside this boundary.
+
+The repository's canonical `docs/design-code-map.json` (or its existing equivalent) supports multiple sources, exhaustive scoped node coverage, canonical components/instances, stable code anchors, explicit removals/exceptions, and reverse lookup from the same records. A design-only task records source/targets without requiring code. Existing implementations bootstrap only the requested scope and dependencies. Persist context in pending storage before worktree creation and under the feature's `factory/design/` afterward; the permanent map references scoped committed sources, exports, captures, and comparison metadata.
+
+Design governs visual decisions. Default implementation updates to design → code; design edits require an explicit request. Resolve a unique target from the request or saved context/map, and ask on ambiguity. Check source freshness and code anchors on each new/resumed run. Inspect shared consumers, obtain agreement before expanding visual scope, and preserve application behavior when a design element is removed. Unsupported inspection, missing identifiers, or unavailable revisions must be reported honestly.
+
+Mapped implementations require current build/runtime, mapping, and rendered-fidelity evidence independently of optional impeccable evaluation. Exact supported design values and matching viewport/theme/state/DPI/scale comparison are required; no universal pixel threshold is imposed. Static desktop review cannot establish rendered fidelity. Treat a demonstrated violation of the approved reference as a requirement failure, rather than advisory styling preference.
+
+Mapping/visual findings share the existing two automatic fix rounds with all other findings; persist the counter before each design fix attempt so resume cannot reset it. A design gate failure goes through this queue, not a fresh code-build retry for visual repair. Missing prerequisites or exhausted rounds leave work partial/blocked. An explicit, scoped user exception may permit proceeding, while retaining the failed/missing gate and unverified status. Fast mode and ordinary publication approval cannot infer that exception. Non-Pen runs preserve their existing flow and UI policy.
+
+Fresh spec-builder, code-build, fixer, reviewers, and judge receive the saved `design` context reference. The orchestrator independently checks evidence identity/results, routes protected decisions, and reports design status and exceptions at approval and in the PR. No new agent role, harness verb, second map, or repair loop is introduced.
 
 ## Agents
 
@@ -155,3 +204,17 @@ Professional code is correct, readable, maintainable, secure, and fast enough fo
 Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR. Repeat for each new adapter; once two adapters exist, start a run on one harness with `--stop-at implement` and resume it on the other.
 
 For the expanded engineering rules, also check that the plan captures applicable quality constraints, automatic fixing leaves guidance-only findings advisory, and concrete defects retain their justified severity. In particular, similar-looking code with different business meanings must not trigger mandatory abstraction; an exposed secret, duplicate consequential retry or violated performance requirement must not be dismissed as a style preference. Source/link checks and canonical renders validate packaging; they do not replace this role-behaviour validation.
+
+### Skill routing validation
+
+Three machine-checkable seams, exact commands in `specs/005-skill-routing/quickstart.md`:
+
+- **Seam 1 — canonical render + dist gate**: every harness re-rendered, then `test -z "$(git status --porcelain -- dist/)"`; proves every `core/` edit (including the new shared reference) reaches all five `dist/<harness>/skill/` trees untouched by hand.
+- **Seam 2 — relative-link integrity**: every relative link in the changed Markdown resolves, `references/skills.md` is linked from `SKILL.md`, `code-build.md` and `fixer.md`, and the shared reference stays under 60 lines and restates no `ENG-n` rule.
+- **Seam 3 — state/question contract**: `bin/factory show` over throwaway fixtures passes `stage: "brainstorm"` and `requires_user` through verbatim, and version 1/2 fixtures still digest, with both named in `state.md`/`protocol.md`.
+
+Agent-driven manual checks (role behaviour, not machine-checkable): three intake trials routing correctly with exactly one question on the ambiguous case; stop-after-`brainstorm` then resume with no repository writes and no repeated questions; a fast-mode run showing and waiting on the seam confirmation, not re-asking it unchanged on resume; removing `ponytail`/`tdd` stopping the affected work with setup guidance; four UI-detection trials (tokens, locale string, user-visible copy, backend-only) classifying correctly with zero UI-reviewer edits; a pre-existing saved run resuming at its recorded stage; and a document read confirming `DESIGN.md`, the shared reference and the five dependent role/orchestrator files state each precedence rule once with no conflict.
+
+### Pen mapping validation
+
+Check relative links and JSON examples, unchanged native-agent metadata, canonical five-harness parity/reproducibility, and state-CLI pass-through for optional `design`, protected questions, consumed repairs, and a pending design-fix reservation; retain version-1/2 and ordinary-run compatibility. The [implementation plan](docs/superpowers/plans/2026-10-25-pen-design-code-mapping-plan.md) records the packaging results. Real Pen inspection and matched application capture are separate acceptance trials: exercise scoped bootstrap/update, a shared-component conflict, stale evidence/resume, interrupted reserved repair, two-round exhaustion, and explicit exceptions from the [approved scenarios](docs/superpowers/specs/2026-10-25-pen-design-code-mapping-design.md). Static packaging checks cannot establish rendered fidelity.

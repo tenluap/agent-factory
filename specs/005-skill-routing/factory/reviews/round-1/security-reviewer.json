@@ -1,0 +1,6 @@
+{
+  "reviewer": "security",
+  "round": 1,
+  "summary": "The diff is prompt/spec/documentation content for the orchestrator and roles (no application, server, or CLI code changed) and deliberately preserves the existing no-install/no-fetch and protected-confirmation controls, so no security defect was found.",
+  "findings": []
+}

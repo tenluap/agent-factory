@@ -20,6 +20,9 @@ Every factory agent ends every turn with exactly one fenced `json` block, the **
 - `questions` (with `needs_input`): the **whole frontier** for this round: every open question whose prerequisites are settled. Defer questions whose wording or options depend on unanswered decisions. Use the question shape below. IDs are unique within a stage; later rounds continue the numbering.
 - `analyze` (analyze stage only): `{ "report": "factory/analyze-<n>.md", "critical": 0, "high": 2, "medium": 1, "low": 0 }`.
 - `pending_clarify` (remediate stage only): findings that need a user decision, as clarify questions in the `questions` item shape. The orchestrator stores them in `state.analyze.pending_clarify` and hands them to the next `clarify`.
+- `design` (optional on Pen reference work): `{ "mode": "implementation", "context": "specs/016-x/factory/design/context.json", "map": "docs/design-code-map.json", "evidence": "specs/016-x/factory/design/comparison.json", "status": "unverified" }`. Fields/statuses follow [design-code-mapping.md](design-code-mapping.md); preserve the required envelope and use repository-relative artifact paths. A fresh role reads actual referenced results, not a claim that a stage completed. The orchestrator persists the result into `state.design` before checkpointing. Missing paths may be `null` during discovery, with the precise prerequisite in `error`/context.
+
+A well-formed `design` gate failure or missing capability is a verification/activation result: use the mapping contract's shared review/repair or protected halt/exception path, not the malformed-agent retry policy. `status: failed` still identifies unfinished role/task work and carries its error; an exception cannot mark unfinished tasks complete. `partial` retains its existing code-build-only meaning. Reviewers/judge keep their existing findings/verdict shapes and describe design evidence/gaps/exceptions in their summaries/findings.
 
 Reviewers and the judge return their report or verdict (findings.md) as their final fenced block instead.
 
@@ -39,11 +42,14 @@ New questions use this shape; `pending_clarify` uses it too:
     { "id": "C", "label": "Something else", "description": "Describe how you would like the agent to work.", "emoji": "💬" }
   ],
   "recommended": "B",
-  "rationale": "Fits your preference to review changes before merging."
+  "rationale": "Fits your preference to review changes before merging.",
+  "requires_user": false
 }
 ```
 
 - `title` is the question; `text` carries any additional context. `helper` states how to answer. Keep descriptions and rationale concise; ground the rationale in known context rather than attributing an unstated preference to the user.
+- `requires_user` (optional boolean, default `false` when absent — today's behaviour unchanged): marks a question fast mode must never auto-answer, alongside the existing `pending_clarify` exclusion. An answer to such a question is stored like any other and never carries `"auto": true`. A test-seam confirmation (DESIGN.md, "Protected confirmations") is one example.
+- Pen target/identity ambiguity, shared-scope expansion, behavior/source conflicts, intentional visual departures, and explicit design-gate exceptions use `requires_user: true` under [design-code-mapping.md](design-code-mapping.md). Persist accepted scope/identity and decision evidence outside `relay` too, so checkpoints cannot erase an exception or turn an unverified gate into a pass.
 - Choice options have unique consecutive letter IDs, labels, short descriptions and contextual emojis. Include a final `💬 Something else` option. `recommended` is a substantive option ID; `rationale` explains it separately so acceptance records only the answer. For open-ended questions use `options: []`, a free-text helper, and proposed answer text in `recommended`.
 - **Legacy questions** may omit `title`, `helper`, `options`, or `rationale`; options may be strings such as `"A: ..."`, and `recommended` may combine answer and reason. Preserve stored questions, answers and IDs. Render available fields in the layout below: use `text` as the heading when `title` is absent, omit missing context/descriptions/rationale, and use a neutral answer instruction when `helper` is absent. Recognise a legacy option letter or recommendation match only when unambiguous; otherwise display the original text without a suggested-option marker. Keep a legacy `recommended` verbatim when accepted rather than guessing how to split it. An old question without options stays free text.
 
@@ -90,7 +96,7 @@ Render nonempty `text` between the heading and helper. For free text, omit optio
 How the orchestrator carries an agent's questions to the user and back:
 
 1. Append the frontier to `state.relay.rounds` as `{ "questions": [...], "answers": {} }` (creating `relay` for this stage if null). An existing open round on resume is reused, with its saved answers, rather than appended again.
-2. **Fast mode** (`mode.fast` true, except initial grilling): fill only unanswered eligible questions from `recommended`, as `{ "answer": "<recommended>", "at": "<now>", "auto": true }`. Preserve explicit answers. Never auto-answer anything stored in `state.analyze.pending_clarify`; carry its origin through every frontier until answered. Notify once per auto-accepted batch ("auto-accepted N questions in <stage>"). If all answered, continue at step 5; otherwise show the remaining questions normally.
+2. **Fast mode** (`mode.fast` true, except initial grilling): fill only unanswered eligible questions from `recommended`, as `{ "answer": "<recommended>", "at": "<now>", "auto": true }`. Preserve explicit answers. Never auto-answer anything stored in `state.analyze.pending_clarify`, nor any question carrying `requires_user: true` ("Questions"); carry its origin (or flag) through every frontier until answered. Notify once per auto-accepted batch ("auto-accepted N questions in <stage>"). If all answered, continue at step 5; otherwise show the remaining questions normally.
 3. Append the `timeline` entry for this user wait (below), set `status: waiting_user`, `NOTIFY`, then show all unanswered questions in one message using "Presentation". Keep an existing open wait entry on resume or partial replies.
 4. Resolve replies by "Replies". Write each answer immediately into the last round's `answers` as `{ "answer": "<text>", "at": "<now>" }`. Wait until every question has an answer; then close the round's timeline entry.
 5. Set `status: running` and `SPAWN` a fresh agent of the same role for the same stage, with the usual inputs and `state.json` path. It reads every round, applies settled answers, recomputes the frontier, and returns another round or `done`. Clear `relay` when the stage completes (state.md, "Checkpoint").
