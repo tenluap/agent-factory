@@ -8,7 +8,7 @@ Adopt native OpenCode V2 subagent/shell instructions and ordered permission rule
 
 ## Constitution check
 
-Pre-design: pass with the sequencing below. Post-design: pass, pending protected seam confirmation.
+Pre-design: pass with the sequencing below. Post-design: pass; protected seam confirmation recorded below.
 
 - Commit the native contract in `DESIGN.md` before adapter behavior changes.
 - Keep native tools/policy in `adapters/opencode/`; leave `core/` unchanged.
@@ -49,6 +49,8 @@ Exempt: `dist/` - generated output only; canonical build, byte comparison and po
 Exempt: feature planning/validation artifacts - documentation only; check consistency and links.
 
 Overridden: none.
+
+Confirmed: 2026-10-25 - Q1 accepted - seams: render_agent(), agent_fields(), render()
 
 ## Validation and applicable quality constraints
 
