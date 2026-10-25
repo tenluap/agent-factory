@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/006-opencode-v2-adapter",
   "spec_dir": "specs/006-opencode-v2-adapter",
   "status": "running",
-  "stage": "tasks",
+  "stage": "analyze",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -91,6 +91,16 @@
       "out_est": 120,
       "reported": null,
       "duration_ms": 32416
+    },
+    {
+      "at": "2026-10-25T19:28:31.213390Z",
+      "stage": "tasks",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 7278,
+      "out_est": 70,
+      "reported": null,
+      "duration_ms": 126900
     }
   ],
   "review": {
@@ -119,6 +129,13 @@
     {
       "at": "2026-10-25T19:26:24.067482Z",
       "stage": "plan",
+      "event": "complete",
+      "commit": null,
+      "harness": "codex"
+    },
+    {
+      "at": "2026-10-25T19:28:31.213390Z",
+      "stage": "tasks",
       "event": "complete",
       "commit": null,
       "harness": "codex"
