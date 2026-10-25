@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -60,6 +60,14 @@
       "summary": "grill round 1: 8 questions",
       "answered_at": "2026-10-25T00:05:00Z",
       "latency_ms": 780000
+    },
+    {
+      "at": "2026-10-25T00:57:30Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "approver gate",
+      "answered_at": "2026-10-25T06:56:00Z",
+      "latency_ms": 21510546
     }
   ],
   "ledger": [
@@ -296,6 +304,13 @@
     {
       "at": "2026-10-25T00:57:16Z",
       "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T06:56:00Z",
+      "stage": "approver",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
