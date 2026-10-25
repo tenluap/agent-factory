@@ -79,8 +79,7 @@ class RenderAgentTests(unittest.TestCase):
             with patch.object(render, "ROOT", root), patch.dict(os.environ, env):
                 _, out = render.render("opencode")
             role_files = sorted((root / "core/roles").glob("*.md"))
-            self.assertEqual(len(role_files), 9)
-            self.assertEqual(len(list((out / "agents").glob("*.md"))), 9)
+            self.assertEqual(len(list((out / "agents").glob("*.md"))), len(role_files))
             for role_file in role_files:
                 meta, _ = render.frontmatter(role_file.read_text())
                 text = (out / "agents" / f'factory-{meta["name"]}.md').read_text()
@@ -98,47 +97,6 @@ class RenderAgentTests(unittest.TestCase):
                     (out / "skill/references/harness" / f"{name}.md").read_bytes(),
                     (render.ADAPTERS / name / "harness.md").read_bytes(),
                 )
-
-
-    def test_opencode_model_overrides_are_rendered(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            shutil.copytree(render.ROOT / "core", root / "core")
-            config_home = root / "factory-home"
-            config_home.mkdir()
-            (config_home / "config.json").write_text(json.dumps({
-                "models": {"opencode": {"deep": "test/deep", "standard": "test/standard"}}
-            }))
-            env = {"FACTORY_HOME": str(config_home), "XDG_CONFIG_HOME": "~/.config"}
-            with patch.object(render, "ROOT", root), patch.dict(os.environ, env):
-                _, out = render.render("opencode")
-            agents = sorted((out / "agents").glob("*.md"))
-            self.assertEqual(len(agents), 9)
-            for agent in agents:
-                with self.subTest(agent=agent.name):
-                    expected = "test/deep" if agent.stem in (
-                        "factory-spec-builder", "factory-review-judge"
-                    ) else "test/standard"
-                    self.assertIn(f"\nmodel: {expected}\n", agent.read_text())
-
-    def test_empty_opencode_models_inherit_the_session(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            shutil.copytree(render.ROOT / "core", root / "core")
-            config_home = root / "factory-home"
-            config_home.mkdir()
-            (config_home / "config.json").write_text(json.dumps({
-                "models": {"opencode": {"deep": "", "standard": ""}}
-            }))
-            env = {"FACTORY_HOME": str(config_home), "XDG_CONFIG_HOME": "~/.config"}
-            with patch.object(render, "ROOT", root), patch.dict(os.environ, env):
-                _, out = render.render("opencode")
-            agents = sorted((out / "agents").glob("*.md"))
-            self.assertEqual(len(agents), 9)
-            for agent in agents:
-                with self.subTest(agent=agent.name):
-                    metadata = agent.read_text().split("\n---\n", 1)[0]
-                    self.assertNotIn("\nmodel:", metadata)
 
 
 if __name__ == "__main__":

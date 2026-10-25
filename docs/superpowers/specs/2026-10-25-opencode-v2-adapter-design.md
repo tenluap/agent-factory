@@ -15,7 +15,7 @@ In scope:
 - Update OpenCode harness instructions to describe V2's `subagent` tool and permission action.
 - Render OpenCode agent files with V2-native `permissions` arrays and retain each role's existing read/write access restrictions.
 - Extend renderer serialization only as needed for nested permission rules; preserve output for existing adapters.
-- Add automated checks for rendered OpenCode frontmatter and permission rules, regenerate canonical `dist/opencode`, and verify other harness outputs remain unchanged.
+- Add automated checks for rendered OpenCode frontmatter and permission rules, regenerate every distribution's shared OpenCode reference, and verify other harnesses' native agents remain unchanged.
 - Document that OpenCode V2 runtime behavior must be verified in an installed V2 session if that environment is available; static rendering alone does not prove runtime behavior.
 
 Out of scope:
@@ -28,9 +28,9 @@ Out of scope:
 
 Keep `adapters/opencode/` as the sole source of OpenCode-specific behavior. Its agent definitions should use V2 Markdown frontmatter: `mode: subagent` and ordered `permissions` entries. Read-only roles deny `edit` and `subagent`; write roles deny `subagent`, matching current access intent. Permission entries use `action`, `resource`, and `effect`; legacy `permission` maps and `task` action are not emitted.
 
-Update `adapters/opencode/harness.md` so `SPAWN` and `SPAWN_PARALLEL` invoke named factory agents with V2's `subagent` tool. Keep skill resolution, question relays, shell usage, install paths, model inheritance, and all neutral verbs unchanged unless V2 evidence requires a focused correction.
+Update `adapters/opencode/harness.md` so `SPAWN` and `SPAWN_PARALLEL` invoke named factory agents with V2's `subagent` tool. V2's shell tool is named `shell`, replacing V1's `bash`. Keep skill resolution, question relays, install paths, model defaults and overrides, and all neutral verbs unchanged.
 
-The renderer should serialize the new list-of-mappings shape without changing the rendered syntax of other adapters. Tests should exercise representative read-only and write agent outputs and verify the complete OpenCode render. Canonical rendering updates only `dist/opencode`.
+The renderer should serialize the new list-of-mappings shape without changing the rendered syntax of other adapters. Tests should exercise representative read-only and write agent outputs and verify the complete OpenCode render. Canonical rendering updates OpenCode agents and the shared OpenCode reference in every distribution.
 
 ## Compatibility and failure handling
 
@@ -40,6 +40,6 @@ The V2 migration guide says supported V1 definitions remain compatible. This cha
 
 1. Run renderer tests for native V2 `mode` and ordered `permissions` output, including read-only and write access cases.
 2. Render OpenCode and verify all generated agents contain native V2 permission fields and expected restrictions.
-3. Render every harness and verify non-OpenCode distributions are unchanged.
+3. Render every harness and verify other harnesses change only their bundled OpenCode reference.
 4. Run repository checks and inspect the final diff, ensuring no unrelated or user-owned files are modified.
 5. If an OpenCode V2 runtime is available, install the rendered adapter and verify `/factory` resolution, named subagent dispatch, and agent-specific edit/child-agent restrictions. Report this separately from static checks.

@@ -7,12 +7,14 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | Harness | Install | Start a run | Agents installed to |
 |---|---|---|---|
 | Claude Code | `./install.sh` | `/factory <feature>` | `~/.claude/agents/factory-*.md` |
-| OpenCode | `./install.sh --harness opencode` | `/factory <feature>` | `~/.config/opencode/agents/factory-*.md` |
+| OpenCode V2 | `./install.sh --harness opencode` | `/factory <feature>` | `~/.config/opencode/agents/factory-*.md` |
 | Codex | `./install.sh --harness codex` | `$factory <feature>` | `~/.codex/agents/factory_*.toml` |
 | GitHub Copilot (CLI, VS Code agent mode) | `./install.sh --harness copilot` | `/factory <feature>` | `~/.copilot/agents/factory-*.agent.md` |
 | ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |
 
 `./install.sh --harness all` installs every adapter. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
+
+The OpenCode adapter targets V2's `subagent` and `shell` tools and native `permissions` rules. OpenCode translates supported V1 agent and skill files, so existing installations are intended to keep working. Re-run `./install.sh --harness opencode` after pulling to use the V2 adapter, then start a new session. See the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
 
 ## Install
 
