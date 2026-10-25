@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -162,11 +162,21 @@
       "out_est": 554,
       "reported": null,
       "duration_ms": 300000
+    },
+    {
+      "at": "2026-10-25T00:52:21Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "claude-code",
+      "in_est": 1011,
+      "out_est": 554,
+      "reported": null,
+      "duration_ms": 300000
     }
   ],
   "review": {
-    "round": 1,
-    "fix_rounds": 0,
+    "round": 2,
+    "fix_rounds": 1,
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
@@ -232,6 +242,13 @@
     {
       "at": "2026-10-25T00:47:44Z",
       "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T00:52:21Z",
+      "stage": "fix",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
