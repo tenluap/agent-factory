@@ -1,6 +1,0 @@
-{
-  "reviewer": "security",
-  "round": 1,
-  "summary": "No security findings: the ZCode adapter adds only static, repo-controlled configuration and generated output; all executable code (render.py, install.sh) is unchanged and no secrets, injections, or unsafe defaults were introduced.",
-  "findings": []
-}

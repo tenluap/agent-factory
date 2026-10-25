@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 2,
-  "summary": "The round-2 fix commit 7b0a931 fully restores FR-018's conventional-default runner clause in the planning role across core and all eight dist copies (SPEC-2, verified), trims the code-writing and judging roles to ENG-n citations whose every delegation target exists on disk in engineering.md and findings.md (STD-2, verified against FR-001/FR-004a/FR-015c/FR-015f/FR-015g), keeps the spec-required stop-and-report wiring inline where FR-011a/FR-011b/FR-013b demand it, leaves .specify/ untouched, and re-renders with zero drift; no new conformance defects introduced, and the advisory round-1 findings remain open by user decision and are not re-raised.",
-  "findings": []
-}
