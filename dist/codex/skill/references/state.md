@@ -4,8 +4,8 @@ One run = one `state.json`. It is the single truth for where the run is; read it
 
 ## Location
 
-- **Pending state** (steps 1-3, before the worktree exists): `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<short-slug>.json`, with `brief.md` beside it as `<same-name>.brief.md`.
-- **Run state** (step 3 onward): `<worktree>/specs/<branch>/factory/state.json`, committed with every checkpoint.
+- **Pending state** (steps 1-4, before the worktree exists): `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<short-slug>.json`, with `brief.md` beside it as `<same-name>.brief.md`.
+- **Run state** (step 4 onward): `<worktree>/specs/<branch>/factory/state.json`, committed with every checkpoint.
 
 The pending file uses this same schema from the moment the run is created: `started_at` is set then, and `relay` and `timeline` capture the grilling rounds too. Step 3 writes both into the run state unchanged.
 
@@ -46,7 +46,7 @@ The pending file uses this same schema from the moment the run is created: `star
 - `status`: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
 - `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A run is created with the default mode — `chain: "lite"`, `fast: true` — unless the command's flags pinned otherwise (SKILL.md, "Route"); a lite→full escalation rewrites `chain` later. A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
-- `stage`: the stage in progress, or the next one to run: `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`.
+- `stage`: the stage in progress, or the next one to run: `brainstorm`, `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`. `brainstorm` (SKILL.md, "Brainstorm") is additive: it only ever appears on the idea path, before `grill`, and every stage value a run recorded before this value existed still resumes unchanged.
 - `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": { "answer": "...", "at": "2026-10-22T14:07:30Z", "auto": false } } } ] }`. Each answer is an object: the user's text, the time it arrived, and `auto: true` when fast mode chose it. The last round is the open one. Write each answer as it arrives (protocol.md, "Relay"). A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round; a version 2 string answer is read as `{ "answer": <string>, "at": null }`.
   - Question fields and rendering are defined in protocol.md, "Questions". Rich question fields are additive within version 3: accept structured options and legacy string options, retaining saved answers and IDs. Derive progress from each question's stored position in the round; keep the original positions when redisplaying unanswered questions. Accepted new-format answers store the option ID or proposed text, separate from the rationale; legacy recommendations remain verbatim.
 - `timeline`: every user wait of the run, oldest first (protocol.md, "Timeline"): `{ "at", "kind", "stage", "summary", "answered_at": null, "latency_ms": null }`. `kind` is `questions` (a relay round), `notice` (any other `NOTIFY` that ends the turn), `approver`, or `halt`. Append the entry when the message is shown; when the user answers, set `answered_at` and `latency_ms` (orchestrator clock, shown → answered) in place. Append-only for the whole run: never cleared at checkpoint, never rewritten. A round with several answers closes on its last answer; a wait the run never came back from keeps its nulls.
@@ -91,11 +91,12 @@ Show each as: branch (or slug), stage, status, last `history` time.
 
 1. `python3 <F>/bin/factory show <branch>` ("CLI"). Work in the digest's `worktree` (pending runs: `repo`). When `harness` differs from this harness: `RESOLVE` every name in `skills` again, set `harness`, and checkpoint before restarting the stage. An open relay's unanswered questions are `relay.unanswered` in the digest, in stored order — redisplay exactly those.
 2. Restart the recorded `stage` from its beginning:
+   - Pending `brainstorm`: re-run step 2 (brainstorm) with the existing brief and saved relay answers as the starting point, then continue into step 3 (grill). Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `grill`: re-run grilling with the existing brief and saved relay answers as the starting point. Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
-   - Pending `worktree`: run step 3.
+   - Pending `worktree`: run step 4.
    - Spec stages: `SPAWN` a fresh `spec-builder` with the state and the stage. It reads `relay` from the state: answered questions are settled, the agent asks only the rest.
    - `implement`: `SPAWN` `code-build`; it continues from the tasks.md checkboxes and inspects any uncommitted work.
-   - `verify`, `review`, `fix`: re-run step 5's verify, then step 6 from its first sub-step for the current round.
+   - `verify`, `review`, `fix`: re-run step 6's verify, then step 7 from its first sub-step for the current round.
    - `approver`: show the approver screen again.
    - `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded.
 3. `halted` or `aborted`: show `halt_reason` and ask the user how to continue before restarting the stage.
