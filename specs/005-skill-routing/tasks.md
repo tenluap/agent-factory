@@ -24,7 +24,7 @@ description: "Task list for Factory skill routing"
 
 ## Phase 1: Setup
 
-- [ ] T001 Export `$CANON` from [quickstart.md](./quickstart.md), confirm `git status --porcelain -- dist/` is empty, and create a throwaway `FACTORY_HOME` under `$SCRATCH` for the Seam 3 fixtures (never under the repository). `Exempt: setup/environment steps - configuration only - no product file changes.`
+- [X] T001 Export `$CANON` from [quickstart.md](./quickstart.md), confirm `git status --porcelain -- dist/` is empty, and create a throwaway `FACTORY_HOME` under `$SCRATCH` for the Seam 3 fixtures (never under the repository). `Exempt: setup/environment steps - configuration only - no product file changes.`
 
 ---
 
