@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -75,6 +75,14 @@
       "summary": "Confirm shared understanding",
       "answered_at": "2026-10-25T21:19:48Z",
       "latency_ms": 72000
+    },
+    {
+      "at": "2026-10-25T22:00:40Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q1 (requires_user): update source documents in same PR?",
+      "answered_at": "2026-10-25T22:01:58Z",
+      "latency_ms": 78000
     }
   ],
   "ledger": [
@@ -107,6 +115,26 @@
       "out_est": 4049,
       "reported": null,
       "duration_ms": 791000
+    },
+    {
+      "at": "2026-10-25T22:00:40Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 17859,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 550000
+    },
+    {
+      "at": "2026-10-25T22:25:32Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 15606,
+      "out_est": 6045,
+      "reported": null,
+      "duration_ms": 1414000
     }
   ],
   "review": {
@@ -142,6 +170,13 @@
     {
       "at": "2026-10-25T21:51:30Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-25T22:25:32Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
