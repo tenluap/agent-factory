@@ -366,8 +366,10 @@ All tiers follow the same output contracts. Tier 3 provides weaker review indepe
 | Git and a usable repository | Creates branches, worktrees, diffs, and checkpoints. Required before a run starts. |
 | Python 3 | Runs the renderer and state CLI without third-party Python dependencies. |
 | SpecKit in the consuming repository | Supplies the specification, planning, task, and implementation instructions. Preflight offers setup when absent. |
-| `grilling`, `domain-modeling`, and `pr` skills | Supply the baseline interview, terminology/decision capture, and PR-writing workflows. Resolve them before expensive work. |
-| `impeccable` skill | Supports the UI review lens; resolve only when needed and disclose a skipped UI review. |
+| `grilling`, `domain-modeling`, and `pr` skills | Supply the baseline interview, terminology/decision capture, and PR-writing workflows. Resolve them before expensive work. **Required**, every run. |
+| `ponytail` and `tdd` skills | Supply reuse-first simplification and test-driven implementation technique for code-writing and fixing turns, bounded by the factory's own engineering rules and plan-time seam confirmation. Resolve before any run commits to code delivery. **Required**, every run that reaches delivery. |
+| `brainstorming` skill | Supports the idea-exploration path (intake intent: exploration). **Conditional**: resolve only on that path; never on the feature path. |
+| `impeccable` skill | Supports the UI review lens; resolve only when needed and disclose a skipped UI review. **Conditional**: resolve only on a UI diff. |
 | Authenticated `gh` and a writable remote | Support GitHub repository lookup and approved PR publication. Confirm publication readiness before the final gate. |
 | Repository build/test tools | Execute the recorded verification commands. A missing or broken required tool is an actionable setup failure. |
 

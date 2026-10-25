@@ -74,9 +74,9 @@ The defaults are `--lite --fast`: a run with no flags uses the lite chain and au
 
 - An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
-- Skills: `grilling`, `domain-modeling`, `pr`, in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
+- Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd` (the last two before any code-delivery work starts), in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
 - SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
-- `impeccable` for UI reviews; the factory offers to install it the first time a run touches UI files.
+- Conditionally resolved skills, only when relevant: `brainstorming` when a run starts from an exploratory idea rather than a settled feature, and `impeccable` for UI reviews — the factory offers to install the latter the first time a run touches UI files.
 
 ## Layout
 
