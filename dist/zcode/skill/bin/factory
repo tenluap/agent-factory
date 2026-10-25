@@ -205,7 +205,7 @@ def find_runs(repo):
         runs.append((path, state, {
             "source": "worktree",
             "branch": state.get("branch") or path.parents[1].name,
-            "worktree": state.get("worktree") or worktree,
+            "worktree": worktree,  # where this copy was found, not the state's recorded home
             "spec_dir": state.get("spec_dir") or f"specs/{path.parents[1].name}",
         }, worktree))
     for path, state in pending_states(repo):
