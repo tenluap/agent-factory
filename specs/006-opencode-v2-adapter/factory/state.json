@@ -9,7 +9,7 @@
   "branch": "006-opencode-v2-adapter",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/006-opencode-v2-adapter",
   "spec_dir": "specs/006-opencode-v2-adapter",
-  "status": "paused",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -65,7 +65,9 @@
       "at": "2026-10-25T19:52:00Z",
       "kind": "approval",
       "stage": "approver",
-      "summary": "User approved round 1 verdict; paused before publishing because PR creation was not authorized in this approval."
+      "summary": "User approved round 1 verdict; paused before publishing because PR creation was not authorized in this approval.",
+      "answered_at": "2026-10-25T19:58:46.578379Z",
+      "latency_ms": null
     }
   ],
   "ledger": [
@@ -127,8 +129,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-25T19:58:46.578379Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/2",
   "history": [
     {
       "at": "2026-10-25T19:19:36.458228Z",
@@ -176,6 +178,13 @@
       "at": "2026-10-25T19:52:00Z",
       "stage": "approver",
       "event": "approved-paused-before-pr",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-25T19:58:46.578379Z",
+      "stage": "pr",
+      "event": "pr-open",
       "commit": null,
       "harness": "opencode"
     }
