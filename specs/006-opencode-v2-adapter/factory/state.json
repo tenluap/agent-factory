@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/006-opencode-v2-adapter",
   "spec_dir": "specs/006-opencode-v2-adapter",
   "status": "running",
-  "stage": "specify",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -52,7 +52,18 @@
       "latency_ms": 162510
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-10-25T19:21:31.385144Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 12000,
+      "out_est": 1700,
+      "reported": null,
+      "duration_ms": 150000
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
@@ -68,6 +79,13 @@
       "event": "continued-existing-scope",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-25T19:21:31.385144Z",
+      "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "codex"
     }
   ],
   "prior_work": {
@@ -76,5 +94,6 @@
     "summary": "Adapter and renderer update completed in invoking checkout before explicit factory invocation. Six renderer tests pass; OpenCode v2.1.4 discovers all nine global symlinked agents and the factory skill. Full factory workflow has not started.",
     "handoff": "/var/folders/jf/7n12j8rx31q29v6v_gd380wc0000gn/T/factory-v2-handoff-9o4jopx5"
   },
-  "resume_instruction": "User said continue after compatibility update and preflight blocker were reported. Resume the settled adapter scope; preserve prior work and prepare final review."
+  "resume_instruction": "User said continue after compatibility update and preflight blocker were reported. Resume the settled adapter scope; preserve prior work and prepare final review.",
+  "capability_note": "Native subagents run the factory role instructions through the default agent type because named factory agent types are unavailable in this session. Review contexts remain independent."
 }
