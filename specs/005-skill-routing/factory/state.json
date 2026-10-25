@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
   "status": "running",
-  "stage": "specify",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -30,7 +30,7 @@
   },
   "commands": {
     "build": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done'",
-    "test": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done' && git diff --exit-code -- dist/"
+    "test": "env -u CLAUDE_HOME -u CODEX_HOME -u COPILOT_HOME -u ZCODE_HOME -u XDG_CONFIG_HOME FACTORY_HOME=/nonexistent sh -c 'for h in $(python3 tools/render.py --list); do python3 tools/render.py \"$h\" || exit 1; done' && test -z \"$(git status --porcelain -- dist/)\""
   },
   "analyze": {
     "pass": 1,
@@ -58,7 +58,18 @@
       "latency_ms": 780000
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-10-25T00:25:00Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 7744,
+      "out_est": 4342,
+      "reported": null,
+      "duration_ms": 900000
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
@@ -78,6 +89,13 @@
     {
       "at": "2026-10-25T00:10:00Z",
       "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T00:25:00Z",
+      "stage": "specify",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
