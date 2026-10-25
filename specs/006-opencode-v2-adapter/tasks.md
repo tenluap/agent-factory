@@ -44,7 +44,7 @@
 
 **Independent test**: Cross-check the evidence record with actual commands/results; no unexecuted check is reported as passed.
 
-- [ ] T007 [US3] Update `specs/006-opencode-v2-adapter/quickstart.md` with performed checks and separate static, runtime discovery, model-backed dispatch and runtime permission-enforcement outcomes. Exempt: documentation only. Identify prior OpenCode v2.1.4 discovery as historical evidence: nine global symlinked roles, expected loaded policy and factory skill discovery; it proves loading only. Keep dispatch/enforcement unverified and make no new model calls. If an optional fresh discovery is performed, bound registration waits and record version/errors; any observed permission or dispatch mismatch blocks delivery without weakening rules. Describe supported V1 compatibility and existing installer/rollback steps accurately.
+- [x] T007 [US3] Update `specs/006-opencode-v2-adapter/quickstart.md` with performed checks and separate static, runtime discovery, model-backed dispatch and runtime permission-enforcement outcomes. Exempt: documentation only. Identify prior OpenCode v2.1.4 discovery as historical evidence: nine global symlinked roles, expected loaded policy and factory skill discovery; it proves loading only. Keep dispatch/enforcement unverified and make no new model calls. If an optional fresh discovery is performed, bound registration waits and record version/errors; any observed permission or dispatch mismatch blocks delivery without weakening rules. Describe supported V1 compatibility and existing installer/rollback steps accurately.
 
 ## Phase 6: Polish and constitution gate
 
