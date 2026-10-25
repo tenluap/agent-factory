@@ -27,7 +27,7 @@ ambiguous, by exactly one relay question, and it is then visible in the run's fi
 
 - Written in the **pending state** only (`${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<slug>.json`):
   brainstorming runs before the worktree exists, so its artifacts and relay rounds live there and move into
-  the worktree at step 3, unchanged from today's grilling (FR-004).
+  the worktree at step 4, unchanged from today's grilling (FR-004).
 - `brief.md` beside the pending state carries the confirmed direction: the alternatives considered, the
   chosen direction and every decision already settled, so `grill` treats them as inputs (FR-003, FR-005).
 - Resume of a pending `brainstorm` re-runs brainstorming with the existing brief and saved relay answers as
@@ -60,7 +60,7 @@ What changes is which names it may hold and when (FR-007, FR-008, FR-009, FR-010
 | `speckit-*`, `grilling`, `domain-modeling`, `pr` | preflight | yes (unchanged) |
 | `ponytail`, `tdd` | preflight, before the run commits to delivery | yes - a code-delivery run cannot start without them |
 | `brainstorming` | preflight, only when intake intent is exploration | yes on the idea path; never resolved on the feature path |
-| `impeccable` | step 6, only on a UI diff | no - the existing install offer, with a disclosed skip |
+| `impeccable` | step 7, only on a UI diff | no - the existing install offer, with a disclosed skip |
 
 A missing required skill stops the affected work with setup guidance naming the logical name and the
 directories searched; nothing is installed beyond the existing authorised `impeccable` offer (FR-011).
