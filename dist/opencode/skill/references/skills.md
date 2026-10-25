@@ -17,7 +17,7 @@ re-resolved when `harness` changed.
 | `speckit-*`, `grilling`, `domain-modeling`, `pr` | preflight | every run |
 | `ponytail`, `tdd` | preflight, before a run commits to code delivery | every fresh `code-build`/`fixer` spawn gets both absolute paths |
 | `brainstorming` | preflight | idea path only; never resolved on the feature path |
-| `impeccable` | step 6, on a UI diff | existing install offer; declined install is a disclosed skip |
+| `impeccable` | step 7, on a UI diff | existing install offer; declined install is a disclosed skip |
 
 A required skill that cannot be resolved stops the affected work with setup guidance naming the logical name
 and the directories searched. Nothing is installed beyond the existing authorised `impeccable` offer, and no

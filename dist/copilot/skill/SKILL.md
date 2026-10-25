@@ -18,6 +18,7 @@ References, read when a step points at them:
 - [`references/state.md`](references/state.md): `state.json` schema, checkpoints, discovery, resume.
 - [`references/protocol.md`](references/protocol.md): the envelope every agent returns, and the relay.
 - [`references/findings.md`](references/findings.md): reviewer findings and judge verdict shapes.
+- [`references/skills.md`](references/skills.md): skill-integration precedence and loading rules, shared with `code-build` and `fixer`.
 
 Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so it can read the references.
 
@@ -25,11 +26,14 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 
 - `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
 - `resume <branch>`: `SHELL: python3 <F>/bin/factory show <branch-or-name>` (state.md, "CLI"), then resume that run from the digest (state.md, "Resume").
-- Anything else: the feature description of a new run. Go to step 1.
+- Anything else: the feature description of a new run. Classify its **intake intent** from the request text (DESIGN.md, "Skill routing"), deciding which stage starts the run:
+  - **Exploration** — open-ended idea wording with no settled solution (e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."): after step 1, go to step 2 (`brainstorm`).
+  - **Delivery** — concrete feature/change wording, or a request naming an existing spec (e.g. "add a `--no-fast` flag", "fix the resume path so..."): after step 1, go straight to step 3 (`grill`), skipping step 2.
+  - **Ambiguous** — neither set of cues present, or both: after step 1, `ASK` exactly one relay question (protocol.md, "Questions") — explore first, or settle it as a feature now — with no new command flag; the answer picks step 2 or step 3 as above, and is saved as that question's relay answer.
 
 Flags are recognised wherever they appear in `$ARGUMENTS`, on either form, and may combine:
 
-- `--lite` / `--full`: pin the spec chain (step 4, "Stage order"). The last one wins.
+- `--lite` / `--full`: pin the spec chain (step 5, "Stage order"). The last one wins.
 - `--fast` / `--no-fast`: whether relay rounds auto-accept their recommended answers. The last one wins.
 - `--stop-at <stage>`: pause the run cleanly before that stage (Policies, "Stop point"). Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`.
 
@@ -40,16 +44,26 @@ The **default mode** is `lite` chain with `fast` on: wherever a flag did not pin
 1. Pick your harness file: `references/harness/$FACTORY_HARNESS.md` when that environment variable is set, otherwise the file whose "Recognise it by" line describes you. No file fits: stop and say which harness you are and that it has no adapter. Read `verbs.md` and that file (from here on, `harness.md`). Record `harness` (its `name`) in the pending state. Use its mapping for every verb for the rest of the run.
 2. Confirm the current directory is inside a git repo. Record `repo` as the main checkout (the parent of `git rev-parse --path-format=absolute --git-common-dir`, so a run started from a worktree still anchors on the main checkout), the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `main`), and `base` = `origin/<default-branch>` after `git -C <repo> fetch origin <default-branch>`.
 3. `.specify/` missing: ask once to run `specify init --here <speckit_init>` (`harness.md`), then follow the resolved `speckit-constitution` file with the user. Declined: stop.
-4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing one: stop and name it. `impeccable` is resolved later, only on a UI diff.
+4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing one: stop and name it. On the idea path only (intake intent is exploration), also `RESOLVE` `brainstorming`; missing there, stop and name it the same way — it is never resolved on the feature path. `impeccable` is resolved later, only on a UI diff.
 5. Read the repo's CLAUDE.md / AGENTS.md for build and test commands; record them as `commands.build` / `commands.test`. None documented: detect from the project files and confirm with the user once.
 
 Done when every skill path and both commands are recorded in the pending state (state.md, "Pending state").
 
-## 2. Grill
+## 2. Brainstorm (idea path only)
 
-Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive whatever the mode. Done when the frontier is empty and the user confirms shared understanding. Name the chain in effect in your closing summary — the user's confirmation covers it, an objection flips it. The chain is `lite` unless a flag pinned it; recommend `full` in the summary when the feature's size calls for it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet, with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (the settled chain and `fast`) and checkpoint the pending state with `stage: worktree`.
+Read protocol.md, "Questions" and "Relay", then follow the resolved `brainstorming` skill on the feature description, here, in the invoking checkout, with these overrides:
 
-## 3. Worktree
+- You handle all user interaction yourself: use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence instead of the skill's own one-question-at-a-time format. Offer its visual companion only for actual visual exploration and only with its own required consent.
+- Write nothing to the invoking checkout: save every intake artifact (alternatives considered, tradeoffs, the confirmed direction) in the pending state alongside the request. These artifacts move into the worktree unchanged at step 4 (Worktree).
+- You own every commit, not the skill: skip its own commit instruction and its handoff to a separate planning skill. SpecKit remains the only planning chain, continued at step 3 (Grill).
+
+Done when the frontier is empty and the user has confirmed a direction (and, where the skill asks, whether to proceed to feature delivery). Write the confirmed direction into `brief.md` beside the pending state: the alternatives considered, then the chosen direction and every decision already settled, each as a bullet. Checkpoint the pending state with `stage: grill`, then go to step 3.
+
+## 3. Grill
+
+Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive whatever the mode. When step 2 (`brainstorm`) ran first, read its `brief.md` decisions as settled inputs and ask only what is still open — never repeat an already-answered question. Done when the frontier is empty and the user confirms shared understanding. Name the chain in effect in your closing summary — the user's confirmation covers it, an objection flips it. The chain is `lite` unless a flag pinned it; recommend `full` in the summary when the feature's size calls for it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet (including any brainstorming already settled), with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (the settled chain and `fast`) and checkpoint the pending state with `stage: worktree`.
+
+## 4. Worktree
 
 1. Pick a 2-4 word kebab `short-name`. Run from `repo`: `bash .specify/extensions/git/scripts/bash/create-new-feature.sh --json --dry-run --short-name <short-name> "<feature>"` and take `BRANCH_NAME`. No git extension: use `NNN-<short-name>` with the next free number across `specs/` and local branches.
 2. `git -C <repo> worktree add <repo>/../<repo-name>-factory/<branch> -b <branch> <base>`. This absolute path is `worktree`.
@@ -57,7 +71,7 @@ Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on t
 
 From here every `SHELL` command runs as `cd <worktree> && ...`, and every agent gets `worktree` in its inputs.
 
-## 4. Spec
+## 5. Spec
 
 Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, `spec_dir` (`specs/<branch>`), the `state.json` path, the brief path, the resolved skill paths, and the stage. `analyze` and `remediate` also get the pass number `analyze.pass`. Each spawn ends with an envelope (protocol.md):
 
@@ -72,19 +86,19 @@ After `analyze`, read the severity counts in the envelope:
 Lite chain:
 
 - Any CRITICAL or HIGH: **escalate** — set `mode.chain` to `full`, then continue the full chain: run `clarify` (with the latest analyze report as context), `grill-with-docs`, then re-run `plan` and `tasks` (decisions settled since they were first derived), then `analyze` under the full-chain rules below.
-- Only MEDIUM or LOW: run `remediate` once, then go to step 5.
-- Clean: go to step 5.
+- Only MEDIUM or LOW: run `remediate` once, then go to step 6.
+- Clean: go to step 6.
 
 Full chain:
 
 - Any CRITICAL or HIGH, and `analyze.loops < 2`: run `remediate` (patch every finding at every severity **in place**; findings that need a user decision come back as `pending_clarify`, stored in state). Then increment `analyze.loops` and `analyze.pass`. `pending_clarify` empty: re-run `analyze` alone against the patched artifacts. `pending_clarify` non-empty: re-run `clarify` with the pending questions and the remediation log, then `grill-with-docs`, then `analyze`. No stage regenerates its artifacts on a loop pass: each edits in place.
 - Any CRITICAL or HIGH, and `analyze.loops == 2`: halt. Ask the user: proceed to implement, give guidance for one more pass, or abort.
-- Only MEDIUM or LOW: run `remediate` once, then go to step 5.
-- Clean: go to step 5.
+- Only MEDIUM or LOW: run `remediate` once, then go to step 6.
+- Clean: go to step 6.
 
 Done when analyze is clean, MEDIUM/LOW were remediated, or the user chose to proceed.
 
-## 5. Implement
+## 6. Implement
 
 `SPAWN` `code-build` with `worktree`, `branch`, `spec_dir`, the `speckit-implement` path and `commands`. It commits each finished task. Envelope `partial` (context running low): `SPAWN` a fresh `code-build`; it resumes from the tasks.md checkboxes.
 
@@ -92,25 +106,25 @@ Then **verify** yourself: run `commands.build` and `commands.test` in the worktr
 
 Done when every tasks.md box is checked and your own build and test runs are green.
 
-## 6. Review
+## 7. Review
 
 1. Diff: `git diff <base>...HEAD` in the worktree. The run is a **UI diff** when any changed path is a UI file: view markup (`*.axaml`, `*.xaml`, `*.html`, `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.css`, `*.scss`), SwiftUI/Compose views, or anything under `Views/`, `ViewModels/`, `components/`, `pages/`.
 2. UI diff and `RESOLVE impeccable` finds nothing: ask once, then run `npx impeccable install --providers=<impeccable_provider> --scope=global` (`harness.md`). Declined: skip `ui-reviewer` and tell the approver.
 3. `SPAWN_PARALLEL`: `security-reviewer`, `code-standards`, `spec-conformance`, plus `ui-reviewer` and `ux-reviewer` on a UI diff. Each gets `worktree`, `spec_dir`, `base`, the review round, and (UI reviewer) the impeccable SKILL.md path. Round 1 reviews the full diff. Every later round is a **delta review**: each reviewer also gets `delta_base` (the checkpoint commit of the previous round) and the previous round's `verdict.json` path, and reviews only the fix diff against that verdict (findings.md, "Reviewing"). Save each report to `<spec_dir>/factory/reviews/round-<n>/<agent>.json`.
 4. `SPAWN` `review-judge` with `worktree`, `spec_dir`, `base`, the round, the round folder, and (round > 1) `delta_base` and the previous verdict path. Save its verdict as `verdict.json` in the same folder. Checkpoint.
-5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands` and the verdict path, verify (step 5), increment `review.fix_rounds`, and repeat this step from 1 with the next round number.
+5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands` and the verdict path, verify (step 6), increment `review.fix_rounds`, and repeat this step from 1 with the next round number.
 
 Done when the verdict has no confirmed blocking findings, or `review.fix_rounds == 2` (remaining blockers go to the approver flagged as unresolved).
 
-## 7. Approver
+## 8. Approver
 
 `NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
-- Approve: step 8.
-- Request changes: take the user's text, `SPAWN` `fixer` with it, verify (step 5), re-run step 6 from 1 (the fix-round cap does not apply here), then return to this step.
+- Approve: step 9.
+- Request changes: take the user's text, `SPAWN` `fixer` with it, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
 - Abort: set `status: aborted` and `ended_at`, checkpoint, keep the worktree, stop.
 
-## 8. PR
+## 9. PR
 
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings.
