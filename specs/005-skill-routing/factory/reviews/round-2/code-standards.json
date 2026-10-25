@@ -1,6 +1,0 @@
-{
-  "reviewer": "code-standards",
-  "round": 2,
-  "summary": "The round-2 delta (state.json's stage/round/ledger/history bookkeeping, plus the empty commit 07019ec fixing SPEC-1) matches the documented state.md schema and ADR 0002's fix-round red-proof mechanism, with no new code-standards defect.",
-  "findings": []
-}

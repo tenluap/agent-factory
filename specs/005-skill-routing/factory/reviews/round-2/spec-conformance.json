@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 2,
-  "summary": "The round's sole substantive commit (verdict-driven fix for SPEC-1) carries a well-formed Red proof and resolves the missing Seam 3 red-step evidence without touching source or spec artifacts, so no new or carried-forward defect is found.",
-  "findings": []
-}
