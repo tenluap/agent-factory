@@ -1,7 +1,7 @@
 {
   "version": 3,
   "started_at": "2026-10-25T19:16:25.441006Z",
-  "harness": "codex",
+  "harness": "opencode",
   "feature": "Check OpenCode V2 compatibility and update the software factory adapter.",
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
   "default_branch": "main",
