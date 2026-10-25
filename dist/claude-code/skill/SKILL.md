@@ -44,7 +44,7 @@ The **default mode** is `lite` chain with `fast` on: wherever a flag did not pin
 1. Pick your harness file: `references/harness/$FACTORY_HARNESS.md` when that environment variable is set, otherwise the file whose "Recognise it by" line describes you. No file fits: stop and say which harness you are and that it has no adapter. Read `verbs.md` and that file (from here on, `harness.md`). Record `harness` (its `name`) in the pending state. Use its mapping for every verb for the rest of the run.
 2. Confirm the current directory is inside a git repo. Record `repo` as the main checkout (the parent of `git rev-parse --path-format=absolute --git-common-dir`, so a run started from a worktree still anchors on the main checkout), the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `main`), and `base` = `origin/<default-branch>` after `git -C <repo> fetch origin <default-branch>`.
 3. `.specify/` missing: ask once to run `specify init --here <speckit_init>` (`harness.md`), then follow the resolved `speckit-constitution` file with the user. Declined: stop.
-4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing one: stop and name it. On the idea path only (intake intent is exploration), also `RESOLVE` `brainstorming`; missing there, stop and name it the same way — it is never resolved on the feature path. `impeccable` is resolved later, only on a UI diff.
+4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing one: stop and name it. Also `RESOLVE` `ponytail` and `tdd` here, before the run ever commits to delivery; record whichever resolve in `skills`, but do not stop here if either is missing — code delivery (step 6, step 7) stops that work alone, naming the missing skill, when it is about to start. On the idea path only (intake intent is exploration), also `RESOLVE` `brainstorming`; missing there, stop and name it the same way as the always-required skills — it is never resolved on the feature path. `impeccable` is resolved later, only on a UI diff. On resume, `RESOLVE` any of these names still absent from `skills`, and every resolved path again when `harness` changed, before any role is spawned (state.md, "Resume").
 5. Read the repo's CLAUDE.md / AGENTS.md for build and test commands; record them as `commands.build` / `commands.test`. None documented: detect from the project files and confirm with the user once.
 
 Done when every skill path and both commands are recorded in the pending state (state.md, "Pending state").
@@ -100,7 +100,9 @@ Done when analyze is clean, MEDIUM/LOW were remediated, or the user chose to pro
 
 ## 6. Implement
 
-`SPAWN` `code-build` with `worktree`, `branch`, `spec_dir`, the `speckit-implement` path and `commands`. It commits each finished task. Envelope `partial` (context running low): `SPAWN` a fresh `code-build`; it resumes from the tasks.md checkboxes.
+`ponytail` or `tdd` unresolved in `skills`: stop this work and tell the user the missing skill's setup guidance; nothing is spawned and no work is reported done.
+
+`SPAWN` `code-build` with `worktree`, `branch`, `spec_dir`, the `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands`. It commits each finished task. Envelope `partial` (context running low): `SPAWN` a fresh `code-build` with the same inputs; it resumes from the tasks.md checkboxes.
 
 Then **verify** yourself: run `commands.build` and `commands.test` in the worktree. Red: `SPAWN` a fresh `code-build` once with the failing output trimmed to the decisive lines; it resumes from the tasks.md checkboxes and fixes the build. Still red: halt.
 
@@ -112,7 +114,7 @@ Done when every tasks.md box is checked and your own build and test runs are gre
 2. UI diff and `RESOLVE impeccable` finds nothing: ask once, then run `npx impeccable install --providers=<impeccable_provider> --scope=global` (`harness.md`). Declined: skip `ui-reviewer` and tell the approver.
 3. `SPAWN_PARALLEL`: `security-reviewer`, `code-standards`, `spec-conformance`, plus `ui-reviewer` and `ux-reviewer` on a UI diff. Each gets `worktree`, `spec_dir`, `base`, the review round, and (UI reviewer) the impeccable SKILL.md path. Round 1 reviews the full diff. Every later round is a **delta review**: each reviewer also gets `delta_base` (the checkpoint commit of the previous round) and the previous round's `verdict.json` path, and reviews only the fix diff against that verdict (findings.md, "Reviewing"). Save each report to `<spec_dir>/factory/reviews/round-<n>/<agent>.json`.
 4. `SPAWN` `review-judge` with `worktree`, `spec_dir`, `base`, the round, the round folder, and (round > 1) `delta_base` and the previous verdict path. Save its verdict as `verdict.json` in the same folder. Checkpoint.
-5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands` and the verdict path, verify (step 6), increment `review.fix_rounds`, and repeat this step from 1 with the next round number.
+5. The verdict carries `escalate`: re-run this step's reviews once in full mode (drop `delta_base`, same round number). Otherwise, verdict has confirmed blocking findings and `review.fix_rounds < 2`: `ponytail` or `tdd` unresolved: stop this fix round the same way as step 6. Else `SPAWN` `fixer` with `worktree`, `spec_dir`, `commands`, the resolved `ponytail` and `tdd` paths and the verdict path, verify (step 6), increment `review.fix_rounds`, and repeat this step from 1 with the next round number.
 
 Done when the verdict has no confirmed blocking findings, or `review.fix_rounds == 2` (remaining blockers go to the approver flagged as unresolved).
 
@@ -121,7 +123,7 @@ Done when the verdict has no confirmed blocking findings, or `review.fix_rounds 
 `NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
 - Approve: step 9.
-- Request changes: take the user's text, `SPAWN` `fixer` with it, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
+- Request changes: `ponytail` or `tdd` unresolved: stop the same way as step 6/7. Else take the user's text, `SPAWN` `fixer` with it and the resolved `ponytail` and `tdd` paths, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
 - Abort: set `status: aborted` and `ended_at`, checkpoint, keep the worktree, stop.
 
 ## 9. PR
