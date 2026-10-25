@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/005-skill-routing",
   "spec_dir": "specs/005-skill-routing",
   "status": "running",
-  "stage": "review",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -172,6 +172,46 @@
       "out_est": 554,
       "reported": null,
       "duration_ms": 300000
+    },
+    {
+      "at": "2026-10-25T00:57:16Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "claude-code",
+      "in_est": 8000,
+      "out_est": 300,
+      "reported": null,
+      "duration_ms": 48920
+    },
+    {
+      "at": "2026-10-25T00:57:16Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "claude-code",
+      "in_est": 8000,
+      "out_est": 300,
+      "reported": null,
+      "duration_ms": 121699
+    },
+    {
+      "at": "2026-10-25T00:57:16Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "claude-code",
+      "in_est": 8000,
+      "out_est": 300,
+      "reported": null,
+      "duration_ms": 234664
+    },
+    {
+      "at": "2026-10-25T00:57:16Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "claude-code",
+      "in_est": 435,
+      "out_est": 16,
+      "reported": null,
+      "duration_ms": 90000
     }
   ],
   "review": {
@@ -249,6 +289,13 @@
     {
       "at": "2026-10-25T00:52:21Z",
       "stage": "fix",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-10-25T00:57:16Z",
+      "stage": "review",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
