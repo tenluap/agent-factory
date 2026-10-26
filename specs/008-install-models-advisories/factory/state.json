@@ -4,13 +4,13 @@
   "harness": "opencode",
   "feature": "fix FR-015 install model pipeline and round-3 advisories from PR #3",
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
-  "default_branch": "007-stabilise-factory",
-  "base": "origin/007-stabilise-factory",
+  "default_branch": "main",
+  "base": "origin/main",
   "branch": "008-install-models-advisories",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
   "status": "running",
-  "stage": "implement",
+  "stage": "verify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -220,6 +220,16 @@
       "out_est": 234,
       "reported": null,
       "duration_ms": 139000
+    },
+    {
+      "at": "2026-10-26T16:19:30Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 6309,
+      "out_est": 3217,
+      "reported": null,
+      "duration_ms": 4595000
     }
   ],
   "review": {
@@ -311,6 +321,13 @@
     {
       "at": "2026-10-26T15:02:54Z",
       "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T16:19:31Z",
+      "stage": "implement",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
