@@ -9,9 +9,9 @@
   "branch": "008-install-models-advisories",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
-  "status": "running",
+  "status": "halted",
   "stage": "fix",
-  "halt_reason": null,
+  "halt_reason": "fixer (review round 1) hit the model usage limit; resets 2026-10-27 04:03:09. Verdict round-1 has 2 medium blockers (render.py config_models shape/parse guard; rebind ended-run refusal) plus 4 low advisories. No fix work was started.",
   "stop_at": null,
   "mode": {
     "chain": "full",
@@ -88,6 +88,14 @@
       "summary": "Q1-Q3 (requires_user): home creation, uninstall scope, glossary",
       "answered_at": "2026-10-26T11:51:49Z",
       "latency_ms": 800000
+    },
+    {
+      "at": "2026-10-26T16:55:12Z",
+      "kind": "halt",
+      "stage": "fix",
+      "summary": "Usage limit reached before fix round 1; resume after reset",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "ledger": [
@@ -270,6 +278,16 @@
       "out_est": 432,
       "reported": null,
       "duration_ms": 719000
+    },
+    {
+      "at": "2026-10-26T16:55:12Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 1266,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 487000
     }
   ],
   "review": {
