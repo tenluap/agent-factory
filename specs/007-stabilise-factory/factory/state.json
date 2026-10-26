@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -337,11 +337,21 @@
       "out_est": 537,
       "reported": null,
       "duration_ms": 379000
+    },
+    {
+      "at": "2026-10-26T09:57:09Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 3444,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 1354000
     }
   ],
   "review": {
-    "round": 2,
-    "fix_rounds": 1,
+    "round": 3,
+    "fix_rounds": 2,
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
@@ -463,6 +473,13 @@
     {
       "at": "2026-10-26T09:34:35Z",
       "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T09:57:09Z",
+      "stage": "fix",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
