@@ -7,6 +7,7 @@ whenever waits and spawns do not overlap (which the flow guarantees).
 """
 
 from datetime import timedelta
+import json
 
 from factory_cli import state
 
@@ -64,6 +65,7 @@ def compute(state_dict):
         "waits": len(timeline),
         "open_waits": sum(1 for e in timeline if not e.get("answered_at")),
         "spawns": len(ledger),
+        **usage_totals(ledger),
     }
 
 
@@ -78,11 +80,32 @@ def fmt_dur(ms):
     return f"{s}s"
 
 
+def usage_totals(ledger):
+    """FR-010, R17: word-count estimates summed under their own labels;
+    harness-reported usage kept verbatim, never merged into one number."""
+    entries = [e for e in ledger if isinstance(e, dict)]
+    return {
+        "in_est": sum(e.get("in_est") or 0 for e in entries),
+        "out_est": sum(e.get("out_est") or 0 for e in entries),
+        "reported": [e["reported"] for e in entries if e.get("reported") is not None],
+    }
+
+
+def fmt_tokens(n):
+    return f"{n // 1000}k" if n >= 1000 else str(n)
+
+
 def sentence(t):
     """The one totals line; None for a run that never recorded its start."""
     if not t.get("bounded"):
         return None
-    return (
+    line = (
         f"Run took {fmt_dur(t['wall_ms'])}: {fmt_dur(t['human_ms'])} you ({t['waits']} waits), "
         f"{fmt_dur(t['agent_ms'])} agents ({t['spawns']} spawns), {fmt_dur(t['overhead_ms'])} overhead."
     )
+    u = t.get("in_est"), t.get("out_est"), t.get("reported")
+    if u[0] or u[1]:
+        line += f" Usage: {fmt_tokens(u[0])} in/{fmt_tokens(u[1])} out estimated."
+    if u[2]:
+        line += f" harness-reported: {json.dumps(u[2])}."
+    return line
