@@ -13,6 +13,7 @@ You are the **orchestrator** of a factory run. You run the loop below, spawn eve
 `<F>` below means this skill's base directory. `$ARGUMENTS` means the text the user passed after `/factory`.
 
 References, read when a step points at them:
+
 - [`references/verbs.md`](references/verbs.md): the verbs this file uses (`SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`).
 - `references/harness/<name>.md`: one file per harness (`claude-code`, `opencode`, `codex`, `copilot`, ...): how to perform each verb there, and its setup values. Preflight picks the one for the harness you are running in.
 - [`references/state.md`](references/state.md): `state.json` schema, checkpoints, discovery, resume.
@@ -87,7 +88,7 @@ Pass `design` (when active) and the resolved `pen-design` path to every spec sta
 
 Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have).
 
-After `analyze`, read the severity counts in the envelope:
+After `analyze`, save the returned envelope to a file and run `python3 <F>/bin/factory analyze-record <envelope>` before checkpointing. This records the report and severity counts through the state writer. Then read those counts:
 
 Lite chain:
 

@@ -66,14 +66,14 @@ Agreed 2026-10-25 (`docs/superpowers/specs/2026-10-25-factory-skill-routing-desi
 
 ### Routing contract
 
-| Trigger | Skill | Owner | First/applied stage |
-|---|---|---|---|
-| An exploratory idea without a settled solution — e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..." | `brainstorming` | Orchestrator | `brainstorm`, before `grill` |
-| A concrete feature, change, or an idea already ready to build — e.g. "add a `--no-fast` flag", "fix the resume path so...", a named existing spec | `grilling` | Orchestrator | `grill` (idea path's second stage, feature path's first) |
-| Neither set of cues, or both | — one intent question decides, then routes as above | Orchestrator | — |
-| Implementation or repair of code | `ponytail` and `tdd` | `code-build`, `fixer` | `implement`, `fix` |
-| A UI-related diff enters review | `impeccable` audit and critique | `ui-reviewer` | `review` |
-| A user-facing flow changes | existing UX lens (complementary, not a repeat of the UI pass) | `ux-reviewer` | `review` |
+| Trigger                                                                                                                                           | Skill                                                         | Owner                 | First/applied stage                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------- | -------------------------------------------------------- |
+| An exploratory idea without a settled solution — e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."      | `brainstorming`                                               | Orchestrator          | `brainstorm`, before `grill`                             |
+| A concrete feature, change, or an idea already ready to build — e.g. "add a `--no-fast` flag", "fix the resume path so...", a named existing spec | `grilling`                                                    | Orchestrator          | `grill` (idea path's second stage, feature path's first) |
+| Neither set of cues, or both                                                                                                                      | — one intent question decides, then routes as above           | Orchestrator          | —                                                        |
+| Implementation or repair of code                                                                                                                  | `ponytail` and `tdd`                                          | `code-build`, `fixer` | `implement`, `fix`                                       |
+| A UI-related diff enters review                                                                                                                   | `impeccable` audit and critique                               | `ui-reviewer`         | `review`                                                 |
+| A user-facing flow changes                                                                                                                        | existing UX lens (complementary, not a repeat of the UI pass) | `ux-reviewer`         | `review`                                                 |
 
 Intake intent is not a stored field: step 0 of `SKILL.md` decides it from the request text, visible afterwards only in the run's first `stage` value and, when a question was needed, in that question's saved relay answer. The idea path is `brainstorm -> grill -> worktree -> the existing spec chain`; the feature path starts at `grill`. Stopping after `brainstorm` leaves the run paused with the confirmed direction in the pending brief and nothing written to the invoking checkout; resuming continues into `grill`, which treats brainstorming's settled decisions as inputs and asks only what is still open. A run saved before this routing existed keeps resuming at its recorded stage unchanged — `brainstorm` is additive to the stage vocabulary (`state.md`), not a replacement of any existing one.
 
@@ -107,17 +107,17 @@ Fresh spec-builder, code-build, fixer, reviewers, and judge receive the saved `d
 
 ## Agents
 
-| Agent | Tier | Access | Role |
-|---|---|---|---|
-| `factory-spec-builder` | deep | write | Runs specify through analyze, one stage per spawn; remediates analyze findings |
-| `factory-code-build` | standard | write | Runs speckit.implement against tasks.md; must finish green |
-| `factory-security-reviewer` | standard | read | Security review of the diff |
-| `factory-code-standards` | standard | read | Diff vs the repo's documented conventions |
-| `factory-spec-conformance` | standard | read | Diff vs spec, plan, tasks |
-| `factory-ui-reviewer` | standard | read | impeccable audit + critique of changed UI (UI diffs only) |
-| `factory-ux-reviewer` | standard | read | UX flows, states, copy (UI diffs only) |
-| `factory-review-judge` | deep | read | Merges, dedupes, verifies findings; one verdict |
-| `factory-fixer` | standard | write | Fixes confirmed findings or the user's requested changes |
+| Agent                       | Tier     | Access | Role                                                                           |
+| --------------------------- | -------- | ------ | ------------------------------------------------------------------------------ |
+| `factory-spec-builder`      | deep     | write  | Runs specify through analyze, one stage per spawn; remediates analyze findings |
+| `factory-code-build`        | standard | write  | Runs speckit.implement against tasks.md; must finish green                     |
+| `factory-security-reviewer` | standard | read   | Security review of the diff                                                    |
+| `factory-code-standards`    | standard | read   | Diff vs the repo's documented conventions                                      |
+| `factory-spec-conformance`  | standard | read   | Diff vs spec, plan, tasks                                                      |
+| `factory-ui-reviewer`       | standard | read   | impeccable audit + critique of changed UI (UI diffs only)                      |
+| `factory-ux-reviewer`       | standard | read   | UX flows, states, copy (UI diffs only)                                         |
+| `factory-review-judge`      | deep     | read   | Merges, dedupes, verifies findings; one verdict                                |
+| `factory-fixer`             | standard | write  | Fixes confirmed findings or the user's requested changes                       |
 
 On Claude Code, `deep` is opus and `standard` is sonnet.
 
@@ -128,11 +128,13 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 ## Decisions
 
 ### Setup
+
 - **Missing `.specify/`**: offer to run `specify init --here <harness.speckit_init>` — each adapter states its own `speckit_init` arguments (ZCode's: `--integration zcode --integration-options="--skills"`) — then the constitution step. Ask once.
 - **impeccable missing**: ask once, then `npx impeccable install --providers=<harness.impeccable_provider> --scope=global`.
 - **Skills that block model invocation**: every `speckit-*` skill and `grill-with-docs` set `disable-model-invocation: true` (or are commands rather than skills on some harnesses), so no agent invokes them. Agents read the resolved file and follow it as instructions. `grill-with-docs` runs as its two parts: `grilling` + `domain-modeling`.
 
 ### Isolation
+
 - Grilling runs in the invoking checkout and writes nothing to the repo. Its output (`brief.md`) and pre-run state live under `${FACTORY_HOME}/pending/` until the worktree exists.
 - The branch name comes from SpecKit's git script in `--dry-run` mode. The factory creates a git worktree on that branch, and everything after grilling runs inside it.
 - The spec directory is passed explicitly (`SPECIFY_FEATURE_DIRECTORY=specs/<branch>`), so branch and spec folder always match.
@@ -140,10 +142,12 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 - Several runs may go at once in one repo, one per session. Branch creation reserves the number, so a later dry-run sees it.
 
 ### Modes
+
 - **Chain** (`full` | `lite`), recorded in `state.mode.chain`. Default `lite`: a run starts on the lite chain unless a flag pinned it (`--lite` pins lite, `--full` pins full; the last one wins). Grilling's closing summary names the chain in effect and the user's confirmation covers it — an objection flips it to `full`, which the orchestrator recommends when the feature's size calls for it. `lite` = specify → plan → tasks → analyze, one pass, no loop: clarify and grill-with-docs are skipped (the top grilling captured what they would have). Any CRITICAL/HIGH analyze finding escalates: the chain becomes `full` and continues from clarify (clarify, grill-with-docs, then plan and tasks re-derived, then analyze under the normal loop rules). MEDIUM/LOW: remediate once, then implement. Every stage keeps its checkpoints, so a lite run resumes like any other.
 - **Fast** (`state.mode.fast`, on by default; `--fast` pins it on, `--no-fast` turns it off, the last one wins): the orchestrator auto-accepts every relay round with the agent's recommended answers, recorded with `"auto": true` in `state.relay`, collapsing multi-round stages to agent-only turns. Never auto-answered: questions in `state.analyze.pending_clarify` (a patch that overturns a decision is the user's to make), and every halt — loop exhaustion, red build, agent failure, `--stop-at`. The approver screen lists the auto-accepted rounds for veto.
 
 ### Interactive steps (relay)
+
 - Grilling at the top runs in the orchestrator directly. It uses the same question presentation and reply rules as later relays and stays interactive even in fast mode.
 - Work the design tree in rounds. Each round contains the **whole frontier**: every open decision whose prerequisites are settled. Defer questions whose wording or options depend on unanswered decisions; recompute the frontier after the round is answered.
 - clarify, grill-with-docs, and specify's clarification markers run inside spec-builder. When spec-builder has questions it ends its turn with the whole frontier (with recommended answers). The orchestrator saves every answer to state as it arrives, then spawns a fresh spec-builder for the same stage. That role reads every round from `state.relay`, treats answered questions as settled, and asks only what is still open. Relay restarts and resume use the same path.
@@ -153,31 +157,38 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 - **Compatibility**: keep existing saved answers and IDs. New question fields support helper text, structured option descriptions/emojis, and a separate recommendation rationale. Read old question shapes too, showing available information in the new layout without inventing missing descriptions or rationale. Accepted answers contain the selection or proposed text, separate from its rationale. Fast-mode eligibility stays unchanged, including the `pending_clarify` exclusion.
 
 ### Analyze loop
+
 - After analyze: if any CRITICAL or HIGH finding exists, spec-builder **patches every finding at every severity in place** (remediation edits `spec.md`, `plan.md`, `tasks.md` and the other artifacts; it never regenerates them). Findings that need a user decision become clarify questions instead of silent fixes. Then analyze **re-runs against the patched artifacts** (pass + 1) to confirm the fixes.
 - clarify and grill-with-docs re-enter the loop only when a remediation finding was deferred to clarify (a decision-touching patch): the pending questions are answered, the settled decisions are edited into the artifacts, and analyze verifies again. A loop whose patches touched no decision re-runs analyze alone.
 - At most 2 loops. If CRITICAL/HIGH findings remain after the second loop, halt and ask the user: proceed, give guidance for one more pass, or abort.
 - If analyze reports only MEDIUM/LOW findings: remediate once (patches in place), then go straight to implement (no loop).
 
 ### Implement
+
 - code-build reads build and test commands from the repo's CLAUDE.md / AGENTS.md, falling back to detection.
 - Done = every task in tasks.md checked, build green, tests green. The orchestrator re-runs build and tests itself to verify. Still red after code-build's own attempts: one fresh code-build gets the failing output; still red: halt and ask.
 
 ### Review
+
 - Always: security, code-standards, spec-conformance.
 - Only when the diff touches UI files: UI (impeccable) and UX.
 - Round 1 reviews the full diff. Every later round is a **delta review**: reviewers see the fix diff since the previous round's checkpoint together with the previous verdict, and check that the fixes landed and added nothing. The fixer declares every file it touches beyond the findings' own files as `Adjacent: <path> - <reason>` in its commit body; the judge checks the fix diff's file list against the findings' files and those lines, and its verdict can carry `escalate`, which re-runs the round once in full review.
 - The judge merges, dedupes and verifies. Confirmed blocking findings go to the fixer; then build + test, then a delta re-review. At most 2 fix rounds. Advisory findings go to the approver untouched.
 
 ### Approver
+
 Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining advisory findings, the capability tier when it is not 1, and (when `mode.fast`) the auto-accepted relay rounds. Options:
+
 - **Approve**: push and open the PR.
 - **Request changes** (free text): fixer, build + test, re-review, back to the approver. No cap; the user drives it.
 - **Abort**: keep the worktree, state `aborted`.
 
 ### PR
+
 Push the branch, open a ready-for-review PR against the default branch with a body written via the `pr` skill (links the spec, includes the review summary). State becomes `pr-open` with the URL. The worktree is kept until the branch merges. Harness-specific extras (on Claude Code, offering the desktop app's Auto-fix binding) come from `harness.md` and are offered, not automatic.
 
 ### State and resume
+
 - State lives at `specs/<branch>/factory/state.json` inside the worktree (schema: `core/skills/factory/references/state.md`). It records the `harness` running the run; each `history` entry records the harness that wrote it.
 - One checkpoint commit per stage (`factory: <stage> complete`) plus a state update. Implement additionally resumes per task from the tasks.md checkboxes.
 - Resume restarts the interrupted stage from its beginning. A relay in progress resumes from the saved Q&A: a fresh spec-builder gets the answered questions and asks only the rest.
@@ -186,41 +197,50 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - Plain `/factory` lists unfinished runs in the current repo (`bin/factory runs`, scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one; `/factory <feature>` starts a new run. `resume <branch>` fetches a resume digest (`bin/factory show`) — scalars plus aggregates, never the whole state — and restarts the recorded stage from it.
 
 ### State CLI (v4)
+
+- **Analysis recording repair**: `analyze-record <envelope>` is the writer for completed analysis outcomes. Accept a bare JSON envelope or its final fenced JSON block, validate non-negative integer severity counts and an existing report confined to this run's spec directory, normalize spec/worktree-relative paths to spec-relative form, append each report once, and store the latest counts/report with a writer timestamp in optional `analyze.result`. Preserve loop counters, remediations and pending clarification questions. Commit through the existing locked, atomic state writer; invalid input leaves state and HEAD unchanged. The orchestrator records this outcome before its analysis checkpoint, not by editing state or inventing a gate override.
 - **Writer layout**: `bin/factory` stays a thin entry script (argv → `factory_cli.cli.main`, exit codes preserved); all logic lives in `core/skills/factory/bin/factory_cli/` modules (`__init__`, `cli`, `state`, `lock`, `checks`, `totals`, `commands`), which the renderer's `copytree` already carries into every `dist/<harness>/skill/` unchanged. Every state mutation goes through it; the orchestrator never hand-edits `state.json`, and a missing Python 3 halts the run with a clear message instead of falling back to manual writes.
 - **Schema v4**: `version: 4` adds an append-only `decisions` list and per-spawn `started_at`/`ended_at` intervals; the history-event vocabulary is closed — `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed` — and anything else is a validation violation with its location. Readers accept versions 1–4 including legacy relay shapes and report, never rewrite, what they read; the writer upgrades a run to v4 in the same atomic write that first changes it (temp file + `os.replace`).
 - **Effort accounting**: agent time is the union of ledger spawn intervals, human time the union of recorded user-wait intervals (`at` → `answered_at`), both reported separately; overhead derives as `max(wall − human − agent, 0)`. No report sums parallel durations or subtracts summed durations from wall clock, so human + agent never exceeds wall time by construction.
 - **Test layout**: a new `tools/tests/` package (one module per seam plus `fixtures/`) that `python3 -m unittest discover -s tools` discovers unchanged. Runs 005 and 006's saved states are recovered from git history as replay fixtures, each with a defect manifest naming stability-brief §3's core defects the replay must report.
 
 ### Enforced gates (M2)
+
+- **Fresh-state gate decisions**: checkpoint evaluates its transition gate and permitting decision inside the writer's lock against the freshly re-read state. A newly recorded CRITICAL/HIGH result blocks implementation without an explicit override; pending clarification questions still block independently. Older states without `analyze.result` retain their existing gate behavior.
 - **Lock lifecycle**: every write acquires `lock.json` beside the state it guards — `<worktree>/specs/<branch>/factory/lock.json` for a worktree run, `<pending-name>.lock.json` beside the pending file before that — recording owner PID, host, harness and time. A write under a live foreign lock is refused with the owner reported; a lock is stale only on its recorded host when the owner process is gone (`os.kill(pid, 0)`), never automatically elsewhere; `factory lock take <run> [--force]` is the only takeover and records `taken_over: true` with the previous lock for audit (FR-005).
 - **Gate table**: `factory_cli/checks.py` holds one table checked by `checkpoint` before the write that advances a stage: → `review` requires the latest verify record to be `verify-pass`; → `implement` requires analyze clean, remediated, or an explicit override decision; → `pr` requires an `approved` decision recorded at `approver` (or a `gate-override`). Refusals name the missing record. `factory verify --pass|--fail --commands '<json>'` writes the verify record; `decisions-add --kind approved|gate-override` records the decisions; the transition a gate decision permits also gets an `approved`/`gate-override` history entry carrying that decision's question ID. Every history event keeps exactly one writer (FR-006).
 - **Role-output shapes**: `envelope check <file>` validates a role output's final fenced `json` block against the three shapes — envelope (protocol.md), reviewer report and judge verdict (findings.md). Key sets, types and required fields are encoded once in `checks.py` with the references' own fenced examples as passing fixtures; one malformed variant per shape is refused with the offending location. Malformed output enters the retry-once policy (FR-007).
 - **CI**: `.github/workflows/ci.yml` runs the full suite, re-renders all five harnesses and fails on the constitution's porcelain drift gate (`test -z "$(git status --porcelain -- dist/)"`, which sees untracked additions a bare diff misses), and checks `install.sh` syntax with `bash -n` (FR-018).
 
 ### Portable and safe (M3)
+
 - **Model policy**: only `claude-code` ships default models (opus/sonnet, its harness requires them); `codex`, `copilot`, `opencode` and `zcode` ship `"models": {}` and inherit session models. Personal choices live in the user's `${FACTORY_HOME}/config.json` under `models.<harness>`, merged at render/install time; `install.sh` prints the effective model per role after rendering, and a render-seam test keeps the README's statement aligned with `adapters/` (FR-015).
 - **Preflight guidance**: when the current harness's SpecKit skills are missing, preflight names the exact `specify init --here <speckit_init>` command from `adapters/<harness>/harness.md` and offers to run it, exactly as for a missing `.specify/`; declining stops the run with the command printed (FR-016). Extra per-harness arguments are recorded in `harness.md`.
 - **Declared-file checkpoints**: a role's envelope `files` list declares everything it changed. `checkpoint <stage> [--files <path>...] [--envelope <file>]` stages exactly `spec_dir` plus that list, commits `factory: <stage> complete`, and reports every other modified or untracked path without committing it — `git add -A` is gone (FR-017).
 - **Rebind**: `factory rebind <run> --worktree <path>` validates the path is a git worktree on the recorded branch, rewrites the stored absolute paths (`worktree`, `repo`) and reports the rewrite; sharing `${FACTORY_HOME}` alone does not move a run (FR-012).
 
 ### Proven (M4)
+
 - **Recovery**: a kill-and-resume suite drives a throwaway fixture run to every stage, kills it there, and resumes it through the CLI: no answered question re-asked (relay/decisions survive checkpoints), no committed task redone (tasks.md checkboxes are the resume point), and no duplicate branch, worktree or pull request (SC-006). The suite exposes any missing resume behaviour — the `resumed` history entry is written through the writer (FR-003), and each stage's resume digest is the only thing a restarting agent reads.
 - **Golden run**: a fixture repository plus a per-harness golden-run checklist (start, pause at `review`, kill, resume on a second harness, approve, PR against a throwaway remote) records FR-013's evidence; the live two-harness run is recorded after merge in `conformance/golden-run-results.md`.
 - **Read-only access**: a static conformance check renders every adapter and asserts each `read`-access agent denies editing in that harness's own terms — tool lists without `Edit`/`Write` (Claude Code, ZCode), OpenCode deny rules, Copilot's tool list. `codex` has no enforceable read-only surface; `adapters/codex/harness.md` documents the limitation and the golden-run checklist records it per adapter (FR-014, R13).
 
 ### Hardening and context trim (P2)
+
 - **Prune preview**: `factory prune [--dry-run|--delete]` lists stale pending files — one whose run has a worktree state or has ended (`pr-open`/`aborted`); a run whose only state is the pending file is never stale — and deletes nothing without the explicit `--delete` (FR-019).
 - **Installer argument validation**: `install.sh`'s option loop validates every value; a missing `--harness` value prints a clear usage message and exits non-zero instead of crashing on an unbound variable (FR-020, S17).
 - **Reported usage labelling**: a ledger entry's `reported` stays `null` unless a harness names a usage source; `show` and the totals line label reported usage separately from the `in_est`/`out_est` word-count estimates, never merged into one number (FR-010, R17).
 - **Pen rules in one reference**: `references/design-code-mapping.md` is the single home for the Pen design rules; the duplicated prose in `SKILL.md` (steps 6, 8, 9) and `references/state.md` is replaced by pointers, with every rule sentence accounted for in a checked list so nothing is lost (FR-021, R15).
 
 ### Cost ledger
+
 - Every `SPAWN` (each role of a `SPAWN_PARALLEL` counts as one) appends one entry to `state.ledger` (schema: `state.md`): stage, role, harness, input/output token estimates, harness-reported usage when available, duration.
 - Estimates are harness-neutral: 1.35 × word count of what the spawn was told to read (its role file, the resolved skill files, the artifacts its inputs name) and of what it wrote (the returned envelope plus new files under the spec's `factory/` folder).
 - `reported` is reserved for usage the harness exposes (today: none in tier 1; tier-2 CLI output where the harness prints it). Every efficiency change to the flow is measured against a prior run's ledger, not guessed.
 - The ledger's own cost is one `wc -w` and one state write per spawn.
 
 ### Policies
+
 - Agent failure (crash, unparseable output, timeout): retry once with the error attached, then halt and ask.
 - Notification (`NOTIFY`, a no-op where the harness has none) on every wait for the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver.
 - `speckit.checklist` and `speckit.taskstoissues` are not part of the flow.
