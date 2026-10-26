@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
   "status": "running",
-  "stage": "verify",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -345,6 +345,13 @@
     {
       "at": "2026-10-26T08:17:25Z",
       "stage": "implement",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T08:17:26Z",
+      "stage": "verify",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
