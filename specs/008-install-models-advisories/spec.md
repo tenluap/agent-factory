@@ -190,8 +190,8 @@ A maintainer reads the CLI contract, the 007 plan and the test suite and finds t
 
 ## Assumptions
 
-- The round-3 blocker on 007's hand-edited `halted` history entry is already resolved: the delivered `specs/007-stabilise-factory/factory/state.json` rewrites that entry to the conformant shape and validates against the closed vocabulary. Validator legacy tolerance and a repair command are out of scope here, as the brief's decisions enumerate only FR-015, the round-3 advisories and the totals bug.
-- The settled FR-015 decision (per-user render under `${FACTORY_HOME:-~/.factory}/dist/<harness>`, linked from there) deliberately supersedes the verdict's suggested fix (report-only from the user's home); where the two differ, `factory/brief.md` wins.
+- The round-3 blocker on 007's hand-edited `halted` history entry is already resolved: the delivered `specs/007-stabilise-factory/factory/state.json` rewrites that entry to the conformant shape and validates against the closed vocabulary. Validator legacy tolerance and a repair command are out of scope here, as the brief's decisions enumerate only 007 FR-015, the round-3 advisories and the totals bug.
+- The settled 007 FR-015 decision (per-user render under `${FACTORY_HOME:-~/.factory}/dist/<harness>`, linked from there) deliberately supersedes the verdict's suggested fix (report-only from the user's home); where the two differ, `factory/brief.md` wins.
 - "Default home" means the documented `${FACTORY_HOME:-~/.factory}`; effective models are resolved from it whether or not `FACTORY_HOME` is exported.
 - Exit code 5 is the CLI's documented usage-error code (contracts/cli.md), and each advisory's cited file and line in `verdict.json` identifies the delivered location.
 - Documentation corrections are confined to the sentences the verdict and brief name (`render.py` comment, `README.md`, `DESIGN.md`, `contracts/cli.md`, `specs/007-stabilise-factory/plan.md`); no other prose is rewritten.

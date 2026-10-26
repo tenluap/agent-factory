@@ -58,7 +58,7 @@ tools/tests/test_install.py                  # install seam incl. the default-ho
 tools/tests/test_lock.py                     # liveness/force/release tests; dead duplicates deleted
 tools/tests/test_commands.py                 # ledger-add, runs, show, checkpoint, rebind, validate
 tools/tests/test_totals.py                   # open-run wall clock
-tools/tests/test_state.py                    # exactly-one-open-relay-round rule
+tools/tests/test_state.py                    # exactly-one-open-relay-round rule; `replay.py` import-vocabulary assertions
 tools/tests/replay.py                        # shared imports from factory_cli.state
 core/skills/factory/bin/factory_cli/
   cli.py       # ledger timestamp usage validation
@@ -89,7 +89,7 @@ specs/007-stabilise-factory/plan.md          # Overridden: ENG-3 line
 
 - **Security**: no personal model id enters the committed `dist/`, adapters or shared output — asserted by a canonical-render test and a `git status --porcelain -- dist/` check after the sandbox install (SC-001); the installer links only the directories `--paths` names.
 - **Data integrity**: every mutation goes through `write_run` (lock, re-read under the lock, validate, atomic write); ended runs are immutable including pending ones; a checkpoint retry reuses its pending history entry — a test each (SC-002, SC-005).
-- **Error and resource limits**: every refusal exits with the documented code and a message naming the cause, zero tracebacks — one test per path (ledger-add timestamp, ended pending run, unevaluable lock PID, foreign release, failed checkpoint commit, malformed `config.json` aborting the install) (SC-002, SC-003); explicit `--force` is the only takeover.
+- **Error and resource limits**: every refusal exits with the documented code and a message naming the cause, zero tracebacks — one test per path (ledger-add timestamp, ended pending run, unevaluable lock PID, foreign release, failed checkpoint commit) (SC-002, SC-003); a malformed `config.json` aborting the install is covered by SC-001; explicit `--force` is the only takeover.
 - **Performance**: no stated requirement, so no measurement or benchmark; install adds exactly one render per harness into the factory home (ENG-20).
 - **Dependencies**: none new; stdlib only (ENG-27).
 - **Observability**: install prints the effective model per role; checkpoint reports `commit: null` plus `commit_error` and the "state written, commit failed" message; `validate` names the location of a relay-round violation (SC-005).
@@ -104,7 +104,7 @@ specs/007-stabilise-factory/plan.md          # Overridden: ENG-3 line
 - Seam: `factory_cli.totals` interval unions — open-run wall clock measured from start to now, union aggregates only in the digest. (007 seam, extended.)
 - Seam: `tools/render.py` render output — canonical render never merges config, per-user `--out` render merges from the default home per key, `--models`/`--paths` write nothing. (007 seam, extended.)
 - Seam: `install.sh` install/uninstall flow — per-user render, link targets, effective model report, the factory-home policy (missing default home `~/.factory` created; an explicitly set `FACTORY_HOME` that does not exist or is unusable fails naming the path; a malformed `config.json` aborts the install cleanly, nothing rendered or linked) and `--uninstall` under a throwaway `HOME`, including the default-home case with `FACTORY_HOME` unset. (007's usage-error-only seam, extended.)
-- Seam: `tools/tests/replay.py` defect detectors — the 005/006 replay reports the same defects after the imports move to `factory_cli.state`. (007 seam, reused.)
+- Seam: `tools/tests/replay.py` defect detectors — the 005/006 replay reports the same defects after the imports move to `factory_cli.state`; asserted from `tools/tests/test_state.py`. (007 seam, reused.)
 - Exempt: `README.md` and `DESIGN.md` model-merge wording, `tools/render.py` docstring and comment lines - documentation only; the behaviour they describe is checked through the render and install seams.
 - Exempt: `specs/007-stabilise-factory/contracts/cli.md` `resume <run>` row and `runs` wording - documentation only.
 - Exempt: `specs/007-stabilise-factory/plan.md` `Overridden:` line - documentation only.
