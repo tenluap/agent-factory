@@ -52,8 +52,10 @@ def render_to(harness, out, config=None, exported=True):
     env = dict(os.environ)
     env.pop("FACTORY_HOME", None)
     env["HOME"] = str(home)
+    factory_home = home if exported else home / ".factory"
     if config is not None:
-        (home / "config.json").write_text(json.dumps(config))
+        factory_home.mkdir(parents=True, exist_ok=True)
+        (factory_home / "config.json").write_text(json.dumps(config))
     if exported:
         env["FACTORY_HOME"] = str(home)
     return subprocess.run(

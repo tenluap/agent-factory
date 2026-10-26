@@ -6,6 +6,7 @@ dist/<harness>/skill/   the orchestrator skill, with references/harness/<name>.m
 dist/<harness>/agents/  one native agent file per role, in this harness's format
 
 Usage: render.py <harness>          render, print nothing
+       render.py <harness> --out <dir>  per-user render into <dir>
        render.py <harness> --paths  render, then print the install targets as shell assignments
        render.py --list             print the known harnesses
 """
@@ -34,17 +35,23 @@ def known():
     return sorted(p.name for p in ADAPTERS.iterdir() if (p / "adapter.json").exists())
 
 
-def config_models(name):
-    """User model overrides for one harness from $FACTORY_HOME/config.json
-    (`{"models": {"<harness": {"deep": "...", "standard": "..."}}}`).
+def default_home():
+    """The documented factory home: ${FACTORY_HOME:-~/.factory}, expanded."""
+    return Path(os.environ.get("FACTORY_HOME") or "~/.factory").expanduser()
 
-    Report-only: the canonical dist/ render never reads user configuration
-    (FR-002), so this feeds the effective-model report, not the rendered fields.
+
+def config_models(name, home=None):
+    """User model overrides for `name` from `<home>/config.json`
+    (`{"models": {"<harness>": {"deep": "...", "standard": "..."}}}`); {}
+    when the file or the keys are absent (per-key fallback, FR-003).
+
+    `home=None` resolves the documented default home. The canonical dist/
+    render never reads user configuration (FR-002); this feeds the per-user
+    render (FR-001) and the effective-model report.
     """
-    config_home = os.environ.get("FACTORY_HOME")
-    if not config_home:
-        return {}
-    config = Path(config_home).expanduser() / "config.json"
+    if home is None:
+        home = default_home()
+    config = home / "config.json"
     if not config.exists():
         return {}
     return json.loads(config.read_text()).get("models", {}).get(name, {})
@@ -61,12 +68,14 @@ def load_adapter(name):
     return adapter
 
 
-def agent_fields(adapter, meta, values):
+def agent_fields(adapter, meta, values, models=None):
     """Ordered (key, value) pairs for one agent's frontmatter."""
+    if models is None:
+        models = adapter["models"]
     fields = [(key, template.format(**values)) for key, template in adapter["fields"]]
     fields += list(adapter.get("extra", {}).items())
     fields += list(adapter["access"][meta["access"]].items())
-    model = adapter["models"].get(meta["tier"], "")
+    model = models.get(meta["tier"], "")
     if model:  # empty: the agent inherits the session's model
         fields.append(("model", model))
     return fields
@@ -103,16 +112,31 @@ def render_agent(adapter, fields, body):
     raise SystemExit(f"unknown agent_format '{adapter['agent_format']}'")
 
 
-def render(name):
+def render(name, out=None):
+    """Render one harness tree and return (adapter, target, effective).
+
+    out=None is the canonical dist/<harness> target and never merges user
+    configuration (FR-002). An explicit `out` is the per-user render: the
+    default home's config.json models merge per key over the adapter
+    defaults (FR-001, FR-003).
+    """
     adapter = load_adapter(name)
-    report_models = {**adapter["models"], **config_models(name)}
+    if out is None:
+        # interim: the canonical render's report keeps the explicit-home
+        # lookup until the write-free report split (FR-004) lands
+        explicit = os.environ.get("FACTORY_HOME")
+        merge = config_models(name, Path(explicit).expanduser()) if explicit else {}
+    else:
+        merge = config_models(name)
+    report_models = {**adapter["models"], **merge}
+    models = report_models if out is not None else adapter["models"]
     effective = []  # (role, model) per role, for the effective-model report
-    out = ROOT / "dist" / name
-    shutil.rmtree(out, ignore_errors=True)
+    target = Path(out) if out is not None else ROOT / "dist" / name
+    shutil.rmtree(target, ignore_errors=True)
 
     # The skill is the same for every harness: the orchestrator picks its harness file at runtime,
     # so harnesses that read each other's skill directories all see the same skill.
-    skill = out / "skill"
+    skill = target / "skill"
     shutil.copytree(ROOT / "core" / "skills" / "factory", skill)
     (skill / "references" / "harness").mkdir()
     for other in known():
@@ -121,7 +145,7 @@ def render(name):
             skill / "references" / "harness" / f"{other}.md",
         )
     (skill / "roles").mkdir()
-    (out / "agents").mkdir()
+    (target / "agents").mkdir()
 
     for role_file in sorted((ROOT / "core" / "roles").glob("*.md")):
         meta, body = frontmatter(role_file.read_text())
@@ -131,11 +155,11 @@ def render(name):
             "role_": meta["name"].replace("-", "_"),
             "description": meta["description"],
         }
-        fields = agent_fields(adapter, meta, values)
+        fields = agent_fields(adapter, meta, values, models=models)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
-        (out / "agents" / adapter["agent_file"].format(**values)).write_text(text)
+        (target / "agents" / adapter["agent_file"].format(**values)).write_text(text)
         effective.append((meta["name"], report_models.get(meta["tier"], "")))
-    return adapter, out, effective
+    return adapter, target, effective
 
 
 def main():
@@ -143,12 +167,19 @@ def main():
     if args == ["--list"]:
         print("\n".join(known()))
         return
+    out = None
+    if "--out" in args:
+        i = args.index("--out")
+        if i + 1 >= len(args):
+            raise SystemExit("--out needs a directory")
+        out = args[i + 1]
+        args = args[:i] + args[i + 2 :]
     if not args or args[0].startswith("-"):
         raise SystemExit(__doc__.strip())
-    adapter, out, effective = render(args[0])
+    adapter, target, effective = render(args[0], out=out)
     if "--paths" in args:
         for key, value in (
-            ("dist", str(out)),
+            ("dist", str(target)),
             ("skill_dir", adapter["skill_dir"]),
             ("agent_dir", adapter["agent_dir"]),
         ):
