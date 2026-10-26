@@ -17,19 +17,19 @@ from factory_cli import totals  # noqa: E402
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
-def ledger(started_at, ended_at, duration_ms=None):
+def ledger(started_at, ended_at, duration_ms=None, in_est=0, out_est=0, reported=None):
     entry = {
         "at": started_at,
         "stage": "review",
         "role": "code-standards",
         "harness": "opencode",
-        "in_est": 0,
-        "out_est": 0,
-        "reported": None,
+        "reported": reported,
     }
     if started_at and ended_at:
         entry.update(started_at=started_at, ended_at=ended_at)
     entry["duration_ms"] = duration_ms if duration_ms is not None else 0
+    entry["in_est"] = in_est
+    entry["out_est"] = out_est
     return entry
 
 
@@ -213,6 +213,97 @@ class SentenceTests(unittest.TestCase):
 
     def test_sentence_without_run_bounds(self):
         self.assertIsNone(totals.sentence(totals.compute(run(None, None))))
+
+
+class UsageLabellingTests(unittest.TestCase):
+    """FR-010, R17: reported usage is labelled separately, never merged."""
+
+    def test_estimates_sum_under_their_own_labels(self):
+        t = totals.compute(
+            run(
+                "2026-10-23T10:00:00Z",
+                "2026-10-23T10:30:00Z",
+                spawns=[
+                    ledger(
+                        "2026-10-23T10:00:00Z",
+                        "2026-10-23T10:10:00Z",
+                        in_est=15000,
+                        out_est=4000,
+                    ),
+                    ledger(
+                        "2026-10-23T10:20:00Z",
+                        "2026-10-23T10:30:00Z",
+                        in_est=8000,
+                        out_est=1000,
+                    ),
+                ],
+            )
+        )
+        self.assertEqual(t["in_est"], 23000, "the word-count estimates, summed")
+        self.assertEqual(t["out_est"], 5000)
+        self.assertEqual(t["reported"], [], "no harness-reported usage, empty list")
+
+    def test_reported_is_kept_verbatim_and_never_merged(self):
+        reported = {"input_tokens": 1200, "output_tokens": 300}
+        t = totals.compute(
+            run(
+                "2026-10-23T10:00:00Z",
+                "2026-10-23T10:30:00Z",
+                spawns=[
+                    ledger(
+                        "2026-10-23T10:00:00Z",
+                        "2026-10-23T10:10:00Z",
+                        in_est=1000,
+                        out_est=100,
+                        reported=reported,
+                    ),
+                    ledger(
+                        "2026-10-23T10:20:00Z",
+                        "2026-10-23T10:30:00Z",
+                        in_est=7,
+                        out_est=3,
+                    ),
+                ],
+            )
+        )
+        self.assertEqual(t["reported"], [reported], "harness-reported usage, verbatim")
+        self.assertEqual(
+            (t["in_est"], t["out_est"]),
+            (1007, 103),
+            "the estimate sums exclude reported usage",
+        )
+
+    def test_sentence_labels_estimates_and_reported_separately(self):
+        t = totals.compute(
+            run(
+                "2026-10-23T10:00:00Z",
+                "2026-10-23T10:30:00Z",
+                spawns=[
+                    ledger(
+                        "2026-10-23T10:00:00Z",
+                        "2026-10-23T10:10:00Z",
+                        in_est=23000,
+                        out_est=5000,
+                        reported={"input_tokens": 1200},
+                    )
+                ],
+            )
+        )
+        line = totals.sentence(t)
+        self.assertIn("23k in/5k out estimated", line)
+        self.assertIn("harness-reported", line, "reported usage carries its own label")
+        self.assertIn('{"input_tokens": 1200}', line, "reported usage shown verbatim")
+
+    def test_sentence_without_usage_stays_unlabelled(self):
+        t = totals.compute(
+            run(
+                "2026-10-23T10:00:00Z",
+                "2026-10-23T10:30:00Z",
+                spawns=[ledger("2026-10-23T10:00:00Z", "2026-10-23T10:10:00Z")],
+            )
+        )
+        self.assertNotIn("estimated", totals.sentence(t))
+        self.assertNotIn("harness-reported", totals.sentence(t))
 
 
 if __name__ == "__main__":
