@@ -16,12 +16,12 @@
 - Q: What counts as human time? → A: Union of recorded user-wait intervals; human + agent ≤ wall clock.
 - Q: How are code changes declared at checkpoints? → A: Role output lists every changed file; checkpoints commit the spec directory plus exactly that list.
 - Q: What defect list must replaying runs 005 and 006 produce? → A: Stability brief §3 core; appended extras need a written reason.
-- Q: How is a gate override recorded? → A: Normal decision record entry (stage, question ID, answer, auto=false, time) in the approver's veto list.
+- Q: How is a gate override recorded? → A: Normal decision record entry (stage, question ID, answer, kind, auto=false, time) in the approver's veto list.
 
 ### Session 2026-10-25 (grill-with-docs)
 
 - Source documents: same PR; each S-item's design decision lands in `DESIGN.md` with or before its implementation; the contradicted sentences in `DESIGN.md`, `state.md` (manual-write fallback), `docs/product-brief.md` §14 and `README.md` are corrected there (FR-024).
-- Passing verification: a `verify-pass`/`verify-fail` history entry through the CLI after the orchestrator re-runs build and test itself, carrying commands and pass/fail; review refuses unless the latest passes (FR-006).
+- Passing verification: a `verify-pass`/`verify-fail` history entry through the CLI after the orchestrator re-runs build and test, carrying commands and pass/fail; review refuses unless the latest passes (FR-006).
 - History events: closed list in `state.md` (FR-003).
 - Run lock: covers pending runs, beside the pending file (FR-005).
 - SC-001 measurement: the suite exercises each mutating command; validate reports zero anomalies in states test runs produce (SC-001).
@@ -155,12 +155,12 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 
 **Enforced gates (S3, S4)**
 
-- **FR-006**: The system MUST refuse illegal stage transitions: review requires the latest verify record (Key Entities: `verify-pass`/`verify-fail`) to pass; publishing a PR requires an `approved` decision record entry at `approver` (auto=false); implementation requires analysis recorded as clean, remediated, or explicitly user-overridden. A gate override MUST be a normal decision record entry (stage, question ID, answer, auto=false, time) in the approver's veto list. The transition a gate decision permits records its history event (`approved` or `gate-override`) referencing that decision.
+- **FR-006**: The system MUST refuse illegal stage transitions: review requires the latest verify record (Key Entities: `verify-pass`/`verify-fail`) to pass; publishing a PR requires an `approved` decision record entry at `approver` (auto=false); implementation requires analysis clean, remediated, or explicitly user-overridden. A gate override MUST be a normal decision record entry (stage, question ID, answer, kind, auto=false, time) in the approver's veto list. The transition a gate decision permits records its `approved`/`gate-override` history event referencing that decision.
 - **FR-007**: The system MUST validate every role's final machine-readable block (envelope, findings, verdict shapes) and reject malformed output; retry-once then applies.
 
 **Accurate reporting and audit (S5, S6, S18)**
 
-- **FR-008**: Settled answers MUST move to an append-only decision record (stage, question ID, answer, auto flag, time) before the stage's relay is cleared; the approver package MUST list every auto-accepted answer for veto.
+- **FR-008**: Settled answers MUST move to an append-only decision record (stage, question ID, answer, kind, auto flag, time) before the stage's relay is cleared; the approver package MUST list every auto-accepted answer for veto.
 - **FR-009**: Spawn start and end times MUST be stored; agent elapsed time MUST be the union of spawn intervals, human time the union of recorded user-wait intervals, reported separately; their sum never exceeds wall-clock time and no report subtracts summed parallel durations from it.
 - **FR-010**: Where a harness reports usage, the system MUST label it separately from word-count estimates.
 
@@ -199,7 +199,7 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 ### Key Entities
 
 - **Run state**: the single record of where a run is: stage, status, mode, harness, timestamps, waits, ledger, decisions, history.
-- **Transition record**: a history entry proving a stage or gate: vocabulary-checked event (FR-003's list), time, commit, harness.
+- **Transition record**: a history entry proving a stage or gate: vocabulary-checked event (FR-003's list), time, commit, harness, optional `decision`.
 - **Verify record**: a `verify-pass`/`verify-fail` history entry written through the CLI after the orchestrator re-runs build and test, carrying commands and pass/fail; the review gate reads the latest one.
 - **Decision record**: an append-only entry per settled answer or gate decision, keeping the auto flag so fast-mode choices can be vetoed.
 - **Spawn interval**: one role execution's start and end, feeding the union-based effort computation.

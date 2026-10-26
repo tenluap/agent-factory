@@ -31,7 +31,7 @@ One run = one file. Location: `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<
 
 ### Transition record (`history[]`)
 
-`{ "at", "stage", "event", "commit", "harness", "decision"? }`. `event` is closed (FR-003): `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed`. Anything else is a validation violation with its location. `commit` is the checkpoint commit or null. `checkpoint` writes exactly one entry per transition: `complete`, or `approved`/`gate-override` carrying `decision` — the permitting decision's question ID — when a gate decision allowed the transition (research R5).
+`{ "at", "stage", "event", "commit", "harness", "decision"? }`. `event` is closed (FR-003): `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed`. Anything else is a validation violation with its location. `commit` is the checkpoint commit or null. `checkpoint` writes exactly one entry per transition: `complete`, or `approved`/`gate-override` carrying `decision` — the permitting decision's question ID in the entry's own stage — when a gate decision allowed the transition (research R5). Every event has one writer: `verify` writes the verify pair, `set-status`'s `aborted`/`pr-open` forms write those two events and set `ended_at`, the resume path writes `resumed`.
 
 ### Verify record
 
@@ -68,7 +68,7 @@ Beside the state file it guards (worktree run) or beside the pending file (pendi
 3. Required fields per stage (a run at `implement` and later carries `commands`; a `pr-open` run carries `pr_url` and `ended_at`, …).
 4. Timestamps parse as ISO-8601 UTC and never decrease within a record: `history`, `timeline`, `ledger`, `decisions` lists are non-decreasing by `at`; `latency_ms`, `duration_ms` ≥ 0; `ended_at` ≥ `started_at` (FR-004).
 5. Exactly one open relay round; every `answers` key matches a question `id` in the same round.
-6. `decisions` entries well-formed and never rewritten (compare against the previous file on write); a history entry's `decision` names an existing decision question ID.
+6. `decisions` entries well-formed and never rewritten (compare against the previous file on write); a history entry's `decision` names a decision entry's question ID in the entry's own stage.
 7. Legacy tolerance on read: version 1 relay batch, version 2 string answers, missing `decisions`/lock — reported as accepted-and-legacy, upgraded on the first write.
 
 ## State transitions

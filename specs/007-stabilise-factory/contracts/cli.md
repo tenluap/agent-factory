@@ -33,7 +33,7 @@ Each stamps its own time, validates before writing, writes atomically (temp + re
 | `wait-open <kind> <stage> <summary>` → `wait-id` | append an open timeline entry (`kind` ∈ `questions\|notice\|approver\|halt`) |
 | `wait-close <wait-id>` | set `answered_at` and `latency_ms` in place |
 | `answer <qid> '<answer>' [--auto] [--stage <stage>]` | write one settled answer into the open relay round (`auto` marks fast-mode acceptance) |
-| `set-status <status> [--halt-reason <text>] [--pr-url <url>]` | record a status change (`halted` carries its reason; `pr-open` its URL and `ended_at`) |
+| `set-status <status> [--halt-reason <text>] [--pr-url <url>]` | record a status change (`halted` carries its reason; `pr-open` its URL); `aborted` and `pr-open` also append their history entry and set `ended_at` |
 | `decisions-add <stage> <qid> '<answer>' [--kind answer\|approved\|gate-override]` | append a decision record entry directly: `--kind approved` records the approver's approval at `approver` (the record the `pr` gate requires), `--kind gate-override` an explicit gate override, `--kind answer` a settled answer written outside `answer`; both gate kinds carry `auto` false |
 
 ## Gate and output checks
