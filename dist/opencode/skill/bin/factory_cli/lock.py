@@ -167,10 +167,12 @@ def release(state_path):
 
 
 def take(state_path, harness, force=False):
-    """The only explicit takeover. Without --force it refuses a live lock."""
+    """The only explicit takeover. Force is evaluated before liveness
+    (FR-013): a failing probe never blocks --force. Without --force it
+    refuses a live lock."""
     path = lock_path_for(state_path)
     existing = read(path)
-    if existing and _live(existing) and not force:
+    if not force and existing and _live(existing):
         raise LockHeld(existing)
     info = {
         "owner_pid": os.getpid(),
