@@ -1,11 +1,12 @@
-"""Install seam tests: `install.sh` argument validation (FR-020, S17).
+"""Install seam tests: `install.sh` argument validation (FR-020) and the
+per-user install flow (FR-001..FR-005).
 
-The plan's declared seam covers the usage-error path only: `--harness`
-with no value must print a clear usage message and exit non-zero, never
-die on `set -u` with an unbound-variable crash. Everything runs under a
-throwaway `HOME` so no real harness directory or factory state is touched.
+Everything runs under a throwaway `HOME` so no real harness directory,
+factory state or the user's checkout is touched; the committed rendered
+distribution is only ever read.
 """
 
+import json
 import os
 import subprocess
 import tempfile
@@ -35,6 +36,108 @@ class InstallArgValidationTests(unittest.TestCase):
         message = out.stderr + out.stdout
         self.assertIn("--harness", message, "the message names the offending flag")
         self.assertNotIn("unbound variable", message, "no set -u crash")
+
+
+class InstallFlowTests(unittest.TestCase):
+    """FR-001/FR-002/FR-004/FR-005: each selected harness is rendered into
+    ${FACTORY_HOME:-~/.factory}/dist/<harness>, its skill/ and agents/* link
+    from that copy, the models report matches the linked agents, a second run
+    re-links cleanly, and the committed rendered distribution is untouched."""
+
+    OVER = "test-org/test-deep-model"
+    CONFIG = {"models": {"opencode": {"deep": OVER}}}
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="factory-install-")
+        self.addCleanup(tmp.cleanup)
+        self.home = Path(tmp.name) / "home"
+        self.xdg = self.home / ".config"
+
+    def run_install(self, *args, config=None, exported=True):
+        """Run install.sh under the sandbox; `config` lands in the factory
+        home that ${FACTORY_HOME:-~/.factory} resolves to for this run."""
+        self.home.mkdir(parents=True, exist_ok=True)
+        self.factory_home = self.home if exported else self.home / ".factory"
+        if config is not None:
+            self.factory_home.mkdir(parents=True, exist_ok=True)
+            (self.factory_home / "config.json").write_text(json.dumps(config))
+        env = dict(os.environ)
+        env["HOME"] = str(self.home)
+        env["XDG_CONFIG_HOME"] = str(self.xdg)
+        if exported:
+            env["FACTORY_HOME"] = str(self.factory_home)
+        else:
+            env.pop("FACTORY_HOME", None)
+        return subprocess.run(
+            ["bash", str(INSTALL), "--harness", "opencode", *args],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=REPO,
+        )
+
+    def dist_porcelain(self):
+        return subprocess.run(
+            ["git", "status", "--porcelain", "--", "dist/"],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+
+    def assert_install_carries_overrides(self, exported):
+        proc = self.run_install(config=self.CONFIG, exported=exported)
+        self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+        per_user = self.factory_home / "dist" / "opencode"
+        self.assertTrue(
+            (per_user / "skill").is_dir(),
+            "the per-user render exists in the factory home",
+        )
+        skill = self.xdg / "opencode" / "skills" / "factory"
+        agents = self.xdg / "opencode" / "agents"
+        self.assertEqual(
+            skill.resolve(),
+            (per_user / "skill").resolve(),
+            "the skill links from the per-user copy",
+        )
+        linked = sorted(agents.glob("factory-*.md"))
+        self.assertTrue(linked, "the agents link into the harness directory")
+        for agent in linked:
+            self.assertEqual(
+                agent.resolve().parent,
+                (per_user / "agents").resolve(),
+                str(agent),
+            )
+        self.assertIn(
+            self.OVER,
+            (agents / "factory-spec-builder.md").read_text(),
+            "the linked agent carries the override",
+        )
+        self.assertIn(
+            f"spec-builder: {self.OVER}",
+            proc.stdout,
+            "the models report matches the linked agents",
+        )
+        self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
+        again = self.run_install(config=self.CONFIG, exported=exported)
+        self.assertEqual(again.returncode, 0, again.stderr + again.stdout)
+        self.assertTrue(
+            (agents / "factory-spec-builder.md").is_symlink(),
+            "a second run re-links cleanly",
+        )
+
+    def test_exported_factory_home_overrides_reach_the_installed_agents(self):
+        self.assert_install_carries_overrides(exported=True)
+
+    def test_default_home_overrides_reach_the_installed_agents(self):
+        # FR-005: config at ~/.factory, FACTORY_HOME unset
+        self.assert_install_carries_overrides(exported=False)
+
+    def test_install_without_config_reports_defaults(self):
+        proc = self.run_install()
+        self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+        self.assertIn("spec-builder: (session default)", proc.stdout)
+        self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
 
 if __name__ == "__main__":
