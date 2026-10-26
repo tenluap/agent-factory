@@ -93,7 +93,7 @@ Design repairs share the existing two automatic fix rounds. Missing or failed re
 
 - `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
-- `core/skills/factory/bin/factory`: read-only state CLI (`runs`, `show`); the orchestrator lists unfinished runs and builds resume digests with it instead of reading whole `state.json` files into context.
+- `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`) list unfinished runs, build resume digests and report violations without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`) stamp, validate, write atomically and commit — state is never hand-edited.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
 - `core/roles/`: spec-builder, code-build, five reviewers, review-judge, fixer, with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.

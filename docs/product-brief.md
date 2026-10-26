@@ -501,7 +501,7 @@ Benchmark the same small backend feature and UI feature under fixed repository r
 
 ## 14. Known ambiguities and recommended resolutions
 
-These are source-level observations relevant to a rebuild, not runtime failures reproduced during this work.
+These are source-level observations relevant to a rebuild, not runtime failures reproduced during this work. Two of them are settled by 007-stabilise-factory: the audit row (settled answers now live in the append-only `decisions` list of schema v4, and the approver reads its veto list from there — relay is only temporary routing data) and the totals row (effort is interval union in `factory_cli/totals.py`; parallel durations are never summed, and human + agent cannot exceed wall clock by construction). The state CLI row is now half-settled: every state mutation goes through the single writer with validation, atomic writes and commit; locking, output validation and transition gates land with M2.
 
 | Observation | Implication | Recommended resolution |
 |---|---|---|
