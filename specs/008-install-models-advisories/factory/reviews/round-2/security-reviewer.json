@@ -1,0 +1,1 @@
+{"reviewer":"security","round":2,"summary":"Fix diff removes both prior confirmed_blocking findings (config_models now validates shape and converts parse/IO errors to a path-naming SystemExit; cmd_rebind refuses ended runs before writing) and introduces no new security defect.","findings":[]}
