@@ -341,6 +341,49 @@ class ForceTakeoverTests(unittest.TestCase):
         self.assertIn("999999999999", str(caught.exception))
 
 
+class ReleaseIdentityTests(unittest.TestCase):
+    """FR-014: release unlinks only the file whose identity (st_dev, st_ino)
+    it just read — a lock replaced by another owner inside the release window
+    is left in place."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.guard = Path(self.tmp.name) / "state.json"
+        self.lock_path = lock.lock_path_for(self.guard)
+
+    def own_lock(self):
+        lock.acquire(self.guard, harness="opencode")
+        return lock.read(self.lock_path)
+
+    def test_release_removes_our_own_unchanged_lock(self):
+        self.own_lock()
+        lock.release(self.guard)
+        self.assertIsNone(lock.read(self.lock_path), "our own lock is removed")
+
+    def test_release_leaves_a_foreign_lock(self):
+        info = self.own_lock()
+        lock._write(self.lock_path, {**info, "owner_pid": 999999})
+        lock.release(self.guard)
+        self.assertIsNotNone(lock.read(self.lock_path), "a foreign lock stays")
+
+    def test_release_never_unlinks_a_lock_swapped_in_after_its_read(self):
+        self.own_lock()
+        real_read = lock.read
+
+        def read_then_swap(path):
+            info = real_read(path)  # release reads our own lock...
+            lock._write(path, {**info, "owner_pid": 999999})  # ...then a rival swaps in
+            return info
+
+        with mock.patch.object(lock, "read", side_effect=read_then_swap):
+            lock.release(self.guard)
+        self.assertIsNotNone(
+            lock.read(self.lock_path), "the rival's lock is left in place"
+        )
+        self.assertEqual(lock.read(self.lock_path)["owner_pid"], 999999)
+
+
 class LockCliTests(unittest.TestCase):
     def setUp(self):
         from tests import Sandbox, fixture

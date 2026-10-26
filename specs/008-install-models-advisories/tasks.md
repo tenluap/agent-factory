@@ -57,7 +57,7 @@
 - [x] T019 [US2] Implement the liveness judgment in `core/skills/factory/bin/factory_cli/lock.py` `_alive`: unjudgeable PID → live, `ProcessLookupError` → gone, other `OSError` → live (FR-012; seam: `factory_cli.lock` lifecycle); then the build gate.
 - [x] T020 [US2] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — `lock take --force` takes over a live lock regardless of holder liveness (force evaluated before liveness) and without `--force` a live lock refuses with the owner reported (FR-013).
 - [x] T021 [US2] Implement force-first takeover in `core/skills/factory/bin/factory_cli/lock.py` `take` and `cmd_lock_take` (FR-013; seam: `factory_cli.lock` lifecycle); then the build gate.
-- [ ] T022 [US2] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — a lock file replaced by another owner between write and release is left in place: `release` unlinks only the file whose identity (`st_dev`, `st_ino`) it just read (FR-014).
+- [x] T022 [US2] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — a lock file replaced by another owner between write and release is left in place: `release` unlinks only the file whose identity (`st_dev`, `st_ino`) it just read (FR-014).
 - [ ] T023 [US2] Implement identity-checked release in `core/skills/factory/bin/factory_cli/lock.py` `release` (FR-014; seam: `factory_cli.lock` lifecycle); then the build gate.
 
 ---
