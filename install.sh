@@ -24,6 +24,25 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Factory-home policy: a missing default home ~/.factory is created; an
+# explicitly configured home must exist as a writable directory — anything
+# else fails naming the path, before anything is rendered or linked.
+if [ -e "$factory_home" ] && [ ! -d "$factory_home" ]; then
+  echo "error: not a directory: $factory_home" >&2
+  exit 2
+fi
+if [ ! -d "$factory_home" ]; then
+  if [ -n "${FACTORY_HOME:-}" ]; then
+    echo "error: FACTORY_HOME does not exist: $factory_home" >&2
+    exit 2
+  fi
+  mkdir -p "$factory_home"
+fi
+if [ ! -w "$factory_home" ]; then
+  echo "error: not writable: $factory_home" >&2
+  exit 2
+fi
+
 link() {
   local from="$1" to="$2"
   if [ -e "$to" ] && [ ! -L "$to" ]; then
