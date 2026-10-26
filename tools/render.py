@@ -34,21 +34,27 @@ def known():
     return sorted(p.name for p in ADAPTERS.iterdir() if (p / "adapter.json").exists())
 
 
+def config_models(name):
+    """User model overrides for one harness from $FACTORY_HOME/config.json
+    (`{"models": {"<harness": {"deep": "...", "standard": "..."}}}`).
+
+    Report-only: the canonical dist/ render never reads user configuration
+    (FR-002), so this feeds the effective-model report, not the rendered fields.
+    """
+    config_home = os.environ.get("FACTORY_HOME")
+    if not config_home:
+        return {}
+    config = Path(config_home).expanduser() / "config.json"
+    if not config.exists():
+        return {}
+    return json.loads(config.read_text()).get("models", {}).get(name, {})
+
+
 def load_adapter(name):
     path = ADAPTERS / name / "adapter.json"
     if not path.exists():
         raise SystemExit(f"unknown harness '{name}' (known: {', '.join(known())})")
     adapter = json.loads(path.read_text())
-    # User overrides: ${FACTORY_HOME}/config.json {"models": {"<harness>": {"deep": "...", "standard": "..."}}}
-    # Applied only when FACTORY_HOME is set explicitly, so a plain render (the committed
-    # dist, CI) is machine-independent; install time passes the user's home.
-    config_home = os.environ.get("FACTORY_HOME")
-    if config_home:
-        config = Path(config_home).expanduser() / "config.json"
-        if config.exists():
-            adapter["models"].update(
-                json.loads(config.read_text()).get("models", {}).get(name, {})
-            )
     home = os.environ.get(adapter["home"]["env"]) or adapter["home"]["default"]
     adapter["skill_dir"] = adapter["skill_dir"].format(home=home)
     adapter["agent_dir"] = adapter["agent_dir"].format(home=home)
@@ -99,6 +105,7 @@ def render_agent(adapter, fields, body):
 
 def render(name):
     adapter = load_adapter(name)
+    report_models = {**adapter["models"], **config_models(name)}
     effective = []  # (role, model) per role, for the effective-model report
     out = ROOT / "dist" / name
     shutil.rmtree(out, ignore_errors=True)
@@ -127,7 +134,7 @@ def render(name):
         fields = agent_fields(adapter, meta, values)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
         (out / "agents" / adapter["agent_file"].format(**values)).write_text(text)
-        effective.append((meta["name"], adapter["models"].get(meta["tier"], "")))
+        effective.append((meta["name"], report_models.get(meta["tier"], "")))
     return adapter, out, effective
 
 
