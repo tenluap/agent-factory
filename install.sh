@@ -43,6 +43,20 @@ if [ ! -w "$factory_home" ]; then
   exit 2
 fi
 
+# A config.json that does not parse aborts the install before any render
+# or link (FR-022): the message names the file and the parse error.
+config="$factory_home/config.json"
+if [ -f "$config" ]; then
+  if ! parse_error="$(python3 -c 'import json, sys
+try:
+    json.load(open(sys.argv[1]))
+except Exception as error:
+    sys.exit(str(error))' "$config" 2>&1)"; then
+    echo "error: $config does not parse: $parse_error" >&2
+    exit 2
+  fi
+fi
+
 link() {
   local from="$1" to="$2"
   if [ -e "$to" ] && [ ! -L "$to" ]; then

@@ -38,7 +38,7 @@
 - [x] T011 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — `--uninstall` removes the links it created and `${FACTORY_HOME:-~/.factory}/dist/<harness>`, and leaves `config.json`, pending runs and the committed rendered distribution untouched (FR-001).
 - [x] T012 [US1] Implement `--uninstall`'s identity-checked link and per-user render removal in `install.sh` (FR-001; seam: `install.sh` install/uninstall flow).
 - [x] T042 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — a `config.json` that does not parse aborts the install before anything is rendered or linked: non-zero exit, a message naming the file and the parse error, no traceback, nothing left under `${FACTORY_HOME:-~/.factory}/dist/`, and `git status --porcelain -- dist/` empty (FR-022).
-- [ ] T043 [US1] Implement the config-parse guard in `install.sh`: a `config.json` that does not parse aborts the install naming the file and the parse error with a non-zero exit, before any render or link (FR-022; seam: `install.sh` install/uninstall flow).
+- [x] T043 [US1] Implement the config-parse guard in `install.sh`: a `config.json` that does not parse aborts the install naming the file and the parse error with a non-zero exit, before any render or link (FR-022; seam: `install.sh` install/uninstall flow).
 - [ ] T013 [US1] Correct the model-merge wording to the delivered behaviour in `README.md`, `DESIGN.md` and the `tools/render.py` comment/docstring (FR-006). Exempt: `README.md`, `DESIGN.md` and `tools/render.py` comments - documentation only.
 
 ---
