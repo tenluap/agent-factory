@@ -273,6 +273,36 @@ class LifecycleTests(unittest.TestCase):
         )
 
 
+class LivenessTests(unittest.TestCase):
+    """FR-012: an owner PID the OS probe cannot evaluate counts as live and
+    never raises; only a proven-gone owner frees the lock."""
+
+    def lock_info(self, owner_pid):
+        return {
+            "owner_pid": owner_pid,
+            "host": HOST,
+            "harness": "opencode",
+            "at": "2026-10-23T12:00:00Z",
+        }
+
+    def test_unevaluable_pids_count_as_live_and_never_raise(self):
+        for pid in (0, -1, -12345, 999999999999, "not-a-pid", None):
+            with self.subTest(pid=pid):
+                self.assertTrue(lock._alive(pid), "unevaluable means live")
+
+    def test_unevaluable_owner_refuses_acquire(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            guard = Path(tmp) / "state.json"
+            lock.lock_path_for(guard).write_text(
+                json.dumps(self.lock_info(999999999999))
+            )
+            with self.assertRaises(lock.LockHeld):
+                lock.acquire(guard, harness="opencode")
+
+    def test_a_gone_owner_is_still_stale(self):
+        self.assertFalse(lock._alive(dead_pid()))
+
+
 class LockCliTests(unittest.TestCase):
     def setUp(self):
         from tests import Sandbox, fixture
