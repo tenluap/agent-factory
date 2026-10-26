@@ -401,6 +401,13 @@ def resolve_target(repo, cwd):
         die(3, f"several pending runs of {repo}; name one")
     if not pending:
         die(1, f"no run to write from {cwd} in {repo}")
+    if pending[0][1].get("status") in ("pr-open", "aborted"):
+        # FR-009: the ended-status skip applies to pending selection too —
+        # an ended pending run is as unwritable as an ended worktree run
+        die(
+            1,
+            f"run is {pending[0][1].get('status')} and has ended; it is not writable",
+        )
     return pending[0]
 
 
