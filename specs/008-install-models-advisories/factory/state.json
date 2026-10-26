@@ -96,6 +96,14 @@
       "summary": "Usage limit reached before fix round 1; resume after reset",
       "answered_at": "2026-10-26T17:04:41.801295Z",
       "latency_ms": 569801
+    },
+    {
+      "at": "2026-10-26T17:21:24.910190Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 008-install-models-advisories",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "ledger": [
