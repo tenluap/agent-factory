@@ -94,8 +94,8 @@
       "kind": "halt",
       "stage": "fix",
       "summary": "Usage limit reached before fix round 1; resume after reset",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-26T17:04:41.801295Z",
+      "latency_ms": 569801
     }
   ],
   "ledger": [
