@@ -723,6 +723,55 @@ class CheckpointStagingTests(unittest.TestCase):
         self.assertIn("docs/bare.md", json.loads(out.stdout)["declared"])
 
 
+class CheckpointCommitFailureTests(unittest.TestCase):
+    """FR-011: a checkpoint whose git commit fails after the state write
+    exits 1 with 'state written, commit failed: <reason>', its JSON carrying
+    commit: null and commit_error; a retry of the same stage reuses the
+    pending history entry instead of appending a second one."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "070-ckpt"
+        self.wt = self.box.worktree_run(self.branch, v4_state())
+        self.state_path = self.wt / "specs" / self.branch / "factory" / "state.json"
+        self.gitdir = self.box.repo / ".git" / "worktrees" / f"wt-{self.branch}"
+
+    def block_git(self):
+        (self.gitdir / "index.lock").write_text("")
+
+    def unblock_git(self):
+        (self.gitdir / "index.lock").unlink()
+
+    def history(self):
+        return json.loads(self.state_path.read_text())["history"]
+
+    def test_failed_commit_is_reported_without_a_traceback(self):
+        self.block_git()
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        message = out.stderr + out.stdout
+        self.assertEqual(out.returncode, 1, message)
+        self.assertIn("state written, commit failed", message)
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+        result = json.loads(out.stdout)
+        self.assertIsNone(result["commit"], "the failed commit is named null")
+        self.assertIn("commit_error", result)
+        self.assertEqual(self.history()[-1]["stage"], "plan", "the state was written")
+
+    def test_retry_reuses_the_pending_history_entry(self):
+        self.block_git()
+        first = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(first.returncode, 1, first.stderr + first.stdout)
+        self.unblock_git()
+        second = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(second.returncode, 0, second.stderr + second.stdout)
+        entries = [e for e in self.history() if e["stage"] == "plan"]
+        self.assertEqual(len(entries), 1, "the retry does not duplicate history")
+        self.assertIsNotNone(
+            entries[-1]["commit"], "the reused entry carries the retry's commit"
+        )
+
+
 class RebindTests(unittest.TestCase):
     """rebind <run> --worktree <path>: validate branch, rewrite stored paths (FR-012)."""
 
