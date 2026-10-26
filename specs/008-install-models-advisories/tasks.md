@@ -68,7 +68,7 @@
 
 **Independent Test**: `rebind` under a competing lock, a checkpoint with a failing commit and its retry, and relays with two open rounds or unanswered questions in a non-last round beside the conformant null and fully answered relays, through the suite (SC-002, SC-005, quickstart S3).
 
-- [ ] T024 [US3] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `rebind <run> --worktree <path>` rewrites through the single writer: the run's lock is held and state re-read under it before `worktree`/`repo` are replaced (FR-008).
+- [x] T024 [US3] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `rebind <run> --worktree <path>` rewrites through the single writer: the run's lock is held and state re-read under it before `worktree`/`repo` are replaced (FR-008).
 - [ ] T025 [US3] Implement `cmd_rebind` in `core/skills/factory/bin/factory_cli/commands.py` as a `mutate` passed to `write_run` instead of a direct `state.write_state` call (FR-008; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T026 [US3] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — a checkpoint whose git commit fails after the state write exits 1 with `state written, commit failed: <reason>`, its JSON carrying `commit: null` and `commit_error`, and a retry of the same stage reuses the pending history entry instead of appending a second one (FR-011).
 - [ ] T027 [US3] Implement the checkpoint commit-failure report and the pending-entry reuse in `core/skills/factory/bin/factory_cli/commands.py` `cmd_checkpoint` (FR-011; seam: `bin/factory` CLI command surface); then the build gate.

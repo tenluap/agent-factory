@@ -5,7 +5,9 @@ Covers `runs`, `show` and `validate` exit codes and digests (contracts/cli.md),
 """
 
 import json
+import os
 import shutil
+import socket
 import unittest
 from pathlib import Path
 from datetime import datetime, timezone
@@ -783,6 +785,29 @@ class RebindTests(unittest.TestCase):
             "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
         )
         self.assertEqual(out.returncode, 3)
+
+    def test_rebind_under_a_live_lock_refuses_without_a_traceback(self):
+        # FR-008: the rewrite goes through the single writer, so a competing
+        # lock is refused by name instead of written over or crashing
+        wt_new = self.moved_worktree()
+        guard = self.state_path(wt_new).parent / "lock.json"
+        guard.write_text(
+            json.dumps(
+                {
+                    "owner_pid": os.getpid(),
+                    "host": socket.gethostname(),
+                    "harness": "opencode",
+                    "at": "2026-10-23T12:00:00Z",
+                }
+            )
+        )
+        out = self.box.cli(
+            "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
+        )
+        message = out.stderr + out.stdout
+        self.assertEqual(out.returncode, 1, message)
+        self.assertIn("locked by", message, "the writer's refusal reports the owner")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
 
 
 class PruneTests(unittest.TestCase):
