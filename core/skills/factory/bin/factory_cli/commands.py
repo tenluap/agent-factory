@@ -842,17 +842,23 @@ def cmd_rebind(repo, cwd, name, worktree):
         current = git(str(target), "branch", "--show-current").strip()
         if current != branch:
             die(1, f"{target} is on branch '{current}'; the run records '{branch}'")
-    new_state = dict(loaded)
-    new_state["worktree"] = str(target.resolve())
-    new_state["repo"] = main_repo(target)
-    state.write_state(path, new_state)
+    rebound_worktree = str(target.resolve())
+    rebound_repo = main_repo(target)
+
+    def mutate(current):
+        # applied to the state freshly read under the run's lock (FR-008)
+        current["worktree"] = rebound_worktree
+        current["repo"] = rebound_repo
+        return current
+
+    write_run(path, loaded, mutate)
     commit_worktree(
         str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir")
     )
     return {
         "rebound": name,
-        "worktree": new_state["worktree"],
-        "repo": new_state["repo"],
+        "worktree": rebound_worktree,
+        "repo": rebound_repo,
         "previous_worktree": loaded.get("worktree"),
     }
 
