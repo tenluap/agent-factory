@@ -89,7 +89,9 @@ class ValidationTests(unittest.TestCase):
             )
         )
         locations = {v["location"] for v in found}
-        self.assertIn("history[0].at", locations)
+        self.assertIn(
+            "history[1].at", locations, "history[1] is the entry that goes backwards"
+        )
         self.assertIn("ledger[0].duration_ms", locations)
         self.assertIn("timeline[1].at", locations)
 
@@ -156,7 +158,7 @@ class WriteTests(unittest.TestCase):
         )
         entry = v3["ledger"][0]
         self.assertEqual(entry["started_at"], entry["at"])
-        self.assertEqual(entry["ended_at"], "2026-10-22T14:03:33Z")
+        self.assertEqual(entry["ended_at"], "2026-10-22T14:03:43Z")
 
     def test_write_refuses_invalid_state_and_keeps_file(self):
         good = state.write_state(self.path, fixture("state-v4.json"))
