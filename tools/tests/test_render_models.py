@@ -41,8 +41,9 @@ def render(harness, config=None):
     return out
 
 
-def render_to(harness, out, config=None, exported=True):
-    """`--out` render into `out`; the factory home is a temp dir holding `config`.
+def render_to(harness, out=None, config=None, exported=True, flags=()):
+    """`--out` render into `out` (or a flag-only run when out is None); the
+    factory home is a temp dir holding `config`.
 
     `exported=True` sets FACTORY_HOME to that home; `exported=False` leaves it
     unset so the documented default home `${FACTORY_HOME:-~/.factory}` resolves
@@ -58,8 +59,11 @@ def render_to(harness, out, config=None, exported=True):
         (factory_home / "config.json").write_text(json.dumps(config))
     if exported:
         env["FACTORY_HOME"] = str(home)
+    cmd = [sys.executable, str(REPO / "tools" / "render.py"), harness, *flags]
+    if out is not None:
+        cmd += ["--out", str(out)]
     return subprocess.run(
-        [sys.executable, str(REPO / "tools" / "render.py"), harness, "--out", str(out)],
+        cmd,
         cwd=REPO,
         env=env,
         capture_output=True,
@@ -180,34 +184,6 @@ class CanonicalRenderTests(unittest.TestCase):
             if not existed:
                 sentinel.unlink()
 
-    def test_effective_models_are_printable_per_role(self):
-        out = render(
-            "opencode",
-            config={"models": {"opencode": {"deep": "test-org/test-deep-model"}}},
-        )
-        plain = subprocess.run(
-            [sys.executable, str(REPO / "tools" / "render.py"), "opencode", "--models"],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            check=True,
-            env={**os.environ, "FACTORY_HOME": ""},
-        )  # empty home: no config
-        self.assertIn("spec-builder: (session default)", plain.stdout)
-        override_home = tempfile.mkdtemp(prefix="factory-render-home-")
-        (Path(override_home) / "config.json").write_text(
-            json.dumps({"models": {"opencode": {"deep": "test-org/test-deep-model"}}})
-        )
-        effective = subprocess.run(
-            [sys.executable, str(REPO / "tools" / "render.py"), "opencode", "--models"],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            check=True,
-            env={**os.environ, "FACTORY_HOME": override_home},
-        )
-        self.assertIn("spec-builder: test-org/test-deep-model", effective.stdout)
-
 
 class PerUserRenderTests(unittest.TestCase):
     """FR-001/FR-003: `render.py <harness> --out <dir>` renders the harness
@@ -264,6 +240,57 @@ class PerUserRenderTests(unittest.TestCase):
         self.assertFalse(
             any("test-org/" in t for t in texts), "nothing personal merges"
         )
+
+
+class ReportTests(unittest.TestCase):
+    """FR-004: `--models` and `--paths` are write-free reports; `--models`
+    prints the effective model per role resolved from the default home,
+    FACTORY_HOME exported or not."""
+
+    OVER = "test-org/test-deep-model"
+
+    def tearDown(self):
+        # the write-free assertions delete dist/<harness>; leave it canonical
+        for harness in ("opencode",):
+            env = dict(os.environ)
+            env.pop("FACTORY_HOME", None)
+            subprocess.run(
+                [sys.executable, str(REPO / "tools" / "render.py"), harness],
+                cwd=REPO,
+                env=env,
+                capture_output=True,
+                check=True,
+            )
+
+    def test_models_report_writes_nothing(self):
+        shutil.rmtree(DIST / "opencode", ignore_errors=True)
+        render_to(
+            "opencode",
+            flags=("--models",),
+            config={"models": {"opencode": {"deep": self.OVER}}},
+        )
+        self.assertFalse((DIST / "opencode").exists(), "--models renders nothing")
+
+    def test_paths_report_writes_nothing(self):
+        shutil.rmtree(DIST / "opencode", ignore_errors=True)
+        render_to("opencode", flags=("--paths",))
+        self.assertFalse((DIST / "opencode").exists(), "--paths renders nothing")
+
+    def test_models_report_resolves_from_the_default_home(self):
+        cfg = {"models": {"opencode": {"deep": self.OVER}}}
+        unset = render_to("opencode", flags=("--models",), config=cfg, exported=False)
+        self.assertIn(f"spec-builder: {self.OVER}", unset.stdout)
+        exported = render_to("opencode", flags=("--models",), config=cfg)
+        self.assertIn(f"spec-builder: {self.OVER}", exported.stdout)
+
+    def test_models_report_without_config_prints_defaults(self):
+        out = render_to("opencode", flags=("--models",), exported=False)
+        self.assertIn("spec-builder: (session default)", out.stdout)
+
+    def test_paths_report_prints_the_install_targets(self):
+        out = render_to("opencode", flags=("--paths",), exported=False)
+        for key in ("dist=", "skill_dir=", "agent_dir="):
+            self.assertIn(key, out.stdout)
 
 
 class ReadOnlyConformanceTests(unittest.TestCase):
