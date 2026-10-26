@@ -70,6 +70,8 @@ install_one() {
   if [ -n "$uninstall" ]; then
     unlink_ours "$skill_dir"
     for f in "$dist"/agents/*; do unlink_ours "$agent_dir/$(basename "$f")"; done
+    rm -rf "$dist"
+    echo "removed: $dist"
     return
   fi
   mkdir -p "$(dirname "$skill_dir")" "$agent_dir"
