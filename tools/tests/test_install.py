@@ -194,6 +194,16 @@ class ConfigParseGuardTests(InstallSandbox, unittest.TestCase):
         self.assertFalse((self.xdg / "opencode").exists(), "nothing was linked")
         self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
+    def test_wrong_shape_config_aborts_the_install_without_a_traceback(self):
+        for text in ("[]", '{"models": 5}', '{"models": {"opencode": "x"}}'):
+            with self.subTest(config=text):
+                proc = self.run_install(config_text=text)
+                self.assertNotEqual(proc.returncode, 0, "the install aborts")
+                message = proc.stderr + proc.stdout
+                self.assertIn("config.json", message, "the message names the file")
+                self.assertNotIn("Traceback", message, "no traceback reaches the user")
+                self.assertFalse((self.xdg / "opencode").exists(), "nothing was linked")
+
 
 class InstallHomePolicyTests(unittest.TestCase):
     """FR-001: a missing default home ~/.factory is created; an explicitly

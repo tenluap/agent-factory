@@ -287,6 +287,29 @@ class ReportTests(unittest.TestCase):
         out = render_to("opencode", flags=("--models",), exported=False)
         self.assertIn("spec-builder: (session default)", out.stdout)
 
+    def test_bad_config_fails_naming_the_file_without_a_traceback(self):
+        for text in ("{not json", "[]", '{"models": 5}', '{"models": {"opencode": 1}}'):
+            with self.subTest(config=text):
+                home = Path(tempfile.mkdtemp(prefix="factory-render-home-"))
+                self.addCleanup(shutil.rmtree, home, True)
+                (home / "config.json").write_text(text)
+                env = dict(os.environ, FACTORY_HOME=str(home))
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        str(REPO / "tools" / "render.py"),
+                        "opencode",
+                        "--models",
+                    ],
+                    cwd=REPO,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertIn("config.json", proc.stderr)
+                self.assertNotIn("Traceback", proc.stderr)
+
     def test_paths_report_prints_the_install_targets(self):
         out = render_to("opencode", flags=("--paths",), exported=False)
         for key in ("dist=", "skill_dir=", "agent_dir="):

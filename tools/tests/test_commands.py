@@ -865,6 +865,26 @@ class RebindTests(unittest.TestCase):
         )
         self.assertEqual(Path(state["repo"]).resolve(), self.box.repo.resolve())
 
+    def test_rebind_refuses_an_ended_run_and_leaves_its_state_unchanged(self):
+        # FR-009: an ended run's stored paths are never rewritten
+        for status in ("pr-open", "aborted"):
+            with self.subTest(status=status):
+                branch = f"091-{status}"
+                wt = self.box.worktree_run(
+                    branch,
+                    v4_state(
+                        branch=branch, status=status, ended_at="2026-10-23T12:00:00Z"
+                    ),
+                )
+                path = wt / "specs" / branch / "factory" / "state.json"
+                before = path.read_text()
+                out = self.box.cli(
+                    "rebind", branch, "--worktree", str(wt), cwd=self.box.repo
+                )
+                self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+                self.assertIn(status, out.stderr, "the refusal names the status")
+                self.assertEqual(path.read_text(), before, "the state is unchanged")
+
     def test_rebind_refuses_a_missing_worktree_with_exit_four(self):
         out = self.box.cli(
             "rebind",

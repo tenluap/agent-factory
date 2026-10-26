@@ -55,7 +55,17 @@ def config_models(name, home=None):
     config = home / "config.json"
     if not config.exists():
         return {}
-    return json.loads(config.read_text()).get("models", {}).get(name, {})
+    try:
+        models = json.loads(config.read_text())
+        for key in ("models", name):
+            if not isinstance(models, dict):
+                raise ValueError("expected a JSON object")
+            models = models.get(key, {})
+        if not isinstance(models, dict):
+            raise ValueError("expected a JSON object")
+    except (OSError, ValueError) as error:
+        raise SystemExit(f"{config}: {error}")
+    return models
 
 
 def load_adapter(name):

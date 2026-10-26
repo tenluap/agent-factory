@@ -857,6 +857,11 @@ def cmd_rebind(repo, cwd, name, worktree):
     if probe.returncode != 0 or probe.stdout.strip() != "true":
         die(4, f"{target} is not a git worktree")
     path, loaded, source = one_run(repo, name)
+    if loaded.get("status") in ("pr-open", "aborted"):
+        die(
+            1,
+            f"run '{name}' is {loaded.get('status')} and has ended; nothing to rebind",
+        )
     branch = loaded.get("branch")
     if branch:
         current = git(str(target), "branch", "--show-current").strip()
