@@ -469,8 +469,8 @@ def settled_answers(relay, fallback_stage, now):
     return migrated
 
 
-def declared_from_envelope(path):
-    """The envelope's `files` list, from a role output or a bare JSON file (FR-017)."""
+def read_envelope(path):
+    """Read a role's final fenced block or a bare JSON file."""
     try:
         text = Path(path).read_text()
     except OSError as e:
@@ -481,6 +481,12 @@ def declared_from_envelope(path):
             block = json.loads(text)
         except ValueError:
             die(1, f"{path}: {error}")
+    return block
+
+
+def declared_from_envelope(path):
+    """The envelope's `files` list, from a role output or a bare JSON file (FR-017)."""
+    block = read_envelope(path)
     files = block.get("files") if isinstance(block, dict) else None
     if not isinstance(files, list) or not all(isinstance(f, str) and f for f in files):
         die(1, f"{path}: the envelope carries no list of declared files in `files`")
@@ -503,12 +509,6 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     target = next_stage or successor(stage)
-    if target:
-        violation = checks.gate_violation(loaded, target)
-        if violation:
-            die(1, f"gate refusal into '{target}': {violation}")
-    permitted = checks.permitting_decision(loaded, target) if target else None
-
     # Every refusal point passes before the state write, so a refused
     # checkpoint leaves the stage, history, relay and worktree untouched.
     declared = list(files or [])
@@ -520,6 +520,11 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
 
     def mutate(s):
+        if target:
+            violation = checks.gate_violation(s, target)
+            if violation:
+                die(1, f"gate refusal into '{target}': {violation}")
+        permitted = checks.permitting_decision(s, target) if target else None
         relay = s.get("relay")
         relay_stage = (
             relay.get("stage")
@@ -566,6 +571,60 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         "declared": declared,
         "undeclared": undeclared,
         "source": source,
+    }
+
+
+def cmd_analyze_record(repo, cwd, envelope):
+    """Persist a validated analysis result without bypassing transition gates."""
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    block = read_envelope(envelope)
+    problems = checks.block_problems(block, "envelope")
+    if problems:
+        die(1, f"invalid analysis envelope: {problems}")
+    if block.get("stage") != "analyze" or block.get("status") != "done":
+        die(1, "analyze-record requires a completed analyze envelope")
+    result = block.get("analyze")
+    if not isinstance(result, dict):
+        die(1, "analysis envelope must carry analyze counts and report")
+    for severity in ("critical", "high", "medium", "low"):
+        value = result.get(severity)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            die(1, f"analyze.{severity} must be a non-negative integer")
+    report = result.get("report")
+    if not worktree or not isinstance(report, str) or not report:
+        die(1, "analyze-record requires a worktree and report path")
+    relative = Path(report)
+    if relative.is_absolute() or ".." in relative.parts:
+        die(1, "analysis report must be relative to the spec directory or worktree")
+    spec_dir = Path(loaded["spec_dir"])
+    root = (Path(worktree) / spec_dir).resolve()
+    candidate = (
+        Path(worktree) / relative
+        if relative.is_relative_to(spec_dir)
+        else root / relative
+    )
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(root) or not resolved.is_file():
+        die(1, "analysis report must exist inside the run's spec directory")
+    normalized = str(resolved.relative_to(root))
+    counts = {k: result[k] for k in ("critical", "high", "medium", "low")}
+    recorded_at = now_iso()
+
+    def mutate(s):
+        analyze = dict(s.get("analyze") or {})
+        reports = list(analyze.get("reports") or [])
+        if normalized not in reports:
+            reports.append(normalized)
+        analyze["reports"] = reports
+        analyze["result"] = {**counts, "report": normalized, "at": recorded_at}
+        s["analyze"] = analyze
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, "factory: analyze-record", loaded.get("spec_dir"))
+    return {
+        "recorded": normalized,
+        "counts": counts,
     }
 
 

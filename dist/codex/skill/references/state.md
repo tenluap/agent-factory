@@ -28,17 +28,61 @@ The pending file uses this same schema from the moment the run is created: `star
   "halt_reason": null,
   "stop_at": null,
   "mode": { "chain": "lite", "fast": true },
-  "skills": { "speckit-plan": "/abs/.../SKILL.md", "grilling": "/abs/.../SKILL.md" },
+  "skills": {
+    "speckit-plan": "/abs/.../SKILL.md",
+    "grilling": "/abs/.../SKILL.md"
+  },
   "commands": { "build": "dotnet build", "test": "dotnet test" },
-  "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": ["factory/analyze-1.md"],
+    "remediations": ["factory/remediation-1.md"],
+    "pending_clarify": []
+  },
   "relay": null,
   "timeline": [],
-  "decisions": [ { "stage": "plan", "question": "Q1", "answer": "full", "auto": false, "at": "2026-10-22T14:07:30Z", "kind": "answer" } ],
-  "ledger": [ { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000, "started_at": "2026-10-22T14:02:11Z", "ended_at": "2026-10-22T14:03:43Z" } ],
-  "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
+  "decisions": [
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "full",
+      "auto": false,
+      "at": "2026-10-22T14:07:30Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [
+    {
+      "at": "2026-10-22T14:02:11Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 13400,
+      "out_est": 2700,
+      "reported": null,
+      "duration_ms": 92000,
+      "started_at": "2026-10-22T14:02:11Z",
+      "ended_at": "2026-10-22T14:03:43Z"
+    }
+  ],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
   "ended_at": null,
   "pr_url": null,
-  "history": [ { "at": "2026-10-21T01:43:00Z", "stage": "specify", "event": "complete", "commit": "abc1234", "harness": "claude-code" } ]
+  "history": [
+    {
+      "at": "2026-10-21T01:43:00Z",
+      "stage": "specify",
+      "event": "complete",
+      "commit": "abc1234",
+      "harness": "claude-code"
+    }
+  ]
 }
 ```
 
@@ -61,6 +105,7 @@ The pending file uses this same schema from the moment the run is created: `star
   - Effort totals are interval unions: agent time is the union of `started_at`/`ended_at`, human time the union of `timeline` wait intervals — never a sum of parallel durations (FR-009, "Totals").
 - `history`: transition records, append-only, non-decreasing by `at` (FR-003, FR-004): `{ "at", "stage", "event", "commit", "harness" }`. `event` is a closed vocabulary: `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed` — anything else is a validation violation. Each event has exactly one writer: `checkpoint` writes `complete` (or the gate events `approved`/`gate-override` carrying `decision`), `verify` writes the verify pair, `set-status`'s `aborted`/`pr-open` forms write those two, the resume path writes `resumed`. A verify record carries `commands: [ { "command", "status" } ]`; the review gate reads the latest one (FR-006).
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC and never decrease within a record (FR-004).
+- `analyze.result`: latest recorded report, non-negative `critical`/`high`/`medium`/`low` counts and writer-stamped `at`. `analyze-record <envelope>` accepts completed analyze envelopes (bare JSON or final fenced JSON), verifies the report exists inside this run's spec directory, normalizes its path, appends it once to `reports`, and preserves pending clarification questions. Record the outcome before checkpointing into implementation; CRITICAL/HIGH counts still block that transition unless explicitly overridden.
 
 ## Pen design context (additive)
 
@@ -93,6 +138,7 @@ The commit that carries a `history` entry is the entry's commit: `git log --grep
 - `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, `violations`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
 - `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals` and `totals_sentence` ("Totals"), `decisions` (the approver's veto list, FR-006), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
 - `python3 <F>/bin/factory validate <run> | validate --all`: every violation as `{ "location", "reason" }`; exit 1 when any is found (FR-003).
+- `python3 <F>/bin/factory analyze-record <envelope>`: persist the validated analysis outcome through the writer before its checkpoint; requires a worktree run and commits its spec directory.
 
 Write commands (each stamps its own time, validates before writing, writes atomically, refuses under a live lock, and commits on worktree runs): `checkpoint <stage> [--next <stage>]` ("Checkpoint"), `ledger-add <stage> <role> [--started-at <iso>] [--ended-at <iso>] [--in-est N] [--out-est N] [--reported '<json>']`, `wait-open <kind> <stage> <summary>` (prints `wait-id`), `wait-close <wait-id>`, `answer <qid> '<answer>' [--auto] [--stage <stage>]`, `set-status <status> [--halt-reason <text>] [--pr-url <url>]`, `decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]`, `verify --pass|--fail --commands '<json>'` (writes the verify pair the review gate reads), `rebind <run> --worktree <path>` (rewrites a moved run's stored paths, FR-012), and `resume <branch-or-name>` (records the `resumed` entry, then prints the digest). Also on the surface: `envelope check <file>` (FR-007), `lock take <run> [--force]` (FR-005), and `prune [--dry-run|--delete]` (FR-019).
 

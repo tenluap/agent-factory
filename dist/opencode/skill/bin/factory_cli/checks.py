@@ -219,6 +219,9 @@ def gate_violation(state_dict, into):
                 "no analyze report records the analyze loop's outcome "
                 "(analyze.reports is empty)"
             )
+        result = analyze.get("result") or {}
+        if result.get("critical", 0) or result.get("high", 0):
+            return "latest analysis has unresolved CRITICAL or HIGH findings"
         if analyze.get("pending_clarify"):
             return (
                 f"analyze.pending_clarify holds {len(analyze['pending_clarify'])} "
