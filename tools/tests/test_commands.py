@@ -68,6 +68,19 @@ class DiscoveryTests(unittest.TestCase):
         branches = [r.get("branch") for r in json.loads(out.stdout)["runs"]]
         self.assertNotIn("012-done", branches)
 
+    def test_runs_skips_aborted_runs_too(self):
+        # FR-017: resume refuses an aborted run, so runs must not list it
+        self.box.worktree_run(
+            "013-aborted",
+            v4_state(status="aborted", ended_at="2026-10-23T12:00:00Z"),
+        )
+        out = self.box.cli("runs")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        branches = [r.get("branch") for r in json.loads(out.stdout)["runs"]]
+        self.assertNotIn(
+            "013-aborted", branches, "an aborted run never appears in runs"
+        )
+
 
 class ShowTests(unittest.TestCase):
     def setUp(self):
