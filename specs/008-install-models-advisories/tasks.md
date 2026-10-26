@@ -50,7 +50,7 @@
 **Independent Test**: each bad input through the CLI in the suite asserting exit code, message and absence of a traceback (SC-002, SC-003, quickstart S2).
 
 - [x] T014 [US2] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `ledger-add --started-at/--ended-at` in every malformed shape (empty, wrong format, non-string) exits 5 naming the offending value, no traceback, and the value never reaches the duration arithmetic (FR-007).
-- [ ] T015 [US2] Implement timestamp usage validation for `ledger-add` in `core/skills/factory/bin/factory_cli/cli.py` with `state.parse_iso`, calling `die_usage` (exit 5) naming the bad value (FR-007; seam: `bin/factory` CLI command surface); then the build gate.
+- [x] T015 [US2] Implement timestamp usage validation for `ledger-add` in `core/skills/factory/bin/factory_cli/cli.py` with `state.parse_iso`, calling `die_usage` (exit 5) naming the bad value (FR-007; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T016 [US2] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — a write targeting an ended run that is still pending is refused as not writable, with the ended status named (FR-009).
 - [ ] T017 [US2] Extend the ended-run skip to pending-run selection in `core/skills/factory/bin/factory_cli/commands.py` so an ended pending run can never be mutated (FR-009; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T018 [US2] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — an owner PID the OS probe cannot evaluate (zero, negative, astronomically large, non-numeric) counts as live and never raises (FR-012).

@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from factory_cli import commands
+from factory_cli import commands, state
 from factory_cli.commands import CLIError
 
 USAGE = """usage: factory <command> [args]
@@ -43,7 +43,12 @@ def die_usage(message):
 
 
 def parse_flags(
-    rest, command, value_flags=("--repo",), bool_flags=(), allow_all=False, repeat_flags=()
+    rest,
+    command,
+    value_flags=("--repo",),
+    bool_flags=(),
+    allow_all=False,
+    repeat_flags=(),
 ):
     """Split `rest` into (positional, flags); usage errors exit 5."""
     positional, flags = [], {}
@@ -85,6 +90,13 @@ def json_or_usage(value, flag):
         return json.loads(value)
     except ValueError:
         die_usage(f"{flag} needs JSON")
+
+
+def iso_or_usage(value, flag):
+    """An ISO-8601 UTC timestamp or a usage refusal naming the bad value."""
+    if value is None or not state.parse_iso(value):
+        die_usage(f"{flag} needs an ISO-8601 UTC timestamp, got '{value}'")
+    return value
 
 
 def emit(result):
@@ -160,8 +172,12 @@ def main(argv):
                 Path.cwd(),
                 positional[0],
                 positional[1],
-                started_at=flags.get("--started-at"),
-                ended_at=flags.get("--ended-at"),
+                started_at=iso_or_usage(flags["--started-at"], "--started-at")
+                if "--started-at" in flags
+                else None,
+                ended_at=iso_or_usage(flags["--ended-at"], "--ended-at")
+                if "--ended-at" in flags
+                else None,
                 in_est=int_or_usage(flags["--in-est"], "--in-est")
                 if "--in-est" in flags
                 else 0,
@@ -233,11 +249,15 @@ def main(argv):
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_resume(repo, positional[0])
         elif command == "rebind":
-            positional, flags = parse_flags(rest, command, value_flags=("--repo", "--worktree"))
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--worktree")
+            )
             if len(positional) != 1 or not flags.get("--worktree"):
                 die_usage("rebind needs <run> --worktree <path>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
-            result = commands.cmd_rebind(repo, Path.cwd(), positional[0], flags["--worktree"])
+            result = commands.cmd_rebind(
+                repo, Path.cwd(), positional[0], flags["--worktree"]
+            )
         elif command == "verify":
             _, flags = parse_flags(
                 rest,
@@ -260,7 +280,9 @@ def main(argv):
                 Path.cwd(),
                 passed=bool(flags.get("--pass")),
                 commands_payload=[
-                    (c.get("command"), c.get("status")) for c in payload if isinstance(c, dict)
+                    (c.get("command"), c.get("status"))
+                    for c in payload
+                    if isinstance(c, dict)
                 ],
             )
         elif command == "lock":
@@ -271,7 +293,9 @@ def main(argv):
             if len(positional) != 1:
                 die_usage("lock take needs exactly one <run>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
-            result = commands.cmd_lock_take(repo, positional[0], force=bool(flags.get("--force")))
+            result = commands.cmd_lock_take(
+                repo, positional[0], force=bool(flags.get("--force"))
+            )
         elif command == "decisions-add":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--kind")
