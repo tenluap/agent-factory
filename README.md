@@ -26,7 +26,7 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 { "models": { "claude-code": { "deep": "opus", "standard": "sonnet" }, "opencode": { "deep": "anthropic/<model-id>" } } }
 ```
 
-Only Claude Code pins agent models by default; on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`.
+Only Claude Code pins agent models by default (its harness requires defaults); on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`, which prints the effective model per role after rendering.
 
 ## Usage
 
@@ -42,7 +42,7 @@ Start a run from the repo you want the feature built in. On Claude Code, OpenCod
 /factory resume <branch> --full --no-fast     resume, switching mode before the stage restarts
 ```
 
-A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage, so a run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even from a different harness or machine that shares `${FACTORY_HOME}`.
+A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage: a checkpoint commits the spec directory plus exactly the files the role's envelope declared, and reports anything else dirty without committing it. A run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even on a different harness. Sharing `${FACTORY_HOME}` alone does not move a run: after moving or copying a worktree, run `factory rebind <branch> --worktree <new-path>` to validate the branch and rewrite the run's stored paths.
 
 ### Flags
 
