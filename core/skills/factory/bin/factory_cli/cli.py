@@ -28,7 +28,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
-  verify --pass|--fail --commands '<json>'          record the build/test verify pair
+  envelope check <file>                             validate the final fenced json block\n  verify --pass|--fail --commands '<json>'          record the build/test verify pair
   lock take <run> [--force]                         the only explicit takeover
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
@@ -198,6 +198,12 @@ def main(argv):
                 halt_reason=flags.get("--halt-reason"),
                 pr_url=flags.get("--pr-url"),
             )
+        elif command == "envelope":
+            if rest[:1] != ["check"] or len(rest) < 2:
+                die_usage("envelope supports only: envelope check <file>")
+            if rest[2:]:
+                die_usage("envelope check takes exactly one <file>")
+            result = commands.cmd_envelope_check(rest[1])
         elif command == "verify":
             _, flags = parse_flags(
                 rest, command, value_flags=("--repo",), bool_flags=("--pass", "--fail")

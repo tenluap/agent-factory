@@ -727,3 +727,23 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: {event}")
     return {"verified": event, "commands": commands_payload}
+
+
+def cmd_envelope_check(path):
+    """Validate a role output's final fenced json block (FR-007)."""
+    try:
+        text = Path(path).read_text()
+    except OSError as e:
+        die(1, f"cannot read {path}: {e}")
+    block, error = checks.extract_block(text)
+    if error:
+        die(1, error)
+    shape = checks.detect_shape(block)
+    if shape is None:
+        die(1, "the final fenced json block matches no role-output shape "
+               "(envelope, reviewer report, judge verdict)")
+    problems = checks.block_problems(block, shape)
+    if problems:
+        die(1, "malformed " + shape + " block: "
+            + "; ".join(f"{p['location']}: {p['reason']}" for p in problems))
+    return {"shape": shape, "problems": 0}
