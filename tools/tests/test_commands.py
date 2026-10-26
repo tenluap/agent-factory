@@ -5,6 +5,7 @@ Covers `runs`, `show` and `validate` exit codes and digests (contracts/cli.md),
 """
 
 import json
+import shutil
 import unittest
 from datetime import datetime, timezone
 
@@ -573,3 +574,51 @@ class CheckpointStagingTests(unittest.TestCase):
         out = self.box.cli("checkpoint", "plan", "--files", "nope/missing.txt", cwd=self.wt)
         self.assertEqual(out.returncode, 1)
         self.assertIn("missing.txt", out.stderr)
+
+
+class RebindTests(unittest.TestCase):
+    """rebind <run> --worktree <path>: validate branch, rewrite stored paths (FR-012)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "090-move"
+        self.wt_old = self.box.worktree_run(self.branch, fixture("state-v4.json"))
+
+    def moved_worktree(self):
+        """Move the worktree directory and let git repair its bookkeeping."""
+        wt_new = self.box.dir / "wt-moved"
+        shutil.move(str(self.wt_old), str(wt_new))
+        self.box.git("worktree", "repair", str(wt_new))
+        return wt_new
+
+    def state_path(self, wt):
+        return wt / "specs" / self.branch / "factory" / "state.json"
+
+    def test_rebind_rewrites_worktree_and_reports(self):
+        wt_new = self.moved_worktree()
+        out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual(report["worktree"], str(wt_new))
+        state = json.loads(self.state_path(wt_new).read_text())
+        self.assertEqual(state["worktree"], str(wt_new), "the recorded home is rewritten")
+        self.assertEqual(state["repo"], str(self.box.repo))
+
+    def test_rebind_refuses_a_missing_worktree_with_exit_four(self):
+        out = self.box.cli("rebind", self.branch, "--worktree", str(self.box.dir / "gone"), cwd=self.box.repo)
+        self.assertEqual(out.returncode, 4)
+        self.assertIn("gone", out.stderr)
+
+    def test_rebind_refuses_a_target_on_another_branch(self):
+        other = self.box.dir / "wt-other"
+        self.box.git("worktree", "add", "-q", "-b", "099-other", str(other))
+        out = self.box.cli("rebind", self.branch, "--worktree", str(other), cwd=self.box.repo)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(self.branch, out.stderr, "the refusal names the recorded branch")
+
+    def test_rebind_refuses_an_ambiguous_run_with_exit_three(self):
+        wt_new = self.moved_worktree()
+        self.box.pending_run(self.branch, fixture("state-v1.json"))
+        out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
+        self.assertEqual(out.returncode, 3)
