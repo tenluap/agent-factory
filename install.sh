@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Render the factory for a harness and symlink it into that harness's directories.
+# Render the factory for a harness into the user's factory home
+# (${FACTORY_HOME:-~/.factory}/dist/<harness>) and symlink the harness's
+# skill and agent directories from that per-user copy.
 # Usage: ./install.sh [--harness <name>|all] [--uninstall]. Default harness: claude-code. Re-run after pulling.
 # Harnesses: see adapters/ (python3 tools/render.py --list).
 set -euo pipefail
 
 src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+factory_home="${FACTORY_HOME:-$HOME/.factory}"
 harness="claude-code"
 uninstall=""
 while [ $# -gt 0 ]; do
@@ -33,17 +36,18 @@ link() {
 
 unlink_ours() {
   local to="$1"
-  if [ -L "$to" ] && [[ "$(readlink "$to")" == "$src"/* ]]; then
+  if [ -L "$to" ] && [[ "$(readlink "$to")" == "$factory_home"/dist/* ]]; then
     rm "$to"
     echo "removed: $to"
   fi
 }
 
 install_one() {
-  local paths dist skill_dir agent_dir
-  paths="$(python3 "$src/tools/render.py" "$1" --paths)"
-  eval "$paths"
+  local dist skill_dir agent_dir
   echo "== $1"
+  dist="$factory_home/dist/$1"
+  python3 "$src/tools/render.py" "$1" --out "$dist"
+  eval "$(python3 "$src/tools/render.py" "$1" --paths --out "$dist")"
   if [ -n "$uninstall" ]; then
     unlink_ours "$skill_dir"
     for f in "$dist"/agents/*; do unlink_ours "$agent_dir/$(basename "$f")"; done
@@ -63,7 +67,7 @@ fi
 for h in $harnesses; do install_one "$h"; done
 [ -n "$uninstall" ] && exit 0
 
-pending="${FACTORY_HOME:-$HOME/.factory}/pending"
+pending="$factory_home/pending"
 mkdir -p "$pending"
 # Pending runs from before the harness split lived under ~/.claude/factory/pending.
 old="$HOME/.claude/factory/pending"
