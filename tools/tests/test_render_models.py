@@ -1,9 +1,9 @@
-"""Model-policy seam tests over `tools/render.py` render output (FR-015).
+"""Model-policy seam tests over `tools/render.py` render output (FR-015, FR-002).
 
 Exactly one adapter ships models (claude-code opus/sonnet); personal provider
-IDs ship nowhere; `${FACTORY_HOME}/config.json` overrides reach the rendered
-agents only when FACTORY_HOME is set explicitly, so the committed dist stays
-machine-independent; the README statement matches `adapters/`.
+IDs ship nowhere; the canonical `render.py <harness>` render never reads
+`config.json`, so the committed dist stays machine-independent whatever the
+environment; the README statement matches `adapters/`.
 """
 
 import json
@@ -87,41 +87,54 @@ class ModelPolicyTests(unittest.TestCase):
             self.assertEqual(adapter.get("models"), {}, name)
 
 
-class RenderOverrideTests(unittest.TestCase):
+class CanonicalRenderTests(unittest.TestCase):
+    """FR-002: the canonical render into dist/ never merges config.json,
+    whatever the environment; personal ids and overrides stay out of it."""
+
     def tearDown(self):
-        env = dict(os.environ)
-        env.pop("FACTORY_HOME", None)
-        subprocess.run(
-            [sys.executable, str(REPO / "tools" / "render.py"), "opencode"],
-            cwd=REPO,
-            env=env,
-            capture_output=True,
-            check=True,
+        for harness in ("claude-code", "opencode"):
+            env = dict(os.environ)
+            env.pop("FACTORY_HOME", None)
+            subprocess.run(
+                [sys.executable, str(REPO / "tools" / "render.py"), harness],
+                cwd=REPO,
+                env=env,
+                capture_output=True,
+                check=True,
+            )
+
+    def agent_texts(self, harness):
+        return [p.read_text() for p in sorted((DIST / harness / "agents").iterdir())]
+
+    def test_exported_home_with_overrides_leaves_dist_at_adapter_defaults(self):
+        render(
+            "claude-code",
+            config={"models": {"claude-code": {"deep": "test-org/test-deep-model"}}},
+        )
+        texts = self.agent_texts("claude-code")
+        self.assertFalse(
+            any("test-org/test-deep-model" in t for t in texts),
+            "the canonical render never merges config.json, even exported",
+        )
+        self.assertTrue(
+            any("opus" in t for t in texts),
+            "the adapter's own model defaults stay in place",
         )
 
-    def agent_texts(self):
-        return [p.read_text() for p in sorted((DIST / "opencode" / "agents").iterdir())]
-
-    def test_config_overrides_reach_the_rendered_agents(self):
+    def test_exported_home_with_overrides_leaves_opencode_canonical(self):
         render(
             "opencode",
             config={"models": {"opencode": {"deep": "test-org/test-deep-model"}}},
         )
-        texts = self.agent_texts()
-        self.assertTrue(
+        texts = self.agent_texts("opencode")
+        self.assertFalse(
             any("test-org/test-deep-model" in t for t in texts),
-            "the deep-tier agents carry the override",
-        )
-        standard = [t for t in texts if "test-org/test-deep-model" not in t]
-        self.assertEqual(
-            len(standard),
-            len(texts) - 2,
-            "only the deep-tier agents (spec-builder, review-judge) take the override",
+            "the canonical opencode render never carries the override",
         )
 
     def test_without_explicit_home_the_render_ignores_the_default_home(self):
         # even once ~/.factory/config.json exists on this machine, a plain
-        # render stays canonical: overrides apply when FACTORY_HOME is set
+        # render stays canonical: the dist path reads no config at all
         default_home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
         sentinel = default_home / "config.json"
         existed = sentinel.exists()
@@ -133,8 +146,8 @@ class RenderOverrideTests(unittest.TestCase):
         try:
             render("opencode")  # no FACTORY_HOME in the child env
             self.assertFalse(
-                any("test-org/leaked" in t for t in self.agent_texts()),
-                "the default home is not consulted without an explicit FACTORY_HOME",
+                any("test-org/leaked" in t for t in self.agent_texts("opencode")),
+                "the default home is never consulted by the canonical render",
             )
         finally:
             if not existed:
