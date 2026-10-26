@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -105,6 +105,14 @@
       "summary": "Usage limit reached during implement; resume after reset",
       "answered_at": "2026-10-26T07:42:01Z",
       "latency_ms": 17914000
+    },
+    {
+      "at": "2026-10-26T10:23:03Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approver gate: approve, request changes or abort",
+      "answered_at": "2026-10-26T10:24:27Z",
+      "latency_ms": 84000
     }
   ],
   "ledger": [
@@ -520,6 +528,13 @@
     {
       "at": "2026-10-26T10:22:56Z",
       "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T10:24:28Z",
+      "stage": "approver",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
