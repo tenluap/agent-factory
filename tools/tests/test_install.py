@@ -140,5 +140,81 @@ class InstallFlowTests(unittest.TestCase):
         self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
 
+class InstallHomePolicyTests(unittest.TestCase):
+    """FR-001: a missing default home ~/.factory is created; an explicitly
+    set FACTORY_HOME that does not exist, is not a directory or is not
+    writable fails naming the path, writing nothing, with no traceback."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="factory-install-")
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.home = self.tmp / "home"
+        self.xdg = self.home / ".config"
+
+    def run_install(self, factory_home, exported=True):
+        self.home.mkdir(parents=True, exist_ok=True)
+        env = dict(os.environ)
+        env["HOME"] = str(self.home)
+        env["XDG_CONFIG_HOME"] = str(self.xdg)
+        if exported:
+            env["FACTORY_HOME"] = str(factory_home)
+        else:
+            env.pop("FACTORY_HOME", None)
+        return subprocess.run(
+            ["bash", str(INSTALL), "--harness", "opencode"],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=REPO,
+        )
+
+    def dist_porcelain(self):
+        return subprocess.run(
+            ["git", "status", "--porcelain", "--", "dist/"],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+
+    def assert_clean_failure(self, proc, path):
+        self.assertNotEqual(proc.returncode, 0, "the bad home fails the install")
+        self.assertIn(
+            str(path), proc.stderr + proc.stdout, "the message names the path"
+        )
+        self.assertNotIn(
+            "Traceback", proc.stderr + proc.stdout, "no traceback reaches the user"
+        )
+        self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
+        self.assertFalse(
+            (self.xdg / "opencode" / "agents").exists(), "nothing was linked"
+        )
+
+    def test_missing_default_home_is_created(self):
+        proc = self.run_install(self.home / ".factory", exported=False)
+        self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+        self.assertTrue(
+            (self.home / ".factory" / "dist" / "opencode" / "skill").is_dir(),
+            "the default home and the per-user render are created",
+        )
+
+    def test_missing_explicit_factory_home_fails_naming_the_path(self):
+        missing = self.tmp / "missing-home"
+        self.assert_clean_failure(self.run_install(missing), missing)
+
+    def test_home_that_is_not_a_directory_fails_naming_the_path(self):
+        plain_file = self.tmp / "not-a-dir"
+        plain_file.write_text("not a home\n")
+        self.assert_clean_failure(self.run_install(plain_file), plain_file)
+
+    def test_unwritable_home_fails_naming_the_path(self):
+        locked = self.tmp / "locked-home"
+        locked.mkdir()
+        locked.chmod(0o500)
+        self.addCleanup(locked.chmod, 0o700)
+        self.assert_clean_failure(self.run_install(locked), locked)
+
+
 if __name__ == "__main__":
     unittest.main()
