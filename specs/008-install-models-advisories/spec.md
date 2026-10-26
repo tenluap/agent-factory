@@ -8,6 +8,13 @@
 
 **Input**: User description: "Fix the unresolved FR-015 install-model blocker from PR #3 judge round 3, every round-3 advisory, and the open-run wall-clock bug in the totals sentence." (see `factory/brief.md` for the settled decisions; findings source: `specs/007-stabilise-factory/factory/reviews/round-3/verdict.json`)
 
+## Clarifications
+
+### Session 2026-10-26
+
+- Q: When does the "exactly one open relay round" rule bind? → A: At most one relay round may hold unanswered questions and it must be the last round; a null relay and a fully answered relay awaiting checkpoint are conformant. Several open rounds are reported at `relay`; unanswered questions in a non-last round are reported at `relay.rounds[i]`.
+- Q: What must the installer do when `config.json` is malformed? → A: The install fails cleanly: a message naming the file and the parse error, a non-zero exit, nothing rendered or linked, and the committed `dist/` untouched.
+
 ## User Scenarios & Testing *(mandatory)*
 
 The user is a developer who installs the factory into one or more harnesses, runs factory sessions recorded in run state, and reads the CLI's reports — and who must be able to trust all three: personal configuration reaching the installed agents, clean refusals instead of crashes, and totals that tell the truth.
@@ -25,6 +32,7 @@ A developer pins their own models in `${FACTORY_HOME:-~/.factory}/config.json` a
 1. **Given** a `config.json` at `~/.factory` with model overrides and `FACTORY_HOME` unset, **When** the installer runs, **Then** the installed agents carry the overridden model ids and the models report lists them as effective.
 2. **Given** an exported `FACTORY_HOME` pointing at a personal home, **When** the installer runs, **Then** the personal overrides apply to the per-user copy that is linked, and the committed `dist/` is byte-identical afterwards.
 3. **Given** no `config.json`, **When** the installer runs, **Then** the adapter defaults are used and reported, with no error.
+4. **Given** a `config.json` that does not parse, **When** the installer runs, **Then** the install fails with a message naming the file and the parse error and a non-zero exit, nothing is rendered or linked, and the committed `dist/` is untouched.
 
 ---
 
@@ -57,7 +65,7 @@ A run owner moves a worktree (`rebind`), records a stage checkpoint, or validate
 1. **Given** a moved worktree, **When** `rebind` runs, **Then** the rewrite happens through the single write interface, with the run's lock held and the state re-read under it.
 2. **Given** a checkpoint whose git commit fails, **When** the command returns, **Then** the failure is reported explicitly and distinguishes "state written, commit failed" from a full success.
 3. **Given** a retry after that failure, **When** the command runs again, **Then** no history entry is silently duplicated.
-4. **Given** state whose relay holds zero or more than one open round, **When** validation runs, **Then** the violation is reported with its location.
+4. **Given** state whose relay holds more than one open round, or unanswered questions in a non-last round, **When** validation runs, **Then** the violation is reported at its location (`relay` or `relay.rounds[i]`); a null relay or a fully answered relay awaiting checkpoint is conformant and reports no anomaly.
 
 ---
 
@@ -98,11 +106,12 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 
 - `FACTORY_HOME` set to a nonexistent or read-only path during install: the install fails with a clear message; the committed `dist/` is still untouched.
 - `config.json` present but missing the harness key or individual model keys: absent entries fall back to the adapter defaults, per key.
+- `config.json` present but unparseable: the install aborts before any render or link, with a message naming the file and the parse error and a non-zero exit; the committed `dist/` is untouched.
 - Installing twice, or `--uninstall` after a per-user render: links point at the per-user copy and are removed without touching the repository's `dist/`.
 - Malformed ledger timestamps in every shape (empty, wrong format, non-string): each exits 5 with the offending value named.
 - A lock file whose owner PID is `0`, negative, astronomically large, or non-numeric: treated as live, never a crash; `--force` still takes over.
 - A lock file replaced by another owner between this process's write and release: release leaves the foreign lock alone.
-- A run whose relay holds two open rounds (or none), a run ended while still pending, and a run whose git commit fails at checkpoint: each is refused or reported, never half-applied.
+- A run whose relay holds two open rounds or unanswered questions in a non-last round, a run ended while still pending, and a run whose git commit fails at checkpoint: each is refused or reported, never half-applied. A null relay and a fully answered relay awaiting checkpoint are conformant.
 
 ## Requirements *(mandatory)*
 
@@ -122,7 +131,7 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 - **FR-007**: `ledger-add` MUST reject a malformed timestamp with a usage error (exit 5) naming the bad value, never a traceback.
 - **FR-008**: `rebind` MUST perform its state rewrite through the single write interface, holding the run's lock and re-reading state under it, like every other mutation.
 - **FR-009**: A run that has ended MUST NOT be writable; the ended-status skip MUST apply to the pending-run selection as well, so an ended pending run cannot be mutated.
-- **FR-010**: State validation MUST enforce exactly one open relay round and report zero or several open rounds with their location.
+- **FR-010**: State validation MUST enforce that at most one relay round holds unanswered questions and that round MUST be the last; a null relay and a fully answered relay awaiting checkpoint are conformant. Several open rounds MUST be reported at `relay`, and unanswered questions in a non-last round at `relay.rounds[i]`.
 - **FR-011**: A checkpoint MUST report a git commit failure explicitly, distinguishing "state written, commit failed" from success, and a retry MUST NOT silently duplicate history entries.
 
 **Lock safety (round-3 findings at `lock.py:52` and `lock.py:160`)**
@@ -144,13 +153,17 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 - **FR-020**: The CLI contract `specs/007-stabilise-factory/contracts/cli.md` MUST document `resume <run>` in the same form as the other commands.
 - **FR-021**: `specs/007-stabilise-factory/plan.md` MUST record `Overridden: ENG-3 - paired red/implement task structure`, the process decision made while delivering 007.
 
+**Installer configuration failure (clarified 2026-10-26)**
+
+- **FR-022**: A `config.json` that does not parse MUST abort the install cleanly: a message naming the file and the parse error, a non-zero exit, nothing rendered or linked, and the committed `dist/` untouched.
+
 ### Key Entities
 
 - **Per-user render**: a harness tree rendered into the user's factory home with personal model overrides merged; what the harness directories link to.
 - **Committed dist**: the canonical, machine-independent generated output in the repository; never carries personal configuration.
 - **Effective model report**: the per-role model list resolved from the default factory home, printed at install time.
 - **Run lock**: an owner/host/harness/time record guarding one run; liveness is a judgment, not a crash, and takeover is always explicit.
-- **Open relay round**: an unanswered question round awaiting the user; state validity requires exactly one.
+- **Open relay round**: an unanswered question round awaiting the user; state validity allows at most one and only as the last round — a null relay and a fully answered relay awaiting checkpoint are conformant.
 - **Totals**: wall clock, human and agent effort derived from unions of recorded intervals; open runs measure to now.
 
 ### Quality and Verification Constraints
@@ -168,11 +181,11 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 
 ### Measurable Outcomes
 
-- **SC-001**: In 100% of install-pipeline tests, overrides from the default home reach the installed agents and the models report, and the committed `dist/` shows zero diff after any installer run.
+- **SC-001**: In 100% of install-pipeline tests, overrides from the default home reach the installed agents and the models report, the committed `dist/` shows zero diff after any installer run, and a malformed `config.json` aborts the install with the file and parse error named, a non-zero exit, and nothing rendered or linked.
 - **SC-002**: Every malformed-input and refused-write path exits with its documented code and message and zero tracebacks, asserted by a test per path (ledger-add timestamp, ended pending run, out-of-range lock PID, foreign lock release, failed checkpoint commit).
 - **SC-003**: Lock behaviour is verified end to end: an unevaluable owner PID counts as live, `lock take --force` succeeds against it in 100% of test runs, and release never removes another owner's lock.
 - **SC-004**: With parallel spawns, human plus agent time stays within wall clock in 100% of digest tests, and every open-run totals sentence reports a non-zero elapsed wall clock.
-- **SC-005**: Validation reports zero anomalies for a conformant run and names the location for a run with zero or two open relay rounds.
+- **SC-005**: Validation reports zero anomalies for a conformant run — including a null relay and a fully answered relay awaiting checkpoint — and names the location for a run with several open rounds (`relay`) or unanswered questions in a non-last round (`relay.rounds[i]`).
 - **SC-006**: The full automated test suite passes and the build gate is clean (all five harnesses re-rendered with no generated-output drift) after the change.
 
 ## Assumptions
