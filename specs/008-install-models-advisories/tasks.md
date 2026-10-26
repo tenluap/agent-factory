@@ -9,6 +9,7 @@
 - **[P]**: parallelizable with the tasks beside it
 - **[Story]**: spec.md user story (US1–US5)
 - Every task names its file paths; code tasks name their seam
+- Task IDs are stable; T042/T043 (FR-022, added after clarification) run inside US1 after T012
 
 **Run tests**: `python3 -m unittest discover -s tools`.
 
@@ -22,7 +23,7 @@
 
 **Story goal**: `install.sh` links agents carrying the user's own models from a per-user render, while the committed rendered distribution stays canonical and machine-independent.
 
-**Independent Test**: sandbox install with `config.json` in the default home and `FACTORY_HOME` unset: linked agents and the models report carry the overrides and `git status --porcelain -- dist/` is empty (SC-001, quickstart S1).
+**Independent Test**: sandbox install with `config.json` in the default home and `FACTORY_HOME` unset: linked agents and the models report carry the overrides and `git status --porcelain -- dist/` is empty; a `config.json` that does not parse aborts with the file and parse error named and nothing rendered or linked (SC-001, quickstart S1).
 
 - [ ] T001 [US1] Failing tests in `tools/tests/test_render_models.py` — seam: `tools/render.py` render output — the canonical `render.py <harness>` render never reads `config.json`: with overrides present and `FACTORY_HOME` exported, the rendered `dist/<harness>` model fields stay at adapter defaults (FR-002).
 - [ ] T002 [US1] Implement canonical render purity in `tools/render.py`: the `dist/<harness>` path never loads user configuration, whatever the environment (FR-002; seam: `tools/render.py` render output).
@@ -36,6 +37,8 @@
 - [ ] T010 [US1] Implement the factory-home policy in `install.sh` (create a missing default home `~/.factory`; fail naming an explicitly configured home that does not exist, is not a directory or is not writable, writing nothing to the repository) (FR-001; seam: `install.sh` install/uninstall flow).
 - [ ] T011 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — `--uninstall` removes the links it created and `${FACTORY_HOME:-~/.factory}/dist/<harness>`, and leaves `config.json`, pending runs and the committed rendered distribution untouched (FR-001).
 - [ ] T012 [US1] Implement `--uninstall`'s identity-checked link and per-user render removal in `install.sh` (FR-001; seam: `install.sh` install/uninstall flow).
+- [ ] T042 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — a `config.json` that does not parse aborts the install before anything is rendered or linked: non-zero exit, a message naming the file and the parse error, no traceback, nothing left under `${FACTORY_HOME:-~/.factory}/dist/`, and `git status --porcelain -- dist/` empty (FR-022).
+- [ ] T043 [US1] Implement the config-parse guard in `install.sh`: a `config.json` that does not parse aborts the install naming the file and the parse error with a non-zero exit, before any render or link (FR-022; seam: `install.sh` install/uninstall flow).
 - [ ] T013 [US1] Correct the model-merge wording to the delivered behaviour in `README.md`, `DESIGN.md` and the `tools/render.py` comment/docstring (FR-006). Exempt: `README.md`, `DESIGN.md` and `tools/render.py` comments - documentation only.
 
 ---
@@ -61,16 +64,16 @@
 
 ## Phase 5: US3 — Every state write goes through the one writer (P2)
 
-**Story goal**: `rebind` and checkpoint mutate through `write_run` (lock, re-read under the lock, validate, atomic write), and validation enforces the relay-round invariant.
+**Story goal**: `rebind` and checkpoint mutate through `write_run` (lock, re-read under the lock, validate, atomic write), and validation enforces the relay-round invariant: at most one open relay round, only as the last.
 
-**Independent Test**: `rebind` under a competing lock, a checkpoint with a failing commit and its retry, and a relay with zero or two open rounds through the suite (SC-002, SC-005, quickstart S3).
+**Independent Test**: `rebind` under a competing lock, a checkpoint with a failing commit and its retry, and relays with two open rounds or unanswered questions in a non-last round beside the conformant null and fully answered relays, through the suite (SC-002, SC-005, quickstart S3).
 
 - [ ] T024 [US3] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `rebind <run> --worktree <path>` rewrites through the single writer: the run's lock is held and state re-read under it before `worktree`/`repo` are replaced (FR-008).
 - [ ] T025 [US3] Implement `cmd_rebind` in `core/skills/factory/bin/factory_cli/commands.py` as a `mutate` passed to `write_run` instead of a direct `state.write_state` call (FR-008; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T026 [US3] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — a checkpoint whose git commit fails after the state write exits 1 with `state written, commit failed: <reason>`, its JSON carrying `commit: null` and `commit_error`, and a retry of the same stage reuses the pending history entry instead of appending a second one (FR-011).
 - [ ] T027 [US3] Implement the checkpoint commit-failure report and the pending-entry reuse in `core/skills/factory/bin/factory_cli/commands.py` `cmd_checkpoint` (FR-011; seam: `bin/factory` CLI command surface); then the build gate.
-- [ ] T028 [US3] Failing tests in `tools/tests/test_state.py` — seam: `factory_cli.state` module API — `validate_state` accepts exactly one open relay round and reports zero or several open rounds at `relay` / `relay.rounds[i]`, `validate` naming the location (FR-010).
-- [ ] T029 [US3] Implement the exactly-one-open-relay-round rule in `core/skills/factory/bin/factory_cli/state.py` `validate_state` (FR-010; seam: `factory_cli.state` module API); then the build gate.
+- [ ] T028 [US3] Failing tests in `tools/tests/test_state.py` — seam: `factory_cli.state` module API — `validate_state` allows at most one open relay round and only as the last round: a null relay and a fully answered relay awaiting checkpoint report no anomaly, several open rounds are reported at `relay`, and unanswered questions in a non-last round at `relay.rounds[i]`, `validate` naming the location (FR-010).
+- [ ] T029 [US3] Implement the at-most-one-open-relay-round rule in `core/skills/factory/bin/factory_cli/state.py` `validate_state` (the open round must be the last; a null relay and a fully answered relay awaiting checkpoint conform; violations report at `relay` or `relay.rounds[i]`) (FR-010; seam: `factory_cli.state` module API); then the build gate.
 
 ---
 
@@ -97,9 +100,9 @@
 
 - [ ] T036 [US5] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — the module defines no test method twice and defines none after the runner's `unittest.main()` exit call, so each lock behaviour is exercised exactly once (FR-018).
 - [ ] T037 [US5] Delete the dead duplicate `LockCliTests` methods after `unittest.main()` in `tools/tests/test_lock.py`, leaving each behaviour covered once (FR-018; seam: `factory_cli.lock` lifecycle).
-- [ ] T038 [US5] Failing tests in `tools/tests/test_state.py` — seam: `tools/tests/replay.py` defect detectors — `tools/tests/replay.py` resolves `parse_iso`, `TIMELINE_KINDS`, `HISTORY_EVENTS` and the stage vocabularies from `factory_cli.state`, not private copies (FR-019).
+- [ ] T038 [US5] Failing tests in `tools/tests/test_state.py` — seam: `tools/tests/replay.py` defect detectors — `tools/tests/replay.py` resolves `parse_iso`, `TIMELINE_KINDS`, `HISTORY_EVENTS` and the stage vocabularies from `factory_cli.state`, not private copies (FR-019; the assertions sit in `tools/tests/test_state.py`, which checks the `factory_cli.state` vocabulary `replay.py` must consume).
 - [ ] T039 [US5] Implement the import move in `tools/tests/replay.py` (shared vocabulary and timestamp parsing from `factory_cli.state`) so `python3 tools/tests/replay.py` still reports every 005/006 fixture defect (FR-019; seam: `tools/tests/replay.py` defect detectors), then close with the full suite, the build gate and quickstart.md S1–S5 (SC-006).
-- [ ] T040 [US5] Document `resume <run>` in `specs/007-stabilise-factory/contracts/cli.md` in the same form as the other commands and align the `runs` wording with the aborted-run skip (FR-020). Exempt: `specs/007-stabilise-factory/contracts/cli.md` rows - documentation only.
+- [ ] T040 [US5] Document `resume <run>` (FR-020) in `specs/007-stabilise-factory/contracts/cli.md` in the same form as the other commands and align the `runs` wording with the aborted-run skip (FR-017). Exempt: `specs/007-stabilise-factory/contracts/cli.md` rows - documentation only.
 - [ ] T041 [US5] Record `Overridden: ENG-3 - paired red/implement task structure` in `specs/007-stabilise-factory/plan.md` beside its seam confirmations, replacing `Overridden: none.` (FR-021). Exempt: `specs/007-stabilise-factory/plan.md` line - documentation only.
 
 ---
@@ -107,7 +110,7 @@
 ## Dependencies & Execution Order
 
 - Phases run in story order US1 → US2 → US3 → US4 → US5 (P1 first); every test task immediately precedes its implementation task and fails until it lands.
-- T004 precedes T006 (the report reuses the resolver); T008 depends on T002/T004/T006; T010 and T012 depend on T008.
+- T004 precedes T006 (the report reuses the resolver); T008 depends on T002/T004/T006; T010 and T012 depend on T008; T042/T043 run after T008 (the guard shields the per-user render and the linking).
 - T019, T021, T023 all touch `tools/tests/test_lock.py` and `core/skills/factory/bin/factory_cli/lock.py` — run them in order; T036/T037 close that file afterwards.
 - T025, T027, T033, T035 all touch `core/skills/factory/bin/factory_cli/commands.py` — in order; T031 precedes T033.
 - T039 depends on T029 (the shared vocabulary lives in `state.py`); T040, T041 are independent documentation tasks.
@@ -115,8 +118,8 @@
 ## Parallel execution examples
 
 - US2 after T008: T014/T015 ∥ T018/T019 (different files); US4: T030/T031 ∥ T032/T033.
-- US5: T036/T037 ∥ T040 ∥ T041; US1's T009–T012 pairs run beside US2's lock pairs.
+- US5: T036/T037 ∥ T040 ∥ T041; US1's T009–T012 pairs and T042/T043 run beside US2's lock pairs.
 
 ## Implementation strategy
 
-MVP is US1: personal models reach the installed agents while `git status --porcelain -- dist/` stays empty after every installer run (quickstart S1). US2/US3 then harden the writer and the lock, US4 fixes the reporting, US5 the hygiene. Each `core/` task closes green under the build gate before the next opens; documentation corrections (T013, T040, T041) land with or before the item they describe. The run closes at T039 with the full suite, the build gate and quickstart.md S1–S5.
+MVP is US1: personal models reach the installed agents while `git status --porcelain -- dist/` stays empty after every installer run, and a malformed `config.json` aborts the install cleanly (quickstart S1). US2/US3 then harden the writer and the lock, US4 fixes the reporting, US5 the hygiene. Each `core/` task closes green under the build gate before the next opens; documentation corrections (T013, T040, T041) land with or before the item they describe. The run closes at T039 with the full suite, the build gate and quickstart.md S1–S5.
