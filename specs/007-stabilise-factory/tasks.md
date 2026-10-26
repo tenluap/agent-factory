@@ -79,7 +79,7 @@
 
 **Independent test**: the kill-and-resume suite passes for a fixture run killed at every stage (SC-006); the static read-only check passes where enforceable.
 
-- [ ] T031 [US5] Record the M4 design decisions in `DESIGN.md` "Decisions": S14 (fixture repository, per-harness golden-run checklist, automated kill-and-resume tests, live two-harness run recorded after merge) and R13 read-only access verification. Exempt: `DESIGN.md` decision entries - documentation only.
+- [X] T031 [US5] Record the M4 design decisions in `DESIGN.md` "Decisions": S14 (fixture repository, per-harness golden-run checklist, automated kill-and-resume tests, live two-harness run recorded after merge) and R13 read-only access verification. Exempt: `DESIGN.md` decision entries - documentation only.
 - [ ] T032 [US5] Failing tests in `tools/tests/test_recovery.py` — seam: `bin/factory` CLI command surface — a throwaway fixture run killed at each stage and resumed through the CLI: no answered question re-asked, no committed task redone, no duplicate branch, worktree or pull request (SC-006).
 - [ ] T033 [US5] Implement the resume behaviour the suite exposes as missing in `core/skills/factory/bin/factory_cli/commands.py` and `state.py` — a `resumed` history entry written through the writer (FR-003) and any digest gap the suite names — so the suite passes (seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T034 [US5] Extend `tools/tests/test_render_models.py` with the static read-only conformance check — seam: `tools/render.py` render output — every rendered `read`-access agent denying edits in that adapter's terms (tool lists without `Edit`/`Write`, OpenCode deny rules, Copilot tool list), `codex` excluded by its documented disclosure (FR-014).
