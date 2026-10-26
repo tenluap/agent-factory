@@ -384,3 +384,327 @@ def cmd_validate(repo, name=None, all_runs=False):
         die(5, "validate needs a run name or --all")
     _, loaded, _ = one_run(repo, name)
     return state.validate_state(loaded)
+
+
+# ---------------------------------------------------------------- writers ---
+# The single writer (FR-001): every mutation stamps its own time, is
+# validated by state.write_state, lands atomically, and commits on worktree
+# runs. Lock refusal lands with the lock module (T015); declared-file staging
+# with T026; gate checks with T017.
+
+
+def now_iso():
+    return state.iso(datetime.now(timezone.utc))
+
+
+def resolve_target(repo, cwd):
+    """The one run this session writes: the worktree run whose home is `cwd`,
+    else the repo's single pending run. Ended runs are never writable."""
+    cwd_real = os.path.realpath(str(cwd))
+    worktree_matches = []
+    for run in deduped(find_runs(repo)):
+        if isinstance(run, dict):
+            continue
+        path, loaded, identity, _ = run
+        if loaded.get("status") in ("pr-open", "aborted"):
+            continue
+        if (
+            identity["source"] == "worktree"
+            and os.path.realpath(identity["worktree"] or "") == cwd_real
+        ):
+            worktree_matches.append((path, loaded, "worktree", identity["worktree"]))
+    if len(worktree_matches) > 1:
+        die(3, f"several runs claim {cwd}")
+    if worktree_matches:
+        return worktree_matches[0]
+    pending = [
+        (path, loaded, "pending", None)
+        for run in deduped(find_runs(repo))
+        if not isinstance(run, dict)
+        for path, loaded, identity, _ in [run]
+        if identity["source"] == "pending"
+    ]
+    if len(pending) > 1:
+        die(3, f"several pending runs of {repo}; name one")
+    if not pending:
+        die(1, f"no run to write from {cwd} in {repo}")
+    return pending[0]
+
+
+def write_run(path, loaded, mutate):
+    try:
+        return state.write_state(path, mutate(dict(loaded)))
+    except state.StateError as e:
+        die(1, str(e))
+
+
+def commit_worktree(worktree, message):
+    if not worktree:
+        return None
+    git(worktree, "add", "-A")
+    git(worktree, "commit", "-q", "-m", message)
+    return git(worktree, "rev-parse", "--short", "HEAD").strip()
+
+
+def successor(stage):
+    order = state.STAGES
+    return (
+        order[order.index(stage) + 1]
+        if stage in order and order.index(stage) + 1 < len(order)
+        else None
+    )
+
+
+def settled_answers(relay, fallback_stage, now):
+    """Every settled answer of the stage's relay, as decision records (FR-008)."""
+    migrated = []
+    for one_round in rounds_of(relay):
+        for qid, answer in (one_round.get("answers") or {}).items():
+            if isinstance(answer, dict):
+                migrated.append(
+                    {
+                        "stage": fallback_stage,
+                        "question": qid,
+                        "answer": answer.get("answer"),
+                        "auto": bool(answer.get("auto")),
+                        "at": answer.get("at") or now,
+                        "kind": "answer",
+                    }
+                )
+            else:  # legacy version 2 string answer
+                migrated.append(
+                    {
+                        "stage": fallback_stage,
+                        "question": qid,
+                        "answer": str(answer),
+                        "auto": False,
+                        "at": now,
+                        "kind": "answer",
+                    }
+                )
+    return migrated
+
+
+def cmd_checkpoint(repo, cwd, stage, next_stage=None):
+    if stage not in state.STAGES:
+        die(
+            1,
+            f"'{stage}' is off-vocabulary; expected one of: {', '.join(state.STAGES)}",
+        )
+    if next_stage is not None and next_stage not in state.STAGES:
+        die(1, f"next stage '{next_stage}' is off-vocabulary")
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    target = next_stage or successor(stage)
+
+    def mutate(s):
+        relay = s.get("relay")
+        relay_stage = (
+            relay.get("stage")
+            if isinstance(relay, dict) and relay.get("stage")
+            else s.get("stage")
+        )
+        decisions = s.get("decisions") or []
+        if isinstance(relay, dict):
+            decisions = decisions + settled_answers(relay, relay_stage, now)
+        s["decisions"] = decisions
+        s["relay"] = None
+        s["history"] = (s.get("history") or []) + [
+            {
+                "at": now,
+                "stage": stage,
+                "event": "complete",
+                "commit": None,
+                "harness": s.get("harness"),
+            }
+        ]
+        if target:
+            s["stage"] = target
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    commit = commit_worktree(worktree, f"factory: {stage} complete")
+    return {
+        "checkpointed": stage,
+        "stage": updated["stage"],
+        "commit": commit,
+        "source": source,
+    }
+
+
+def cmd_ledger_add(
+    repo,
+    cwd,
+    stage,
+    role,
+    started_at=None,
+    ended_at=None,
+    in_est=0,
+    out_est=0,
+    reported=None,
+):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    start, end = started_at or now, ended_at or started_at or now
+    duration = max(
+        int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
+    )
+
+    def mutate(s):
+        s["ledger"] = (s.get("ledger") or []) + [
+            {
+                "at": now,
+                "stage": stage,
+                "role": role,
+                "harness": s.get("harness"),
+                "in_est": in_est,
+                "out_est": out_est,
+                "reported": reported,
+                "duration_ms": duration,
+                "started_at": start,
+                "ended_at": end,
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: ledger-add {stage}")
+    return {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+
+
+def cmd_wait_open(repo, cwd, kind, stage, summary):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        s["timeline"] = (s.get("timeline") or []) + [
+            {
+                "at": now,
+                "kind": kind,
+                "stage": stage,
+                "summary": summary,
+                "answered_at": None,
+                "latency_ms": None,
+            }
+        ]
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: wait-open {stage}")
+    return {"wait-id": len(updated["timeline"]) - 1}
+
+
+def cmd_wait_close(repo, cwd, wait_id):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        timeline = list(s.get("timeline") or [])
+        if not 0 <= wait_id < len(timeline):
+            die(1, f"no wait #{wait_id} (timeline has {len(timeline)} entries)")
+        entry = dict(timeline[wait_id])
+        if entry.get("answered_at"):
+            die(1, f"wait #{wait_id} is already closed")
+        answered = state.parse_iso(now)
+        opened = state.parse_iso(entry.get("at"))
+        entry["answered_at"] = now
+        entry["latency_ms"] = (
+            max(int((answered - opened).total_seconds() * 1000), 0) if opened else 0
+        )
+        timeline[wait_id] = entry
+        s["timeline"] = timeline
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, "factory: wait-close")
+    return {"closed": wait_id}
+
+
+def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
+        rounds = rounds_of(relay) or [{"questions": [], "answers": {}}]
+        last = dict(rounds[-1])
+        questions = list(last.get("questions") or [])
+        if not any(isinstance(q, dict) and q.get("id") == qid for q in questions):
+            questions.append({"id": qid})
+        last["questions"] = questions
+        answers = dict(last.get("answers") or {})
+        answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}
+        last["answers"] = answers
+        s["relay"] = {
+            "stage": stage or relay.get("stage") or s.get("stage"),
+            "rounds": rounds[:-1] + [last],
+        }
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: answer {qid}")
+    return {"answered": qid, "auto": bool(auto)}
+
+
+def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
+    if status not in state.STATUSES:
+        die(
+            1,
+            f"'{status}' is off-vocabulary; expected one of: {', '.join(state.STATUSES)}",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    if status == "halted" and not halt_reason:
+        die(1, "set-status halted needs --halt-reason")
+    if status == "pr-open" and not pr_url:
+        die(1, "set-status pr-open needs --pr-url")
+
+    def mutate(s):
+        s["status"] = status
+        if status == "halted":
+            s["halt_reason"] = halt_reason
+        if status == "pr-open":
+            s["pr_url"] = pr_url
+        if status in ("pr-open", "aborted"):
+            s["ended_at"] = now
+            s["history"] = (s.get("history") or []) + [
+                {
+                    "at": now,
+                    "stage": "pr" if status == "pr-open" else s.get("stage"),
+                    "event": status,
+                    "commit": None,
+                    "harness": s.get("harness"),
+                }
+            ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: set-status {status}")
+    return {"status": status}
+
+
+def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
+    if kind not in state.DECISION_KINDS:
+        die(
+            1,
+            f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        s["decisions"] = (s.get("decisions") or []) + [
+            {
+                "stage": stage,
+                "question": qid,
+                "answer": answer,
+                "auto": False,
+                "at": now,
+                "kind": kind,
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: decisions-add {qid}")
+    return {"added": {"stage": stage, "question": qid, "kind": kind}}
