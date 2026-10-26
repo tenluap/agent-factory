@@ -1,6 +1,6 @@
 # Harness-agnostic factory: design and plan
 
-Oct 22, 2026 · @Paul · Status: **proposal, waiting for Paul's go-ahead.** Nothing has been changed in `claude-factory` yet.
+Oct 22, 2026 · @Paul · Status: **implemented.** Proposed 2026-10-22, delivered by run `007-stabilise-factory`; the portable-core/adapter split, neutral verbs, stateless stages and capability tiers described here are the shipped design (see `DESIGN.md`). Moved here from the repository root; the text below is the original proposal.
 
 ## Summary
 

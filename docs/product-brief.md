@@ -15,7 +15,7 @@ The factory's primary unit is **one feature in one repository**, ending at an op
 
 ## 2. Evidence and how to use this brief
 
-This brief combines the supplied [README](../README.md), the [harness-agnostic plan](<../Harness-agnostic factory design and plan.md>), and the repository's current design, role prompts, protocols, adapters, and helper scripts. The inspection baseline is commit `3162747`, together with the supplied plan and the working-tree files present during inspection. Existing local changes were left in place.
+This brief combines the supplied [README](../README.md), the [harness-agnostic plan](<Harness-agnostic factory design and plan.md>), and the repository's current design, role prompts, protocols, adapters, and helper scripts. The inspection baseline is commit `3162747`, together with the supplied plan and the working-tree files present during inspection. Existing local changes were left in place.
 
 Three labels distinguish evidence from product choices:
 
@@ -627,7 +627,7 @@ The following can serve as the opening instruction when recreating the factory. 
 | Source | Use in this brief |
 |---|---|
 | [README](../README.md) | User-facing installation, entry points, modes, resume, requirements, and repository layout. FR-01, FR-05, FR-14–FR-16. |
-| [Harness-agnostic design and plan](<../Harness-agnostic factory design and plan.md>) | Portable-core rationale, stateless stages, neutral verbs, capability tiers, historical migration sequence. FR-14–FR-15. |
+| [Harness-agnostic design and plan](<Harness-agnostic factory design and plan.md>) | Portable-core rationale, stateless stages, neutral verbs, capability tiers, historical migration sequence. FR-14–FR-15. |
 | [DESIGN](../DESIGN.md) | Authoritative current workflow, gates, review/repair limits, approval, PR policy, telemetry, and validation plan. FR-01–FR-16. |
 | [CONTEXT](../CONTEXT.md) | Domain vocabulary and engineering concepts. |
 | [Repository constitution](../.specify/memory/constitution.md) | Design precedence, portable core, stateless roles, generated-distribution policy, simplicity. |
