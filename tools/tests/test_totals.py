@@ -106,7 +106,7 @@ class UnionTests(unittest.TestCase):
                         "duration_ms": 5 * 60_000,
                     },  # legacy v3 entry
                     {"at": "2026-10-23T10:20:00Z"},  # nothing measurable
-                    ledger(None, None, duration_ms=60_000),
+                    {"at": "2026-10-23T10:25:00Z", "duration_ms": 60_000},
                 ],
             )
         )

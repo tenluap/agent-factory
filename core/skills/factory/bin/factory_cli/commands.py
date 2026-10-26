@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import state
+from factory_cli import state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -55,13 +55,6 @@ def main_repo(cwd):
     if out.returncode != 0:
         die(2, f"not a git repository: {cwd}")
     return str(Path(out.stdout.strip()).resolve().parent)
-
-
-def fmt_dur(ms):
-    s = max(int(ms or 0), 0) // 1000
-    h, s = divmod(s, 3600)
-    m, s = divmod(s, 60)
-    return f"{h}h {m}m" if h else (f"{m}m {s}s" if m else f"{s}s")
 
 
 def last_activity(state_dict):
@@ -123,28 +116,6 @@ def veto_list(state_dict):
     ]
 
 
-def totals_sentence(state_dict):
-    start = state.parse_iso(state_dict.get("started_at"))
-    if not start:
-        return None
-    end = state.parse_iso(state_dict.get("ended_at")) or datetime.now(timezone.utc)
-    wall_ms = (end - start).total_seconds() * 1000
-    timeline = [e for e in state_dict.get("timeline") or [] if isinstance(e, dict)]
-    closed = [e for e in timeline if isinstance(e.get("latency_ms"), (int, float))]
-    human_ms = sum(e["latency_ms"] for e in closed)
-    ledger = [e for e in state_dict.get("ledger") or [] if isinstance(e, dict)]
-    agent_ms = sum(
-        e["duration_ms"]
-        for e in ledger
-        if isinstance(e.get("duration_ms"), (int, float))
-    )
-    overhead_ms = max(wall_ms - human_ms - agent_ms, 0)
-    return (
-        f"Run took {fmt_dur(wall_ms)}: {fmt_dur(human_ms)} you ({len(closed)} waits), "
-        f"{fmt_dur(agent_ms)} agents ({len(ledger)} spawns), {fmt_dur(overhead_ms)} overhead."
-    )
-
-
 def digest(state_dict, state_path, source):
     out = {k: v for k, v in state_dict.items() if k not in LARGE}
     out["relay"] = relay_digest(state_dict.get("relay"))
@@ -168,9 +139,10 @@ def digest(state_dict, state_path, source):
             if isinstance(e.get("duration_ms"), (int, float))
         ),
     }
+    out["totals"] = totals.compute(state_dict)
     out["decisions"] = veto_list(state_dict)
     out["history_tail"] = (state_dict.get("history") or [])[-3:]
-    out["totals_sentence"] = totals_sentence(state_dict)
+    out["totals_sentence"] = totals.sentence(totals.compute(state_dict))
     analyze = state_dict.get("analyze")
     if isinstance(analyze, dict) and isinstance(analyze.get("pending_clarify"), list):
         out["analyze"] = {**analyze, "pending_clarify": len(analyze["pending_clarify"])}
