@@ -9,7 +9,13 @@ harness="claude-code"
 uninstall=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --harness) harness="$2"; shift 2 ;;
+    --harness)
+      if [ $# -lt 2 ] || [ -z "$2" ]; then
+        echo "usage: $0 [--harness <name>|all] [--uninstall]" >&2
+        echo "error: --harness needs a value (see adapters/, python3 tools/render.py --list)" >&2
+        exit 2
+      fi
+      harness="$2"; shift 2 ;;
     --uninstall) uninstall=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
