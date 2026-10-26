@@ -91,6 +91,11 @@ class Sandbox:
             cwd=str(cwd or self.repo),
         )
 
+    def write_temp(self, name, content):
+        path = self.dir / name
+        path.write_text(content)
+        return str(path)
+
     def close(self):
         subprocess.run(
             ["git", "worktree", "prune"], cwd=str(self.repo), capture_output=True
