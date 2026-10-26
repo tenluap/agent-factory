@@ -114,7 +114,7 @@ Then **verify** yourself: run applicable `commands.build` and `commands.test` in
 
 Done when every tasks.md box is checked, every implementation task is complete, and your own applicable build and test runs are green. A design verification task explicitly waived by a scoped exception is checked only with that decision labeled; it never claims successful verification.
 
-For active Pen implementation, also verify current source/code/capture identity, map/anchor coverage, and runtime/fidelity evidence yourself under `design-code-mapping.md`; persist actual gate results. Missing prerequisites halt for a protected decision; repairable design failures enter step 7's shared queue even if implementation is not yet verified. A valid design failure result is not a fresh code-build visual-repair retry. Design-only work runs applicable checks; app gates remain explicitly not applicable. A stage result never by itself claims verified product fidelity.
+For active Pen implementation, the design gates apply under `design-code-mapping.md`: verify identity, coverage, and evidence yourself and persist actual results; its "Accounted stage rules" (§6) govern repair routing, exceptions, and design-only checks.
 
 ## 7. Review
 
@@ -132,18 +132,18 @@ For active design work, the mandatory gate/exception policy in `design-code-mapp
 
 `NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the approver's veto list (`decisions`: every `auto: true` answer and every `gate-override`, any stage) for veto before you approve. When `review.ui_diff` is true, disclose the UI evaluation's state: `review.ui_reviewer_skipped` (the install was declined), or, when `ui-reviewer` ran, whether its findings disclosed rendered or only static/evidence-limited evaluation. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
-- Approve: step 9 only when active design gates pass or a current explicit scoped exception permits proceeding; ordinary Approve does not infer an exception. Otherwise use the protected decision path in `design-code-mapping.md`.
+- Approve: step 9 only under `design-code-mapping.md`'s approval rule (§6): active design gates pass or a current explicit scoped exception permits proceeding; otherwise the protected decision path there.
 - Request changes: `ponytail` or `tdd` unresolved: stop the same way as step 6/7. Else take the user's text, `SPAWN` `fixer` with it, the resolved `ponytail` and `tdd` paths, and active `design`/`pen-design` path, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
 - Abort: `SHELL: python3 <F>/bin/factory set-status aborted`, keep the worktree, stop.
 
-For active design work, also show source/target, canonical map path/status, current gate results and evidence links, remaining mismatches and shared impact, and explicit exceptions. Persist the user's protected design decisions with their evidence, not only in a relay that a checkpoint clears.
+For active design work, the approval screen shows the handoff facts `design-code-mapping.md` §6 accounts (source/target, map path/status, gate results, evidence, mismatches, exceptions), and protected decisions persist outside the relay.
 
 ## 9. PR
 
-Before publishing active design work, recheck source/code/capture identity and current gate/exception status under `design-code-mapping.md`. Changed evidence returns to invalid checks; unwaived missing/failed gates halt publication.
+Active design work publishes only after `design-code-mapping.md`'s publication recheck (§§5–6): identity and gate/exception status current, unwaived missing/failed gates halt.
 
 1. `git push -u origin <branch>`.
-2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include source/target, map status, evidence links, actual gate gaps, and explicit exceptions.
+2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include the handoff facts `design-code-mapping.md` §6 accounts.
 3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
 4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`, push.
 5. `NOTIFY` the run totals (state.md, "Totals") and offer (do not do) any after-PR extras `harness.md` lists.

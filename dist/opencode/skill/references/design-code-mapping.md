@@ -102,3 +102,17 @@ Missing prerequisite, no progress, or exhausted rounds leaves the affected work 
 An explicit scoped exception permits proceeding past named design gates, retaining `exception-accepted` and failed/missing gate results rather than `verified`/`validated`. Record waived verification tasks explicitly with their decision; unfinished implementation tasks and unrelated mandatory build/test requirements still apply. Without that exception, halt publication; allow user-directed changes or abort while preserving work. User-requested further repairs follow the existing user-directed policy, without rewriting the automatic counter.
 
 Approval and PR handoff report source/target, map path/status, gate results, evidence links, actual mismatches, shared impact, and explicit exceptions. Before publication and on resume recheck identity/freshness; return to invalid checks when context changed. Source edits remain explicitly authorized; review and implementation do not silently redesign the reference.
+
+## 6. Accounted stage rules
+
+These rules live here and only here; the orchestrator SKILL.md and `references/state.md` point at them instead of restating them.
+
+- [x] On active Pen implementation the orchestrator verifies the gates itself — current source/code/capture identity, map/anchor coverage, runtime/fidelity evidence — and persists actual results (§4).
+- [x] A stage result never by itself claims verified product fidelity (§4).
+- [x] Design-only work runs the applicable repository checks; application gates are `not-applicable` only with a reason (§1, §4).
+- [x] Missing prerequisites halt for a protected decision; repairable design failures join step 7's shared repair queue even while implementation is not yet verified (§5).
+- [x] A valid design failure result is never retried as extra code-build visual repair; all repairs share `review.fix_rounds` (§5).
+- [x] Ordinary Approve, fast mode, and agent recommendations never infer exception acceptance; only an explicit scoped exception permits proceeding past named gates, recorded with its evidence (§5).
+- [x] The approval screen shows source/target, canonical map path/status, gate results, evidence links, remaining mismatches and shared impact, and explicit exceptions; protected decisions are persisted in context/map/evidence as well as relay, because checkpoints clear relay (§5).
+- [x] Before publication (and on resume) recheck source/code/capture identity and gate/exception status; changed evidence returns the affected checks to invalid, and unwaived missing/failed gates halt publication (§5).
+- [x] Design context uses pending storage before the worktree exists and moves to `<spec_dir>/factory/design/context.json` at creation, with every returned `design` result persisted before the checkpoint (§1).
