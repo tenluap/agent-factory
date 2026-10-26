@@ -9,7 +9,7 @@
   "branch": "007-stabilise-factory",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -403,8 +403,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-26T10:25:06Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/3",
   "history": [
     {
       "at": "2026-10-25T21:19:48Z",
@@ -536,6 +536,13 @@
       "at": "2026-10-26T10:24:28Z",
       "stage": "approver",
       "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T10:25:06Z",
+      "stage": "pr",
+      "event": "pr-open",
       "commit": null,
       "harness": "opencode"
     }
