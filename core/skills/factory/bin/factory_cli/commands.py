@@ -830,3 +830,26 @@ def cmd_rebind(repo, cwd, name, worktree):
     commit_worktree(str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir"))
     return {"rebound": name, "worktree": new_state["worktree"], "repo": new_state["repo"],
             "previous_worktree": loaded.get("worktree")}
+
+
+def cmd_resume(repo, name):
+    """Record the `resumed` history entry through the writer and return the
+    resume digest: the recorded stage restarts from its beginning (FR-003)."""
+    path, loaded, source = one_run(repo, name)
+    if loaded.get("status") in ("pr-open", "aborted"):
+        die(1, f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume")
+    now = now_iso()
+
+    def mutate(s):
+        s["status"] = "running"
+        s["halt_reason"] = None
+        s["history"] = (s.get("history") or []) + [
+            {"at": now, "stage": s.get("stage"), "event": "resumed",
+             "commit": None, "harness": s.get("harness")}]
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    worktree = updated.get("worktree")
+    if source == "worktree" and worktree:
+        commit_worktree(worktree, f"factory: resume {name}", spec_dir=updated.get("spec_dir"))
+    return digest(updated, path, source)

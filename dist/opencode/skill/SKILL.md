@@ -26,7 +26,7 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 ## 0. Route
 
 - `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
-- `resume <branch>`: `SHELL: python3 <F>/bin/factory show <branch-or-name>` (state.md, "CLI"), then resume that run from the digest (state.md, "Resume").
+- `resume <branch>`: `SHELL: python3 <F>/bin/factory resume <branch-or-name>` — records the `resumed` history entry through the writer and prints the resume digest (state.md, "CLI") — then resume that run from the digest (state.md, "Resume").
 - Anything else: the feature description of a new run. Classify its **intake intent** from the request text (DESIGN.md, "Skill routing"), deciding which stage starts the run:
   - **Exploration** — open-ended idea wording with no settled solution (e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."): after step 1, go to step 2 (`brainstorm`).
   - **Delivery** — concrete feature/change wording, or a request naming an existing spec (e.g. "add a `--no-fast` flag", "fix the resume path so..."): after step 1, go straight to step 3 (`grill`), skipping step 2.

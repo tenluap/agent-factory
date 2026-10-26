@@ -18,6 +18,7 @@ read:
   runs [--repo <path>]              unfinished runs of the repo, JSON
   show <run> [--repo <path>]        resume digest for one run, JSON
   validate <run> | validate --all   validation violations; exit 1 when any
+  resume <run>                      record the resumed entry, print the resume digest
 
 write (the single writer; each stamps its time, validates, writes atomically):
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
@@ -220,6 +221,12 @@ def main(argv):
             if rest[2:]:
                 die_usage("envelope check takes exactly one <file>")
             result = commands.cmd_envelope_check(rest[1])
+        elif command == "resume":
+            positional, flags = parse_flags(rest, command)
+            if len(positional) != 1:
+                die_usage("resume needs exactly one <run>")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_resume(repo, positional[0])
         elif command == "rebind":
             positional, flags = parse_flags(rest, command, value_flags=("--repo", "--worktree"))
             if len(positional) != 1 or not flags.get("--worktree"):
@@ -228,7 +235,10 @@ def main(argv):
             result = commands.cmd_rebind(repo, Path.cwd(), positional[0], flags["--worktree"])
         elif command == "verify":
             _, flags = parse_flags(
-                rest, command, value_flags=("--repo",), bool_flags=("--pass", "--fail")
+                rest,
+                command,
+                value_flags=("--repo", "--commands"),
+                bool_flags=("--pass", "--fail"),
             )
             if bool(flags.get("--pass")) == bool(flags.get("--fail")):
                 die_usage("verify needs exactly one of --pass or --fail")
