@@ -288,7 +288,8 @@ def cmd_runs(repo):
             continue
         path, loaded, identity, _ = run
         violations = state.validate_state(loaded)
-        if loaded.get("status") == "pr-open":
+        # FR-017: resume refuses both ended statuses, so runs lists neither
+        if loaded.get("status") in ("pr-open", "aborted"):
             continue
         entries.append(
             {
