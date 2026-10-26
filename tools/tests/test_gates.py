@@ -21,6 +21,11 @@ def base(stage="implement", **overrides):
     s = fixture("state-v4.json")
     s.update(stage=stage, status="running", **overrides)
     s["history"] = [h for h in s["history"] if h["event"] == "complete"]
+    s["decisions"] = [
+        d
+        for d in s.get("decisions") or []
+        if d.get("kind") not in ("approved", "gate-override")
+    ]
     return s
 
 
@@ -204,7 +209,9 @@ class AcceptingSideCliTests(unittest.TestCase):
         out = self.box.cli("checkpoint", "implement", "--next", "review", cwd=self.wt)
         self.assertEqual(out.returncode, 1)
         self.assertIn("verify", out.stderr.lower())
-        self.assertEqual(self.load()["stage"], "implement", "a refused checkpoint changes nothing")
+        self.assertEqual(
+            self.load()["stage"], "implement", "a refused checkpoint changes nothing"
+        )
 
     def test_gate_override_permits_implement_and_history_carries_the_decision(self):
         s = self.load()

@@ -28,6 +28,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
+  verify --pass|--fail --commands '<json>'          record the build/test verify pair
   lock take <run> [--force]                         the only explicit takeover
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
@@ -196,6 +197,28 @@ def main(argv):
                 positional[0],
                 halt_reason=flags.get("--halt-reason"),
                 pr_url=flags.get("--pr-url"),
+            )
+        elif command == "verify":
+            _, flags = parse_flags(
+                rest, command, value_flags=("--repo",), bool_flags=("--pass", "--fail")
+            )
+            if bool(flags.get("--pass")) == bool(flags.get("--fail")):
+                die_usage("verify needs exactly one of --pass or --fail")
+            payload = (
+                json_or_usage(flags["--commands"], "--commands")
+                if "--commands" in flags
+                else []
+            )
+            if not isinstance(payload, list) or payload == []:
+                die_usage("--commands needs a JSON list of {command, status} objects")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_verify(
+                repo,
+                Path.cwd(),
+                passed=bool(flags.get("--pass")),
+                commands_payload=[
+                    (c.get("command"), c.get("status")) for c in payload if isinstance(c, dict)
+                ],
             )
         elif command == "lock":
             sub = rest[:1]

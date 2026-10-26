@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import lock, state, totals
+from factory_cli import checks, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -470,6 +470,11 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     target = next_stage or successor(stage)
+    if target:
+        violation = checks.gate_violation(loaded, target)
+        if violation:
+            die(1, f"gate refusal into '{target}': {violation}")
+    permitted = checks.permitting_decision(loaded, target) if target else None
 
     def mutate(s):
         relay = s.get("relay")
@@ -483,15 +488,16 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None):
             decisions = decisions + settled_answers(relay, relay_stage, now)
         s["decisions"] = decisions
         s["relay"] = None
-        s["history"] = (s.get("history") or []) + [
-            {
-                "at": now,
-                "stage": stage,
-                "event": "complete",
-                "commit": None,
-                "harness": s.get("harness"),
-            }
-        ]
+        entry = {
+            "at": now,
+            "stage": stage,
+            "event": permitted["kind"] if permitted else "complete",
+            "commit": None,
+            "harness": s.get("harness"),
+        }
+        if permitted:
+            entry["decision"] = permitted["question"]
+        s["history"] = (s.get("history") or []) + [entry]
         if target:
             s["stage"] = target
         return s
@@ -691,5 +697,33 @@ def cmd_lock_take(repo, name, force=False):
         info = lock.take(path, harness=loaded.get("harness") or "unknown", force=force)
     except lock.LockHeld as e:
         die(1, str(e))
-    return {"taken": name, "lock_path": str(lock.lock_path_for(path)),
-            "taken_over": info["taken_over"], "previous_owner": info["previous"]}
+    return {
+        "taken": name,
+        "lock_path": str(lock.lock_path_for(path)),
+        "taken_over": info["taken_over"],
+        "previous_owner": info["previous"],
+    }
+
+
+def cmd_verify(repo, cwd, passed, commands_payload):
+    """The verify record (FR-006, R3): the review gate reads the latest one."""
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    event = "verify-pass" if passed else "verify-fail"
+
+    def mutate(s):
+        s["history"] = (s.get("history") or []) + [
+            {
+                "at": now,
+                "stage": s.get("stage"),
+                "event": event,
+                "commit": None,
+                "harness": s.get("harness"),
+                "commands": [{"command": c, "status": st} for c, st in commands_payload],
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: {event}")
+    return {"verified": event, "commands": commands_payload}
