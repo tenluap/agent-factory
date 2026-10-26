@@ -624,3 +624,64 @@ class RebindTests(unittest.TestCase):
         self.box.pending_run(self.branch, fixture("state-v1.json"))
         out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
         self.assertEqual(out.returncode, 3)
+
+
+class PruneTests(unittest.TestCase):
+    """prune previews stale pending files and deletes only with --delete (FR-019)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+
+    def pending(self, name, state):
+        return self.box.pending_run(name, state)
+
+    def with_worktree_state(self, name, state):
+        path = self.pending(name, state)
+        wt = self.box.dir / f"moved-{name}"
+        folder = wt / "specs" / name / "factory"
+        folder.mkdir(parents=True)
+        (folder / "state.json").write_text(json.dumps(dict(state, worktree=str(wt))))
+        return path
+
+    def test_stale_when_the_run_has_a_worktree_state(self):
+        path = self.with_worktree_state("110-a", fixture("state-v4.json"))
+        out = self.box.cli("prune", "--dry-run")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn(str(path), out.stdout)
+        self.assertTrue(path.exists(), "a dry run deletes nothing")
+
+    def test_stale_when_the_pending_run_ended(self):
+        pr = self.pending("111-b", fixture("state-v4.json"))
+        aborted = self.pending("112-b2", fixture("state-v1.json"))
+        s = json.loads(aborted.read_text())
+        s["status"] = "aborted"
+        s["ended_at"] = "2026-10-24T00:00:00Z"
+        aborted.write_text(json.dumps(s))
+        pr_state = json.loads(pr.read_text())
+        pr_state["status"] = "pr-open"
+        pr_state["ended_at"] = "2026-10-24T00:00:00Z"
+        pr.write_text(json.dumps(pr_state))
+        out = self.box.cli("prune", "--dry-run")
+        self.assertIn(str(pr), out.stdout)
+        self.assertIn(str(aborted), out.stdout)
+
+    def test_a_run_whose_only_state_is_the_pending_file_is_never_stale(self):
+        path = self.pending("113-c", fixture("state-v1.json"))
+        out = self.box.cli("prune", "--dry-run")
+        self.assertNotIn(str(path), out.stdout)
+        out = self.box.cli("prune", "--delete")
+        self.assertTrue(path.exists(), "--delete never removes a run's only state")
+
+    def test_delete_is_the_only_deleting_form(self):
+        stale = self.with_worktree_state("114-d", fixture("state-v4.json"))
+        keep = self.pending("115-e", fixture("state-v1.json"))
+        for args in ((), ("--dry-run",)):
+            out = self.box.cli("prune", *args)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertTrue(stale.exists(), f"prune {args} deletes nothing")
+            self.assertIn(str(stale), out.stdout, f"prune {args} still lists the candidate")
+        out = self.box.cli("prune", "--delete")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertFalse(stale.exists(), "--delete removes the stale pending file")
+        self.assertTrue(keep.exists())
