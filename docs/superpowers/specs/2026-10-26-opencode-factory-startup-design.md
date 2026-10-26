@@ -1,7 +1,7 @@
 # OpenCode factory startup reliability
 
 **Date:** 26 October 2026  
-**Status:** Approved design; implementation pending.
+**Status:** Implemented; runtime OpenCode discovery still requires a live-session check.
 
 ## Problem
 
