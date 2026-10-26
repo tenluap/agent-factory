@@ -103,6 +103,51 @@ class ShowTests(unittest.TestCase):
         self.assertEqual(out.returncode, 3)
         self.assertIn("several", out.stderr)
 
+    def test_show_digest_aggregates_come_from_totals_alone(self):
+        # FR-015: with overlapping spawns the summed parallel duplicates are
+        # gone; the union totals are the only elapsed aggregates
+        self.box.worktree_run(
+            "025-overlap",
+            v4_state(
+                ledger=[
+                    {
+                        "at": "2026-10-23T10:00:00Z",
+                        "stage": "implement",
+                        "role": "code-build",
+                        "harness": "opencode",
+                        "started_at": "2026-10-23T10:00:00Z",
+                        "ended_at": "2026-10-23T10:05:00Z",
+                        "duration_ms": 300000,
+                        "in_est": 0,
+                        "out_est": 0,
+                        "reported": None,
+                    },
+                    {
+                        "at": "2026-10-23T10:01:00Z",
+                        "stage": "review",
+                        "role": "code-standards",
+                        "harness": "opencode",
+                        "started_at": "2026-10-23T10:01:00Z",
+                        "ended_at": "2026-10-23T10:04:00Z",
+                        "duration_ms": 180000,
+                        "in_est": 0,
+                        "out_est": 0,
+                        "reported": None,
+                    },
+                ],
+            ),
+        )
+        out = self.box.cli("show", "025-overlap")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        digest = json.loads(out.stdout)
+        self.assertNotIn("human_ms", digest["waits"], "the summed duplicate is gone")
+        self.assertNotIn("agent_ms", digest["spawns"], "the summed duplicate is gone")
+        self.assertEqual(
+            digest["totals"]["agent_ms"],
+            300000,
+            "the union of the overlapping intervals, never their sum",
+        )
+
     def test_show_missing_recorded_worktree_exits_four(self):
         self.box.worktree_run(
             "021-delta", v4_state(), worktree=self.box.dir / "gone-021"
