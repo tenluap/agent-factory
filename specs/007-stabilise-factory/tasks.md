@@ -103,7 +103,7 @@
 - [X] T043 [US6] Implement the reported-vs-estimate labelling in `core/skills/factory/bin/factory_cli/totals.py` and `show`, with `ledger-add --reported` storing harness-reported usage where an adapter exposes it (FR-010, S18; seam: `factory_cli.totals` interval unions); then the build gate.
 - [X] T044 [US6] Consolidate the Pen design rules into `core/skills/factory/references/design-code-mapping.md` (FR-021): move every rule sentence from `core/skills/factory/SKILL.md` steps 6, 8, 9 and the duplicated prose of `core/skills/factory/references/state.md` (keeping its schema facts) into the one reference against a checked list of accounted rules, replacing removed prose with pointers and trimming redundant prose. Exempt: `SKILL.md` and `references/` prose - documentation only.
 - [X] T045 [US6] Move `Harness-agnostic factory design and plan.md` to `docs/` marked implemented and update the inbound links in `README.md`, `DESIGN.md` and `specs/`. Exempt: `docs/` moves - documentation only.
-- [ ] T046 [US6] FR-024 closing pass: correct every sentence still contradicted by the delivered behaviour in `DESIGN.md`, `core/skills/factory/references/state.md`, `docs/product-brief.md` §14 and `README.md`, each correction deliberate in this same change. Exempt: `README.md`, `docs/` and `references/` corrections - documentation only.
+- [X] T046 [US6] FR-024 closing pass: correct every sentence still contradicted by the delivered behaviour in `DESIGN.md`, `core/skills/factory/references/state.md`, `docs/product-brief.md` §14 and `README.md`, each correction deliberate in this same change. Exempt: `README.md`, `docs/` and `references/` corrections - documentation only.
 
 ---
 
