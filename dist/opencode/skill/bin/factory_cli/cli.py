@@ -28,6 +28,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
+  lock take <run> [--force]                         the only explicit takeover
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
@@ -196,6 +197,15 @@ def main(argv):
                 halt_reason=flags.get("--halt-reason"),
                 pr_url=flags.get("--pr-url"),
             )
+        elif command == "lock":
+            sub = rest[:1]
+            if sub != ["take"]:
+                die_usage("lock supports only: lock take <run> [--force]")
+            positional, flags = parse_flags(rest[1:], command, bool_flags=("--force",))
+            if len(positional) != 1:
+                die_usage("lock take needs exactly one <run>")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_lock_take(repo, positional[0], force=bool(flags.get("--force")))
         elif command == "decisions-add":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--kind")

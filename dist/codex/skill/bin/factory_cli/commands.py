@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import state, totals
+from factory_cli import lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -406,6 +406,8 @@ def resolve_target(repo, cwd):
 def write_run(path, loaded, mutate):
     try:
         return state.write_state(path, mutate(dict(loaded)))
+    except lock.LockHeld as e:
+        die(1, str(e))
     except state.StateError as e:
         die(1, str(e))
 
@@ -680,3 +682,14 @@ def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
     write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: decisions-add {qid}")
     return {"added": {"stage": stage, "question": qid, "kind": kind}}
+
+
+def cmd_lock_take(repo, name, force=False):
+    """Explicit takeover of a run's lock (FR-005); refuses a live lock unless --force."""
+    path, loaded, source = one_run(repo, name)
+    try:
+        info = lock.take(path, harness=loaded.get("harness") or "unknown", force=force)
+    except lock.LockHeld as e:
+        die(1, str(e))
+    return {"taken": name, "lock_path": str(lock.lock_path_for(path)),
+            "taken_over": info["taken_over"], "previous_owner": info["previous"]}

@@ -153,3 +153,40 @@ class LifecycleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LockCliTests(unittest.TestCase):
+    def setUp(self):
+        from tests import Sandbox, fixture
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "060-lock"
+        self.wt = self.box.worktree_run(self.branch, fixture("state-v4.json"))
+        from pathlib import Path as _P
+        self.guard = self.wt / "specs" / self.branch / "factory" / "state.json"
+        self.lock_path = lock.lock_path_for(self.guard)
+
+    def test_lock_take_cli_refuses_live_and_takes_with_force(self):
+        lock.acquire(self.guard, harness="opencode")
+        out = self.box.cli("lock", "take", self.branch)
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("locked by PID", out.stderr)
+        out = self.box.cli("lock", "take", self.branch, "--force")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        on_disk = json.loads(self.lock_path.read_text())
+        self.assertTrue(on_disk["taken_over"])
+        self.assertEqual(on_disk["previous"]["harness"], "opencode")
+
+    def test_writers_refuse_under_a_live_foreign_lock(self):
+        holder = subprocess.Popen(["sleep", "30"])
+        try:
+            self.lock_path.write_text(json.dumps(
+                {"owner_pid": holder.pid, "host": HOST, "harness": "opencode",
+                 "at": "2026-10-20T10:00:00Z"}))
+            out = self.box.cli("checkpoint", "implement", cwd=self.wt)
+            self.assertEqual(out.returncode, 1)
+            self.assertIn("locked by PID", out.stderr)
+        finally:
+            holder.terminate()
+            holder.wait()
+            self.lock_path.unlink(missing_ok=True)

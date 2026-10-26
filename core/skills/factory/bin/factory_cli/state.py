@@ -11,6 +11,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from factory_cli import lock
+
 VERSION = 4
 STATUSES = ("running", "waiting_user", "paused", "halted", "aborted", "pr-open")
 STAGES = (
@@ -378,11 +380,15 @@ def write_state(path, state):
                 )
     state = upgrade(state)
     text = json.dumps(state, indent=2, ensure_ascii=False) + "\n"
-    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    lock.acquire(path, harness=state.get("harness") or "unknown")
     try:
-        tmp.write_text(text)
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        try:
+            tmp.write_text(text)
+            os.replace(tmp, path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+    finally:
+        lock.release(path)
     return state
