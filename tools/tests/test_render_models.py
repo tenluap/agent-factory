@@ -41,6 +41,31 @@ def render(harness, config=None):
     return out
 
 
+def render_to(harness, out, config=None, exported=True):
+    """`--out` render into `out`; the factory home is a temp dir holding `config`.
+
+    `exported=True` sets FACTORY_HOME to that home; `exported=False` leaves it
+    unset so the documented default home `${FACTORY_HOME:-~/.factory}` resolves
+    through the sandboxed HOME.
+    """
+    home = Path(tempfile.mkdtemp(prefix="factory-render-home-"))
+    env = dict(os.environ)
+    env.pop("FACTORY_HOME", None)
+    env["HOME"] = str(home)
+    if config is not None:
+        (home / "config.json").write_text(json.dumps(config))
+    if exported:
+        env["FACTORY_HOME"] = str(home)
+    return subprocess.run(
+        [sys.executable, str(REPO / "tools" / "render.py"), harness, "--out", str(out)],
+        cwd=REPO,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+
 class ModelPolicyTests(unittest.TestCase):
     def tearDown(self):
         # leave the working tree's dist exactly canonical
@@ -180,6 +205,63 @@ class CanonicalRenderTests(unittest.TestCase):
             env={**os.environ, "FACTORY_HOME": override_home},
         )
         self.assertIn("spec-builder: test-org/test-deep-model", effective.stdout)
+
+
+class PerUserRenderTests(unittest.TestCase):
+    """FR-001/FR-003: `render.py <harness> --out <dir>` renders the harness
+    tree into <dir> with `${FACTORY_HOME:-~/.factory}/config.json` models
+    merged per key over the adapter defaults; absent config or keys fall
+    back per key."""
+
+    OVER = "test-org/test-deep-model"
+
+    def out_texts(self, out):
+        return [p.read_text() for p in sorted((Path(out) / "agents").iterdir())]
+
+    def test_out_render_merges_from_the_default_home_when_unset(self):
+        out = tempfile.mkdtemp(prefix="factory-per-user-")
+        render_to(
+            "opencode",
+            out,
+            config={"models": {"opencode": {"deep": self.OVER}}},
+            exported=False,
+        )
+        self.assertTrue(
+            any(self.OVER in t for t in self.out_texts(out)),
+            "an unset FACTORY_HOME still resolves ~/.factory/config.json",
+        )
+        self.assertTrue((Path(out) / "skill").is_dir(), "the tree lands in <dir>")
+
+    def test_out_render_merges_from_an_exported_factory_home(self):
+        out = tempfile.mkdtemp(prefix="factory-per-user-")
+        render_to("opencode", out, config={"models": {"opencode": {"deep": self.OVER}}})
+        self.assertTrue(any(self.OVER in t for t in self.out_texts(out)))
+
+    def test_out_render_falls_back_per_key_on_absent_keys(self):
+        out = tempfile.mkdtemp(prefix="factory-per-user-")
+        render_to(
+            "claude-code",
+            out,
+            config={"models": {"claude-code": {"standard": "test-org/test-standard"}}},
+        )
+        texts = self.out_texts(out)
+        self.assertTrue(
+            any("test-org/test-standard" in t for t in texts),
+            "a present key merges over the default",
+        )
+        self.assertTrue(
+            any("opus" in t for t in texts),
+            "an absent key keeps the adapter default",
+        )
+
+    def test_out_render_without_config_uses_defaults(self):
+        out = tempfile.mkdtemp(prefix="factory-per-user-")
+        render_to("claude-code", out)  # no config.json in the home at all
+        texts = self.out_texts(out)
+        self.assertTrue(any("opus" in t for t in texts), "adapter defaults stand")
+        self.assertFalse(
+            any("test-org/" in t for t in texts), "nothing personal merges"
+        )
 
 
 class ReadOnlyConformanceTests(unittest.TestCase):
