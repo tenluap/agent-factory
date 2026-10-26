@@ -538,16 +538,24 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             decisions = decisions + settled_answers(relay, relay_stage, now)
         s["decisions"] = decisions
         s["relay"] = None
-        entry = {
-            "at": now,
-            "stage": stage,
-            "event": permitted["kind"] if permitted else "complete",
-            "commit": None,
-            "harness": s.get("harness"),
-        }
-        if permitted:
-            entry["decision"] = permitted["question"]
-        s["history"] = (s.get("history") or []) + [entry]
+        history = s.get("history") or []
+        pending = history[-1] if history else None
+        if pending and pending.get("stage") == stage and pending.get("commit") is None:
+            # FR-011: a retry of a stage whose commit never landed reuses the
+            # pending entry instead of appending a second one
+            pending["at"] = now
+        else:
+            entry = {
+                "at": now,
+                "stage": stage,
+                "event": permitted["kind"] if permitted else "complete",
+                "commit": None,
+                "harness": s.get("harness"),
+            }
+            if permitted:
+                entry["decision"] = permitted["question"]
+            history = history + [entry]
+        s["history"] = history
         if target:
             s["stage"] = target
         return s
@@ -560,12 +568,37 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         dirty = dirty_paths(worktree)
         in_spec = [p for p in dirty if p.startswith(spec_prefix)]
         undeclared = [p for p in dirty if p not in declared and p not in in_spec]
-        commit = commit_worktree(
-            worktree,
-            f"factory: {stage} complete",
-            spec_dir=updated.get("spec_dir"),
-            extra=declared,
-        )
+        try:
+            commit = commit_worktree(
+                worktree,
+                f"factory: {stage} complete",
+                spec_dir=updated.get("spec_dir"),
+                extra=declared,
+            )
+        except CLIError as e:
+            reason = str(e)
+            print(f"factory: state written, commit failed: {reason}", file=sys.stderr)
+            return {
+                "checkpointed": stage,
+                "stage": updated["stage"],
+                "commit": None,
+                "commit_error": reason,
+                "declared": declared,
+                "undeclared": undeclared,
+                "source": source,
+            }
+        # FR-011: a retried checkpoint fills the reused pending entry with the
+        # commit that finally landed (a fresh checkpoint appends a new entry)
+        reused = len(updated.get("history") or []) == len(loaded.get("history") or [])
+        if commit and reused and updated.get("history"):
+
+            def stamp(s):
+                trailing = s.get("history") or []
+                if trailing and trailing[-1].get("stage") == stage:
+                    trailing[-1]["commit"] = commit
+                return s
+
+            write_run(path, updated, stamp)
     return {
         "checkpointed": stage,
         "stage": updated["stage"],

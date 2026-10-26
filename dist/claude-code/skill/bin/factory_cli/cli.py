@@ -309,6 +309,10 @@ def main(argv):
         else:
             die_usage(f"unknown command '{command}'")
         emit(result)
+        if isinstance(result, dict) and result.get("commit_error"):
+            # FR-011: the state write landed, the commit did not — the JSON
+            # above names it and the exit code says the command failed
+            raise SystemExit(1)
     except commands.state.StateError as e:  # a refused write names its reason
         print(f"factory: {e}", file=sys.stderr)
         raise SystemExit(1)
