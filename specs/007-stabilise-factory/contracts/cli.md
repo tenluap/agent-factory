@@ -17,7 +17,7 @@ Phase 1 output for `007-stabilise-factory`. Invocation: `python3 <F>/bin/factory
 
 | Command | Output (JSON) | Notes |
 |---|---|---|
-| `runs [--repo <path>]` | discovery list | one entry per unfinished run; reports lock and validation violations instead of hiding them |
+| `runs [--repo <path>]` | discovery list | one entry per unfinished run; `pr-open` and `aborted` runs are skipped, since resume refuses them (FR-017); reports lock and validation violations instead of hiding them |
 | `show <run> [--repo <path>]` | resume digest | scalars plus aggregates, `relay.unanswered`, `decisions` (the approver's veto list), `waits`, `spawns`, `totals_sentence`, `history_tail`; never the whole state |
 | `validate <run> [--all]` | violation list | each violation: `location`, `reason`; exit 1 when any is found (S2, FR-003) |
 
@@ -35,6 +35,7 @@ Each stamps its own time, validates before writing, writes atomically (temp + re
 | `answer <qid> '<answer>' [--auto] [--stage <stage>]` | write one settled answer into the open relay round (`auto` marks fast-mode acceptance) |
 | `set-status <status> [--halt-reason <text>] [--pr-url <url>]` | record a status change (`halted` carries its reason; `pr-open` its URL); `aborted` and `pr-open` also append their history entry and set `ended_at` |
 | `decisions-add <stage> <qid> '<answer>' [--kind answer\|approved\|gate-override]` | append a decision record entry directly: `--kind approved` records the approver's approval at `approver` (the record the `pr` gate requires), `--kind gate-override` an explicit gate override, `--kind answer` a settled answer written outside `answer`; both gate kinds carry `auto` false |
+| `resume <run>` | refuse a `pr-open` or `aborted` run; otherwise record the `resumed` history entry through the writer, clear `halt_reason`, set `status: running`, and print the resume digest (FR-020) |
 
 ## Gate and output checks
 

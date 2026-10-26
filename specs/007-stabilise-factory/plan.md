@@ -126,7 +126,7 @@ conformance/golden-run/<harness>.md          # one golden-run checklist per harn
 - Exempt: `README.md`, `references/state.md`, `references/protocol.md`, `references/design-code-mapping.md`, `SKILL.md` prose - documentation only.
 - Exempt: `adapters/*/adapter.json` model fields, `adapters/*/harness.md`, `.github/workflows/ci.yml` - configuration and documentation only; their behaviour is checked through the render and install seams.
 - Exempt: `conformance/golden-run/<harness>.md` checklists, `conformance/golden-run-results.md` and `conformance/fixture-repo/` contents - documentation and test data only.
-- Overridden: none.
+- Overridden: ENG-3 - paired red/implement task structure
 
 Confirmed: 2026-10-25 - Q1 accepted - seams: `bin/factory` CLI command surface, `factory_cli.state` module API, `factory_cli.checks` transition rules, `factory_cli.checks` output-shape checker, `factory_cli.totals` interval unions, `factory_cli.lock` lifecycle, `tools/render.py` render output, `install.sh` argument validation
 
