@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
   "status": "running",
-  "stage": "review",
+  "stage": "fix",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -297,6 +297,46 @@
       "out_est": 0,
       "reported": null,
       "duration_ms": 1176000
+    },
+    {
+      "at": "2026-10-26T09:28:16Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 2665,
+      "out_est": 227,
+      "reported": null,
+      "duration_ms": 534000
+    },
+    {
+      "at": "2026-10-26T09:28:16Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 2834,
+      "out_est": 261,
+      "reported": null,
+      "duration_ms": 534000
+    },
+    {
+      "at": "2026-10-26T09:28:16Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 3413,
+      "out_est": 120,
+      "reported": null,
+      "duration_ms": 534000
+    },
+    {
+      "at": "2026-10-26T09:34:35Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 2331,
+      "out_est": 537,
+      "reported": null,
+      "duration_ms": 379000
     }
   ],
   "review": {
@@ -416,6 +456,13 @@
     {
       "at": "2026-10-26T09:19:22Z",
       "stage": "fix",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T09:34:35Z",
+      "stage": "review",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
