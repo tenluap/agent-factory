@@ -155,14 +155,20 @@ def acquire(state_path, harness):
 
 
 def release(state_path):
-    """Remove the lock only if this process still owns it."""
+    """Remove the lock only if this process still owns it. The unlink is
+    identity-checked (FR-014): the file is removed only when it is still the
+    same file (st_dev, st_ino) whose contents said so — a lock swapped in by
+    another owner inside the window is left in place."""
     path = lock_path_for(state_path)
+    identity = _identity(path)
     info = read(path)
     if (
         info
         and info.get("owner_pid") == os.getpid()
         and info.get("host") == socket.gethostname()
     ):
+        if _identity(path) != identity:
+            return  # replaced since the read; not ours to remove
         path.unlink(missing_ok=True)
 
 
