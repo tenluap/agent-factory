@@ -102,8 +102,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 008-install-models-advisories",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-26T17:21:49.509523Z",
+      "latency_ms": 24599
     }
   ],
   "ledger": [
