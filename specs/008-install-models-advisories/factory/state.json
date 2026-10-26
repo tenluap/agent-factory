@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
   "status": "running",
-  "stage": "specify",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -61,7 +61,18 @@
       "latency_ms": 168000
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-10-26T10:39:17Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 6568,
+      "out_est": 3699,
+      "reported": null,
+      "duration_ms": 357000
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
@@ -81,6 +92,13 @@
     {
       "at": "2026-10-26T10:33:20Z",
       "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T10:39:17Z",
+      "stage": "specify",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
