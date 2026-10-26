@@ -7,10 +7,10 @@ Phase 1 for `008-install-models-advisories`. **No state schema change**: run `st
 ### Per-user render (`${FACTORY_HOME:-~/.factory}/dist/<harness>`)
 
 - A full harness tree (`skill/`, `agents/`) rendered at install time with the user's model overrides merged.
-- Owner: `install.sh` via `tools/render.py <harness> --out <dir>`; disposable and re-created on every install; removed with the links by `--uninstall`.
-- Validation: the render root must be creatable and writable; otherwise the install fails naming the path and writes nothing to the repository.
+- Owner: `install.sh` via `tools/render.py <harness> --out <dir>`; disposable and re-created on every install; removed with the links by `--uninstall`, which leaves `config.json`, pending runs and the committed rendered distribution untouched.
+- Validation: a missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install naming the path and writes nothing to the repository.
 
-### Committed `dist/<harness>`
+### Committed rendered distribution (`dist/<harness>`)
 
 - The canonical, machine-independent render; produced only by `tools/render.py <harness>` and the build gate.
 - Invariant (FR-002): it never contains a personal model id, and no installer run rewrites or dirties it.

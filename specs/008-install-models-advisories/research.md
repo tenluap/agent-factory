@@ -6,21 +6,21 @@ Phase 0 for `008-install-models-advisories`. Every technical unknown in `plan.md
 
 **Decision**: `tools/render.py` gains one explicit per-user render target, `render.py <harness> --out <dir>`, which renders the harness tree into `<dir>` with `${FACTORY_HOME:-~/.factory}/config.json` `models.<harness>` merged over the adapter defaults (per-key fallback). The plain `render.py <harness>` render into `dist/<harness>` never reads `config.json` at all. `install.sh` renders each selected harness into `${FACTORY_HOME:-~/.factory}/dist/<harness>` and links the skill and agent directories from that copy.
 
-**Rationale**: the committed `dist/` must stay canonical and machine-independent (FR-002) while installed agents must carry the user's models (FR-001); only an explicit second render target can satisfy both. The brief fixes the target path.
+**Rationale**: the committed rendered distribution must stay canonical and machine-independent (FR-002) while installed agents must carry the user's models (FR-001); only an explicit second render target can satisfy both. The brief fixes the target path.
 
-**Alternatives considered**: (a) the verdict's report-only fix — leave the linked dist without personal models; rejected, the brief supersedes it. (b) keep env-gated merging inside `load_adapter` and unset `FACTORY_HOME` for canonical renders; rejected, an exported `FACTORY_HOME` would still be one forgotten `unset` away from leaking personal ids into committed output. (c) post-process the copied agent files with `sed`; rejected, the renderer already owns field generation.
+**Alternatives considered**: (a) the verdict's report-only fix — leave the linked rendered distribution without personal models; rejected, the brief supersedes it. (b) keep env-gated merging inside `load_adapter` and unset `FACTORY_HOME` for canonical renders; rejected, an exported `FACTORY_HOME` would still be one forgotten `unset` away from leaking personal ids into committed output. (c) post-process the copied agent files with `sed`; rejected, the renderer already owns field generation.
 
 ## R2 — The effective-model report
 
 **Decision**: `--models` and `--paths` become reports that never write: `render.py <harness> --models` prints the effective model per role resolved from the default home (adapter defaults merged with `config.json`, whether or not `FACTORY_HOME` is exported) without rendering anything.
 
-**Rationale**: the report must equal what the linked agents carry (FR-004) and an installer run may never rewrite or dirty the committed `dist/` (FR-002). Today both `install.sh` render calls re-render `dist/`, which is the demonstrated leak.
+**Rationale**: the report must equal what the linked agents carry (FR-004) and an installer run may never rewrite or dirty the committed rendered distribution (FR-002). Today both `install.sh` render calls re-render `dist/`, which is the demonstrated leak.
 
 **Alternatives considered**: keeping `--models` as a post-render print; rejected, it forces a canonical render at install time.
 
 ## R3 — Default-home resolution
 
-**Decision**: one helper resolves the factory home as `${FACTORY_HOME:-~/.factory}` (expanded) for config reads and the per-user render root; an absent `config.json` or absent keys fall back per key to adapter defaults. A nonexistent or unwritable home fails the install with a message naming the path; the committed `dist/` is untouched because install never writes it.
+**Decision**: one helper resolves the factory home as `${FACTORY_HOME:-~/.factory}` (expanded) for config reads and the per-user render root; an absent `config.json` or absent keys fall back per key to adapter defaults. A missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install with a message naming the path, writing nothing — the committed rendered distribution is untouched because install never writes it. `--uninstall` removes the links it created and the per-user render at `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched.
 
 **Rationale**: FR-003 and the edge cases in `spec.md`; today an unset `FACTORY_HOME` silently means "no config", and `test_render_models.py` asserts that false behaviour.
 

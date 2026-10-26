@@ -6,7 +6,7 @@
 
 ## Summary
 
-One stacked PR off `origin/007-stabilise-factory`, two threads. **Personal models (FR-001–FR-006)**: `install.sh` renders a per-user copy of each selected harness into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with `config.json` models merged and links the harness's skill and agent directories from that copy; `tools/render.py` gains an explicit per-user render target and its canonical render never reads `config.json`, so the committed `dist/` stays machine-independent; the models report resolves from the default home and writes nothing. **Round-3 advisories (FR-007–FR-021)**: exit-5 usage refusals for malformed ledger timestamps, `rebind` through `write_run`, ended runs immutable everywhere, exactly one open relay round in validation, lock liveness as a judgment (unevaluable PID counts as live, `--force` before liveness, identity-checked release), `show` and totals honest about time (union totals only, open runs measured to now, aborted runs hidden) and the hygiene items — dead test duplicates deleted, `replay.py` on shared vocabulary, `resume <run>` documented, 007's plan recording its ENG-3 override.
+One stacked PR off `origin/007-stabilise-factory`, two threads. **Personal models (FR-001–FR-006)**: `install.sh` renders a per-user copy of each selected harness into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with `config.json` models merged and links the harness's skill and agent directories from that copy; `tools/render.py` gains an explicit per-user render target and its canonical render never reads `config.json`, so the committed rendered distribution stays machine-independent; the models report resolves from the default home and writes nothing. **Round-3 advisories (FR-007–FR-021)**: exit-5 usage refusals for malformed ledger timestamps, `rebind` through `write_run`, ended runs immutable everywhere, exactly one open relay round in validation, lock liveness as a judgment (unevaluable PID counts as live, `--force` before liveness, identity-checked release), `show` and totals honest about time (union totals only, open runs measured to now, aborted runs hidden) and the hygiene items — dead test duplicates deleted, `replay.py` on shared vocabulary, `resume <run>` documented, 007's plan recording its ENG-3 override.
 
 ## Technical Context
 
@@ -17,7 +17,7 @@ One stacked PR off `origin/007-stabilise-factory`, two threads. **Personal model
 **Target Platform**: macOS/Linux developer machines across `claude-code`, `opencode`, `codex`, `copilot`, `zcode`.
 **Project Type**: CLI tool plus installer over generated skill/agent documentation.
 **Performance Goals**: one extra render per harness at install time and nothing else; per-write cost unchanged. No stated throughput requirement, so no benchmark (ENG-20 not triggered).
-**Constraints**: one writer per run; ended runs immutable; committed `dist/` machine-independent and never touched by an installer run; stdlib only; no schema or vocabulary change.
+**Constraints**: one writer per run; ended runs immutable; the committed rendered distribution machine-independent and never touched by an installer run; stdlib only; no schema or vocabulary change.
 **Scale/Scope**: no new module; changes across `install.sh`, `tools/render.py` and five `factory_cli` modules, two documentation files, two 007 spec files; tests extend seven existing modules.
 
 ## Constitution Check
@@ -76,7 +76,7 @@ specs/007-stabilise-factory/plan.md          # Overridden: ENG-3 line
 | Name | Kind | Reason |
 |---|---|---|
 | `specs/008-install-models-advisories/{research,data-model,quickstart,contracts/cli-delta}.md` | file | Phase 0/1 design artifacts the plan workflow requires; the delta contract keeps 007's contract authoritative while naming what this run changes |
-| per-user render target (`render.py <h> --out <dir>`) | abstraction | the committed `dist/` must stay machine-independent while installed agents carry personal models (FR-001, FR-002) |
+| per-user render target (`render.py <h> --out <dir>`) | abstraction | the committed rendered distribution must stay machine-independent while installed agents carry personal models (FR-001, FR-002) |
 | write-free reports (`--models`, `--paths`) | abstraction | the models report must match the linked agents and may never rewrite `dist/` (FR-004) |
 | unevaluable-PID-is-live liveness rule | abstraction | liveness is a judgment; a failed probe must never grant a silent takeover (FR-012, FR-013) |
 | pending checkpoint history entry reused on retry | abstraction | a retried checkpoint after a failed commit must not duplicate history (FR-011) |
@@ -91,7 +91,7 @@ specs/007-stabilise-factory/plan.md          # Overridden: ENG-3 line
 - **Performance**: no stated requirement, so no measurement or benchmark; install adds exactly one render per harness into the factory home (ENG-20).
 - **Dependencies**: none new; stdlib only (ENG-27).
 - **Observability**: install prints the effective model per role; checkpoint reports `commit: null` plus `commit_error` and the "state written, commit failed" message; `validate` names the location of a relay-round violation (SC-005).
-- **Compatibility**: state files and saved runs untouched (no schema change); existing installs keep working after re-running the installer; `--uninstall` removes links to the per-user copy without touching the repository's `dist/`; documentation corrections confined to the sentences the brief names.
+- **Compatibility**: state files and saved runs untouched (no schema change); existing installs keep working after re-running the installer; `--uninstall` removes the links it created and the per-user render `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched; documentation corrections confined to the sentences the brief names.
 - **Delivery**: one stacked PR targeting `007-stabilise-factory`; the build re-renders all five harnesses (the changed `factory_cli` lands in every `dist/<harness>/skill/bin/`) and fails on any drift (SC-006).
 
 ## Test seams

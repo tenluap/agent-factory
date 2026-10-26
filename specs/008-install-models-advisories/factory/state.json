@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -77,6 +77,14 @@
       "summary": "Q1 (requires_user): relay open-round rule",
       "answered_at": "2026-10-26T11:20:18Z",
       "latency_ms": 344000
+    },
+    {
+      "at": "2026-10-26T11:38:29Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q1-Q3 (requires_user): home creation, uninstall scope, glossary",
+      "answered_at": "2026-10-26T11:51:49Z",
+      "latency_ms": 800000
     }
   ],
   "ledger": [
@@ -149,6 +157,26 @@
       "out_est": 3849,
       "reported": null,
       "duration_ms": 583000
+    },
+    {
+      "at": "2026-10-26T11:38:29Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 19516,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 507000
+    },
+    {
+      "at": "2026-10-26T12:03:46Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 8466,
+      "out_est": 5901,
+      "reported": null,
+      "duration_ms": 717000
     }
   ],
   "review": {
@@ -205,6 +233,13 @@
     {
       "at": "2026-10-26T11:30:01Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T12:03:46Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "opencode"

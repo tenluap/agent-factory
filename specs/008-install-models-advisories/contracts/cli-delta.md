@@ -31,6 +31,6 @@ Phase 1 for `008-install-models-advisories`. The base contract is `specs/007-sta
 
 | Invocation | Behaviour |
 |---|---|
-| `./install.sh [--harness <name>\|all]` | renders each harness into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with the user's models merged, links `skill/` and `agents/*` from that per-user copy, prints the effective-model report; never renders or dirties the committed `dist/` (FR-001–FR-005) |
-| `./install.sh --uninstall` | removes only links pointing into the per-user copy (or the repository's `dist/`); the repository's `dist/` is never touched |
-| failure | a nonexistent or unwritable factory home fails with a message naming the path |
+| `./install.sh [--harness <name>\|all]` | renders each harness into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with the user's models merged, links `skill/` and `agents/*` from that per-user copy, prints the effective-model report; never renders or dirties the committed rendered distribution (FR-001–FR-005) |
+| `./install.sh --uninstall` | removes the links it created and the per-user render `${FACTORY_HOME:-~/.factory}/dist/<harness>`; `config.json`, pending runs and the committed rendered distribution are untouched (FR-001) |
+| failure | a missing default home `~/.factory` is created; an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or is not writable, fails with a message naming the path, writing nothing (FR-001) |

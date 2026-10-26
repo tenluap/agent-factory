@@ -21,9 +21,9 @@ The user is a developer who installs the factory into one or more harnesses, run
 
 ### User Story 1 - Personal model choices reach the installed agents (Priority: P1)
 
-A developer pins their own models in `${FACTORY_HOME:-~/.factory}/config.json` and runs `./install.sh`. The linked skill and agents carry their model ids; the repository's committed `dist/` output is untouched by their personal choices; the printed models report lists exactly what the installed agents use.
+A developer pins their own models in `${FACTORY_HOME:-~/.factory}/config.json` and runs `./install.sh`. The linked skill and agents carry their model ids; the repository's committed rendered distribution is untouched by their personal choices; the printed models report lists exactly what the installed agents use.
 
-**Why this priority**: this is the unresolved PR #3 blocker; today personal overrides either never reach the installed agents (default home ignored) or leak personal model ids into the shared, committed `dist/` (exported `FACTORY_HOME`).
+**Why this priority**: this is the unresolved PR #3 blocker; today personal overrides either never reach the installed agents (default home ignored) or leak personal model ids into the shared, committed rendered distribution (exported `FACTORY_HOME`).
 
 **Independent Test**: With `config.json` in the default home and `FACTORY_HOME` unset, run the installer in a sandbox and compare the linked agent files and the models report against the overrides; afterwards confirm the committed `dist/` shows no diff.
 
@@ -87,7 +87,7 @@ A run owner reads the run digest and totals sentence. Parallel work is never sum
 
 ### User Story 5 - Documentation and tests match what ships (Priority: P3)
 
-A maintainer reads the CLI contract, the007 plan and the test suite and finds them true: the documented commands are all documented, the recorded process override is stated where the process decision lives, tests exist once and share one vocabulary source.
+A maintainer reads the CLI contract, the 007 plan and the test suite and finds them true: the documented commands are all documented, the recorded process override is stated where the process decision lives, tests exist once and share one vocabulary source.
 
 **Why this priority**: round-3 low findings are exactly these drifts; they cost reviewers real time and hide behaviour.
 
@@ -104,10 +104,10 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 
 ### Edge Cases
 
-- `FACTORY_HOME` set to a nonexistent or read-only path during install: the install fails with a clear message; the committed `dist/` is still untouched.
+- **Factory home during install**: a missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install with a message naming the path, writing nothing — the committed rendered distribution is untouched either way.
 - `config.json` present but missing the harness key or individual model keys: absent entries fall back to the adapter defaults, per key.
 - `config.json` present but unparseable: the install aborts before any render or link, with a message naming the file and the parse error and a non-zero exit; the committed `dist/` is untouched.
-- Installing twice, or `--uninstall` after a per-user render: links point at the per-user copy and are removed without touching the repository's `dist/`.
+- Installing twice re-links cleanly; `--uninstall` after a per-user render removes the links and `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched.
 - Malformed ledger timestamps in every shape (empty, wrong format, non-string): each exits 5 with the offending value named.
 - A lock file whose owner PID is `0`, negative, astronomically large, or non-numeric: treated as live, never a crash; `--force` still takes over.
 - A lock file replaced by another owner between this process's write and release: release leaves the foreign lock alone.
@@ -119,8 +119,8 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 
 **Personal model pipeline (resolves 007 FR-015; verdict finding at `install.sh:44`)**
 
-- **FR-001**: The installer MUST render a per-user copy of each selected harness's tree into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with the user's `config.json` model overrides merged, and link that harness's skill and agent directories from the per-user copy.
-- **FR-002**: The committed `dist/` MUST stay canonical and machine-independent: rendering for the repository MUST NOT merge personal configuration into it, and no installer run may rewrite or dirty the committed `dist/`.
+- **FR-001**: The installer MUST render a per-user copy of each selected harness's tree into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with the user's `config.json` model overrides merged, and link that harness's skill and agent directories from the per-user copy. A missing default home `~/.factory` is created; an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install with a message naming the path, writing nothing. `--uninstall` MUST remove the links it created and the per-user render at `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched.
+- **FR-002**: The committed rendered distribution MUST stay canonical and machine-independent: rendering for the repository MUST NOT merge personal configuration into it, and no installer run may rewrite or dirty it.
 - **FR-003**: Effective-model resolution MUST honour the documented default home `${FACTORY_HOME:-~/.factory}` — an unset `FACTORY_HOME` reads `~/.factory/config.json`, never "no config".
 - **FR-004**: The installer's models report MUST print the effective model per role as resolved from the default home, matching what the linked agents carry.
 - **FR-005**: An automated check MUST cover the default-home case (config at `~/.factory`, `FACTORY_HOME` unset), asserting the overrides reach the installed copy and the report.
@@ -160,7 +160,7 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 ### Key Entities
 
 - **Per-user render**: a harness tree rendered into the user's factory home with personal model overrides merged; what the harness directories link to.
-- **Committed dist**: the canonical, machine-independent generated output in the repository; never carries personal configuration.
+- **Committed rendered distribution**: the canonical, machine-independent rendered distribution tracked in the repository (`dist/` names its directory only); never carries personal configuration.
 - **Effective model report**: the per-role model list resolved from the default factory home, printed at install time.
 - **Run lock**: an owner/host/harness/time record guarding one run; liveness is a judgment, not a crash, and takeover is always explicit.
 - **Open relay round**: an unanswered question round awaiting the user; state validity allows at most one and only as the last round — a null relay and a fully answered relay awaiting checkpoint are conformant.
@@ -181,7 +181,7 @@ A maintainer reads the CLI contract, the007 plan and the test suite and finds th
 
 ### Measurable Outcomes
 
-- **SC-001**: In 100% of install-pipeline tests, overrides from the default home reach the installed agents and the models report, the committed `dist/` shows zero diff after any installer run, and a malformed `config.json` aborts the install with the file and parse error named, a non-zero exit, and nothing rendered or linked.
+- **SC-001**: In 100% of install-pipeline tests, overrides from the default home reach the installed agents and the models report, the committed `dist/` shows zero diff after any installer run, and a malformed `config.json` aborts the install with the file and parse error named, a non-zero exit, and nothing rendered or linked. A missing default home is created; an explicitly configured home that does not exist, is not a directory or is not writable fails naming its path and writes nothing; `--uninstall` leaves `config.json`, pending runs and the committed rendered distribution untouched.
 - **SC-002**: Every malformed-input and refused-write path exits with its documented code and message and zero tracebacks, asserted by a test per path (ledger-add timestamp, ended pending run, out-of-range lock PID, foreign lock release, failed checkpoint commit).
 - **SC-003**: Lock behaviour is verified end to end: an unevaluable owner PID counts as live, `lock take --force` succeeds against it in 100% of test runs, and release never removes another owner's lock.
 - **SC-004**: With parallel spawns, human plus agent time stays within wall clock in 100% of digest tests, and every open-run totals sentence reports a non-zero elapsed wall clock.

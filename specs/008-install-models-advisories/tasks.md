@@ -20,7 +20,7 @@
 
 ## Phase 3: US1 — Personal model choices reach the installed agents (P1) 🎯 MVP
 
-**Story goal**: `install.sh` links agents carrying the user's own models from a per-user render, while the committed `dist/` stays canonical and machine-independent.
+**Story goal**: `install.sh` links agents carrying the user's own models from a per-user render, while the committed rendered distribution stays canonical and machine-independent.
 
 **Independent Test**: sandbox install with `config.json` in the default home and `FACTORY_HOME` unset: linked agents and the models report carry the overrides and `git status --porcelain -- dist/` is empty (SC-001, quickstart S1).
 
@@ -31,11 +31,11 @@
 - [ ] T005 [US1] Failing tests in `tools/tests/test_render_models.py` — seam: `tools/render.py` render output — `--models` and `--paths` write nothing at all and `--models` reports the effective model per role resolved from the default home, `FACTORY_HOME` exported or not (FR-004).
 - [ ] T006 [US1] Implement `--models` / `--paths` as write-free reports in `tools/render.py` (`--models` merges defaults with the default home's `config.json` per key) (FR-004; seam: `tools/render.py` render output).
 - [ ] T007 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — under a throwaway `HOME`: each selected harness is rendered into `${FACTORY_HOME:-~/.factory}/dist/<harness>`, its `skill/` and `agents/*` link from that copy, the models report lists the effective models matching the linked agents, `git status --porcelain -- dist/` stays empty, and a second run re-links cleanly; the FR-005 default-home case (`FACTORY_HOME` unset, `config.json` at `~/.factory`) and the exported-`FACTORY_HOME` case both carry the overrides (FR-001, FR-002, FR-004, FR-005).
-- [ ] T008 [US1] Implement the per-user render, linking and report in `install.sh`: render into `${FACTORY_HOME:-~/.factory}/dist/<harness>`, link `skill/` and `agents/*` from that copy, print the effective-model report, never render or dirty the committed `dist/` (FR-001, FR-002, FR-004, FR-005; seam: `install.sh` install/uninstall flow).
-- [ ] T009 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — a nonexistent or unwritable factory home fails with a message naming the path, with no traceback and `git status --porcelain -- dist/` empty.
-- [ ] T010 [US1] Implement the factory-home failure path in `install.sh` (create the render root or fail naming it, writing nothing to the repository) (seam: `install.sh` install/uninstall flow).
-- [ ] T011 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — `--uninstall` removes only links pointing into the per-user copy (or the repository's `dist/`), leaves other files alone and never touches the repository's `dist/`.
-- [ ] T012 [US1] Implement `--uninstall`'s identity-checked link removal in `install.sh` (FR-001; seam: `install.sh` install/uninstall flow).
+- [ ] T008 [US1] Implement the per-user render, linking and report in `install.sh`: render into `${FACTORY_HOME:-~/.factory}/dist/<harness>`, link `skill/` and `agents/*` from that copy, print the effective-model report, never render or dirty the committed rendered distribution (FR-001, FR-002, FR-004, FR-005; seam: `install.sh` install/uninstall flow).
+- [ ] T009 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — a missing default home `~/.factory` is created; an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or is not writable, fails with a message naming the path, with no traceback and `git status --porcelain -- dist/` empty (FR-001).
+- [ ] T010 [US1] Implement the factory-home policy in `install.sh` (create a missing default home `~/.factory`; fail naming an explicitly configured home that does not exist, is not a directory or is not writable, writing nothing to the repository) (FR-001; seam: `install.sh` install/uninstall flow).
+- [ ] T011 [US1] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` install/uninstall flow — `--uninstall` removes the links it created and `${FACTORY_HOME:-~/.factory}/dist/<harness>`, and leaves `config.json`, pending runs and the committed rendered distribution untouched (FR-001).
+- [ ] T012 [US1] Implement `--uninstall`'s identity-checked link and per-user render removal in `install.sh` (FR-001; seam: `install.sh` install/uninstall flow).
 - [ ] T013 [US1] Correct the model-merge wording to the delivered behaviour in `README.md`, `DESIGN.md` and the `tools/render.py` comment/docstring (FR-006). Exempt: `README.md`, `DESIGN.md` and `tools/render.py` comments - documentation only.
 
 ---
