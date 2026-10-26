@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
   "status": "running",
-  "stage": "review",
+  "stage": "fix",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -230,10 +230,50 @@
       "out_est": 3217,
       "reported": null,
       "duration_ms": 4595000
+    },
+    {
+      "at": "2026-10-26T16:35:05Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 1338,
+      "out_est": 213,
+      "reported": null,
+      "duration_ms": 934000
+    },
+    {
+      "at": "2026-10-26T16:35:05Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 1507,
+      "out_est": 336,
+      "reported": null,
+      "duration_ms": 934000
+    },
+    {
+      "at": "2026-10-26T16:35:05Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 2086,
+      "out_est": 198,
+      "reported": null,
+      "duration_ms": 934000
+    },
+    {
+      "at": "2026-10-26T16:47:04Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 2472,
+      "out_est": 432,
+      "reported": null,
+      "duration_ms": 719000
     }
   ],
   "review": {
-    "round": 0,
+    "round": 1,
     "fix_rounds": 0,
     "ui_diff": false,
     "ui_reviewer_skipped": false
@@ -335,6 +375,13 @@
     {
       "at": "2026-10-26T16:19:31Z",
       "stage": "verify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T16:47:04Z",
+      "stage": "review",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
