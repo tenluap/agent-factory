@@ -566,5 +566,14 @@
       "harness": "opencode"
     }
   ],
-  "decisions": []
+  "decisions": [
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve",
+      "auto": false,
+      "at": "2026-10-26T17:21:49.762591Z",
+      "kind": "approved"
+    }
+  ]
 }
