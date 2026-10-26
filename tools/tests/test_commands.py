@@ -230,6 +230,41 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(self.box.cli("runs", "--repo").returncode, 5)
 
 
+class EndedPendingRunTests(unittest.TestCase):
+    """FR-009: the ended-status skip applies to pending-run selection too;
+    an ended pending run can never be mutated."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.box.pending_run(
+            "050-ended",
+            v4_state(
+                status="pr-open",
+                pr_url="https://x/pr/9",
+                ended_at="2026-10-23T12:00:00Z",
+            ),
+        )
+
+    def test_write_to_ended_pending_run_is_refused_with_the_status_named(self):
+        out = self.box.cli("ledger-add", "plan", "spec-builder")
+        self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+        message = out.stderr + out.stdout
+        self.assertIn("pr-open", message, "the refusal names the ended status")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+
+    def test_aborted_pending_run_is_refused_too(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        box.pending_run(
+            "051-aborted",
+            v4_state(status="aborted", ended_at="2026-10-23T12:00:00Z"),
+        )
+        out = box.cli("ledger-add", "plan", "spec-builder")
+        self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+        self.assertIn("aborted", out.stderr + out.stdout)
+
+
 class LedgerTimestampTests(unittest.TestCase):
     """FR-007: a malformed --started-at/--ended-at is a usage refusal (exit 5)
     naming the offending value, never a traceback; the value never reaches the
