@@ -51,12 +51,15 @@ class InstallSandbox:
         self.home = Path(tmp.name) / "home"
         self.xdg = self.home / ".config"
 
-    def run_install(self, *args, config=None, exported=True):
+    def run_install(self, *args, config=None, config_text=None, exported=True):
         """Run install.sh under the sandbox; `config` lands in the factory
         home that ${FACTORY_HOME:-~/.factory} resolves to for this run."""
         self.home.mkdir(parents=True, exist_ok=True)
         self.factory_home = self.home if exported else self.home / ".factory"
-        if config is not None:
+        if config_text is not None:
+            self.factory_home.mkdir(parents=True, exist_ok=True)
+            (self.factory_home / "config.json").write_text(config_text)
+        elif config is not None:
             self.factory_home.mkdir(parents=True, exist_ok=True)
             (self.factory_home / "config.json").write_text(json.dumps(config))
         env = dict(os.environ)
@@ -173,6 +176,22 @@ class UninstallTests(InstallSandbox, unittest.TestCase):
         )
         self.assertTrue(config.exists(), "config.json survives")
         self.assertTrue(pending.exists(), "pending runs survive")
+        self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
+
+
+class ConfigParseGuardTests(InstallSandbox, unittest.TestCase):
+    """FR-022: a config.json that does not parse aborts the install before
+    anything is rendered or linked — message naming the file and the parse
+    error, non-zero exit, no traceback."""
+
+    def test_unparseable_config_aborts_the_install(self):
+        proc = self.run_install(config_text="{not json")
+        self.assertNotEqual(proc.returncode, 0, "the install aborts")
+        message = proc.stderr + proc.stdout
+        self.assertIn("config.json", message, "the message names the file")
+        self.assertNotIn("Traceback", message, "no traceback reaches the user")
+        self.assertFalse((self.factory_home / "dist").exists(), "nothing was rendered")
+        self.assertFalse((self.xdg / "opencode").exists(), "nothing was linked")
         self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
 
