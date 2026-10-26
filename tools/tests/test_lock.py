@@ -12,6 +12,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -150,19 +151,67 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(taken["previous"]["owner_pid"], gone)
         lock.release(self.guard)
 
+    def test_acquire_refuses_an_unreadable_lock_file(self):
+        self.lock_path.write_text("{not json")
+        with self.assertRaises(lock.LockHeld):
+            lock.acquire(self.guard, harness="claude-code")
+
+    def test_acquire_between_read_and_write_loses_to_an_interleaved_owner(self):
+        """The create is exclusive: a racer parked after its read, before its
+        write, must lose to an acquirer completing inside that window — never
+        overwrite it. `_now` is patched only to hold the window open."""
+        original_now = lock._now
+        in_window = threading.Event()
+        close_window = threading.Event()
+
+        def slow_now():
+            in_window.set()
+            close_window.wait(5)
+            return original_now()
+
+        outcome = {}
+
+        def racer():
+            try:
+                lock.acquire(self.guard, harness="slow")
+                outcome["racer"] = "won"
+            except lock.LockHeld:
+                outcome["racer"] = "held"
+
+        lock._now = slow_now
+        thread = threading.Thread(target=racer)
+        thread.start()
+        try:
+            self.assertTrue(in_window.wait(5), "the racer reached the write window")
+            lock._now = original_now  # only the racer stays in the window
+            lock.acquire(self.guard, harness="main")
+            close_window.set()
+            thread.join(5)
+            lock.release(self.guard)
+        finally:
+            lock._now = original_now
+            close_window.set()
+            thread.join(5)
+            self.lock_path.unlink(missing_ok=True)
+        self.assertEqual(
+            outcome.get("racer"),
+            "held",
+            "a racer that loses the create race reports LockHeld",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
 
-
-class LockCliTests(unittest.TestCase):
     def setUp(self):
         from tests import Sandbox, fixture
+
         self.box = Sandbox()
         self.addCleanup(self.box.close)
         self.branch = "060-lock"
         self.wt = self.box.worktree_run(self.branch, fixture("state-v4.json"))
         from pathlib import Path as _P
+
         self.guard = self.wt / "specs" / self.branch / "factory" / "state.json"
         self.lock_path = lock.lock_path_for(self.guard)
 
@@ -180,9 +229,16 @@ class LockCliTests(unittest.TestCase):
     def test_writers_refuse_under_a_live_foreign_lock(self):
         holder = subprocess.Popen(["sleep", "30"])
         try:
-            self.lock_path.write_text(json.dumps(
-                {"owner_pid": holder.pid, "host": HOST, "harness": "opencode",
-                 "at": "2026-10-20T10:00:00Z"}))
+            self.lock_path.write_text(
+                json.dumps(
+                    {
+                        "owner_pid": holder.pid,
+                        "host": HOST,
+                        "harness": "opencode",
+                        "at": "2026-10-20T10:00:00Z",
+                    }
+                )
+            )
             out = self.box.cli("checkpoint", "implement", cwd=self.wt)
             self.assertEqual(out.returncode, 1)
             self.assertIn("locked by PID", out.stderr)

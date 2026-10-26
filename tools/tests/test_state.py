@@ -194,6 +194,50 @@ class WriteTests(unittest.TestCase):
         state.write_state(self.path, grown)  # appending is allowed
         self.assertEqual(len(json.loads(self.path.read_text())["decisions"]), 3)
 
+    def test_write_state_reapplies_the_mutation_to_the_current_state(self):
+        """Read-modify-write is exclusive: a write based on a stale read
+        re-applies its mutation to the state current under the lock, never
+        dropping a change another writer landed in between."""
+        state.write_state(self.path, fixture("state-v4.json"))
+        stale_read, _ = state.read_state(self.path)
+
+        def other_writer(s):
+            s["timeline"] = (s.get("timeline") or []) + [
+                {
+                    "at": "2026-10-23T12:00:00Z",
+                    "kind": "notice",
+                    "stage": s.get("stage"),
+                    "summary": "landed while we worked",
+                    "answered_at": None,
+                    "latency_ms": None,
+                }
+            ]
+            return s
+
+        state.write_state(self.path, stale_read, mutate=other_writer)
+
+        def our_writer(s):
+            s["history"] = (s.get("history") or []) + [
+                {
+                    "at": "2026-10-23T12:30:00Z",
+                    "stage": s.get("stage"),
+                    "event": "resumed",
+                    "commit": None,
+                    "harness": s.get("harness"),
+                }
+            ]
+            return s
+
+        state.write_state(self.path, stale_read, mutate=our_writer)
+        final = json.loads(self.path.read_text())
+        self.assertTrue(
+            any(
+                e.get("summary") == "landed while we worked" for e in final["timeline"]
+            ),
+            "a stale read must not drop another writer's landed change",
+        )
+        self.assertEqual(final["history"][-1]["event"], "resumed")
+
 
 if __name__ == "__main__":
     unittest.main()

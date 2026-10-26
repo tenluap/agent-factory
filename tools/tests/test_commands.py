@@ -315,17 +315,15 @@ class WriterTests(unittest.TestCase):
         self.assertEqual((entry["stage"], entry["event"]), ("plan", "complete"))
         self.assertTrue(self.recent(entry["at"]), "the writer stamps its own time")
         self.assertEqual(entry["harness"], before["harness"])
-        self.assertIn(
-            {
-                "stage": "plan",
-                "question": "Q5",
-                "answer": "B",
-                "auto": True,
-                "at": "2026-10-22T14:05:00Z",
-                "kind": "answer",
-            },
-            after["decisions"],
+        migrated = next(d for d in after["decisions"] if d["question"] == "Q5")
+        self.assertEqual(
+            (migrated["answer"], migrated["auto"], migrated["kind"]),
+            ("B", True, "answer"),
             "settled relay answers move into decisions (FR-008)",
+        )
+        self.assertTrue(
+            self.recent(migrated["at"]),
+            "the migration stamps the checkpoint's own time",
         )
         self.assertIsNone(after["relay"], "relay is cleared after its answers move")
         self.assertEqual(
@@ -335,6 +333,34 @@ class WriterTests(unittest.TestCase):
         self.assertEqual(last, "factory: plan complete")
         self.assertTrue(
             self.committed_clean(), "the checkpoint commits the state write"
+        )
+
+    def test_checkpoint_migrates_answers_older_than_existing_decisions(self):
+        self.box.corrupt_worktree_state(
+            "040-writer",
+            lambda s: s["decisions"].append(
+                {
+                    "stage": "plan",
+                    "question": "Q9",
+                    "answer": "a later decision",
+                    "auto": False,
+                    "at": "2026-10-23T09:00:00Z",
+                    "kind": "answer",
+                }
+            ),
+        )
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        decisions = self.load()["decisions"]
+        stamps = [replay.parse_iso(d["at"]) for d in decisions]
+        self.assertEqual(
+            stamps, sorted(stamps), "decisions stay non-decreasing after migration"
+        )
+        migrated = next(d for d in decisions if d["question"] == "Q5")
+        self.assertEqual(
+            (migrated["answer"], migrated["auto"], migrated["kind"]),
+            ("B", True, "answer"),
+            "the settled answer still moves into decisions (FR-008)",
         )
 
     def test_checkpoint_next_flag_serves_non_linear_flows(self):
@@ -543,38 +569,79 @@ class CheckpointStagingTests(unittest.TestCase):
         (self.wt / "core").mkdir()
         (self.wt / "core" / "declared.txt").write_text("declared change\n")
         (self.wt / "scratch.txt").write_text("undeclared\n")
-        out = self.box.cli("checkpoint", "plan", "--files", "core/declared.txt", cwd=self.wt)
+        out = self.box.cli(
+            "checkpoint", "plan", "--files", "core/declared.txt", cwd=self.wt
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         report = json.loads(out.stdout)
-        self.assertEqual(report["undeclared"], ["scratch.txt"],
-                         "every other dirty path is reported, not committed")
-        self.assertEqual(self.committed(),
-                         ["core/declared.txt", f"specs/{self.branch}/factory/state.json"])
+        self.assertEqual(
+            report["undeclared"],
+            ["scratch.txt"],
+            "every other dirty path is reported, not committed",
+        )
+        self.assertEqual(
+            self.committed(),
+            ["core/declared.txt", f"specs/{self.branch}/factory/state.json"],
+        )
         self.assertEqual(self.dirty(), ["scratch.txt"])
 
     def test_checkpoint_envelope_reads_the_declared_list(self):
-        envelope = {"status": "done", "stage": "plan", "summary": "s",
-                    "files": ["docs/changed.md"]}
+        envelope = {
+            "status": "done",
+            "stage": "plan",
+            "summary": "s",
+            "files": ["docs/changed.md"],
+        }
         (self.wt / "docs").mkdir()
         (self.wt / "docs" / "changed.md").write_text("x\n")
-        (self.wt / "envelope.md").write_text("prose\n```json\n" + json.dumps(envelope) + "\n```\n")
-        out = self.box.cli("checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt)
+        (self.wt / "envelope.md").write_text(
+            "prose\n```json\n" + json.dumps(envelope) + "\n```\n"
+        )
+        out = self.box.cli(
+            "checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("docs/changed.md", json.loads(out.stdout)["declared"])
-        self.assertEqual(self.committed(),
-                         ["docs/changed.md", f"specs/{self.branch}/factory/state.json"])
+        self.assertEqual(
+            self.committed(),
+            ["docs/changed.md", f"specs/{self.branch}/factory/state.json"],
+        )
         self.assertNotIn("envelope.md", self.committed())
 
     def test_checkpoint_refuses_an_envelope_without_files(self):
-        (self.wt / "envelope.md").write_text("```json\n{\"status\": \"done\"}\n```")
-        out = self.box.cli("checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt)
+        (self.wt / "envelope.md").write_text('```json\n{"status": "done"}\n```')
+        out = self.box.cli(
+            "checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt
+        )
         self.assertEqual(out.returncode, 1)
         self.assertIn("files", out.stderr)
 
     def test_checkpoint_refuses_a_declared_path_that_does_not_exist(self):
-        out = self.box.cli("checkpoint", "plan", "--files", "nope/missing.txt", cwd=self.wt)
+        before = self.state_path.read_text()
+        out = self.box.cli(
+            "checkpoint", "plan", "--files", "nope/missing.txt", cwd=self.wt
+        )
         self.assertEqual(out.returncode, 1)
         self.assertIn("missing.txt", out.stderr)
+        self.assertEqual(
+            self.state_path.read_text(),
+            before,
+            "a refused checkpoint leaves the state untouched",
+        )
+
+    def test_checkpoint_envelope_accepts_bare_json(self):
+        envelope = {
+            "status": "done",
+            "stage": "plan",
+            "summary": "s",
+            "files": ["docs/bare.md"],
+        }
+        (self.wt / "docs").mkdir()
+        (self.wt / "docs" / "bare.md").write_text("x\n")
+        path = self.box.write_temp("envelope.json", json.dumps(envelope))
+        out = self.box.cli("checkpoint", "plan", "--envelope", path, cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("docs/bare.md", json.loads(out.stdout)["declared"])
 
 
 class RebindTests(unittest.TestCase):
@@ -598,31 +665,46 @@ class RebindTests(unittest.TestCase):
 
     def test_rebind_rewrites_worktree_and_reports(self):
         wt_new = self.moved_worktree()
-        out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
+        out = self.box.cli(
+            "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         report = json.loads(out.stdout)
         self.assertEqual(Path(report["worktree"]).resolve(), wt_new.resolve())
         state = json.loads(self.state_path(wt_new).read_text())
-        self.assertEqual(Path(state["worktree"]).resolve(), wt_new.resolve(),
-                         "the recorded home is rewritten")
+        self.assertEqual(
+            Path(state["worktree"]).resolve(),
+            wt_new.resolve(),
+            "the recorded home is rewritten",
+        )
         self.assertEqual(Path(state["repo"]).resolve(), self.box.repo.resolve())
 
     def test_rebind_refuses_a_missing_worktree_with_exit_four(self):
-        out = self.box.cli("rebind", self.branch, "--worktree", str(self.box.dir / "gone"), cwd=self.box.repo)
+        out = self.box.cli(
+            "rebind",
+            self.branch,
+            "--worktree",
+            str(self.box.dir / "gone"),
+            cwd=self.box.repo,
+        )
         self.assertEqual(out.returncode, 4)
         self.assertIn("gone", out.stderr)
 
     def test_rebind_refuses_a_target_on_another_branch(self):
         other = self.box.dir / "wt-other"
         self.box.git("worktree", "add", "-q", "-b", "099-other", str(other))
-        out = self.box.cli("rebind", self.branch, "--worktree", str(other), cwd=self.box.repo)
+        out = self.box.cli(
+            "rebind", self.branch, "--worktree", str(other), cwd=self.box.repo
+        )
         self.assertEqual(out.returncode, 1)
         self.assertIn(self.branch, out.stderr, "the refusal names the recorded branch")
 
     def test_rebind_refuses_an_ambiguous_run_with_exit_three(self):
         wt_new = self.moved_worktree()
         self.box.pending_run(self.branch, fixture("state-v1.json"))
-        out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
+        out = self.box.cli(
+            "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
+        )
         self.assertEqual(out.returncode, 3)
 
 
@@ -680,7 +762,9 @@ class PruneTests(unittest.TestCase):
             out = self.box.cli("prune", *args)
             self.assertEqual(out.returncode, 0, out.stderr)
             self.assertTrue(stale.exists(), f"prune {args} deletes nothing")
-            self.assertIn(str(stale), out.stdout, f"prune {args} still lists the candidate")
+            self.assertIn(
+                str(stale), out.stdout, f"prune {args} still lists the candidate"
+            )
         out = self.box.cli("prune", "--delete")
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertFalse(stale.exists(), "--delete removes the stale pending file")

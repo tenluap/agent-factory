@@ -5,6 +5,7 @@ their tasks land. Everything mechanical routes through `state` (and, from
 T015, `lock`); this module adds only discovery, digests and CLI errors.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -405,7 +406,7 @@ def resolve_target(repo, cwd):
 
 def write_run(path, loaded, mutate):
     try:
-        return state.write_state(path, mutate(dict(loaded)))
+        return state.write_state(path, loaded, mutate=mutate)
     except lock.LockHeld as e:
         die(1, str(e))
     except state.StateError as e:
@@ -434,7 +435,12 @@ def successor(stage):
 
 
 def settled_answers(relay, fallback_stage, now):
-    """Every settled answer of the stage's relay, as decision records (FR-008)."""
+    """Every settled answer of the stage's relay, as decision records (FR-008).
+
+    Stamped with the checkpoint's own `now`: decisions are validated
+    non-decreasing, so keeping each answer's original time could place a
+    migrated record before an existing decision and refuse every retry.
+    """
     migrated = []
     for one_round in rounds_of(relay):
         for qid, answer in (one_round.get("answers") or {}).items():
@@ -445,7 +451,7 @@ def settled_answers(relay, fallback_stage, now):
                         "question": qid,
                         "answer": answer.get("answer"),
                         "auto": bool(answer.get("auto")),
-                        "at": answer.get("at") or now,
+                        "at": now,
                         "kind": "answer",
                     }
                 )
@@ -503,6 +509,16 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             die(1, f"gate refusal into '{target}': {violation}")
     permitted = checks.permitting_decision(loaded, target) if target else None
 
+    # Every refusal point passes before the state write, so a refused
+    # checkpoint leaves the stage, history, relay and worktree untouched.
+    declared = list(files or [])
+    if envelope:
+        declared = declared + declared_from_envelope(envelope)
+    if worktree:
+        missing = [f for f in declared if not (Path(worktree) / f).exists()]
+        if missing:
+            die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
+
     def mutate(s):
         relay = s.get("relay")
         relay_stage = (
@@ -530,15 +546,10 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         return s
 
     updated = write_run(path, loaded, mutate)
-    declared = list(files or [])
-    if envelope:
-        declared = declared + declared_from_envelope(envelope)
     undeclared = []
+    commit = None
     if worktree:
         spec_prefix = (updated.get("spec_dir") or "").rstrip("/") + "/"
-        missing = [f for f in declared if not (Path(worktree) / f).exists()]
-        if missing:
-            die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
         dirty = dirty_paths(worktree)
         in_spec = [p for p in dirty if p.startswith(spec_prefix)]
         undeclared = [p for p in dirty if p not in declared and p not in in_spec]
@@ -548,8 +559,6 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             spec_dir=updated.get("spec_dir"),
             extra=declared,
         )
-    else:
-        commit = None
     return {
         "checkpointed": stage,
         "stage": updated["stage"],

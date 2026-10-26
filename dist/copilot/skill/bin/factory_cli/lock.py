@@ -86,23 +86,52 @@ def _write(path, info):
         raise
 
 
+def _create(path, info):
+    """Create the lock file exclusively; FileExistsError when one exists."""
+    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    try:
+        with os.fdopen(fd, "w") as handle:
+            handle.write(json.dumps(info, indent=2) + "\n")
+    except BaseException:
+        Path(path).unlink(missing_ok=True)
+        raise
+
+
 def acquire(state_path, harness):
     """Take the run's lock for a write; LockHeld under a live foreign lock.
-    A stale lock (own host, owner gone) is replaced, keeping it as `previous`."""
+
+    Creation is O_CREAT|O_EXCL, so racers that both see no lock never both
+    win, and an unreadable lock file is refused (its owner is unknown; only
+    `take --force` clears it). A stale lock (own host, owner gone) is
+    replaced, keeping it as `previous`; the replacement unlinks only a lock
+    still identical to the stale one just re-read, so a racer never deletes
+    a lock it did not observe.
+
+    # ponytail: two racers stealing the same stale lock can still both
+    # replace it; fcntl.flock is the upgrade if that ever matters.
+    """
     path = lock_path_for(state_path)
-    existing = read(path)
-    if existing and _live(existing):
-        raise LockHeld(existing)
-    info = {
-        "owner_pid": os.getpid(),
-        "host": socket.gethostname(),
-        "harness": harness,
-        "at": _now(),
-        "taken_over": False,
-        "previous": existing if existing else None,
-    }
-    _write(path, info)
-    return info
+    for _ in range(3):
+        existing = read(path)
+        if existing and _live(existing):
+            raise LockHeld(existing)
+        info = {
+            "owner_pid": os.getpid(),
+            "host": socket.gethostname(),
+            "harness": harness,
+            "at": _now(),
+            "taken_over": False,
+            "previous": existing if existing else None,
+        }
+        try:
+            _create(path, info)
+            return info
+        except FileExistsError:
+            if existing and not _live(existing) and read(path) == existing:
+                path.unlink(missing_ok=True)  # clear the stale lock we observed
+    raise LockHeld(
+        read(path) or {"owner_pid": "?", "host": "?", "harness": "?", "at": "?"}
+    )
 
 
 def release(state_path):

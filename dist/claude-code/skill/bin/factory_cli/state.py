@@ -357,31 +357,43 @@ def _with_interval(entry):
     return entry
 
 
-def write_state(path, state):
+def write_state(path, state, mutate=None):
     """Validate, guard the append-only decisions, upgrade and replace atomically.
 
-    Returns the upgraded state actually written. Raises StateError, leaving the
-    file untouched, on any violation or on a decisions rewrite.
+    With `mutate`, the lock is taken first and the mutation is re-applied to
+    the state freshly read under it, so a read-modify-write never drops a
+    change that landed while the caller worked; without it, `state` is the
+    full record to write. Returns the upgraded state actually written.
+    Raises StateError, leaving the file untouched, on any violation or on a
+    decisions rewrite.
     """
-    violations = validate_state(state)
-    if violations:
-        detail = "; ".join(f"{v['location']}: {v['reason']}" for v in violations)
-        raise StateError(f"refusing to write invalid state ({detail})")
     path = Path(path)
-    if path.exists():
-        old, error = read_state(path)
-        if not error and isinstance(old.get("decisions"), list):
-            new = state.get("decisions") or []
-            recorded = old["decisions"]
-            if recorded != new[: len(recorded)]:
-                raise StateError(
-                    "refusing to rewrite the append-only decisions list "
-                    f"({len(recorded)} recorded entries must persist unchanged)"
-                )
-    state = upgrade(state)
-    text = json.dumps(state, indent=2, ensure_ascii=False) + "\n"
     lock.acquire(path, harness=state.get("harness") or "unknown")
     try:
+        if mutate is not None:
+            current, error = read_state(path)
+            if error or not isinstance(current, dict):
+                raise StateError(
+                    f"cannot re-read {path} under the lock: "
+                    f"{error or 'not a JSON object'}"
+                )
+            state = mutate(current)
+        violations = validate_state(state)
+        if violations:
+            detail = "; ".join(f"{v['location']}: {v['reason']}" for v in violations)
+            raise StateError(f"refusing to write invalid state ({detail})")
+        if path.exists():
+            old, error = read_state(path)
+            if not error and isinstance(old.get("decisions"), list):
+                new = state.get("decisions") or []
+                recorded = old["decisions"]
+                if recorded != new[: len(recorded)]:
+                    raise StateError(
+                        "refusing to rewrite the append-only decisions list "
+                        f"({len(recorded)} recorded entries must persist unchanged)"
+                    )
+        state = upgrade(state)
+        text = json.dumps(state, indent=2, ensure_ascii=False) + "\n"
         tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
         try:
             tmp.write_text(text)
