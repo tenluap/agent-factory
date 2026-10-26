@@ -38,11 +38,9 @@ class InstallArgValidationTests(unittest.TestCase):
         self.assertNotIn("unbound variable", message, "no set -u crash")
 
 
-class InstallFlowTests(unittest.TestCase):
-    """FR-001/FR-002/FR-004/FR-005: each selected harness is rendered into
-    ${FACTORY_HOME:-~/.factory}/dist/<harness>, its skill/ and agents/* link
-    from that copy, the models report matches the linked agents, a second run
-    re-links cleanly, and the committed rendered distribution is untouched."""
+class InstallSandbox:
+    """Shared sandbox: a throwaway HOME + XDG tree, an installer runner and
+    the committed-dist porcelain check. No test touches the real home."""
 
     OVER = "test-org/test-deep-model"
     CONFIG = {"models": {"opencode": {"deep": OVER}}}
@@ -84,6 +82,13 @@ class InstallFlowTests(unittest.TestCase):
             text=True,
             check=True,
         ).stdout
+
+
+class InstallFlowTests(InstallSandbox, unittest.TestCase):
+    """FR-001/FR-002/FR-004/FR-005: each selected harness is rendered into
+    ${FACTORY_HOME:-~/.factory}/dist/<harness>, its skill/ and agents/* link
+    from that copy, the models report matches the linked agents, a second run
+    re-links cleanly, and the committed rendered distribution is untouched."""
 
     def assert_install_carries_overrides(self, exported):
         proc = self.run_install(config=self.CONFIG, exported=exported)
@@ -137,6 +142,37 @@ class InstallFlowTests(unittest.TestCase):
         proc = self.run_install()
         self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
         self.assertIn("spec-builder: (session default)", proc.stdout)
+        self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
+
+
+class UninstallTests(InstallSandbox, unittest.TestCase):
+    """FR-001: --uninstall removes the links it created and the per-user
+    render at ${FACTORY_HOME:-~/.factory}/dist/<harness>, leaving config.json,
+    pending runs and the committed rendered distribution untouched."""
+
+    def test_uninstall_removes_its_links_and_per_user_render(self):
+        proc = self.run_install(config=self.CONFIG)
+        self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+        skill = self.xdg / "opencode" / "skills" / "factory"
+        agents = self.xdg / "opencode" / "agents"
+        config = self.factory_home / "config.json"
+        pending = self.factory_home / "pending" / "keep-run.json"
+        pending.parent.mkdir(parents=True, exist_ok=True)
+        pending.write_text("{}\n")
+        out = self.run_install("--uninstall")
+        self.assertEqual(out.returncode, 0, out.stderr + out.stdout)
+        self.assertFalse(
+            skill.exists() or skill.is_symlink(), "the skill link is removed"
+        )
+        self.assertEqual(
+            list(agents.glob("factory-*.md")), [], "the agent links are removed"
+        )
+        self.assertFalse(
+            (self.factory_home / "dist" / "opencode").exists(),
+            "the per-user render is removed",
+        )
+        self.assertTrue(config.exists(), "config.json survives")
+        self.assertTrue(pending.exists(), "pending runs survive")
         self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
 
