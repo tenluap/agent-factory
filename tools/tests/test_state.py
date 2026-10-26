@@ -15,6 +15,7 @@ CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" /
 sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli import state  # noqa: E402
+from tests import replay  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -186,6 +187,20 @@ class ValidationTests(unittest.TestCase):
         self.assertFalse(
             any(v["location"] == "relay" for v in found),
             "a single open round is not reported at relay",
+        )
+
+
+class ReplayVocabularyTests(unittest.TestCase):
+    """FR-019: tools/tests/replay.py resolves its timestamp parsing and
+    vocabularies from factory_cli.state, not private copies."""
+
+    def test_replay_shares_the_state_vocabularies(self):
+        self.assertIs(replay.parse_iso, state.parse_iso)
+        self.assertIs(replay.TIMELINE_KINDS, state.TIMELINE_KINDS)
+        self.assertIs(replay.HISTORY_EVENTS, state.HISTORY_EVENTS)
+        self.assertTrue(
+            set(replay.AGENT_STAGES) <= set(state.STAGES),
+            "the agent stages come from the shared stage vocabulary",
         )
 
 
