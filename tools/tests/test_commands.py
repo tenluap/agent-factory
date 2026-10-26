@@ -230,6 +230,52 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(self.box.cli("runs", "--repo").returncode, 5)
 
 
+class LedgerTimestampTests(unittest.TestCase):
+    """FR-007: a malformed --started-at/--ended-at is a usage refusal (exit 5)
+    naming the offending value, never a traceback; the value never reaches the
+    duration arithmetic."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run("030-ledger", v4_state())
+
+    def run_ledger_add(self, *extra):
+        return self.box.cli("ledger-add", "plan", "spec-builder", *extra, cwd=self.wt)
+
+    def assert_usage_refusal(self, out, value):
+        self.assertEqual(out.returncode, 5, out.stderr + out.stdout)
+        message = out.stderr + out.stdout
+        self.assertIn(value, message, "the message names the offending value")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+
+    def test_malformed_started_at_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add("--started-at", "yesterday"), "yesterday"
+        )
+
+    def test_malformed_ended_at_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add("--ended-at", "soon-ish"), "soon-ish"
+        )
+
+    def test_empty_timestamp_exits_five(self):
+        out = self.run_ledger_add("--started-at", "")
+        self.assertEqual(out.returncode, 5, out.stderr + out.stdout)
+        self.assertNotIn("Traceback", out.stderr + out.stdout)
+
+    def test_missing_flag_value_exits_five(self):
+        self.assertEqual(self.run_ledger_add("--started-at").returncode, 5)
+
+    def test_good_start_with_bad_end_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add(
+                "--started-at", "2026-10-22T14:00:00Z", "--ended-at", "later"
+            ),
+            "later",
+        )
+
+
 class ReplayTests(unittest.TestCase):
     def test_replay_reports_every_core_defect_with_no_false_pass(self):
         ok, lines = replay.check()
