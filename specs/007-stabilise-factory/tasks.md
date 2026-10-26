@@ -96,7 +96,7 @@
 
 - [X] T037 [US6] Record the P2 design decisions in `DESIGN.md` "Decisions": R12 prune preview, S17 installer argument validation, R17 reported-usage labelling, R15 Pen consolidation. Exempt: `DESIGN.md` decision entries - documentation only.
 - [X] T038 [US6] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `prune --dry-run` listing stale pending files (run has a worktree state or ended `pr-open`/`aborted`) and deleting nothing, `prune --delete` being the only deleting form, and a run whose only state is the pending file never listed (FR-019).
-- [ ] T039 [US6] Implement `prune [--dry-run|--delete]` in `core/skills/factory/bin/factory_cli/commands.py` (FR-019; seam: `bin/factory` CLI command surface); then the build gate.
+- [X] T039 [US6] Implement `prune [--dry-run|--delete]` in `core/skills/factory/bin/factory_cli/commands.py` (FR-019; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T040 [US6] Failing tests in `tools/tests/test_install.py` — seam: `install.sh` argument validation — `--harness` with no value printing a clear usage message and exiting non-zero with no unbound-variable crash, under a throwaway `HOME` (FR-020).
 - [ ] T041 [US6] Implement argument validation in `install.sh`'s option loop, failing with a usage message instead of a crash (FR-020; seam: `install.sh` argument validation).
 - [ ] T042 [US6] Failing tests in `tools/tests/test_totals.py` — seam: `factory_cli.totals` interval unions — reported usage (`reported`) labelled separately from the word-count estimates (`in_est`/`out_est`) in `show` and the totals line, never merged into one number (FR-010).

@@ -30,7 +30,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
   envelope check <file>                             validate the final fenced json block\n  verify --pass|--fail --commands '<json>'          record the build/test verify pair
-  rebind <run> --worktree <path>                    rewrite a moved run's stored paths\n  lock take <run> [--force]                         the only explicit takeover
+  prune [--dry-run|--delete]                        list stale pending files; only --delete deletes\n  rebind <run> --worktree <path>                    rewrite a moved run's stored paths\n  lock take <run> [--force]                         the only explicit takeover
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
@@ -221,6 +221,11 @@ def main(argv):
             if rest[2:]:
                 die_usage("envelope check takes exactly one <file>")
             result = commands.cmd_envelope_check(rest[1])
+        elif command == "prune":
+            _, flags = parse_flags(rest, command, bool_flags=("--dry-run", "--delete"))
+            if flags.get("--dry-run") and flags.get("--delete"):
+                die_usage("prune takes --dry-run or --delete, not both")
+            result = commands.cmd_prune(delete=bool(flags.get("--delete")))
         elif command == "resume":
             positional, flags = parse_flags(rest, command)
             if len(positional) != 1:

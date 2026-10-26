@@ -813,8 +813,11 @@ def cmd_rebind(repo, cwd, name, worktree):
     target = Path(worktree)
     if not target.is_dir():
         die(4, f"the run's worktree {target} does not exist")
-    probe = subprocess.run(["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
-                           capture_output=True, text=True)
+    probe = subprocess.run(
+        ["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True,
+        text=True,
+    )
     if probe.returncode != 0 or probe.stdout.strip() != "true":
         die(4, f"{target} is not a git worktree")
     path, loaded, source = one_run(repo, name)
@@ -827,9 +830,15 @@ def cmd_rebind(repo, cwd, name, worktree):
     new_state["worktree"] = str(target.resolve())
     new_state["repo"] = main_repo(target)
     state.write_state(path, new_state)
-    commit_worktree(str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir"))
-    return {"rebound": name, "worktree": new_state["worktree"], "repo": new_state["repo"],
-            "previous_worktree": loaded.get("worktree")}
+    commit_worktree(
+        str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir")
+    )
+    return {
+        "rebound": name,
+        "worktree": new_state["worktree"],
+        "repo": new_state["repo"],
+        "previous_worktree": loaded.get("worktree"),
+    }
 
 
 def cmd_resume(repo, name):
@@ -837,19 +846,57 @@ def cmd_resume(repo, name):
     resume digest: the recorded stage restarts from its beginning (FR-003)."""
     path, loaded, source = one_run(repo, name)
     if loaded.get("status") in ("pr-open", "aborted"):
-        die(1, f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume")
+        die(
+            1,
+            f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume",
+        )
     now = now_iso()
 
     def mutate(s):
         s["status"] = "running"
         s["halt_reason"] = None
         s["history"] = (s.get("history") or []) + [
-            {"at": now, "stage": s.get("stage"), "event": "resumed",
-             "commit": None, "harness": s.get("harness")}]
+            {
+                "at": now,
+                "stage": s.get("stage"),
+                "event": "resumed",
+                "commit": None,
+                "harness": s.get("harness"),
+            }
+        ]
         return s
 
     updated = write_run(path, loaded, mutate)
     worktree = updated.get("worktree")
     if source == "worktree" and worktree:
-        commit_worktree(worktree, f"factory: resume {name}", spec_dir=updated.get("spec_dir"))
+        commit_worktree(
+            worktree, f"factory: resume {name}", spec_dir=updated.get("spec_dir")
+        )
     return digest(updated, path, source)
+
+
+def stale_pending_files():
+    """Stale pending files (FR-019): the run's state home has moved into a
+    worktree (the pending state records one) or the run has ended
+    (pr-open/aborted). A run whose only state is the pending file — no
+    recorded worktree, still running — is never stale."""
+    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+    stale = []
+    for path in sorted((home / "pending").glob("*.json")):
+        loaded, error = state.read_state(path)
+        if error:
+            continue  # never delete what cannot be read
+        if loaded.get("worktree") or loaded.get("status") in ("pr-open", "aborted"):
+            stale.append(path)
+    return stale
+
+
+def cmd_prune(delete=False):
+    """Preview stale pending files; deletion only with --delete (FR-019)."""
+    stale = [str(p) for p in stale_pending_files()]
+    deleted = []
+    if delete:
+        for path in stale:
+            Path(path).unlink()
+            deleted.append(path)
+    return {"stale": stale, "deleted": deleted}
