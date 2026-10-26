@@ -805,3 +805,28 @@ def cmd_envelope_check(path):
             + "; ".join(f"{p['location']}: {p['reason']}" for p in problems),
         )
     return {"shape": shape, "problems": 0}
+
+
+def cmd_rebind(repo, cwd, name, worktree):
+    """Rewrite a moved run's stored paths (FR-012): the target must be a git
+    worktree on the recorded branch; sharing ${FACTORY_HOME} alone never moves a run."""
+    target = Path(worktree)
+    if not target.is_dir():
+        die(4, f"the run's worktree {target} does not exist")
+    probe = subprocess.run(["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
+                           capture_output=True, text=True)
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        die(4, f"{target} is not a git worktree")
+    path, loaded, source = one_run(repo, name)
+    branch = loaded.get("branch")
+    if branch:
+        current = git(str(target), "branch", "--show-current").strip()
+        if current != branch:
+            die(1, f"{target} is on branch '{current}'; the run records '{branch}'")
+    new_state = dict(loaded)
+    new_state["worktree"] = str(target.resolve())
+    new_state["repo"] = main_repo(target)
+    state.write_state(path, new_state)
+    commit_worktree(str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir"))
+    return {"rebound": name, "worktree": new_state["worktree"], "repo": new_state["repo"],
+            "previous_worktree": loaded.get("worktree")}

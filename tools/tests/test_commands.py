@@ -7,6 +7,7 @@ Covers `runs`, `show` and `validate` exit codes and digests (contracts/cli.md),
 import json
 import shutil
 import unittest
+from pathlib import Path
 from datetime import datetime, timezone
 
 from tests import Sandbox, fixture
@@ -600,10 +601,11 @@ class RebindTests(unittest.TestCase):
         out = self.box.cli("rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo)
         self.assertEqual(out.returncode, 0, out.stderr)
         report = json.loads(out.stdout)
-        self.assertEqual(report["worktree"], str(wt_new))
+        self.assertEqual(Path(report["worktree"]).resolve(), wt_new.resolve())
         state = json.loads(self.state_path(wt_new).read_text())
-        self.assertEqual(state["worktree"], str(wt_new), "the recorded home is rewritten")
-        self.assertEqual(state["repo"], str(self.box.repo))
+        self.assertEqual(Path(state["worktree"]).resolve(), wt_new.resolve(),
+                         "the recorded home is rewritten")
+        self.assertEqual(Path(state["repo"]).resolve(), self.box.repo.resolve())
 
     def test_rebind_refuses_a_missing_worktree_with_exit_four(self):
         out = self.box.cli("rebind", self.branch, "--worktree", str(self.box.dir / "gone"), cwd=self.box.repo)

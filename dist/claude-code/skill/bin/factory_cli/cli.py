@@ -29,7 +29,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
   envelope check <file>                             validate the final fenced json block\n  verify --pass|--fail --commands '<json>'          record the build/test verify pair
-  lock take <run> [--force]                         the only explicit takeover
+  rebind <run> --worktree <path>                    rewrite a moved run's stored paths\n  lock take <run> [--force]                         the only explicit takeover
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
@@ -220,6 +220,12 @@ def main(argv):
             if rest[2:]:
                 die_usage("envelope check takes exactly one <file>")
             result = commands.cmd_envelope_check(rest[1])
+        elif command == "rebind":
+            positional, flags = parse_flags(rest, command, value_flags=("--repo", "--worktree"))
+            if len(positional) != 1 or not flags.get("--worktree"):
+                die_usage("rebind needs <run> --worktree <path>")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_rebind(repo, Path.cwd(), positional[0], flags["--worktree"])
         elif command == "verify":
             _, flags = parse_flags(
                 rest, command, value_flags=("--repo",), bool_flags=("--pass", "--fail")
