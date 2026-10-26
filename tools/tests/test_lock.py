@@ -15,6 +15,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
@@ -301,6 +302,43 @@ class LivenessTests(unittest.TestCase):
 
     def test_a_gone_owner_is_still_stale(self):
         self.assertFalse(lock._alive(dead_pid()))
+
+
+class ForceTakeoverTests(unittest.TestCase):
+    """FR-013: --force is evaluated before liveness — a takeover with --force
+    succeeds even when the holder's liveness cannot be judged; without it a
+    live lock refuses with the owner reported."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.guard = Path(self.tmp.name) / "state.json"
+        self.lock_path = lock.lock_path_for(self.guard)
+
+    def write_lock(self, owner_pid):
+        self.lock_path.write_text(
+            json.dumps(
+                {
+                    "owner_pid": owner_pid,
+                    "host": HOST,
+                    "harness": "opencode",
+                    "at": "2026-10-23T12:00:00Z",
+                }
+            )
+        )
+
+    def test_force_takes_over_when_liveness_cannot_be_judged(self):
+        self.write_lock(999999999999)
+        with mock.patch.object(lock, "_alive", side_effect=OverflowError):
+            info = lock.take(self.guard, harness="opencode", force=True)
+        self.assertTrue(info["taken_over"])
+        self.assertEqual(lock.read(self.lock_path)["owner_pid"], os.getpid())
+
+    def test_without_force_a_live_lock_refuses_with_owner_reported(self):
+        self.write_lock(999999999999)
+        with self.assertRaises(lock.LockHeld) as caught:
+            lock.take(self.guard, harness="opencode")
+        self.assertIn("999999999999", str(caught.exception))
 
 
 class LockCliTests(unittest.TestCase):
