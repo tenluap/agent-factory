@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "started_at": "2026-10-21T09:00:00Z",
+  "ended_at": null,
+  "harness": "opencode",
+  "feature": "string-answer relay rounds",
+  "repo": "/repo",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "002-string-answers",
+  "worktree": "/repo-factory/002-string-answers",
+  "spec_dir": "specs/002-string-answers",
+  "status": "running",
+  "stage": "clarify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": { "chain": "full", "fast": true },
+  "skills": { "speckit-clarify": "/skills/speckit-clarify/SKILL.md" },
+  "analyze": { "pass": 1, "loops": 0, "reports": [], "remediations": [], "pending_clarify": [] },
+  "relay": {
+    "stage": "clarify",
+    "rounds": [
+      {
+        "questions": [
+          { "id": "Q1", "text": "Which option?", "options": ["A: one", "B: two"], "recommended": "B" }
+        ],
+        "answers": { "Q1": "B: two" }
+      }
+    ]
+  },
+  "timeline": [
+    { "at": "2026-10-21T09:05:00Z", "kind": "questions", "stage": "clarify", "summary": "Clarify round 1 (1 question)", "answered_at": "2026-10-21T09:10:00Z", "latency_ms": 300000 }
+  ],
+  "ledger": [
+    { "at": "2026-10-21T09:01:00Z", "stage": "clarify", "role": "spec-builder", "harness": "opencode", "in_est": 9000, "out_est": 3000, "reported": null, "duration_ms": 240000 }
+  ],
+  "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
+  "pr_url": null,
+  "history": [
+    { "at": "2026-10-21T09:02:00Z", "stage": "specify", "event": "complete", "commit": "abc1234", "harness": "opencode" },
+    { "at": "2026-10-21T09:04:00Z", "stage": "clarify", "event": "complete", "commit": null, "harness": "opencode" }
+  ]
+}

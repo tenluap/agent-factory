@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "started_at": "2026-10-22T14:00:00Z",
+  "ended_at": null,
+  "harness": "claude-code",
+  "feature": "v3 state as written before the v4 schema",
+  "repo": "/repo",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "003-v3-shape",
+  "worktree": "/repo-factory/003-v3-shape",
+  "spec_dir": "specs/003-v3-shape",
+  "status": "running",
+  "stage": "implement",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": { "chain": "full", "fast": true },
+  "skills": { "speckit-implement": "/skills/speckit-implement/SKILL.md" },
+  "commands": { "build": "make build", "test": "make test" },
+  "analyze": { "pass": 2, "loops": 1, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
+  "relay": null,
+  "timeline": [],
+  "ledger": [
+    { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000 }
+  ],
+  "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
+  "pr_url": null,
+  "history": [
+    { "at": "2026-10-22T14:01:00Z", "stage": "specify", "event": "complete", "commit": "aaa0001", "harness": "claude-code" },
+    { "at": "2026-10-22T14:03:00Z", "stage": "plan", "event": "complete", "commit": "aaa0002", "harness": "claude-code" },
+    { "at": "2026-10-22T14:10:00Z", "stage": "implement", "event": "complete", "commit": "aaa0003", "harness": "claude-code" }
+  ]
+}

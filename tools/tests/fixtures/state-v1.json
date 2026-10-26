@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "started_at": "2026-10-20T10:00:00Z",
+  "ended_at": null,
+  "harness": "claude-code",
+  "feature": "legacy single-batch relay",
+  "repo": "/repo",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "001-legacy-batch",
+  "worktree": null,
+  "spec_dir": "specs/001-legacy-batch",
+  "status": "running",
+  "stage": "grill",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": { "chain": "lite", "fast": false },
+  "skills": {},
+  "relay": {
+    "questions": [
+      { "id": "Q1", "text": "Which chain?", "recommended": "lite" },
+      { "id": "Q2", "text": "Fast mode?", "recommended": "yes" }
+    ],
+    "answers": { "Q1": "lite", "Q2": "yes" }
+  },
+  "timeline": [],
+  "ledger": [],
+  "history": [
+    { "at": "2026-10-20T10:05:00Z", "stage": "brainstorm", "event": "complete", "commit": null, "harness": "claude-code" },
+    { "at": "2026-10-20T10:06:00Z", "stage": "grill", "event": "complete", "commit": null, "harness": "claude-code" }
+  ]
+}
