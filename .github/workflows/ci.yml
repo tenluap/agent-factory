@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Full suite
+        run: python3 -m unittest discover -s tools
+      - name: Render all five harnesses and fail on dist drift (Constitution III)
+        run: |
+          export FACTORY_HOME="$(mktemp -d)"
+          for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done
+          test -z "$(git status --porcelain -- dist/)"
+      - name: Installer syntax (FR-018)
+        run: bash -n install.sh
