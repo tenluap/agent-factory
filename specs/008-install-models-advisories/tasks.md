@@ -98,7 +98,7 @@
 
 **Independent Test**: quickstart S5 — the replay reports the same 005/006 defects, `tools/tests/test_lock.py` defines each behaviour once, the contract carries `resume <run>`, 007's plan carries the override (FR-018–FR-021).
 
-- [ ] T036 [US5] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — the module defines no test method twice and defines none after the runner's `unittest.main()` exit call, so each lock behaviour is exercised exactly once (FR-018).
+- [x] T036 [US5] Failing tests in `tools/tests/test_lock.py` — seam: `factory_cli.lock` lifecycle — the module defines no test method twice and defines none after the runner's `unittest.main()` exit call, so each lock behaviour is exercised exactly once (FR-018).
 - [ ] T037 [US5] Delete the dead duplicate `LockCliTests` methods after `unittest.main()` in `tools/tests/test_lock.py`, leaving each behaviour covered once (FR-018; seam: `factory_cli.lock` lifecycle).
 - [ ] T038 [US5] Failing tests in `tools/tests/test_state.py` — seam: `tools/tests/replay.py` defect detectors — `tools/tests/replay.py` resolves `parse_iso`, `TIMELINE_KINDS`, `HISTORY_EVENTS` and the stage vocabularies from `factory_cli.state`, not private copies (FR-019; the assertions sit in `tools/tests/test_state.py`, which checks the `factory_cli.state` vocabulary `replay.py` must consume).
 - [ ] T039 [US5] Implement the import move in `tools/tests/replay.py` (shared vocabulary and timestamp parsing from `factory_cli.state`) so `python3 tools/tests/replay.py` still reports every 005/006 fixture defect (FR-019; seam: `tools/tests/replay.py` defect detectors), then close with the full suite, the build gate and quickstart.md S1–S5 (SC-006).

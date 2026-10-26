@@ -6,6 +6,7 @@ recorded host when the owner process is gone; takeover is explicit via
 lock lives beside its pending file.
 """
 
+import ast
 import json
 import os
 import socket
@@ -428,6 +429,39 @@ class LockCliTests(unittest.TestCase):
             holder.terminate()
             holder.wait()
             self.lock_path.unlink(missing_ok=True)
+
+
+class TestModuleHygieneTests(unittest.TestCase):
+    """FR-018: each lock behaviour is exercised exactly once — no test method
+    is defined twice, and none is dead code after the runner's exit call."""
+
+    def test_no_test_method_is_defined_twice_or_after_the_runner(self):
+        tree = ast.parse(Path(__file__).read_text())
+        names = [
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test")
+        ]
+        duplicates = {name for name in names if names.count(name) > 1}
+        self.assertEqual(duplicates, set(), "every lock behaviour is defined once")
+        guard_line = None
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.If)
+                and isinstance(node.test, ast.Compare)
+                and getattr(node.test.left, "id", "") == "__name__"
+            ):
+                guard_line = node.lineno
+        self.assertIsNotNone(guard_line, "the module keeps its runner guard")
+        after = [
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name.startswith("test")
+            and guard_line
+            and node.lineno > guard_line
+        ]
+        self.assertEqual(after, [], "no test method lives after the runner's exit call")
 
 
 if __name__ == "__main__":
