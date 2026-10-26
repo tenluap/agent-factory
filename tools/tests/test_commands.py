@@ -248,10 +248,6 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 def writer_state():
     """A running v3-shaped state with an open relay round, ready to upgrade."""
     s = fixture("state-v3.json")
@@ -769,3 +765,7 @@ class PruneTests(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertFalse(stale.exists(), "--delete removes the stale pending file")
         self.assertTrue(keep.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

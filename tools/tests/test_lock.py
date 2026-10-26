@@ -199,10 +199,81 @@ class LifecycleTests(unittest.TestCase):
             "a racer that loses the create race reports LockHeld",
         )
 
+    def test_stale_clear_never_deletes_a_lock_swapped_in_after_the_comparison(self):
+        """The takeover's unlink must survive a racer's fresh lock that lands
+        after our comparison read: the clear re-checks that the file on disk
+        is still the stale lock just observed (same device and inode)."""
+        gone = dead_pid()
+        self.lock_path.write_text(
+            json.dumps(
+                {
+                    "owner_pid": gone,
+                    "host": HOST,
+                    "harness": "opencode",
+                    "at": "2026-10-20T10:00:00Z",
+                }
+            )
+        )
+        fresh = {
+            "owner_pid": os.getpid(),
+            "host": HOST,
+            "harness": "claude-code",
+            "at": "2026-10-20T10:00:01Z",
+        }
+        original_read = lock.read
+        calls = {"n": 0}
 
-if __name__ == "__main__":
-    unittest.main()
+        def racing_read(p):
+            calls["n"] += 1
+            if calls["n"] != 2:
+                return original_read(p)
+            observed = self.lock_path.read_text()  # the comparison sees the stale lock
+            # a racer's takeover lands: its own stale clear plus exclusive create
+            self.lock_path.unlink()
+            self.lock_path.write_text(json.dumps(fresh))
+            return json.loads(observed)
 
+        lock.read = racing_read
+        try:
+            with self.assertRaises(lock.LockHeld):
+                lock.acquire(self.guard, harness="claude-code")
+        finally:
+            lock.read = original_read
+        self.assertEqual(
+            json.loads(self.lock_path.read_text()),
+            fresh,
+            "the fresh lock a racer swapped in after the comparison survives",
+        )
+
+    def test_create_failure_never_unlinks_a_lock_swapped_in_behind_it(self):
+        """_create's failed write removes the file only when it still holds
+        the JSON this call wrote; a lock swapped in since the create stays."""
+        fresh = {
+            "owner_pid": os.getpid(),
+            "host": HOST,
+            "harness": "claude-code",
+            "at": "2026-10-20T10:00:01Z",
+        }
+        original_dumps = json.dumps
+
+        def exploding_dumps(obj, **kwargs):
+            self.lock_path.write_text(original_dumps(fresh))  # a racer's lock lands
+            raise ValueError("simulated write failure")
+
+        lock.json.dumps = exploding_dumps
+        try:
+            with self.assertRaises(ValueError):
+                lock.acquire(self.guard, harness="claude-code")
+        finally:
+            lock.json.dumps = original_dumps
+        self.assertEqual(
+            json.loads(self.lock_path.read_text()),
+            fresh,
+            "the lock swapped in behind the failed create survives",
+        )
+
+
+class LockCliTests(unittest.TestCase):
     def setUp(self):
         from tests import Sandbox, fixture
 
@@ -214,6 +285,42 @@ if __name__ == "__main__":
 
         self.guard = self.wt / "specs" / self.branch / "factory" / "state.json"
         self.lock_path = lock.lock_path_for(self.guard)
+
+    def test_lock_take_cli_refuses_live_and_takes_with_force(self):
+        lock.acquire(self.guard, harness="opencode")
+        out = self.box.cli("lock", "take", self.branch)
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("locked by PID", out.stderr)
+        out = self.box.cli("lock", "take", self.branch, "--force")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        on_disk = json.loads(self.lock_path.read_text())
+        self.assertTrue(on_disk["taken_over"])
+        self.assertEqual(on_disk["previous"]["harness"], "opencode")
+
+    def test_writers_refuse_under_a_live_foreign_lock(self):
+        holder = subprocess.Popen(["sleep", "30"])
+        try:
+            self.lock_path.write_text(
+                json.dumps(
+                    {
+                        "owner_pid": holder.pid,
+                        "host": HOST,
+                        "harness": "opencode",
+                        "at": "2026-10-20T10:00:00Z",
+                    }
+                )
+            )
+            out = self.box.cli("checkpoint", "implement", cwd=self.wt)
+            self.assertEqual(out.returncode, 1)
+            self.assertIn("locked by PID", out.stderr)
+        finally:
+            holder.terminate()
+            holder.wait()
+            self.lock_path.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
     def test_lock_take_cli_refuses_live_and_takes_with_force(self):
         lock.acquire(self.guard, harness="opencode")

@@ -86,14 +86,28 @@ def _write(path, info):
         raise
 
 
+def _identity(path):
+    """(st_dev, st_ino) of the file at path, or None when it is absent."""
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return (st.st_dev, st.st_ino)
+
+
 def _create(path, info):
-    """Create the lock file exclusively; FileExistsError when one exists."""
+    """Create the lock file exclusively; FileExistsError when one exists.
+
+    A failed write removes the file only when it still holds the JSON this
+    call wrote, so a lock swapped in since the create is never deleted.
+    """
     fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     try:
         with os.fdopen(fd, "w") as handle:
             handle.write(json.dumps(info, indent=2) + "\n")
     except BaseException:
-        Path(path).unlink(missing_ok=True)
+        if read(path) == info:
+            Path(path).unlink(missing_ok=True)
         raise
 
 
@@ -104,17 +118,17 @@ def acquire(state_path, harness):
     win, and an unreadable lock file is refused (its owner is unknown; only
     `take --force` clears it). A stale lock (own host, owner gone) is
     replaced, keeping it as `previous`; the replacement unlinks only a lock
-    still identical to the stale one just re-read, so a racer never deletes
-    a lock it did not observe.
-
-    # ponytail: two racers stealing the same stale lock can still both
-    # replace it; fcntl.flock is the upgrade if that ever matters.
+    that still holds the stale contents just re-read and is still the same
+    file on disk (same device and inode), so a racer's fresh lock is never
+    deleted. Two racers stealing the same stale lock can still both replace
+    it; fcntl.flock is the upgrade if that ever matters.
     """
     path = lock_path_for(state_path)
     for _ in range(3):
         existing = read(path)
         if existing and _live(existing):
             raise LockHeld(existing)
+        stale_id = _identity(path) if existing else None
         info = {
             "owner_pid": os.getpid(),
             "host": socket.gethostname(),
@@ -127,7 +141,12 @@ def acquire(state_path, harness):
             _create(path, info)
             return info
         except FileExistsError:
-            if existing and not _live(existing) and read(path) == existing:
+            if (
+                existing
+                and not _live(existing)
+                and read(path) == existing
+                and _identity(path) == stale_id
+            ):
                 path.unlink(missing_ok=True)  # clear the stale lock we observed
     raise LockHeld(
         read(path) or {"owner_pid": "?", "host": "?", "harness": "?", "at": "?"}

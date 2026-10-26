@@ -169,10 +169,6 @@ class RenderOverrideTests(unittest.TestCase):
         self.assertIn("spec-builder: test-org/test-deep-model", effective.stdout)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ReadOnlyConformanceTests(unittest.TestCase):
     """Static read-only conformance (FR-014, R13): every rendered read-access
     agent denies editing in its adapter's own terms; codex is excluded by its
@@ -182,6 +178,7 @@ class ReadOnlyConformanceTests(unittest.TestCase):
 
     def read_roles(self):
         import render as render_mod
+
         for role_file in sorted((render_mod.ROOT / "core" / "roles").glob("*.md")):
             meta, _ = render_mod.frontmatter(role_file.read_text())
             if meta["access"] == "read":
@@ -190,16 +187,23 @@ class ReadOnlyConformanceTests(unittest.TestCase):
     def agent_path(self, harness, meta):
         adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
         name = adapter["agent_file"].format(
-            role=meta["name"], role_=meta["name"].replace("-", "_"),
-            description=meta["description"])
+            role=meta["name"],
+            role_=meta["name"].replace("-", "_"),
+            description=meta["description"],
+        )
         return DIST / harness / "agents" / name
 
     def tearDown(self):
         for harness in self.ENFORCING:
             env = dict(os.environ)
             env.pop("FACTORY_HOME", None)
-            subprocess.run([sys.executable, str(REPO / "tools" / "render.py"), harness],
-                           cwd=REPO, env=env, capture_output=True, check=True)
+            subprocess.run(
+                [sys.executable, str(REPO / "tools" / "render.py"), harness],
+                cwd=REPO,
+                env=env,
+                capture_output=True,
+                check=True,
+            )
 
     def test_read_agents_deny_editing_in_each_adapters_terms(self):
         for harness in self.ENFORCING:
@@ -211,11 +215,19 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 with self.subTest(harness=harness, role=meta["name"]):
                     if harness in ("claude-code", "zcode"):
                         self.assertIn("tools:", text)
-                        tools_line = next(line for line in text.splitlines() if line.startswith("tools:"))
+                        tools_line = next(
+                            line
+                            for line in text.splitlines()
+                            if line.startswith("tools:")
+                        )
                         self.assertNotIn("Edit", tools_line, path)
                         self.assertNotIn("Write", tools_line, path)
                     elif harness == "copilot":
-                        tools_line = next(line for line in text.splitlines() if line.startswith("tools:"))
+                        tools_line = next(
+                            line
+                            for line in text.splitlines()
+                            if line.startswith("tools:")
+                        )
                         self.assertNotIn("edit", tools_line.lower(), path)
                         self.assertNotIn("write", tools_line.lower(), path)
                     elif harness == "opencode":
@@ -224,17 +236,27 @@ class ReadOnlyConformanceTests(unittest.TestCase):
 
     def test_codex_limitation_is_disclosed(self):
         disclosure = (ADAPTERS / "codex" / "harness.md").read_text()
-        self.assertIn("read-only roles are read-only by instruction", disclosure,
-                      "codex documents that it cannot enforce read-only agents")
+        self.assertIn(
+            "read-only roles are read-only by instruction",
+            disclosure,
+            "codex documents that it cannot enforce read-only agents",
+        )
 
     def test_write_roles_keep_edit_access(self):
         import render as render_mod
+
         render("claude-code")
         adapter = json.loads((ADAPTERS / "claude-code" / "adapter.json").read_text())
         for role_file in sorted((render_mod.ROOT / "core" / "roles").glob("*.md")):
             meta, _ = render_mod.frontmatter(role_file.read_text())
             if meta["access"] == "write":
                 text = self.agent_path("claude-code", meta).read_text()
-                tools_line = next(line for line in text.splitlines() if line.startswith("tools:"))
+                tools_line = next(
+                    line for line in text.splitlines() if line.startswith("tools:")
+                )
                 self.assertIn("Edit", tools_line, meta["name"])
                 self.assertIn("Write", tools_line, meta["name"])
+
+
+if __name__ == "__main__":
+    unittest.main()
