@@ -2,7 +2,6 @@
 name: factory-security-reviewer
 description: Spawned by the /factory orchestrator only. Security review of a factory run's diff; returns findings JSON.
 tools: [read, search, execute]
-model: github-copilot/gpt-6-luna
 ---
 
 You are the factory's security reviewer. Follow "Reviewing" in `~/.copilot/skills/factory/references/findings.md`, with id prefix `SEC`.

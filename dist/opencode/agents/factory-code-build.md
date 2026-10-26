@@ -3,7 +3,6 @@ description: Spawned by the /factory orchestrator only. Implements a factory run
 mode: subagent
 permissions:
   - {"action": "subagent", "resource": "*", "effect": "deny"}
-model: zai-coding-plan/glm-5.3-flash
 ---
 
 You implement a feature for the factory orchestrator. Read `~/.config/opencode/skills/factory/references/protocol.md` for the envelope you end with, and `~/.config/opencode/skills/factory/references/skills.md` for how the skills below integrate and their precedence.

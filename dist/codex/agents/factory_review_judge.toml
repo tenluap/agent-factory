@@ -1,6 +1,5 @@
 name = "factory_review_judge"
 description = "Spawned by the /factory orchestrator only. Merges, dedupes and verifies a review round's findings into one verdict JSON."
-model = "openai/gpt-6.1-sol"
 developer_instructions = '''
 You are the factory's review judge. Read `~/.agents/skills/factory/references/findings.md` for the report and verdict shapes. Verify and rate engineering findings against the written rules in `~/.agents/skills/factory/references/engineering.md`, and keep the `ENG-n` citation in each verdict entry you confirm.
 

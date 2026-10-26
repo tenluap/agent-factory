@@ -1,0 +1,911 @@
+"""Command implementations for the factory CLI.
+
+Read commands (`runs`, `show`, `validate`) live here; write commands join as
+their tasks land. Everything mechanical routes through `state` (and, from
+T015, `lock`); this module adds only discovery, digests and CLI errors.
+"""
+
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+from factory_cli import checks, lock, state, totals
+
+LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
+
+
+class CLIError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+
+def die(code, message):
+    raise CLIError(code, message)
+
+
+def git(repo, *args):
+    try:
+        out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+    except OSError:
+        die(2, "git not runnable")
+    if out.returncode != 0:
+        die(2, out.stderr.strip() or f"git {' '.join(args)} failed")
+    return out.stdout
+
+
+def main_repo(cwd):
+    try:
+        out = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(cwd),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        die(2, "git not runnable")
+    if out.returncode != 0:
+        die(2, f"not a git repository: {cwd}")
+    return str(Path(out.stdout.strip()).resolve().parent)
+
+
+def last_activity(state_dict):
+    candidates = []
+    for key in ("history", "timeline"):
+        entries = state_dict.get(key)
+        if isinstance(entries, list) and entries and isinstance(entries[-1], dict):
+            if entries[-1].get("at"):
+                candidates.append(entries[-1]["at"])
+    if state_dict.get("started_at"):
+        candidates.append(state_dict["started_at"])
+    return max(candidates) if candidates else None
+
+
+def rounds_of(relay):
+    if not isinstance(relay, dict):
+        return []
+    if isinstance(relay.get("rounds"), list):
+        return [r for r in relay["rounds"] if isinstance(r, dict)]
+    if relay.get("questions"):  # version 1: one batch at the top of relay
+        return [
+            {"questions": relay["questions"], "answers": relay.get("answers") or {}}
+        ]
+    return []
+
+
+def relay_digest(relay):
+    rounds = rounds_of(relay)
+    if not rounds:
+        return None
+    last = rounds[-1]
+    questions = last.get("questions") or []
+    answers = last.get("answers") or {}
+    unanswered = []
+    for position, q in enumerate(questions, 1):
+        if isinstance(q, dict):
+            if q.get("id") in answers:
+                continue
+            entry = {"position": position, **q}
+        else:  # legacy string question
+            entry = {"position": position, "text": str(q)}
+        unanswered.append(entry)
+    return {
+        "stage": relay.get("stage"),
+        "rounds": len(rounds),
+        "total": len(questions),
+        "answered": len(questions) - len(unanswered),
+        "unanswered": unanswered,
+    }
+
+
+def veto_list(state_dict):
+    """SC-004: every auto-accepted answer and every gate override, any stage."""
+    decisions = state_dict.get("decisions") or []
+    return [
+        d
+        for d in decisions
+        if isinstance(d, dict) and (d.get("auto") or d.get("kind") == "gate-override")
+    ]
+
+
+def digest(state_dict, state_path, source):
+    out = {k: v for k, v in state_dict.items() if k not in LARGE}
+    out["relay"] = relay_digest(state_dict.get("relay"))
+    timeline = [e for e in state_dict.get("timeline") or [] if isinstance(e, dict)]
+    closed = sum(1 for e in timeline if e.get("latency_ms") is not None)
+    out["waits"] = {
+        "total": len(timeline),
+        "open": len(timeline) - closed,
+        "human_ms": sum(
+            e["latency_ms"]
+            for e in timeline
+            if isinstance(e.get("latency_ms"), (int, float))
+        ),
+    }
+    ledger = [e for e in state_dict.get("ledger") or [] if isinstance(e, dict)]
+    out["spawns"] = {
+        "total": len(ledger),
+        "agent_ms": sum(
+            e["duration_ms"]
+            for e in ledger
+            if isinstance(e.get("duration_ms"), (int, float))
+        ),
+    }
+    out["totals"] = totals.compute(state_dict)
+    out["decisions"] = veto_list(state_dict)
+    out["history_tail"] = (state_dict.get("history") or [])[-3:]
+    out["totals_sentence"] = totals.sentence(totals.compute(state_dict))
+    analyze = state_dict.get("analyze")
+    if isinstance(analyze, dict) and isinstance(analyze.get("pending_clarify"), list):
+        out["analyze"] = {**analyze, "pending_clarify": len(analyze["pending_clarify"])}
+    out["state_path"] = str(state_path)
+    out["source"] = source
+    return out
+
+
+def worktree_states(repo):
+    for block in git(repo, "worktree", "list", "--porcelain").split("\n\n"):
+        for line in block.splitlines():
+            if line.startswith("worktree "):
+                worktree = line[len("worktree ") :]
+                for path in sorted(Path(worktree).glob("specs/*/factory/state.json")):
+                    yield worktree, path
+                break
+
+
+def pending_states(repo):
+    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+    repo_real = os.path.realpath(repo)
+    for path in sorted((home / "pending").glob("*.json")):
+        loaded, error = state.read_state(path)
+        if error:
+            print(
+                f"factory: skipping unreadable pending file {path}: {error}",
+                file=sys.stderr,
+            )
+            continue
+        repo_field = loaded.get("repo")
+        if repo_field and os.path.realpath(repo_field) == repo_real:
+            yield path, loaded
+
+
+def find_runs(repo):
+    """Every visible copy of every run: a (state_path, state, identity, worktree)
+    tuple, or a plain dict for an unreadable worktree state. A run's state rides
+    along as a copy into every later worktree branched after it."""
+    runs = []
+    for worktree, path in worktree_states(repo):
+        loaded, error = state.read_state(path)
+        if error:
+            runs.append(
+                {
+                    "source": "worktree",
+                    "state_path": str(path),
+                    "status": "unreadable",
+                    "error": error,
+                }
+            )
+            continue
+        runs.append(
+            (
+                path,
+                loaded,
+                {
+                    "source": "worktree",
+                    "branch": loaded.get("branch") or path.parents[1].name,
+                    "worktree": worktree,  # where this copy was found, not the state's recorded home
+                    "spec_dir": loaded.get("spec_dir")
+                    or f"specs/{path.parents[1].name}",
+                },
+                worktree,
+            )
+        )
+    for path, loaded in pending_states(repo):
+        runs.append(
+            (
+                path,
+                loaded,
+                {"source": "pending", "branch": None, "name": path.stem},
+                None,
+            )
+        )
+    return runs
+
+
+def is_authoritative(run):
+    path, loaded, identity, worktree = run
+    return bool(
+        worktree
+        and loaded.get("worktree")
+        and os.path.realpath(loaded["worktree"]) == os.path.realpath(worktree)
+    )
+
+
+def deduped(runs):
+    """One entry per run: copies sharing a branch collapse onto the copy in the
+    worktree the state itself names, else the first seen."""
+    picked, order, out = {}, [], []
+    for run in runs:
+        if isinstance(run, dict):
+            out.append(run)
+            continue
+        key = (run[2]["source"], run[2].get("branch") or run[0].stem)
+        if key not in picked:
+            order.append(key)
+            picked[key] = run
+        elif is_authoritative(run) and not is_authoritative(picked[key]):
+            picked[key] = run
+    return out + [picked[key] for key in order]
+
+
+def find_matches(repo, name):
+    """Every deduped run matching `<name>`: (path, state, source) triples."""
+    name = name[:-5] if name.endswith(".json") else name
+    matches = []
+    for run in deduped(find_runs(repo)):
+        if isinstance(run, dict):
+            continue
+        path, loaded, identity, _ = run
+        if identity["source"] == "worktree":
+            if name in (loaded.get("branch"), path.parents[1].name):
+                matches.append((path, loaded, "worktree"))
+        elif name == identity["name"] or identity["name"].endswith(f"-{name}"):
+            matches.append((path, loaded, "pending"))
+    return matches
+
+
+def one_run(repo, name):
+    """The single run matching `<name>`, refusing none/ambiguous/gone homes."""
+    matches = find_matches(repo, name)
+    if not matches:
+        known = (
+            ", ".join(
+                sorted(
+                    filter(
+                        None,
+                        (
+                            r[1].get("branch") or r[0].stem
+                            for r in deduped(find_runs(repo))
+                            if not isinstance(r, dict)
+                        ),
+                    )
+                )
+            )
+            or "none found"
+        )
+        die(1, f"no run '{name}' in {repo} (runs: {known})")
+    if len(matches) > 1:
+        listed = ", ".join(str(p) for p, _, _ in matches)
+        die(3, f"'{name}' matches several runs: {listed}")
+    return matches[0]
+
+
+def cmd_runs(repo):
+    entries = []
+    for run in deduped(find_runs(repo)):
+        if isinstance(run, dict):  # unreadable worktree state
+            entries.append(
+                {
+                    **run,
+                    "violations": [{"location": "state.json", "reason": run["error"]}],
+                }
+            )
+            continue
+        path, loaded, identity, _ = run
+        violations = state.validate_state(loaded)
+        if loaded.get("status") == "pr-open":
+            continue
+        entries.append(
+            {
+                **identity,
+                "stage": loaded.get("stage"),
+                "status": loaded.get("status"),
+                "halt_reason": loaded.get("halt_reason"),
+                "mode": loaded.get("mode"),
+                "feature": loaded.get("feature"),
+                "last_activity": last_activity(loaded),
+                "state_path": str(path),
+                "violations": violations,
+            }
+        )
+    entries.sort(key=lambda e: e.get("last_activity") or "", reverse=True)
+    return {"repo": repo, "runs": entries}
+
+
+def cmd_show(repo, name):
+    path, loaded, source = one_run(repo, name)
+    home = loaded.get("worktree")
+    if source == "worktree" and home and not os.path.isdir(home):
+        die(
+            4,
+            f"run '{name}' records worktree {home}, which no longer exists "
+            f"(state found at {path})",
+        )
+    return digest(loaded, path, source)
+
+
+def cmd_validate(repo, name=None, all_runs=False):
+    """Violations for one run or, with --all, every run; empty list means clean."""
+    violations = []
+    if all_runs:
+        for run in deduped(find_runs(repo)):
+            if isinstance(run, dict):
+                violations.append(
+                    {
+                        "run": run.get("state_path"),
+                        "location": "state.json",
+                        "reason": run["error"],
+                    }
+                )
+                continue
+            path, loaded, _, _ = run
+            violations.extend(
+                {"run": loaded.get("branch") or path.stem, **v}
+                for v in state.validate_state(loaded)
+            )
+        return violations
+    if not name:
+        die(5, "validate needs a run name or --all")
+    _, loaded, _ = one_run(repo, name)
+    return state.validate_state(loaded)
+
+
+# ---------------------------------------------------------------- writers ---
+# The single writer (FR-001): every mutation stamps its own time, is
+# validated by state.write_state, lands atomically, and commits on worktree
+# runs. Lock refusal lands with the lock module (T015); declared-file staging
+# with T026; gate checks with T017.
+
+
+def now_iso():
+    return state.iso(datetime.now(timezone.utc))
+
+
+def resolve_target(repo, cwd):
+    """The one run this session writes: the worktree run whose home is `cwd`,
+    else the repo's single pending run. Ended runs are never writable."""
+    cwd_real = os.path.realpath(str(cwd))
+    worktree_matches = []
+    for run in deduped(find_runs(repo)):
+        if isinstance(run, dict):
+            continue
+        path, loaded, identity, _ = run
+        if loaded.get("status") in ("pr-open", "aborted"):
+            continue
+        if (
+            identity["source"] == "worktree"
+            and os.path.realpath(identity["worktree"] or "") == cwd_real
+        ):
+            worktree_matches.append((path, loaded, "worktree", identity["worktree"]))
+    if len(worktree_matches) > 1:
+        die(3, f"several runs claim {cwd}")
+    if worktree_matches:
+        return worktree_matches[0]
+    pending = [
+        (path, loaded, "pending", None)
+        for run in deduped(find_runs(repo))
+        if not isinstance(run, dict)
+        for path, loaded, identity, _ in [run]
+        if identity["source"] == "pending"
+    ]
+    if len(pending) > 1:
+        die(3, f"several pending runs of {repo}; name one")
+    if not pending:
+        die(1, f"no run to write from {cwd} in {repo}")
+    return pending[0]
+
+
+def write_run(path, loaded, mutate):
+    try:
+        return state.write_state(path, loaded, mutate=mutate)
+    except lock.LockHeld as e:
+        die(1, str(e))
+    except state.StateError as e:
+        die(1, str(e))
+
+
+def commit_worktree(worktree, message, spec_dir=None, extra=()):
+    """Stage spec_dir (plus the checkpoint's declared extras) and commit.
+    Undeclared changes are never staged (FR-017)."""
+    if not worktree:
+        return None
+    add = [path for path in ([spec_dir] if spec_dir else []) if path] + list(extra)
+    if add:
+        git(worktree, "add", "--", *add)
+    git(worktree, "commit", "-q", "-m", message)
+    return git(worktree, "rev-parse", "--short", "HEAD").strip()
+
+
+def successor(stage):
+    order = state.STAGES
+    return (
+        order[order.index(stage) + 1]
+        if stage in order and order.index(stage) + 1 < len(order)
+        else None
+    )
+
+
+def settled_answers(relay, fallback_stage, now):
+    """Every settled answer of the stage's relay, as decision records (FR-008).
+
+    Stamped with the checkpoint's own `now`: decisions are validated
+    non-decreasing, so keeping each answer's original time could place a
+    migrated record before an existing decision and refuse every retry.
+    """
+    migrated = []
+    for one_round in rounds_of(relay):
+        for qid, answer in (one_round.get("answers") or {}).items():
+            if isinstance(answer, dict):
+                migrated.append(
+                    {
+                        "stage": fallback_stage,
+                        "question": qid,
+                        "answer": answer.get("answer"),
+                        "auto": bool(answer.get("auto")),
+                        "at": now,
+                        "kind": "answer",
+                    }
+                )
+            else:  # legacy version 2 string answer
+                migrated.append(
+                    {
+                        "stage": fallback_stage,
+                        "question": qid,
+                        "answer": str(answer),
+                        "auto": False,
+                        "at": now,
+                        "kind": "answer",
+                    }
+                )
+    return migrated
+
+
+def declared_from_envelope(path):
+    """The envelope's `files` list, from a role output or a bare JSON file (FR-017)."""
+    try:
+        text = Path(path).read_text()
+    except OSError as e:
+        die(1, f"cannot read {path}: {e}")
+    block, error = checks.extract_block(text)
+    if error:
+        try:
+            block = json.loads(text)
+        except ValueError:
+            die(1, f"{path}: {error}")
+    files = block.get("files") if isinstance(block, dict) else None
+    if not isinstance(files, list) or not all(isinstance(f, str) and f for f in files):
+        die(1, f"{path}: the envelope carries no list of declared files in `files`")
+    return files
+
+
+def dirty_paths(worktree):
+    status = git(worktree, "status", "--porcelain", "--untracked-files=all")
+    return [line[3:].strip().strip('"') for line in status.splitlines() if line.strip()]
+
+
+def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None):
+    if stage not in state.STAGES:
+        die(
+            1,
+            f"'{stage}' is off-vocabulary; expected one of: {', '.join(state.STAGES)}",
+        )
+    if next_stage is not None and next_stage not in state.STAGES:
+        die(1, f"next stage '{next_stage}' is off-vocabulary")
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    target = next_stage or successor(stage)
+    if target:
+        violation = checks.gate_violation(loaded, target)
+        if violation:
+            die(1, f"gate refusal into '{target}': {violation}")
+    permitted = checks.permitting_decision(loaded, target) if target else None
+
+    # Every refusal point passes before the state write, so a refused
+    # checkpoint leaves the stage, history, relay and worktree untouched.
+    declared = list(files or [])
+    if envelope:
+        declared = declared + declared_from_envelope(envelope)
+    if worktree:
+        missing = [f for f in declared if not (Path(worktree) / f).exists()]
+        if missing:
+            die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
+
+    def mutate(s):
+        relay = s.get("relay")
+        relay_stage = (
+            relay.get("stage")
+            if isinstance(relay, dict) and relay.get("stage")
+            else s.get("stage")
+        )
+        decisions = s.get("decisions") or []
+        if isinstance(relay, dict):
+            decisions = decisions + settled_answers(relay, relay_stage, now)
+        s["decisions"] = decisions
+        s["relay"] = None
+        entry = {
+            "at": now,
+            "stage": stage,
+            "event": permitted["kind"] if permitted else "complete",
+            "commit": None,
+            "harness": s.get("harness"),
+        }
+        if permitted:
+            entry["decision"] = permitted["question"]
+        s["history"] = (s.get("history") or []) + [entry]
+        if target:
+            s["stage"] = target
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    undeclared = []
+    commit = None
+    if worktree:
+        spec_prefix = (updated.get("spec_dir") or "").rstrip("/") + "/"
+        dirty = dirty_paths(worktree)
+        in_spec = [p for p in dirty if p.startswith(spec_prefix)]
+        undeclared = [p for p in dirty if p not in declared and p not in in_spec]
+        commit = commit_worktree(
+            worktree,
+            f"factory: {stage} complete",
+            spec_dir=updated.get("spec_dir"),
+            extra=declared,
+        )
+    return {
+        "checkpointed": stage,
+        "stage": updated["stage"],
+        "commit": commit,
+        "declared": declared,
+        "undeclared": undeclared,
+        "source": source,
+    }
+
+
+def cmd_ledger_add(
+    repo,
+    cwd,
+    stage,
+    role,
+    started_at=None,
+    ended_at=None,
+    in_est=0,
+    out_est=0,
+    reported=None,
+):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    start, end = started_at or now, ended_at or started_at or now
+    duration = max(
+        int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
+    )
+
+    def mutate(s):
+        s["ledger"] = (s.get("ledger") or []) + [
+            {
+                "at": now,
+                "stage": stage,
+                "role": role,
+                "harness": s.get("harness"),
+                "in_est": in_est,
+                "out_est": out_est,
+                "reported": reported,
+                "duration_ms": duration,
+                "started_at": start,
+                "ended_at": end,
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: ledger-add {stage}", loaded.get("spec_dir"))
+    return {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+
+
+def cmd_wait_open(repo, cwd, kind, stage, summary):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        s["timeline"] = (s.get("timeline") or []) + [
+            {
+                "at": now,
+                "kind": kind,
+                "stage": stage,
+                "summary": summary,
+                "answered_at": None,
+                "latency_ms": None,
+            }
+        ]
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: wait-open {stage}", loaded.get("spec_dir"))
+    return {"wait-id": len(updated["timeline"]) - 1}
+
+
+def cmd_wait_close(repo, cwd, wait_id):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        timeline = list(s.get("timeline") or [])
+        if not 0 <= wait_id < len(timeline):
+            die(1, f"no wait #{wait_id} (timeline has {len(timeline)} entries)")
+        entry = dict(timeline[wait_id])
+        if entry.get("answered_at"):
+            die(1, f"wait #{wait_id} is already closed")
+        answered = state.parse_iso(now)
+        opened = state.parse_iso(entry.get("at"))
+        entry["answered_at"] = now
+        entry["latency_ms"] = (
+            max(int((answered - opened).total_seconds() * 1000), 0) if opened else 0
+        )
+        timeline[wait_id] = entry
+        s["timeline"] = timeline
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, "factory: wait-close", loaded.get("spec_dir"))
+    return {"closed": wait_id}
+
+
+def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
+        rounds = rounds_of(relay) or [{"questions": [], "answers": {}}]
+        last = dict(rounds[-1])
+        questions = list(last.get("questions") or [])
+        if not any(isinstance(q, dict) and q.get("id") == qid for q in questions):
+            questions.append({"id": qid})
+        last["questions"] = questions
+        answers = dict(last.get("answers") or {})
+        answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}
+        last["answers"] = answers
+        s["relay"] = {
+            "stage": stage or relay.get("stage") or s.get("stage"),
+            "rounds": rounds[:-1] + [last],
+        }
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: answer {qid}", loaded.get("spec_dir"))
+    return {"answered": qid, "auto": bool(auto)}
+
+
+def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
+    if status not in state.STATUSES:
+        die(
+            1,
+            f"'{status}' is off-vocabulary; expected one of: {', '.join(state.STATUSES)}",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    if status == "halted" and not halt_reason:
+        die(1, "set-status halted needs --halt-reason")
+    if status == "pr-open" and not pr_url:
+        die(1, "set-status pr-open needs --pr-url")
+
+    def mutate(s):
+        s["status"] = status
+        if status == "halted":
+            s["halt_reason"] = halt_reason
+        if status == "pr-open":
+            s["pr_url"] = pr_url
+        if status in ("pr-open", "aborted"):
+            s["ended_at"] = now
+            s["history"] = (s.get("history") or []) + [
+                {
+                    "at": now,
+                    "stage": "pr" if status == "pr-open" else s.get("stage"),
+                    "event": status,
+                    "commit": None,
+                    "harness": s.get("harness"),
+                }
+            ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: set-status {status}", loaded.get("spec_dir"))
+    return {"status": status}
+
+
+def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
+    if kind not in state.DECISION_KINDS:
+        die(
+            1,
+            f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+
+    def mutate(s):
+        s["decisions"] = (s.get("decisions") or []) + [
+            {
+                "stage": stage,
+                "question": qid,
+                "answer": answer,
+                "auto": False,
+                "at": now,
+                "kind": kind,
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: decisions-add {qid}", loaded.get("spec_dir"))
+    return {"added": {"stage": stage, "question": qid, "kind": kind}}
+
+
+def cmd_lock_take(repo, name, force=False):
+    """Explicit takeover of a run's lock (FR-005); refuses a live lock unless --force."""
+    path, loaded, source = one_run(repo, name)
+    try:
+        info = lock.take(path, harness=loaded.get("harness") or "unknown", force=force)
+    except lock.LockHeld as e:
+        die(1, str(e))
+    return {
+        "taken": name,
+        "lock_path": str(lock.lock_path_for(path)),
+        "taken_over": info["taken_over"],
+        "previous_owner": info["previous"],
+    }
+
+
+def cmd_verify(repo, cwd, passed, commands_payload):
+    """The verify record (FR-006, R3): the review gate reads the latest one."""
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    now = now_iso()
+    event = "verify-pass" if passed else "verify-fail"
+
+    def mutate(s):
+        s["history"] = (s.get("history") or []) + [
+            {
+                "at": now,
+                "stage": s.get("stage"),
+                "event": event,
+                "commit": None,
+                "harness": s.get("harness"),
+                "commands": [
+                    {"command": c, "status": st} for c, st in commands_payload
+                ],
+            }
+        ]
+        return s
+
+    write_run(path, loaded, mutate)
+    commit_worktree(worktree, f"factory: {event}", loaded.get("spec_dir"))
+    return {"verified": event, "commands": commands_payload}
+
+
+def cmd_envelope_check(path):
+    """Validate a role output's final fenced json block (FR-007)."""
+    try:
+        text = Path(path).read_text()
+    except OSError as e:
+        die(1, f"cannot read {path}: {e}")
+    block, error = checks.extract_block(text)
+    if error:
+        die(1, error)
+    shape = checks.detect_shape(block)
+    if shape is None:
+        die(
+            1,
+            "the final fenced json block matches no role-output shape "
+            "(envelope, reviewer report, judge verdict)",
+        )
+    problems = checks.block_problems(block, shape)
+    if problems:
+        die(
+            1,
+            "malformed "
+            + shape
+            + " block: "
+            + "; ".join(f"{p['location']}: {p['reason']}" for p in problems),
+        )
+    return {"shape": shape, "problems": 0}
+
+
+def cmd_rebind(repo, cwd, name, worktree):
+    """Rewrite a moved run's stored paths (FR-012): the target must be a git
+    worktree on the recorded branch; sharing ${FACTORY_HOME} alone never moves a run."""
+    target = Path(worktree)
+    if not target.is_dir():
+        die(4, f"the run's worktree {target} does not exist")
+    probe = subprocess.run(
+        ["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        die(4, f"{target} is not a git worktree")
+    path, loaded, source = one_run(repo, name)
+    branch = loaded.get("branch")
+    if branch:
+        current = git(str(target), "branch", "--show-current").strip()
+        if current != branch:
+            die(1, f"{target} is on branch '{current}'; the run records '{branch}'")
+    new_state = dict(loaded)
+    new_state["worktree"] = str(target.resolve())
+    new_state["repo"] = main_repo(target)
+    state.write_state(path, new_state)
+    commit_worktree(
+        str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir")
+    )
+    return {
+        "rebound": name,
+        "worktree": new_state["worktree"],
+        "repo": new_state["repo"],
+        "previous_worktree": loaded.get("worktree"),
+    }
+
+
+def cmd_resume(repo, name):
+    """Record the `resumed` history entry through the writer and return the
+    resume digest: the recorded stage restarts from its beginning (FR-003)."""
+    path, loaded, source = one_run(repo, name)
+    if loaded.get("status") in ("pr-open", "aborted"):
+        die(
+            1,
+            f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume",
+        )
+    now = now_iso()
+
+    def mutate(s):
+        s["status"] = "running"
+        s["halt_reason"] = None
+        s["history"] = (s.get("history") or []) + [
+            {
+                "at": now,
+                "stage": s.get("stage"),
+                "event": "resumed",
+                "commit": None,
+                "harness": s.get("harness"),
+            }
+        ]
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    worktree = updated.get("worktree")
+    if source == "worktree" and worktree:
+        commit_worktree(
+            worktree, f"factory: resume {name}", spec_dir=updated.get("spec_dir")
+        )
+    return digest(updated, path, source)
+
+
+def stale_pending_files():
+    """Stale pending files (FR-019): the run's state home has moved into a
+    worktree (the pending state records one) or the run has ended
+    (pr-open/aborted). A run whose only state is the pending file — no
+    recorded worktree, still running — is never stale."""
+    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+    stale = []
+    for path in sorted((home / "pending").glob("*.json")):
+        loaded, error = state.read_state(path)
+        if error:
+            continue  # never delete what cannot be read
+        if loaded.get("worktree") or loaded.get("status") in ("pr-open", "aborted"):
+            stale.append(path)
+    return stale
+
+
+def cmd_prune(delete=False):
+    """Preview stale pending files; deletion only with --delete (FR-019)."""
+    stale = [str(p) for p in stale_pending_files()]
+    deleted = []
+    if delete:
+        for path in stale:
+            Path(path).unlink()
+            deleted.append(path)
+    return {"stale": stale, "deleted": deleted}

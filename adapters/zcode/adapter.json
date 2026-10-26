@@ -10,5 +10,5 @@
     "read": { "tools": "Read, Grep, Glob, Bash" },
     "write": { "tools": "Read, Edit, Write, Bash, Grep, Glob" }
   },
-  "models": { "deep": "zai-coding-plan/glm-5.3", "standard": "zai-coding-plan/glm-5.3-flash" }
+  "models": {}
 }

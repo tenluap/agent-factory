@@ -9,7 +9,13 @@ harness="claude-code"
 uninstall=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --harness) harness="$2"; shift 2 ;;
+    --harness)
+      if [ $# -lt 2 ] || [ -z "$2" ]; then
+        echo "usage: $0 [--harness <name>|all] [--uninstall]" >&2
+        echo "error: --harness needs a value (see adapters/, python3 tools/render.py --list)" >&2
+        exit 2
+      fi
+      harness="$2"; shift 2 ;;
     --uninstall) uninstall=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -46,6 +52,7 @@ install_one() {
   mkdir -p "$(dirname "$skill_dir")" "$agent_dir"
   link "$dist/skill" "$skill_dir"
   for f in "$dist"/agents/*; do link "$f" "$agent_dir/$(basename "$f")"; done
+  python3 "$src/tools/render.py" "$1" --models
 }
 
 if [ "$harness" = "all" ]; then

@@ -48,6 +48,28 @@ _Avoid_: issue, comment, violation
 The judge's merged, deduplicated, verified ruling over a review round's findings.
 _Avoid_: report, summary
 
+## Run state
+
+**State writer**:
+The single CLI interface that mutates run state: it stamps the time, validates, writes atomically and commits. There is no manual-write fallback; if it cannot run, the run halts.
+_Avoid_: state editor, manual path, hand edit
+
+**History event**:
+The vocabulary-checked event a transition record carries, from the closed list `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed`.
+_Avoid_: event type, status flag
+
+**Verify record**:
+The latest `verify` history entry: build and test re-run by the orchestrator itself, its commands and pass/fail carried in the entry. Review reads it and refuses unless it passes.
+_Avoid_: verification note, green build
+
+**Run lock**:
+One run's guard against concurrent writers, recording owner, host, harness and time; it covers the worktree state and, before that, the pending file beside which it lives.
+_Avoid_: mutex, lock file
+
+**Stale pending file**:
+A pending file whose run has a worktree state or has ended; the file that is still the run's only state is never stale.
+_Avoid_: orphan state, old run
+
 ## Skill routing
 
 **Intake intent**:

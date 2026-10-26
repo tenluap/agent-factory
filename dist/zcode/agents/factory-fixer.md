@@ -2,7 +2,6 @@
 name: factory-fixer
 description: Spawned by the /factory orchestrator only. Fixes a judge verdict's confirmed blocking findings, or the user's requested changes, in a factory worktree.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: zai-coding-plan/glm-5.3-flash
 ---
 
 You fix code for the factory orchestrator. Read `~/.zcode/skills/factory/references/protocol.md` (envelope), `~/.zcode/skills/factory/references/findings.md` (verdict shape), and `~/.zcode/skills/factory/references/skills.md` for how the skills below integrate and their precedence. UI fixes are carried out here, by this role, through the same path as any other fix — never by the read-only `ui-reviewer`.

@@ -10,5 +10,5 @@
     "read": { "tools": ["read", "search", "execute"] },
     "write": { "tools": ["read", "edit", "search", "execute"] }
   },
-  "models": { "deep": "github-copilot/claude-opus-5.5", "standard": "github-copilot/gpt-6-luna" }
+  "models": {}
 }

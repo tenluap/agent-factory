@@ -15,7 +15,7 @@ The factory's primary unit is **one feature in one repository**, ending at an op
 
 ## 2. Evidence and how to use this brief
 
-This brief combines the supplied [README](../README.md), the [harness-agnostic plan](<../Harness-agnostic factory design and plan.md>), and the repository's current design, role prompts, protocols, adapters, and helper scripts. The inspection baseline is commit `3162747`, together with the supplied plan and the working-tree files present during inspection. Existing local changes were left in place.
+This brief combines the supplied [README](../README.md), the [harness-agnostic plan](<Harness-agnostic factory design and plan.md>), and the repository's current design, role prompts, protocols, adapters, and helper scripts. The inspection baseline is commit `3162747`, together with the supplied plan and the working-tree files present during inspection. Existing local changes were left in place.
 
 Three labels distinguish evidence from product choices:
 
@@ -501,7 +501,7 @@ Benchmark the same small backend feature and UI feature under fixed repository r
 
 ## 14. Known ambiguities and recommended resolutions
 
-These are source-level observations relevant to a rebuild, not runtime failures reproduced during this work.
+These are source-level observations relevant to a rebuild, not runtime failures reproduced during this work. 007-stabilise-factory settles five of them: the audit row (settled answers now live in the append-only `decisions` list of schema v4, and the approver reads its veto list from there — relay is only temporary routing data), the totals row (effort is interval union in `factory_cli/totals.py`; parallel durations are never summed, and human + agent cannot exceed wall clock by construction), the models row (adapter configuration is authoritative, `${FACTORY_HOME}/config.json` overrides merge at render time, and `install.sh` prints the effective model per role), the rebind row (`factory rebind <run> --worktree <path>` validates a moved worktree and rewrites the run's stored paths), and the state CLI row (every state mutation goes through the single writer with validation, atomic writes, live-lock refusal, `envelope check` output validation and checkpoint transition gates). The migration-plan row remains an observation for future rebuilds.
 
 | Observation | Implication | Recommended resolution |
 |---|---|---|
@@ -627,7 +627,7 @@ The following can serve as the opening instruction when recreating the factory. 
 | Source | Use in this brief |
 |---|---|
 | [README](../README.md) | User-facing installation, entry points, modes, resume, requirements, and repository layout. FR-01, FR-05, FR-14–FR-16. |
-| [Harness-agnostic design and plan](<../Harness-agnostic factory design and plan.md>) | Portable-core rationale, stateless stages, neutral verbs, capability tiers, historical migration sequence. FR-14–FR-15. |
+| [Harness-agnostic design and plan](<Harness-agnostic factory design and plan.md>) | Portable-core rationale, stateless stages, neutral verbs, capability tiers, historical migration sequence. FR-14–FR-15. |
 | [DESIGN](../DESIGN.md) | Authoritative current workflow, gates, review/repair limits, approval, PR policy, telemetry, and validation plan. FR-01–FR-16. |
 | [CONTEXT](../CONTEXT.md) | Domain vocabulary and engineering concepts. |
 | [Repository constitution](../.specify/memory/constitution.md) | Design precedence, portable core, stateless roles, generated-distribution policy, simplicity. |
