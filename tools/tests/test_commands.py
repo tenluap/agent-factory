@@ -516,3 +516,60 @@ class WriterTests(unittest.TestCase):
         path = self.box.home / "pending" / "repo-052-pend.json"
         after = json.loads(path.read_text())
         self.assertEqual((after["stage"], after["version"]), ("tasks", 4))
+
+
+class CheckpointStagingTests(unittest.TestCase):
+    """Declared-file checkpoints (SC-008, FR-017): the spec directory plus
+    exactly the declared list is committed; everything else is reported."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "080-stage"
+        self.wt = self.box.worktree_run(self.branch, writer_state())
+        self.state_path = self.wt / "specs" / self.branch / "factory" / "state.json"
+
+    def dirty(self):
+        out = self.box.git("status", "--porcelain", cwd=self.wt)
+        return sorted(line[3:].strip() for line in out.splitlines() if line.strip())
+
+    def committed(self):
+        out = self.box.git("show", "--name-only", "--format=", "HEAD", cwd=self.wt)
+        return sorted(line for line in out.splitlines() if line.strip())
+
+    def test_checkpoint_commits_only_spec_dir_plus_declared(self):
+        (self.wt / "core").mkdir()
+        (self.wt / "core" / "declared.txt").write_text("declared change\n")
+        (self.wt / "scratch.txt").write_text("undeclared\n")
+        out = self.box.cli("checkpoint", "plan", "--files", "core/declared.txt", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual(report["undeclared"], ["scratch.txt"],
+                         "every other dirty path is reported, not committed")
+        self.assertEqual(self.committed(),
+                         ["core/declared.txt", f"specs/{self.branch}/factory/state.json"])
+        self.assertEqual(self.dirty(), ["scratch.txt"])
+
+    def test_checkpoint_envelope_reads_the_declared_list(self):
+        envelope = {"status": "done", "stage": "plan", "summary": "s",
+                    "files": ["docs/changed.md"]}
+        (self.wt / "docs").mkdir()
+        (self.wt / "docs" / "changed.md").write_text("x\n")
+        (self.wt / "envelope.md").write_text("prose\n```json\n" + json.dumps(envelope) + "\n```\n")
+        out = self.box.cli("checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("docs/changed.md", json.loads(out.stdout)["declared"])
+        self.assertEqual(self.committed(),
+                         ["docs/changed.md", f"specs/{self.branch}/factory/state.json"])
+        self.assertNotIn("envelope.md", self.committed())
+
+    def test_checkpoint_refuses_an_envelope_without_files(self):
+        (self.wt / "envelope.md").write_text("```json\n{\"status\": \"done\"}\n```")
+        out = self.box.cli("checkpoint", "plan", "--envelope", "envelope.md", cwd=self.wt)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("files", out.stderr)
+
+    def test_checkpoint_refuses_a_declared_path_that_does_not_exist(self):
+        out = self.box.cli("checkpoint", "plan", "--files", "nope/missing.txt", cwd=self.wt)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("missing.txt", out.stderr)
