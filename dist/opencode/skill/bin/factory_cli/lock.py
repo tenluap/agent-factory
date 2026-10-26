@@ -46,16 +46,17 @@ def _now():
 
 
 def _alive(pid):
-    if not isinstance(pid, int):
-        return False
+    """Liveness judgment (FR-012): a PID the OS probe cannot evaluate —
+    wrong type, zero, negative, out of range — counts as live; only a
+    proven-gone owner frees the lock."""
+    if not isinstance(pid, int) or isinstance(pid, bool) or pid <= 0:
+        return True
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         return False
-    except PermissionError:
+    except (OverflowError, OSError):
         return True
-    except OSError:
-        return False
     return True
 
 
