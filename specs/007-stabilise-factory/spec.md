@@ -21,7 +21,7 @@
 ### Session 2026-10-25 (grill-with-docs)
 
 - Source documents: same PR; each S-item's design decision lands in `DESIGN.md` with or before its implementation; the contradicted sentences in `DESIGN.md`, `state.md` (manual-write fallback), `docs/product-brief.md` §14 and `README.md` are corrected there (FR-024).
-- Passing verification: a `verify` history entry through the CLI after the orchestrator re-runs build and test itself, carrying commands and pass/fail; review refuses unless the latest passes (FR-006).
+- Passing verification: a `verify-pass`/`verify-fail` history entry through the CLI after the orchestrator re-runs build and test itself, carrying commands and pass/fail; review refuses unless the latest passes (FR-006).
 - History events: closed list in `state.md` (FR-003).
 - Run lock: covers pending runs, beside the pending file (FR-005).
 - SC-001 measurement: the suite exercises each mutating command; validate reports zero anomalies in states test runs produce (SC-001).
@@ -155,7 +155,7 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 
 **Enforced gates (S3, S4)**
 
-- **FR-006**: The system MUST refuse illegal stage transitions: review requires the latest verify record (Key Entities) to pass; publishing a PR requires a recorded approval decision; implementation requires analysis recorded as clean, remediated, or explicitly user-overridden. A gate override MUST be a normal decision record entry (stage, question ID, answer, auto=false, time) in the approver's veto list.
+- **FR-006**: The system MUST refuse illegal stage transitions: review requires the latest verify record (Key Entities: `verify-pass`/`verify-fail`) to pass; publishing a PR requires an `approved` decision record entry at `approver` (auto=false); implementation requires analysis recorded as clean, remediated, or explicitly user-overridden. A gate override MUST be a normal decision record entry (stage, question ID, answer, auto=false, time) in the approver's veto list. The transition a gate decision permits records its history event (`approved` or `gate-override`) referencing that decision.
 - **FR-007**: The system MUST validate every role's final machine-readable block (envelope, findings, verdict shapes) and reject malformed output; retry-once then applies.
 
 **Accurate reporting and audit (S5, S6, S18)**
@@ -200,8 +200,8 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 
 - **Run state**: the single record of where a run is: stage, status, mode, harness, timestamps, waits, ledger, decisions, history.
 - **Transition record**: a history entry proving a stage or gate: vocabulary-checked event (FR-003's list), time, commit, harness.
-- **Verify record**: a `verify` history entry written through the CLI after the orchestrator re-runs build and test, carrying commands and pass/fail; the review gate reads the latest one.
-- **Decision record**: an append-only entry per settled answer, keeping the auto flag so fast-mode choices can be vetoed.
+- **Verify record**: a `verify-pass`/`verify-fail` history entry written through the CLI after the orchestrator re-runs build and test, carrying commands and pass/fail; the review gate reads the latest one.
+- **Decision record**: an append-only entry per settled answer or gate decision, keeping the auto flag so fast-mode choices can be vetoed.
 - **Spawn interval**: one role execution's start and end, feeding the union-based effort computation.
 - **Run lock**: owner, host, harness and time, guarding one run — worktree state and, before that, its pending file — against concurrent writers.
 - **Adapter configuration**: per-harness defaults and personal overrides, effective value reportable per role.
@@ -212,7 +212,7 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 - **Data integrity**: atomic validated writes, append-only decisions and timeline, non-decreasing timestamps, writer-only upgrades.
 - **Security**: no undeclared files or secrets in checkpoints; read-only roles cannot edit or the limitation is disclosed; no personal models in shared adapters.
 - **Error and resource limits**: retry-once-then-halt; lock takeover explicit; cleanup preview-first.
-- **Compatibility**: state versions 1–3 readable, legacy question shapes usable, saved runs resumable at their recorded stage.
+- **Compatibility**: state versions 1–4 readable, legacy question shapes usable, saved runs resumable at their recorded stage.
 - **Dependencies**: standard-library-only tooling; a new runtime dependency needs a stated reason in the plan.
 - **Observability**: every spawn, transition, wait and decision visible in state and the run report.
 - **Verification**: fixture tests per CLI command, a CI regression suite, the 005/006 replay, the golden-run checklist on two harnesses.
@@ -232,10 +232,10 @@ A developer gets self-explaining argument errors, can preview stale-pending clea
 
 ## Assumptions
 
-- Scope: all of S1–S19 (P0–P2) plus the context trim (consolidated Pen design rules, prose the CLI writer makes redundant); the state schema advances one version.
-- State writes run through the Python 3 CLI only: thin entry script, logic in modules the renderer copies into `dist/`; a missing runtime halts the run.
+- Scope: all of S1–S19 (P0–P2) plus the context trim; the state schema advances one version.
+- State writes run through the Python 3 CLI only; a missing runtime halts the run (FR-002).
 - Only the Claude Code adapter ships default models (opus/sonnet); the rest inherit session models; personal OpenCode choices move to the user's factory configuration.
 - Runs 005 and 006, from git history, are SC-002's validation fixtures; "Harness-agnostic factory design and plan.md" moves into `docs/`, marked implemented.
 - Out of scope: renaming the repository, and the brief's §6 exclusions (automatic merge or deploy, hosted dashboard, multi-repository features, a database, automatic worktree deletion).
-- Tests run through the standard-library runner, discovery extended as new test folders appear.
+- Tests run through the standard-library runner.
 - Judgement stays in roles; only mechanical bookkeeping (time, vocabulary, file write, transition check) moves into code.

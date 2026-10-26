@@ -92,6 +92,7 @@ conformance/golden-run/<harness>.md          # one golden-run checklist per harn
 | `tools/tests/` (8 modules + `fixtures/`) | file | S8 fixture coverage per CLI command, the 005/006 replay (SC-002), kill-and-resume |
 | `tools/tests/replay.py` | file | the 005/006 replay entry point shared by the suite and `quickstart.md` |
 | `conformance/fixture-repo/`, `conformance/golden-run/<harness>.md` | file | FR-013's shipped fixture repository and per-harness checklists |
+| `conformance/golden-run-results.md` | file | records FR-013's per-adapter golden-run results (the live two-harness run lands after merge) |
 | `.github/workflows/ci.yml` | file | FR-018: full suite, render drift and installer syntax on every change |
 | interval-union accounting | abstraction | summed parallel durations overstate effort (S6) |
 | run-lock lifecycle | abstraction | one guard covering a pending run and its later worktree (S7) |
@@ -112,7 +113,7 @@ conformance/golden-run/<harness>.md          # one golden-run checklist per harn
 
 ## Test seams
 
-- Seam: `bin/factory` CLI command surface — `runs`, `show`, `validate`, `checkpoint`, `ledger-add`, `wait-open`, `wait-close`, `answer`, `set-status`, `verify`, `envelope check`, `lock take`, `rebind`, `prune` — driven as a process over fixture states.
+- Seam: `bin/factory` CLI command surface — `runs`, `show`, `validate`, `checkpoint`, `ledger-add`, `wait-open`, `wait-close`, `answer`, `decisions-add`, `set-status`, `verify`, `envelope check`, `lock take`, `rebind`, `prune` — driven as a process over fixture states.
 - Seam: `factory_cli.state` module API — `read_state`, `validate_state`, `write_state` (atomic write, first-write upgrade).
 - Seam: `factory_cli.checks` transition rules — one refusal test per illegal transition and one pass test per legal one.
 - Seam: `factory_cli.checks` output-shape checker — envelope, reviewer-report and judge-verdict blocks, valid and malformed (the examples in `protocol.md`/`findings.md` are fixtures).
@@ -124,7 +125,7 @@ conformance/golden-run/<harness>.md          # one golden-run checklist per harn
 - Exempt: `docs/` moves and `docs/product-brief.md` §14 corrections - documentation only.
 - Exempt: `README.md`, `references/state.md`, `references/protocol.md`, `references/design-code-mapping.md`, `SKILL.md` prose - documentation only.
 - Exempt: `adapters/*/adapter.json` model fields, `adapters/*/harness.md`, `.github/workflows/ci.yml` - configuration and documentation only; their behaviour is checked through the render and install seams.
-- Exempt: `conformance/golden-run/<harness>.md` checklists and `conformance/fixture-repo/` contents - documentation and test data only.
+- Exempt: `conformance/golden-run/<harness>.md` checklists, `conformance/golden-run-results.md` and `conformance/fixture-repo/` contents - documentation and test data only.
 - Overridden: none.
 
 Confirmed: 2026-10-25 - Q1 accepted - seams: `bin/factory` CLI command surface, `factory_cli.state` module API, `factory_cli.checks` transition rules, `factory_cli.checks` output-shape checker, `factory_cli.totals` interval unions, `factory_cli.lock` lifecycle, `tools/render.py` render output, `install.sh` argument validation

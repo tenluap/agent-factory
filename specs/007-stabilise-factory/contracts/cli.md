@@ -27,20 +27,20 @@ Each stamps its own time, validates before writing, writes atomically (temp + re
 
 | Command | Effect |
 |---|---|
-| `checkpoint <stage> [--files <path>...] [--envelope <file>]` | gate check for the transition, then: append the `complete` history entry, set the next stage, move the stage's settled relay answers into `decisions` before clearing `relay` (FR-008), commit `spec_dir` + exactly the declared files as `factory: <stage> complete`, report any other dirty path without committing it (FR-017) |
+| `checkpoint <stage> [--files <path>...] [--envelope <file>]` | gate check for the transition, then: append its history entry — `complete`, or `approved`/`gate-override` carrying `decision: <qid>` when that gate decision permitted the transition — set the next stage, move the stage's settled relay answers into `decisions` before clearing `relay` (FR-008), commit `spec_dir` + exactly the declared files as `factory: <stage> complete`, report any other dirty path without committing it (FR-017) |
 | `verify --pass\|--fail --commands '<json>'` | append the verify record (`verify-pass` / `verify-fail`, FR-006) |
 | `ledger-add <stage> <role> [--started-at <iso>] [--ended-at <iso>] [--in-est N] [--out-est N] [--reported '<json>']` | append one spawn interval (FR-009); `reported` labelled separately from estimates (FR-010) |
 | `wait-open <kind> <stage> <summary>` → `wait-id` | append an open timeline entry (`kind` ∈ `questions\|notice\|approver\|halt`) |
 | `wait-close <wait-id>` | set `answered_at` and `latency_ms` in place |
 | `answer <qid> '<answer>' [--auto] [--stage <stage>]` | write one settled answer into the open relay round (`auto` marks fast-mode acceptance) |
 | `set-status <status> [--halt-reason <text>] [--pr-url <url>]` | record a status change (`halted` carries its reason; `pr-open` its URL and `ended_at`) |
-| `decisions-add <stage> <qid> '<answer>' [--kind answer\|gate-override]` | append a decision record entry directly (gate overrides use `--kind gate-override`, `auto` false) |
+| `decisions-add <stage> <qid> '<answer>' [--kind answer\|approved\|gate-override]` | append a decision record entry directly: `--kind approved` records the approver's approval at `approver` (the record the `pr` gate requires), `--kind gate-override` an explicit gate override, `--kind answer` a settled answer written outside `answer`; both gate kinds carry `auto` false |
 
 ## Gate and output checks
 
 | Command | Behaviour |
 |---|---|
-| `checkpoint ...` (gate table) | refuses → `review` without a passing latest verify record, → `implement` without analyze clean/remediated/overridden, → `pr` without a recorded approval; names the missing record (FR-006) |
+| `checkpoint ...` (gate table) | refuses → `review` without a passing latest verify record, → `implement` without analyze clean/remediated/overridden, → `pr` without an `approved` decision at `approver` (or a `gate-override` decision); names the missing record (FR-006) |
 | `envelope check <file>` | validates the final fenced `json` block against the envelope (protocol.md), reviewer report and judge verdict shapes (findings.md); exit 1 with the offending location on malformed output (FR-007) |
 
 ## Lock

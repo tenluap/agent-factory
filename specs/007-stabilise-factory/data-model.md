@@ -22,7 +22,7 @@ One run = one file. Location: `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<
 | `analyze` | object | `pass`, `loops`, `reports`, `remediations`, `pending_clarify` |
 | `relay` | object or null | current stage's question rounds (see below) |
 | `timeline` | list | user waits, append-only (FR-009) |
-| `decisions` | list | **v4**: settled answers, append-only (FR-008) |
+| `decisions` | list | **v4**: settled answers and gate decisions, append-only (FR-008) |
 | `ledger` | list | spawn intervals, one per spawn (FR-009) |
 | `review` | object | `round`, `fix_rounds`, `ui_diff`, `ui_reviewer_skipped`, optional `pending_design_fix` |
 | `history` | list | transition records, append-only (FR-003) |
@@ -31,7 +31,7 @@ One run = one file. Location: `${FACTORY_HOME:-~/.factory}/pending/<repo-name>-<
 
 ### Transition record (`history[]`)
 
-`{ "at", "stage", "event", "commit", "harness" }`. `event` is closed (FR-003): `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed`. Anything else is a validation violation with its location. `commit` is the checkpoint commit or null.
+`{ "at", "stage", "event", "commit", "harness", "decision"? }`. `event` is closed (FR-003): `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed`. Anything else is a validation violation with its location. `commit` is the checkpoint commit or null. `checkpoint` writes exactly one entry per transition: `complete`, or `approved`/`gate-override` carrying `decision` — the permitting decision's question ID — when a gate decision allowed the transition (research R5).
 
 ### Verify record
 
@@ -39,7 +39,7 @@ A history entry with `event: "verify-pass"` or `"verify-fail"` and `commands: [ 
 
 ### Decision record (`decisions[]`, v4)
 
-`{ "stage", "question", "answer", "auto", "at", "kind" }` — `kind` is `answer` (a settled relay answer) or `gate-override` (an explicit override of a gate). Append-only; written before the stage's `relay` is cleared (FR-008). The approver's veto list is every `auto: true` entry plus every `gate-override` entry (FR-006).
+`{ "stage", "question", "answer", "auto", "at", "kind" }` — `kind` is `answer` (a settled relay answer), `approved` (the approver's approval recorded at `approver`; the record the `pr` gate requires) or `gate-override` (an explicit override of a gate). Append-only; written before the stage's `relay` is cleared (FR-008). The approver's veto list is every `auto: true` entry plus every `gate-override` entry (FR-006).
 
 ### Spawn interval (`ledger[]`)
 
@@ -68,7 +68,7 @@ Beside the state file it guards (worktree run) or beside the pending file (pendi
 3. Required fields per stage (a run at `implement` and later carries `commands`; a `pr-open` run carries `pr_url` and `ended_at`, …).
 4. Timestamps parse as ISO-8601 UTC and never decrease within a record: `history`, `timeline`, `ledger`, `decisions` lists are non-decreasing by `at`; `latency_ms`, `duration_ms` ≥ 0; `ended_at` ≥ `started_at` (FR-004).
 5. Exactly one open relay round; every `answers` key matches a question `id` in the same round.
-6. `decisions` entries well-formed and never rewritten (compare against the previous file on write).
+6. `decisions` entries well-formed and never rewritten (compare against the previous file on write); a history entry's `decision` names an existing decision question ID.
 7. Legacy tolerance on read: version 1 relay batch, version 2 string answers, missing `decisions`/lock — reported as accepted-and-legacy, upgraded on the first write.
 
 ## State transitions

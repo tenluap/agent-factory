@@ -49,6 +49,8 @@ python3 <F>/bin/factory checkpoint review --files src/x.py            # now allo
 
 Expected: each refusal names the missing record; after `verify --pass` the transition is allowed; a second concurrent session's write is refused with the lock owner named (SC-005). Declared-file rule: a checkpoint with an undeclared dirty file commits only the spec directory plus declared files and reports the rest (SC-008).
 
+Approval and override records (FR-006): `checkpoint pr` is refused until `decisions-add approver <qid> 'approved' --kind approved` records the approval; the permitted transition then writes the `approved` history entry referencing that decision. A `--kind gate-override` decision likewise permits its transition and is recorded with the `gate-override` history entry, and appears in the approver's veto list.
+
 ## 5. Rebind and prune
 
 ```bash

@@ -17,7 +17,7 @@ Phase 0 output for `007-stabilise-factory`. Format per entry: **Decision**, **Ra
 ## R3. The verify record
 
 - **Decision**: a verify record is one history entry written by `factory verify --commands ... --pass|--fail`, with event `verify-pass` or `verify-fail` — the two verify values of FR-003's closed vocabulary — carrying `commands` (each command string and its exit status) and `at`. The review gate reads the latest verify entry and requires `verify-pass`; a failed entry followed by a passing one is decided by the latest; none at all is refused (spec Edge Cases).
-- **Rationale**: FR-003's vocabulary is closed and contains no bare `verify` event, while Key Entities calls the record "a `verify` history entry"; naming the pair of events is the only reading consistent with both. Recorded here as the design decision.
+- **Rationale**: FR-003's vocabulary is closed and contains no bare `verify` event; naming the pair of events is the only reading consistent with it and with the record's pass/fail payload. Key Entities now uses the same pair wording, so one term names one concept.
 - **Alternatives considered**: a separate `verify` list outside `history` (would need a second vocabulary and a second read path); a bare `verify` event (breaks FR-003's closed list).
 
 ## R4. Atomic writes, locking, takeover
@@ -28,9 +28,9 @@ Phase 0 output for `007-stabilise-factory`. Format per entry: **Decision**, **Ra
 
 ## R5. Transition gates
 
-- **Decision**: `checks.py` holds one gate table checked before the write that would advance a stage: → `review` needs the latest verify record to pass (FR-006); → `pr` needs a recorded approval decision; → `implement` needs analyze recorded clean, remediated, or a user override. A gate override is a normal decision-record entry (stage, question ID, answer, `auto: false`, time) in the approver's veto list, and the transition it permits also gets a `gate-override` history entry referencing that decision. Refusals name the missing record.
-- **Rationale**: one table gives one refusal vocabulary for tests and for the orchestrator's messages (SC-005).
-- **Alternatives considered**: scattered `if` checks per command (harder to test exhaustively); letting `set-status` bypass gates (that is exactly run 006's failure).
+- **Decision**: `checks.py` holds one gate table checked before the write that would advance a stage: → `review` needs the latest verify record to pass (FR-006); → `pr` needs a recorded approval decision; → `implement` needs analyze recorded clean, remediated, or a user override. A gate override is a normal decision-record entry (stage, question ID, answer, `auto: false`, time) in the approver's veto list, and the transition it permits also gets a `gate-override` history entry referencing that decision. An approval follows the same shape: `decisions-add <stage> <qid> '<answer>' --kind approved` at `approver` records it, and the `approver` → `pr` transition it permits gets the `approved` history entry referencing that decision (so both non-`complete` events of FR-003's vocabulary have a writer). Refusals name the missing record.
+- **Rationale**: one table gives one refusal vocabulary for tests and for the orchestrator's messages (SC-005); recording approvals as decision entries (not bare history events) keeps one audit list and one writer path (`decisions-add`), matching the settled clarification on gate overrides.
+- **Alternatives considered**: scattered `if` checks per command (harder to test exhaustively); letting `set-status` bypass gates (that is exactly run 006's failure); an `approve` command of its own (a second writer for one record kind); approvals as bare `approved` history events with no decision entry (nothing to audit or veto, and the `pr` gate would read history instead of decisions).
 
 ## R6. Role-output shape checking
 
