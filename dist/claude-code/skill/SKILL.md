@@ -30,7 +30,7 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 - Anything else: the feature description of a new run. Classify its **intake intent** from the request text (DESIGN.md, "Skill routing"), deciding which stage starts the run:
   - **Exploration** — open-ended idea wording with no settled solution (e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."): after step 1, go to step 2 (`brainstorm`).
   - **Delivery** — concrete feature/change wording, or a request naming an existing spec (e.g. "add a `--no-fast` flag", "fix the resume path so..."): after step 1, go straight to step 3 (`grill`), skipping step 2.
-  - **Ambiguous** — neither set of cues present, or both: after step 1, `ASK` exactly one relay question (protocol.md, "Questions") — explore first, or settle it as a feature now — with no new command flag; the answer picks step 2 or step 3 as above, and is saved as that question's relay answer.
+  - **Ambiguous** — neither set of cues present, or both: after step 1, `ASK` exactly one relay question (protocol.md, "Questions") — explore first, or settle it as a feature now — with no new command flag; the answer picks step 2 or step 3 as above, and is saved with `SHELL: python3 <F>/bin/factory answer Q1 '<answer>' --stage grill`.
 
 Flags are recognised wherever they appear in `$ARGUMENTS`, on either form, and may combine:
 
@@ -65,7 +65,7 @@ Done when the frontier is empty and the user has confirmed a direction (and, whe
 
 ## 3. Grill
 
-Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive whatever the mode. When step 2 (`brainstorm`) ran first, read its `brief.md` decisions as settled inputs and ask only what is still open — never repeat an already-answered question. Done when the frontier is empty and the user confirms shared understanding. Name the chain in effect in your closing summary — the user's confirmation covers it, an objection flips it. The chain is `lite` unless a flag pinned it; recommend `full` in the summary when the feature's size calls for it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet (including any brainstorming already settled), with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (the settled chain and `fast`) and checkpoint the pending state with `stage: worktree`.
+Read protocol.md, "Questions" and "Relay", then follow the `grilling` skill on the feature description, here, with the user. Use the protocol's frontier batching, Markdown presentation, reply rules and pending-state persistence; initial grilling stays interactive whatever the mode. When step 2 (`brainstorm`) ran first, read its `brief.md` decisions as settled inputs and ask only what is still open — never repeat an already-answered question. Done when the frontier is empty and the user confirms shared understanding. Name the chain in effect in your closing summary — the user's confirmation covers it, an objection flips it. The chain is `lite` unless a flag pinned it; recommend `full` in the summary when the feature's size calls for it. Write the settled design as `brief.md` beside the pending state: the feature in one paragraph, then every decision as a bullet (including any brainstorming already settled), with the chosen chain named. Nothing is written to the repo in this step. Record `mode` (the settled chain and `fast`) in the pending state and checkpoint it with `SHELL: python3 <F>/bin/factory checkpoint grill --next worktree` (state.md, "Checkpoint").
 
 ## 4. Worktree
 
@@ -80,7 +80,7 @@ From here every `SHELL` command runs as `cd <worktree> && ...`, and every agent 
 Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, `spec_dir` (`specs/<branch>`), the `state.json` path, the brief path, the resolved skill paths, and the stage. `analyze` and `remediate` also get the pass number `analyze.pass`. Each spawn ends with an envelope (protocol.md):
 
 - `needs_input`: run the relay (protocol.md); it spawns a fresh spec-builder for the same stage once every question is answered.
-- `done`: checkpoint (state.md), then spawn the next stage.
+- `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>]` (state.md, "Checkpoint"), then spawn the next stage.
 - `failed`: failure policy (below).
 
 Pass `design` (when active) and the resolved `pen-design` path to every spec stage. Persist returned design references/results before checkpointing; a recorded missing design prerequisite follows the mapping contract rather than being retried as an agent crash. The plan must carry the mapping/runtime/fidelity gates and capture requirements into tasks.
@@ -130,11 +130,11 @@ For active design work, the mandatory gate/exception policy in `design-code-mapp
 
 ## 8. Approver
 
-`NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the auto-accepted relay rounds (`state.relay` answers carrying `auto: true`) for veto before you approve. When `review.ui_diff` is true, disclose the UI evaluation's state: `review.ui_reviewer_skipped` (the install was declined), or, when `ui-reviewer` ran, whether its findings disclosed rendered or only static/evidence-limited evaluation. `ASK` with the options **Approve**, **Request changes**, **Abort**.
+`NOTIFY`, then show the user: one-paragraph summary, `git diff --stat <base>...HEAD`, link to `spec.md`, the judge verdict, findings fixed per round, advisory and unresolved findings, the run totals (state.md, "Totals"), the capability tier (`harness.md`) when it is not 1, and — when `mode.fast` — the approver's veto list (`decisions`: every `auto: true` answer and every `gate-override`, any stage) for veto before you approve. When `review.ui_diff` is true, disclose the UI evaluation's state: `review.ui_reviewer_skipped` (the install was declined), or, when `ui-reviewer` ran, whether its findings disclosed rendered or only static/evidence-limited evaluation. `ASK` with the options **Approve**, **Request changes**, **Abort**.
 
 - Approve: step 9 only when active design gates pass or a current explicit scoped exception permits proceeding; ordinary Approve does not infer an exception. Otherwise use the protected decision path in `design-code-mapping.md`.
 - Request changes: `ponytail` or `tdd` unresolved: stop the same way as step 6/7. Else take the user's text, `SPAWN` `fixer` with it, the resolved `ponytail` and `tdd` paths, and active `design`/`pen-design` path, verify (step 6), re-run step 7 from 1 (the fix-round cap does not apply here), then return to this step.
-- Abort: set `status: aborted` and `ended_at`, checkpoint, keep the worktree, stop.
+- Abort: `SHELL: python3 <F>/bin/factory set-status aborted`, keep the worktree, stop.
 
 For active design work, also show source/target, canonical map path/status, current gate results and evidence links, remaining mismatches and shared impact, and explicit exceptions. Persist the user's protected design decisions with their evidence, not only in a relay that a checkpoint clears.
 
@@ -145,18 +145,18 @@ Before publishing active design work, recheck source/code/capture identity and c
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include source/target, map status, evidence links, actual gate gaps, and explicit exceptions.
 3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
-4. Set `status: pr-open`, `pr_url`, and `ended_at`, checkpoint, push.
+4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`, push.
 5. `NOTIFY` the run totals (state.md, "Totals") and offer (do not do) any after-PR extras `harness.md` lists.
 
 Done when the PR URL is in state and shown to the user.
 
 ## Policies
 
-- **Stop point**: when the next stage to start equals `stop_at`, do not start it. Checkpoint with `status: paused` and `stage` set to that stage, clear `stop_at`, `NOTIFY`, and tell the user `<invoke> resume <branch>` (`harness.md`) continues from there. Then end your turn. A `stop_at` the chain never reaches (e.g. `clarify` on a lite run that never escalates) simply never triggers; the run finishes with the setting unset.
-- **Cost ledger**: after every `SPAWN` (each role of a `SPAWN_PARALLEL` is one entry), append an entry to `state.ledger` (state.md, "Schema"): word-count estimates of what the spawn read and wrote, harness-reported usage when `harness.md` names a source, duration. Entries ride the next checkpoint.
-- **Checkpoint** after every completed stage (state.md). The state file is the single truth for where the run is.
-- **Halt**: set `status: halted` with `halt_reason`, checkpoint, `NOTIFY`, ask the user. Their answer resumes the stage, redirects it, or aborts.
-- **Notify** (`NOTIFY`) every time you wait on the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver. Every wait is recorded as a `timeline` entry (protocol.md, "Timeline"): appended when shown, closed with `answered_at` and `latency_ms` when answered.
+- **Stop point**: when the next stage to start equals `stop_at`, do not start it. Set `status: paused` and `stage` to that stage through the writer (`set-status paused`, then `checkpoint <completed-stage> --next <stage>`), clear `stop_at`, `NOTIFY`, and tell the user `<invoke> resume <branch>` (`harness.md`) continues from there. Then end your turn. A `stop_at` the chain never reaches (e.g. `clarify` on a lite run that never escalates) simply never triggers; the run finishes with the setting unset.
+- **Cost ledger**: after every `SPAWN` (each role of a `SPAWN_PARALLEL` is one entry), `SHELL: python3 <F>/bin/factory ledger-add <stage> <role> --started-at <iso> --ended-at <iso> --in-est <N> --out-est <N>` (state.md, "Schema"): word-count estimates of what the spawn read and wrote, harness-reported usage via `--reported` when `harness.md` names a source, the interval stamping its duration.
+- **State writes** go only through the writer commands of `python3 <F>/bin/factory` (state.md, "CLI"): `checkpoint <stage> [--next <stage>]` after every completed stage, `ledger-add` per spawn, `wait-open`/`wait-close` per user wait, `answer` per settled relay answer, `set-status` for status changes, `decisions-add` for gate decisions. Never edit `state.json` by hand. The state file is the single truth for where the run is. If `python3` or `<F>/bin/factory` is missing, halt the run with that message and ask — there is no manual state-write fallback (FR-002).
+- **Halt**: `SHELL: python3 <F>/bin/factory set-status halted --halt-reason "<reason>"`, `NOTIFY`, ask the user. Their answer resumes the stage, redirects it, or aborts.
+- **Notify** (`NOTIFY`) every time you wait on the user: relay questions, analyze-loop exhaustion, red build, agent failure, approver. Every wait is recorded through the writer (protocol.md, "Timeline"): `SHELL: python3 <F>/bin/factory wait-open <kind> <stage> "<summary>"` when shown (keep the printed `wait-id`), `wait-close <wait-id>` when answered.
 - **Failure policy**: an agent crashes, times out, or returns no parseable envelope: retry once with a fresh agent, same inputs plus the error and current state; second failure: halt.
 - **Skills that block model invocation** (every `speckit-*`, and `grill-with-docs`): never invoke them through the harness's skill or command mechanism. Agents read the resolved file and follow it. `grill-with-docs` runs as `grilling` then `domain-modeling`.
 - **SpecKit hooks** (`.specify/extensions.yml`): skipped for the whole run. The factory owns the branch and every commit.

@@ -33,7 +33,7 @@
 - [X] T009 [US2] Implement `core/skills/factory/bin/factory_cli/totals.py` interval-union accounting and wire `ledger-add` `started_at`/`ended_at` (v4 spawn interval, `duration_ms` derived) and `show`'s `totals_sentence` (FR-009; seam: `factory_cli.totals` interval unions); then the build gate.
 - [X] T010 [US1] Correct the contradicted sentences and document schema v4: `DESIGN.md` "State CLI" paragraph (manual-write fallback) and `core/skills/factory/references/state.md` (manual edit paths, the checkpoint's `git add -A`) now describe the single writer, its records and commands. Exempt: `DESIGN.md` corrections and `references/state.md` prose - documentation only.
 - [X] T011 [US2] Correct `docs/product-brief.md` §14 rows this run settles (totals formula under parallel reviews, the auto-accept audit at approval) and `README.md`'s read-only CLI description. Exempt: `docs/` corrections and `README.md` prose - documentation only.
-- [ ] T012 [US1] Update `core/skills/factory/SKILL.md` to record state through the writer commands instead of editing `state.json`, naming the halt-with-message path when Python 3 is missing (FR-002). Exempt: `SKILL.md` prose - documentation only.
+- [X] T012 [US1] Update `core/skills/factory/SKILL.md` to record state through the writer commands instead of editing `state.json`, naming the halt-with-message path when Python 3 is missing (FR-002). Exempt: `SKILL.md` prose - documentation only.
 
 ---
 
