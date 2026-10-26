@@ -7,7 +7,8 @@ dist/<harness>/agents/  one native agent file per role, in this harness's format
 
 Usage: render.py <harness>          render, print nothing
        render.py <harness> --out <dir>  per-user render into <dir>
-       render.py <harness> --paths  render, then print the install targets as shell assignments
+       render.py <harness> --paths  report the install targets, write nothing
+       render.py <harness> --models report the effective model per role, write nothing
        render.py --list             print the known harnesses
 """
 
@@ -112,25 +113,29 @@ def render_agent(adapter, fields, body):
     raise SystemExit(f"unknown agent_format '{adapter['agent_format']}'")
 
 
-def render(name, out=None):
-    """Render one harness tree and return (adapter, target, effective).
+def roles():
+    """(file name, meta, body) per role file, sorted — one pass over core/roles."""
+    for role_file in sorted((ROOT / "core" / "roles").glob("*.md")):
+        meta, body = frontmatter(role_file.read_text())
+        yield role_file.name, meta, body
 
-    out=None is the canonical dist/<harness> target and never merges user
+
+def effective_models(models):
+    """(role, model) per role — the effective-model report rows."""
+    return [(meta["name"], models.get(meta["tier"], "")) for _, meta, _ in roles()]
+
+
+def render(name, out=None):
+    """Render one harness tree into the target directory and return it.
+
+    out=None is the canonical dist/<harness> target and never reads user
     configuration (FR-002). An explicit `out` is the per-user render: the
     default home's config.json models merge per key over the adapter
     defaults (FR-001, FR-003).
     """
     adapter = load_adapter(name)
-    if out is None:
-        # interim: the canonical render's report keeps the explicit-home
-        # lookup until the write-free report split (FR-004) lands
-        explicit = os.environ.get("FACTORY_HOME")
-        merge = config_models(name, Path(explicit).expanduser()) if explicit else {}
-    else:
-        merge = config_models(name)
-    report_models = {**adapter["models"], **merge}
-    models = report_models if out is not None else adapter["models"]
-    effective = []  # (role, model) per role, for the effective-model report
+    merge = config_models(name) if out is not None else {}
+    models = {**adapter["models"], **merge}
     target = Path(out) if out is not None else ROOT / "dist" / name
     shutil.rmtree(target, ignore_errors=True)
 
@@ -147,9 +152,8 @@ def render(name, out=None):
     (skill / "roles").mkdir()
     (target / "agents").mkdir()
 
-    for role_file in sorted((ROOT / "core" / "roles").glob("*.md")):
-        meta, body = frontmatter(role_file.read_text())
-        (skill / "roles" / role_file.name).write_text(body.lstrip("\n"))
+    for role_name, meta, body in roles():
+        (skill / "roles" / role_name).write_text(body.lstrip("\n"))
         values = {
             "role": meta["name"],
             "role_": meta["name"].replace("-", "_"),
@@ -158,8 +162,23 @@ def render(name, out=None):
         fields = agent_fields(adapter, meta, values, models=models)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
         (target / "agents" / adapter["agent_file"].format(**values)).write_text(text)
-        effective.append((meta["name"], report_models.get(meta["tier"], "")))
-    return adapter, target, effective
+    return target
+
+
+def print_paths(adapter, target):
+    for key, value in (
+        ("dist", str(target)),
+        ("skill_dir", adapter["skill_dir"]),
+        ("agent_dir", adapter["agent_dir"]),
+    ):
+        print(f"{key}={shlex.quote(os.path.expanduser(value))}")
+
+
+def print_models(harness):
+    adapter = load_adapter(harness)
+    models = {**adapter["models"], **config_models(harness)}
+    for role, model in effective_models(models):
+        print(f"{role}: {model or '(session default)'}")
 
 
 def main():
@@ -176,17 +195,18 @@ def main():
         args = args[:i] + args[i + 2 :]
     if not args or args[0].startswith("-"):
         raise SystemExit(__doc__.strip())
-    adapter, target, effective = render(args[0], out=out)
-    if "--paths" in args:
-        for key, value in (
-            ("dist", str(target)),
-            ("skill_dir", adapter["skill_dir"]),
-            ("agent_dir", adapter["agent_dir"]),
-        ):
-            print(f"{key}={shlex.quote(os.path.expanduser(value))}")
-    if "--models" in args:  # the effective model per role after overrides (FR-015)
-        for role, model in effective:
-            print(f"{role}: {model or '(session default)'}")
+    harness = args[0]
+    if "--models" in args or "--paths" in args:
+        # write-free reports (FR-004): print and leave the tree alone
+        adapter = load_adapter(harness)
+        if "--paths" in args:
+            print_paths(
+                adapter, Path(out) if out is not None else ROOT / "dist" / harness
+            )
+        if "--models" in args:
+            print_models(harness)
+        return
+    render(harness, out=out)
 
 
 if __name__ == "__main__":
