@@ -206,6 +206,12 @@ Push the branch, open a ready-for-review PR against the default branch with a bo
 - **Golden run**: a fixture repository plus a per-harness golden-run checklist (start, pause at `review`, kill, resume on a second harness, approve, PR against a throwaway remote) records FR-013's evidence; the live two-harness run is recorded after merge in `conformance/golden-run-results.md`.
 - **Read-only access**: a static conformance check renders every adapter and asserts each `read`-access agent denies editing in that harness's own terms — tool lists without `Edit`/`Write` (Claude Code, ZCode), OpenCode deny rules, Copilot's tool list. `codex` has no enforceable read-only surface; `adapters/codex/harness.md` documents the limitation and the golden-run checklist records it per adapter (FR-014, R13).
 
+### Hardening and context trim (P2)
+- **Prune preview**: `factory prune [--dry-run|--delete]` lists stale pending files — one whose run has a worktree state or has ended (`pr-open`/`aborted`); a run whose only state is the pending file is never stale — and deletes nothing without the explicit `--delete` (FR-019).
+- **Installer argument validation**: `install.sh`'s option loop validates every value; a missing `--harness` value prints a clear usage message and exits non-zero instead of crashing on an unbound variable (FR-020, S17).
+- **Reported usage labelling**: a ledger entry's `reported` stays `null` unless a harness names a usage source; `show` and the totals line label reported usage separately from the `in_est`/`out_est` word-count estimates, never merged into one number (FR-010, R17).
+- **Pen rules in one reference**: `references/design-code-mapping.md` is the single home for the Pen design rules; the duplicated prose in `SKILL.md` (steps 6, 8, 9) and `references/state.md` is replaced by pointers, with every rule sentence accounted for in a checked list so nothing is lost (FR-021, R15).
+
 ### Cost ledger
 - Every `SPAWN` (each role of a `SPAWN_PARALLEL` counts as one) appends one entry to `state.ledger` (schema: `state.md`): stage, role, harness, input/output token estimates, harness-reported usage when available, duration.
 - Estimates are harness-neutral: 1.35 × word count of what the spawn was told to read (its role file, the resolved skill files, the artifacts its inputs name) and of what it wrote (the returned envelope plus new files under the spec's `factory/` folder).
