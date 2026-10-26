@@ -7,12 +7,12 @@ Run everything from the run's worktree. No dependency beyond Python 3, `bash`, `
 ```bash
 python3 -m unittest discover -s tools          # full suite
 for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done
-git diff --exit-code -- dist/                  # build gate: no generated drift
+test -z "$(git status --porcelain -- dist/)"   # build gate: no generated drift
 ```
 
-Expected: all tests pass; the re-render leaves `dist/` byte-identical (the changed `factory_cli` modules make the first re-render show a diff to commit; after committing, the gate is clean).
+Expected: all tests pass; the re-render leaves `dist/` byte-identical (the changed `factory_cli` modules make the first re-render show a diff to commit; after committing, the gate is clean). The gate is the constitution's porcelain check; `git diff --exit-code -- dist/` cannot see untracked additions and is not the gate.
 
-## S1 — Personal models reach the installed agents (FR-001–FR-005)
+## S1 — Personal models reach the installed agents (FR-001–FR-005, FR-022)
 
 ```bash
 sandbox="$(mktemp -d)"
@@ -22,15 +22,15 @@ HOME="$sandbox" bash -c 'unset FACTORY_HOME
   ./install.sh --harness opencode'
 ```
 
-Expected: the linked agent files under the harness's agent directory carry `test-org/test-deep` for deep-tier roles; the printed models report lists it as effective; `git status --porcelain -- dist/` is empty (the committed `dist/` is untouched). The same with `FACTORY_HOME` exported to a personal home applies to the per-user copy there. Without any `config.json`, the adapter defaults are used and reported.
+Expected: the linked agent files under the harness's agent directory carry `test-org/test-deep` for deep-tier roles; the printed models report lists it as effective; `git status --porcelain -- dist/` is empty (the committed `dist/` is untouched). The same with `FACTORY_HOME` exported to a personal home applies to the per-user render there. Without any `config.json`, the adapter defaults are used and reported; a missing default home `~/.factory` is created, while an explicitly set `FACTORY_HOME` that does not exist or is not a writable directory fails naming the path and writes nothing. A `config.json` that does not parse aborts the install: a message naming the file and the parse error, a non-zero exit, nothing rendered or linked, `git status --porcelain -- dist/` empty (FR-022).
 
 ## S2 — Clean refusals (FR-007, FR-009, FR-012–FR-014)
 
 Through the suite (`tools/tests/test_commands.py`, `tools/tests/test_lock.py`): `ledger-add --started-at 'yesterday'` exits 5 naming the value; a write targeting an ended pending run is refused; a lock with `owner_pid: 999999999999` is treated as live and `lock take --force` takes it over; release leaves a foreign lock file in place.
 
-## S3 — Single writer and checkpoint retry (FR-008, FR-011)
+## S3 — Single writer, relay-round rule and checkpoint retry (FR-008, FR-010, FR-011)
 
-Through the suite: `rebind` under a competing lock either refuses or re-reads under the lock; a checkpoint whose commit fails exits 1 with `state written, commit failed`, and re-running it leaves exactly one history entry for that stage.
+Through the suite: `rebind` under a competing lock either refuses or re-reads under the lock; a checkpoint whose commit fails exits 1 with `state written, commit failed`, and re-running it leaves exactly one history entry for that stage; `validate` reports a run with several open relay rounds at `relay` and unanswered questions in a non-last round at `relay.rounds[i]`, while a null relay and a fully answered relay awaiting checkpoint report no anomaly.
 
 ## S4 — Truthful time (FR-015–FR-017)
 

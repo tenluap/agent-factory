@@ -8,7 +8,7 @@ Phase 1 for `008-install-models-advisories`. **No state schema change**: run `st
 
 - A full harness tree (`skill/`, `agents/`) rendered at install time with the user's model overrides merged.
 - Owner: `install.sh` via `tools/render.py <harness> --out <dir>`; disposable and re-created on every install; removed with the links by `--uninstall`, which leaves `config.json`, pending runs and the committed rendered distribution untouched.
-- Validation: a missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install naming the path and writes nothing to the repository.
+- Validation: a missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install naming the path and writes nothing to the repository; a `config.json` that does not parse aborts the install before any render or link — message naming the file and the parse error, non-zero exit, nothing rendered or linked (FR-022).
 
 ### Committed rendered distribution (`dist/<harness>`)
 
@@ -28,7 +28,8 @@ Phase 1 for `008-install-models-advisories`. **No state schema change**: run `st
 ### Relay rounds
 
 - Shape unchanged (`relay.rounds[]`, each `questions[]` with `answers`; version 1: one batch).
-- New validation rule (FR-010): exactly one round is open (at least one unanswered question). Zero or several open rounds is a violation reported at `relay` or `relay.rounds[i]`.
+- Definition (glossary): an **open relay round** holds at least one unanswered question, awaiting the user's answers.
+- New validation rule (FR-010, clarified 2026-10-26): at most one round is open and an open round must be the last; a null relay and a fully answered relay awaiting checkpoint are conformant and report no anomaly. Several open rounds are a violation reported at `relay`; unanswered questions in a non-last round at `relay.rounds[i]`.
 
 ### Checkpoint history entry
 

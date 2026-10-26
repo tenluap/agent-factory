@@ -20,9 +20,9 @@ Phase 0 for `008-install-models-advisories`. Every technical unknown in `plan.md
 
 ## R3 — Default-home resolution
 
-**Decision**: one helper resolves the factory home as `${FACTORY_HOME:-~/.factory}` (expanded) for config reads and the per-user render root; an absent `config.json` or absent keys fall back per key to adapter defaults. A missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install with a message naming the path, writing nothing — the committed rendered distribution is untouched because install never writes it. `--uninstall` removes the links it created and the per-user render at `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched.
+**Decision**: one helper resolves the factory home as `${FACTORY_HOME:-~/.factory}` (expanded) for config reads and the per-user render root; an absent `config.json` or absent keys fall back per key to adapter defaults. A missing default home `~/.factory` is created (`mkdir -p`, as today); an explicitly set `FACTORY_HOME` that does not exist, or any home that is not a directory or not writable, fails the install with a message naming the path, writing nothing — the committed rendered distribution is untouched because install never writes it. A `config.json` that does not parse aborts the install before any render or link: a message naming the file and the parse error, a non-zero exit, nothing rendered or linked (FR-022, clarified 2026-10-26). `--uninstall` removes the links it created and the per-user render at `${FACTORY_HOME:-~/.factory}/dist/<harness>`, leaving `config.json`, pending runs and the committed rendered distribution untouched.
 
-**Rationale**: FR-003 and the edge cases in `spec.md`; today an unset `FACTORY_HOME` silently means "no config", and `test_render_models.py` asserts that false behaviour.
+**Rationale**: FR-003, FR-022 and the edge cases in `spec.md`; today an unset `FACTORY_HOME` silently means "no config", and `test_render_models.py` asserts that false behaviour. The home-creation and uninstall policies and the clean parse failure were settled with the user (grill-with-docs and clarify, 2026-10-26), so install fails loudly on a home it may not rewrite and on a config it cannot read.
 
 ## R4 — Lock liveness and takeover
 
@@ -54,7 +54,7 @@ Phase 0 for `008-install-models-advisories`. Every technical unknown in `plan.md
 
 ## R8 — Validation of relay rounds, listings and digests
 
-**Decision**: `validate_state` counts open relay rounds (a round with at least one unanswered question; version-1 shape is one round) and reports `relay` / `relay.rounds[i]` when the count is not exactly one (FR-010). `cmd_runs` skips aborted runs as it already skips `pr-open` (FR-017). `digest` drops the summed `waits.human_ms` / `spawns.agent_ms` duplicates and keeps `totals` from `totals.compute` (FR-015). `totals.compute` measures wall clock from `started_at` to `ended_at` or, when absent, to now (FR-016).
+**Decision**: `validate_state` enforces that at most one relay round is open (an open relay round holds at least one unanswered question; version-1 shape is one round) and that an open round is the last round; a null relay and a fully answered relay awaiting checkpoint are conformant. Several open rounds are reported at `relay`, unanswered questions in a non-last round at `relay.rounds[i]` (FR-010, clarified 2026-10-26 — the rule is "at most one and last", never "exactly one"). `cmd_runs` skips aborted runs as it already skips `pr-open` (FR-017). `digest` drops the summed `waits.human_ms` / `spawns.agent_ms` duplicates and keeps `totals` from `totals.compute` (FR-015). `totals.compute` measures wall clock from `started_at` to `ended_at` or, when absent, to now (FR-016).
 
 **Rationale**: each is the verdict's cited defect with its cited fix.
 
@@ -66,6 +66,6 @@ Phase 0 for `008-install-models-advisories`. Every technical unknown in `plan.md
 
 ## R10 — Verification approach
 
-**Decision**: no new test dependency or runner: `python3 -m unittest discover -s tools` covers every behaviour change through the seams listed in `plan.md`; the FR-015 acceptance runs `install.sh` under a throwaway `HOME` with `FACTORY_HOME` unset and asserts `git status --porcelain -- dist/` stays empty.
+**Decision**: no new test dependency or runner: `python3 -m unittest discover -s tools` covers every behaviour change through the seams listed in `plan.md`; the FR-015 acceptance runs `install.sh` under a throwaway `HOME` with `FACTORY_HOME` unset and asserts `git status --porcelain -- dist/` stays empty, and the FR-022 case runs the same installer seam asserting the clean abort (message naming file and parse error, non-zero exit, nothing rendered or linked).
 
 **Rationale**: stdlib-only constraint and the existing suite; the installer seam already runs under a throwaway `HOME`.
