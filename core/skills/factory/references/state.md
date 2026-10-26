@@ -1,6 +1,6 @@
 # Run state
 
-One run = one `state.json`. It is the single truth for where the run is; read it before acting, write it after every change.
+One run = one `state.json`. It is the single truth for where the run is; read it before acting, and write it only through the CLI's write commands ("CLI") — never by hand.
 
 ## Location
 
@@ -13,7 +13,7 @@ The pending file uses this same schema from the moment the run is created: `star
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "started_at": "2026-10-22T14:00:00Z",
   "harness": "claude-code",
   "feature": "the user's feature text",
@@ -33,7 +33,8 @@ The pending file uses this same schema from the moment the run is created: `star
   "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": ["factory/remediation-1.md"], "pending_clarify": [] },
   "relay": null,
   "timeline": [],
-  "ledger": [ { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000 } ],
+  "decisions": [ { "stage": "plan", "question": "Q1", "answer": "full", "auto": false, "at": "2026-10-22T14:07:30Z", "kind": "answer" } ],
+  "ledger": [ { "at": "2026-10-22T14:02:11Z", "stage": "plan", "role": "spec-builder", "harness": "claude-code", "in_est": 13400, "out_est": 2700, "reported": null, "duration_ms": 92000, "started_at": "2026-10-22T14:02:11Z", "ended_at": "2026-10-22T14:03:43Z" } ],
   "review": { "round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
   "ended_at": null,
   "pr_url": null,
@@ -41,21 +42,25 @@ The pending file uses this same schema from the moment the run is created: `star
 }
 ```
 
+- `version`: `4` on every write; readers accept versions 1–4 including legacy relay shapes and never rewrite what they read; the writer upgrades a run in the same atomic write that first changes it (FR-022).
 - `harness`: the adapter running the run now (`harness.md`, `name`). Each `history` entry records the harness that wrote it.
 - `skills`: keyed by logical name. Paths are only valid on the harness that resolved them.
-- `status`: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
+- `status`: closed vocabulary: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").
-- `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A run is created with the default mode — `chain: "lite"`, `fast: true` — unless the command's flags pinned otherwise (SKILL.md, "Route"); a lite→full escalation rewrites `chain` later. A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds.
-- `stage`: the stage in progress, or the next one to run: `brainstorm`, `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`. `brainstorm` (SKILL.md, "Brainstorm") is additive: it only ever appears on the idea path, before `grill`, and every stage value a run recorded before this value existed still resumes unchanged.
-- `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": { "answer": "...", "at": "2026-10-22T14:07:30Z", "auto": false } } } ] }`. Each answer is an object: the user's text, the time it arrived, and `auto: true` when fast mode chose it. The last round is the open one. Write each answer as it arrives (protocol.md, "Relay"). A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round; a version 2 string answer is read as `{ "answer": <string>, "at": null }`.
-  - Question fields and rendering are defined in protocol.md, "Questions". Rich question fields are additive within version 3: accept structured options and legacy string options, retaining saved answers and IDs. Derive progress from each question's stored position in the round; keep the original positions when redisplaying unanswered questions. Accepted new-format answers store the option ID or proposed text, separate from the rationale; legacy recommendations remain verbatim. The optional `requires_user` field (protocol.md, "Questions") is one such additive field: fast mode (protocol.md, "Relay", step 2) must skip a question carrying it, exactly like `pending_clarify`; a question saved without the field keeps today's fast-mode behaviour unchanged.
-- `timeline`: every user wait of the run, oldest first (protocol.md, "Timeline"): `{ "at", "kind", "stage", "summary", "answered_at": null, "latency_ms": null }`. `kind` is `questions` (a relay round), `notice` (any other `NOTIFY` that ends the turn), `approver`, or `halt`. Append the entry when the message is shown; when the user answers, set `answered_at` and `latency_ms` (orchestrator clock, shown → answered) in place. Append-only for the whole run: never cleared at checkpoint, never rewritten. A round with several answers closes on its last answer; a wait the run never came back from keeps its nulls.
+- `mode`: the run's chain (`chain`: `full` | `lite`) and whether relays auto-accept their recommended answers (`fast`). A run is created with the default mode — `chain: "lite"`, `fast: true` — unless the command's flags pinned otherwise (SKILL.md, "Route"); a lite→full escalation rewrites `chain` later. A relay answer may carry `"auto": true` (fast mode's auto-accepts); the approver screen lists those rounds from `decisions`.
+- `stage`: closed vocabulary, the stage in progress or the next one to run: `brainstorm`, `grill`, `worktree`, `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `remediate`, `implement`, `verify`, `review`, `fix`, `approver`, `pr`. `brainstorm` (SKILL.md, "Brainstorm") is additive: it only ever appears on the idea path, before `grill`, and every stage value a run recorded before this value existed still resumes unchanged.
+- `relay`: `null`, or every question round of the current stage: `{ "stage": "clarify", "rounds": [ { "questions": [ { "id": "Q1", "text": "...", "recommended": "..." } ], "answers": { "Q1": { "answer": "...", "at": "2026-10-22T14:07:30Z", "auto": false } } } ] }`. Each answer is an object: the user's text, the time it arrived, and `auto: true` when fast mode chose it. The last round is the open one. Answers are written as they arrive through `factory answer` (protocol.md, "Relay"). A version 1 state's single batch (`questions` + `answers` at the top of `relay`) is read as one round; a version 2 string answer is read as `{ "answer": <string>, "at": null }`.
+  - Question fields and rendering are defined in protocol.md, "Questions". Rich question fields are additive: accept structured options and legacy string options, retaining saved answers and IDs. Derive progress from each question's stored position in the round; keep the original positions when redisplaying unanswered questions. Accepted new-format answers store the option ID or proposed text, separate from the rationale; legacy recommendations remain verbatim. The optional `requires_user` field (protocol.md, "Questions") is one such additive field: fast mode (protocol.md, "Relay", step 2) must skip a question carrying it, exactly like `pending_clarify`; a question saved without the field keeps today's fast-mode behaviour unchanged.
+  - At the checkpoint the stage's settled answers move into `decisions` (append-only) before `relay` is cleared (FR-008).
+- `decisions`: **v4**, append-only. One record per settled answer or gate decision: `{ "stage", "question", "answer", "auto", "at", "kind" }`, `kind` ∈ `answer` (a settled relay answer) | `approved` (the approver's approval, the record the `pr` gate requires) | `gate-override` (an explicit override of a gate). Gate kinds are never `auto`. The approver's veto list is every `auto: true` entry plus every `gate-override` entry (FR-006, SC-004). Entries are never rewritten or removed.
+- `timeline`: every user wait of the run, oldest first (protocol.md, "Timeline"): `{ "at", "kind", "stage", "summary", "answered_at": null, "latency_ms": null }`. `kind` is closed: `questions` (a relay round), `notice` (any other `NOTIFY` that ends the turn), `approver`, or `halt`. `factory wait-open` appends the entry; `factory wait-close` sets `answered_at` and `latency_ms` (shown → answered) in place. Append-only for the whole run: never cleared at checkpoint. A round with several answers closes on its last answer; a wait the run never came back from keeps its nulls.
 - `started_at` / `ended_at`: set `started_at` when the run is created; `ended_at` when the run reaches `pr-open` or `aborted`.
-- `ledger`: one entry per agent spawn, appended when the spawn returns (each role of a `SPAWN_PARALLEL` gets its own entry): `{ "at", "stage", "role", "harness", "in_est", "out_est", "reported", "duration_ms" }`.
+- `ledger`: one entry per agent spawn, appended by `factory ledger-add` when the spawn returns (each role of a `SPAWN_PARALLEL` gets its own entry): `{ "at", "stage", "role", "harness", "in_est", "out_est", "reported", "duration_ms", "started_at", "ended_at" }`. **v4** adds the spawn interval `started_at`/`ended_at`; `duration_ms` is derived from it on write (pre-v4 entries keep their stored duration and gain an interval on the first write).
   - `in_est` / `out_est`: word count × 1.35, rounded. Input words: the role file, the resolved skill files the inputs name, and the artifacts the inputs name. Output words: the returned envelope plus files created or modified under `<spec_dir>/factory/` during the spawn (`find <spec_dir>/factory -type f -newermt "<spawn start>" | xargs wc -w`).
-  - `reported`: `null`, or `{ "in", "out" }` taken from usage the harness exposes for the spawn (`harness.md` names the source; none exists in tier 1 today).
-  - `duration_ms`: orchestrator clock, spawn start to result. Append the entry before the checkpoint so the checkpoint commits it.
-- Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC.
+  - `reported`: `null`, or `{ "in", "out" }` taken from usage the harness exposes for the spawn (`harness.md` names the source; none exists in tier 1 today). It is always labelled separately from the estimates (FR-010), never merged with them.
+  - Effort totals are interval unions: agent time is the union of `started_at`/`ended_at`, human time the union of `timeline` wait intervals — never a sum of parallel durations (FR-009, "Totals").
+- `history`: transition records, append-only, non-decreasing by `at` (FR-003, FR-004): `{ "at", "stage", "event", "commit", "harness" }`. `event` is a closed vocabulary: `complete`, `verify-pass`, `verify-fail`, `approved`, `gate-override`, `aborted`, `pr-open`, `resumed` — anything else is a validation violation. Each event has exactly one writer: `checkpoint` writes `complete` (or the gate events `approved`/`gate-override` carrying `decision`), `verify` writes the verify pair, `set-status`'s `aborted`/`pr-open` forms write those two, the resume path writes `resumed`. A verify record carries `commands: [ { "command", "status" } ]`; the review gate reads the latest one (FR-006).
+- Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC and never decrease within a record (FR-004).
 
 ## Pen design context (additive)
 
@@ -63,30 +68,37 @@ When a run creates, references, or updates a Pen implementation reference, add `
 
 Use pending storage before the worktree exists. On worktree creation move context into `<spec_dir>/factory/design/context.json`, update paths, and remove references to the deleted pending files. Persist every returned `design` result before checkpointing. Repository artifact paths are relative to the worktree; externally hosted sources retain their source references and an exported baseline.
 
-This is optional within version 3: version 1/2 and older version-3 states without it remain readable and keep their existing behavior. If a resumed stage actually encounters a Pen reference, activate the contract and bootstrap scoped context/coverage. The read-only CLI already passes small unknown fields through verbatim, including `design`; it does not validate the map or claim fidelity.
+This is optional: version 1/2 and older states without it remain readable and keep their existing behavior. If a resumed stage actually encounters a Pen reference, activate the contract and bootstrap scoped context/coverage. The CLI passes small unknown fields through verbatim, including `design`; it does not validate the map or claim fidelity.
 
 Use existing `review.fix_rounds` for all automatic design and other repairs. Before an active-design automatic fixer starts, increment/persist it with `stage: fix` and optional `review.pending_design_fix: { "attempt": 1, "round": 1, "verdict": "specs/016-feature/factory/reviews/round-1/verdict.json" }`. Clear the marker after the attempt completes; a crash/restart continues that reservation with the saved verdict and uncommitted work, not another increment. Neither resume nor the evidence's change of phase resets the limit. Save protected user decisions and explicit scoped exceptions in context/map/evidence as well as relay answers, because checkpoints clear `relay`. Changed source/code/capture identity invalidates affected evidence and exceptions, not the consumed repair counter. Failed/missing gates remain recorded even when the status is `exception-accepted`.
 
 ## Totals
 
-The approver screen and the final `NOTIFY` each carry one totals line, computed from the state: total wall clock (`ended_at - started_at`), human wait (sum of `timeline.latency_ms`, with the wait count), agent time (sum of `ledger.duration_ms`, with the spawn count), and the residual (wall clock minus the other two). One shared sentence format, e.g. `Run took 2h 14m: 38m you (12 waits), 1h 12m agents (23 spawns), 24m overhead.`
+The approver screen and the final `NOTIFY` each carry one totals line, computed from the state by interval union (`factory_cli/totals.py`): total wall clock (`ended_at - started_at`), human wait (union of `timeline` wait intervals, with the wait count), agent time (union of ledger spawn intervals, with the spawn count), and the non-negative residual (wall clock minus the other two). No report sums parallel durations — with parallel reviewers the union, not the sum, fits the wall clock (FR-009). One shared sentence format, e.g. `Run took 2h 14m: 38m you (12 waits), 1h 12m agents (23 spawns), 24m overhead.`
 
 ## Checkpoint
 
-After a stage completes:
-1. Set `stage` to the next stage, clear `relay` (`timeline` is never cleared), append a `history` entry (`commit` left `null`, `harness` set).
-2. `cd <worktree> && git add -A && git commit -m "factory: <stage> complete"`.
+After a stage completes the orchestrator runs the writer, which does all of it (FR-001):
 
-The commit that carries a `history` entry is the entry's commit: `git log --grep "factory: <stage> complete"` finds it. Pending state has no git: just write the file.
+```sh
+python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>]
+```
+
+The command stamps the time, moves the stage's settled relay answers into `decisions` before clearing `relay`, appends the `complete` history entry (`commit` left `null`, `harness` set), sets the next stage — the linear successor, or `--next` where the flow is non-linear (the analyze loop's re-entry, a lite chain skipping `clarify`) — validates, writes atomically and commits `factory: <stage> complete`. Pending state has no git: the file is written, nothing committed. `relay` is never cleared without its answers moving to `decisions` first (FR-008).
+
+The commit that carries a `history` entry is the entry's commit: `git log --grep "factory: <stage> complete"` finds it.
 
 ## CLI
 
-`<F>/bin/factory` is the skill's read-only state CLI (stdlib Python 3). It does the mechanical state work — discovery and the resume digest — outside the orchestrator's context, so routing never reads a whole `state.json` into it: its token cost stays flat however large `relay`, `timeline`, `ledger` and `history` grow. It writes nothing.
+`<F>/bin/factory` is the factory's state CLI (stdlib Python 3) and the **single writer**: every state mutation goes through it, and the orchestrator never hand-edits `state.json` (FR-001). Its read commands do the mechanical state work — discovery, the resume digest, validation — outside the orchestrator's context, so routing never reads a whole `state.json` into it: its token cost stays flat however large `relay`, `timeline`, `ledger` and `history` grow.
 
-- `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
-- `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals_sentence` ("Totals"), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
+- `python3 <F>/bin/factory runs [--repo <path>]`: "Discovery" as JSON — one entry per unfinished run: `source` (`worktree` | `pending`), `branch` (or `name`), `stage`, `status`, `halt_reason`, `mode`, `feature`, `last_activity`, `state_path`, `violations`, plus `worktree` and `spec_dir` on worktree runs. A run whose state rides along as a copy in later worktrees appears once.
+- `python3 <F>/bin/factory show <branch-or-name> [--repo <path>]`: the "Resume" digest as JSON — every small state field verbatim, and from the large ones only what resume needs: `relay` as the open round's unanswered questions (each with its stored `position`, ready to redisplay), `waits` and `spawns` totals, `totals` and `totals_sentence` ("Totals"), `decisions` (the approver's veto list, FR-006), and `history_tail` (the last three entries). `analyze.pending_clarify` is a count. Everything a restarting agent needs beyond the digest it reads from `state.json` itself.
+- `python3 <F>/bin/factory validate <run> | validate --all`: every violation as `{ "location", "reason" }`; exit 1 when any is found (FR-003).
 
-`<branch-or-name>` is the run's `branch`, or a pending file's name with or without its `<repo-name>-` prefix. Both commands exit non-zero with the reason on stderr (no match, ambiguous name, not a git repo, or for `show` a worktree run whose recorded `worktree` no longer exists: halt and ask rather than resume). The orchestrator uses the manual paths below only when the script is missing or Python 3 is not installed.
+Write commands (each stamps its own time, validates before writing, writes atomically, refuses under a live lock, and commits on worktree runs): `checkpoint <stage> [--next <stage>]` ("Checkpoint"), `ledger-add <stage> <role> [--started-at <iso>] [--ended-at <iso>] [--in-est N] [--out-est N] [--reported '<json>']`, `wait-open <kind> <stage> <summary>` (prints `wait-id`), `wait-close <wait-id>`, `answer <qid> '<answer>' [--auto] [--stage <stage>]`, `set-status <status> [--halt-reason <text>] [--pr-url <url>]`, `decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]`.
+
+Exit codes: 0 success; 1 no matching run or refused write (validation) with the reason on stderr; 2 not a git repository or git not runnable; 3 ambiguous run name; 4 the run's recorded `worktree` no longer exists (`show` only: halt and ask rather than resume); 5 usage error. A missing Python 3 or a missing `<F>/bin/factory` halts the run with a clear message (FR-002) — there is no manual state-write fallback.
 
 ## Discovery
 
