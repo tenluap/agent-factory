@@ -20,7 +20,7 @@ read:
   validate <run> | validate --all   validation violations; exit 1 when any
 
 write (the single writer; each stamps its time, validates, writes atomically):
-  checkpoint <stage> [--next <stage>]                 record a stage complete
+  checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
             [--in-est N] [--out-est N] [--reported '<json>']
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
@@ -41,7 +41,9 @@ def die_usage(message):
     raise CLIError(5, f"{message}\n\n{USAGE}")
 
 
-def parse_flags(rest, command, value_flags=("--repo",), bool_flags=(), allow_all=False):
+def parse_flags(
+    rest, command, value_flags=("--repo",), bool_flags=(), allow_all=False, repeat_flags=()
+):
     """Split `rest` into (positional, flags); usage errors exit 5."""
     positional, flags = [], {}
     rest = iter(rest)
@@ -51,6 +53,12 @@ def parse_flags(rest, command, value_flags=("--repo",), bool_flags=(), allow_all
             continue
         if flag in bool_flags:
             flags[flag] = True
+            continue
+        if flag in repeat_flags:
+            value = next(rest, None)
+            if not value:
+                die_usage(f"{command}: {flag} needs a value")
+            flags.setdefault(flag, []).append(value)
             continue
         if not flag.startswith("-"):
             positional.append(flag)
@@ -114,13 +122,21 @@ def main(argv):
             raise SystemExit(1 if result else 0)
         elif command == "checkpoint":
             positional, flags = parse_flags(
-                rest, command, value_flags=("--repo", "--next")
+                rest,
+                command,
+                value_flags=("--repo", "--next", "--envelope"),
+                repeat_flags=("--files",),
             )
             if len(positional) != 1:
                 die_usage("checkpoint needs exactly one <stage>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_checkpoint(
-                repo, Path.cwd(), positional[0], next_stage=flags.get("--next")
+                repo,
+                Path.cwd(),
+                positional[0],
+                next_stage=flags.get("--next"),
+                files=flags.get("--files"),
+                envelope=flags.get("--envelope"),
             )
         elif command == "ledger-add":
             positional, flags = parse_flags(

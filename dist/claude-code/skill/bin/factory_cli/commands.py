@@ -412,10 +412,14 @@ def write_run(path, loaded, mutate):
         die(1, str(e))
 
 
-def commit_worktree(worktree, message):
+def commit_worktree(worktree, message, spec_dir=None, extra=()):
+    """Stage spec_dir (plus the checkpoint's declared extras) and commit.
+    Undeclared changes are never staged (FR-017)."""
     if not worktree:
         return None
-    git(worktree, "add", "-A")
+    add = [path for path in ([spec_dir] if spec_dir else []) if path] + list(extra)
+    if add:
+        git(worktree, "add", "--", *add)
     git(worktree, "commit", "-q", "-m", message)
     return git(worktree, "rev-parse", "--short", "HEAD").strip()
 
@@ -459,7 +463,30 @@ def settled_answers(relay, fallback_stage, now):
     return migrated
 
 
-def cmd_checkpoint(repo, cwd, stage, next_stage=None):
+def declared_from_envelope(path):
+    """The envelope's `files` list, from a role output or a bare JSON file (FR-017)."""
+    try:
+        text = Path(path).read_text()
+    except OSError as e:
+        die(1, f"cannot read {path}: {e}")
+    block, error = checks.extract_block(text)
+    if error:
+        try:
+            block = json.loads(text)
+        except ValueError:
+            die(1, f"{path}: {error}")
+    files = block.get("files") if isinstance(block, dict) else None
+    if not isinstance(files, list) or not all(isinstance(f, str) and f for f in files):
+        die(1, f"{path}: the envelope carries no list of declared files in `files`")
+    return files
+
+
+def dirty_paths(worktree):
+    status = git(worktree, "status", "--porcelain", "--untracked-files=all")
+    return [line[3:].strip().strip('"') for line in status.splitlines() if line.strip()]
+
+
+def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None):
     if stage not in state.STAGES:
         die(
             1,
@@ -503,11 +530,32 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None):
         return s
 
     updated = write_run(path, loaded, mutate)
-    commit = commit_worktree(worktree, f"factory: {stage} complete")
+    declared = list(files or [])
+    if envelope:
+        declared = declared + declared_from_envelope(envelope)
+    undeclared = []
+    if worktree:
+        spec_prefix = (updated.get("spec_dir") or "").rstrip("/") + "/"
+        missing = [f for f in declared if not (Path(worktree) / f).exists()]
+        if missing:
+            die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
+        dirty = dirty_paths(worktree)
+        in_spec = [p for p in dirty if p.startswith(spec_prefix)]
+        undeclared = [p for p in dirty if p not in declared and p not in in_spec]
+        commit = commit_worktree(
+            worktree,
+            f"factory: {stage} complete",
+            spec_dir=updated.get("spec_dir"),
+            extra=declared,
+        )
+    else:
+        commit = None
     return {
         "checkpointed": stage,
         "stage": updated["stage"],
         "commit": commit,
+        "declared": declared,
+        "undeclared": undeclared,
         "source": source,
     }
 
@@ -548,7 +596,7 @@ def cmd_ledger_add(
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: ledger-add {stage}")
+    commit_worktree(worktree, f"factory: ledger-add {stage}", loaded.get("spec_dir"))
     return {"added": {"stage": stage, "role": role, "duration_ms": duration}}
 
 
@@ -570,7 +618,7 @@ def cmd_wait_open(repo, cwd, kind, stage, summary):
         return s
 
     updated = write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: wait-open {stage}")
+    commit_worktree(worktree, f"factory: wait-open {stage}", loaded.get("spec_dir"))
     return {"wait-id": len(updated["timeline"]) - 1}
 
 
@@ -596,7 +644,7 @@ def cmd_wait_close(repo, cwd, wait_id):
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, "factory: wait-close")
+    commit_worktree(worktree, "factory: wait-close", loaded.get("spec_dir"))
     return {"closed": wait_id}
 
 
@@ -622,7 +670,7 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: answer {qid}")
+    commit_worktree(worktree, f"factory: answer {qid}", loaded.get("spec_dir"))
     return {"answered": qid, "auto": bool(auto)}
 
 
@@ -659,7 +707,7 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: set-status {status}")
+    commit_worktree(worktree, f"factory: set-status {status}", loaded.get("spec_dir"))
     return {"status": status}
 
 
@@ -686,7 +734,7 @@ def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: decisions-add {qid}")
+    commit_worktree(worktree, f"factory: decisions-add {qid}", loaded.get("spec_dir"))
     return {"added": {"stage": stage, "question": qid, "kind": kind}}
 
 
@@ -719,13 +767,15 @@ def cmd_verify(repo, cwd, passed, commands_payload):
                 "event": event,
                 "commit": None,
                 "harness": s.get("harness"),
-                "commands": [{"command": c, "status": st} for c, st in commands_payload],
+                "commands": [
+                    {"command": c, "status": st} for c, st in commands_payload
+                ],
             }
         ]
         return s
 
     write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: {event}")
+    commit_worktree(worktree, f"factory: {event}", loaded.get("spec_dir"))
     return {"verified": event, "commands": commands_payload}
 
 
@@ -740,10 +790,18 @@ def cmd_envelope_check(path):
         die(1, error)
     shape = checks.detect_shape(block)
     if shape is None:
-        die(1, "the final fenced json block matches no role-output shape "
-               "(envelope, reviewer report, judge verdict)")
+        die(
+            1,
+            "the final fenced json block matches no role-output shape "
+            "(envelope, reviewer report, judge verdict)",
+        )
     problems = checks.block_problems(block, shape)
     if problems:
-        die(1, "malformed " + shape + " block: "
-            + "; ".join(f"{p['location']}: {p['reason']}" for p in problems))
+        die(
+            1,
+            "malformed "
+            + shape
+            + " block: "
+            + "; ".join(f"{p['location']}: {p['reason']}" for p in problems),
+        )
     return {"shape": shape, "problems": 0}

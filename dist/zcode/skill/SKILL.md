@@ -80,7 +80,7 @@ From here every `SHELL` command runs as `cd <worktree> && ...`, and every agent 
 Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, `spec_dir` (`specs/<branch>`), the `state.json` path, the brief path, the resolved skill paths, and the stage. `analyze` and `remediate` also get the pass number `analyze.pass`. Each spawn ends with an envelope (protocol.md):
 
 - `needs_input`: run the relay (protocol.md); it spawns a fresh spec-builder for the same stage once every question is answered.
-- `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>]` (state.md, "Checkpoint"), then spawn the next stage.
+- `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>] --files <declared path>...` (state.md, "Checkpoint"; declare every file the stage's outputs changed, or `--envelope <role output>` to take the envelope's `files` list — the checkpoint commits the spec directory plus exactly the declared files and reports the rest), then spawn the next stage.
 - `failed`: failure policy (below).
 
 Pass `design` (when active) and the resolved `pen-design` path to every spec stage. Persist returned design references/results before checkpointing; a recorded missing design prerequisite follows the mapping contract rather than being retried as an agent crash. The plan must carry the mapping/runtime/fidelity gates and capture requirements into tasks.
