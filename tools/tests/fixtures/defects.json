@@ -1,0 +1,38 @@
+{
+  "comment": "SC-002 replay manifest: every entry in core-defects must be reported for its run (stability-brief §3 core), and every reported defect must be listed here; extras carry a written reason.",
+  "core-vocabulary": [
+    "history-timestamps-backwards",
+    "rounded-timestamps",
+    "totals-exceed-wall-clock",
+    "history-events-off-vocabulary",
+    "timeline-kind-off-vocabulary",
+    "history-missing-implement-verify",
+    "ledger-incomplete-spawns",
+    "decision-audit-lost"
+  ],
+  "runs": {
+    "005-skill-routing": {
+      "fixture": "replay-005.json",
+      "core-defects": [
+        "history-timestamps-backwards",
+        "rounded-timestamps",
+        "totals-exceed-wall-clock",
+        "decision-audit-lost"
+      ],
+      "extras": {}
+    },
+    "006-opencode-v2-adapter": {
+      "fixture": "replay-006.json",
+      "core-defects": [
+        "history-events-off-vocabulary",
+        "timeline-kind-off-vocabulary",
+        "history-missing-implement-verify",
+        "ledger-incomplete-spawns",
+        "decision-audit-lost"
+      ],
+      "extras": {
+        "rounded-timestamps": "history 19:50:00Z/19:52:00Z share the invented :00 pattern of the §3 rounded-times row."
+      }
+    }
+  }
+}
