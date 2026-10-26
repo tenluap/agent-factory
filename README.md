@@ -26,7 +26,7 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 { "models": { "claude-code": { "deep": "opus", "standard": "sonnet" }, "opencode": { "deep": "anthropic/<model-id>" } } }
 ```
 
-Only Claude Code pins agent models by default (its harness requires defaults); on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`, which prints the effective model per role after rendering.
+Only Claude Code pins agent models by default (its harness requires defaults); on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
 
 ## Usage
 
