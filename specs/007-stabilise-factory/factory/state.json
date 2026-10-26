@@ -9,9 +9,9 @@
   "branch": "007-stabilise-factory",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/007-stabilise-factory",
   "spec_dir": "specs/007-stabilise-factory",
-  "status": "halted",
-  "stage": "implement",
-  "halt_reason": "code-build hit the model usage limit (5-hour window, resets 2026-10-26 13:36:54) after committing T001-T038 (37/46 tasks; T020 CI and T039-T046 open, T039 prune work uncommitted in the worktree). Retry would fail until reset.",
+  "status": "running",
+  "stage": "verify",
+  "halt_reason": null,
   "stop_at": null,
   "mode": {
     "chain": "full",
@@ -103,8 +103,8 @@
       "kind": "halt",
       "stage": "implement",
       "summary": "Usage limit reached during implement; resume after reset",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-26T07:42:01Z",
+      "latency_ms": 17914000
     }
   ],
   "ledger": [
@@ -237,6 +237,16 @@
       "out_est": 0,
       "reported": null,
       "duration_ms": 7265000
+    },
+    {
+      "at": "2026-10-26T08:17:25Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 7391,
+      "out_est": 3310,
+      "reported": null,
+      "duration_ms": 2124000
     }
   ],
   "review": {
@@ -329,6 +339,13 @@
       "at": "2026-10-26T02:43:27Z",
       "stage": "implement",
       "event": "halted",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-26T08:17:25Z",
+      "stage": "implement",
+      "event": "complete",
       "commit": null,
       "harness": "opencode"
     }
