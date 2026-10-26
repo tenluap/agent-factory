@@ -6,6 +6,7 @@ Covers `runs`, `show` and `validate` exit codes and digests (contracts/cli.md),
 
 import json
 import unittest
+from datetime import datetime, timezone
 
 from tests import Sandbox, fixture
 from tests import replay
@@ -247,3 +248,185 @@ class ReplayTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def writer_state():
+    """A running v3-shaped state with an open relay round, ready to upgrade."""
+    s = fixture("state-v3.json")
+    s["stage"] = "plan"
+    s["relay"] = {
+        "stage": "plan",
+        "rounds": [
+            {
+                "questions": [{"id": "Q5", "text": "Pick one", "recommended": "B"}],
+                "answers": {"Q5": {"answer": "B", "at": "2026-10-22T14:05:00Z", "auto": True}},
+            }
+        ],
+    }
+    s["decisions"] = [{"stage": "grill", "question": "Q1", "answer": "full", "auto": False,
+                       "at": "2026-10-22T14:04:00Z", "kind": "answer"}]
+    return s
+
+
+class WriterTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run("040-writer", writer_state())
+        self.state_path = self.wt / "specs" / "040-writer" / "factory" / "state.json"
+
+    def load(self):
+        return json.loads(self.state_path.read_text())
+
+    def recent(self, stamp):
+        return abs(replay.parse_iso(stamp).timestamp()
+                   - datetime.now(timezone.utc).timestamp()) < 120
+
+    def committed_clean(self):
+        status = self.box.git("status", "--porcelain", cwd=self.wt).strip()
+        return status == ""
+
+    def test_checkpoint_stamps_appends_migrates_and_commits(self):
+        before = self.load()
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        after = self.load()
+        self.assertEqual(after["stage"], "tasks", "linear successor becomes the next stage")
+        entry = after["history"][-1]
+        self.assertEqual((entry["stage"], entry["event"]), ("plan", "complete"))
+        self.assertTrue(self.recent(entry["at"]), "the writer stamps its own time")
+        self.assertEqual(entry["harness"], before["harness"])
+        self.assertIn({"stage": "plan", "question": "Q5", "answer": "B", "auto": True,
+                       "at": "2026-10-22T14:05:00Z", "kind": "answer"}, after["decisions"],
+                      "settled relay answers move into decisions (FR-008)")
+        self.assertIsNone(after["relay"], "relay is cleared after its answers move")
+        self.assertEqual(after["decisions"][0], before["decisions"][0], "decisions are append-only")
+        last = self.box.git("log", "-1", "--format=%s", cwd=self.wt).strip()
+        self.assertEqual(last, "factory: plan complete")
+        self.assertTrue(self.committed_clean(), "the checkpoint commits the state write")
+
+    def test_checkpoint_next_flag_serves_non_linear_flows(self):
+        out = self.box.cli("checkpoint", "analyze", "--next", "analyze", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.load()["stage"], "analyze",
+                         "the analyze loop re-enters without leaving the writer")
+
+    def test_checkpoint_refuses_invalid_state_untouched(self):
+        self.box.corrupt_worktree_state(
+            "040-writer", lambda s: s["history"][1].__setitem__("event", "bogus"))
+        before = self.state_path.read_text()
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("bogus", out.stderr)
+        self.assertEqual(self.state_path.read_text(), before, "a refused write changes nothing")
+        self.assertTrue(self.committed_clean())
+
+    def test_ledger_add_appends_interval_and_commits(self):
+        out = self.box.cli(
+            "ledger-add", "plan", "spec-builder",
+            "--started-at", "2026-10-22T14:00:00Z", "--ended-at", "2026-10-22T14:01:00Z",
+            "--in-est", "100", "--out-est", "50", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        entry = self.load()["ledger"][-1]
+        self.assertEqual((entry["stage"], entry["role"]), ("plan", "spec-builder"))
+        self.assertEqual((entry["started_at"], entry["ended_at"]),
+                         ("2026-10-22T14:00:00Z", "2026-10-22T14:01:00Z"))
+        self.assertEqual(entry["duration_ms"], 60000, "duration derives from the interval")
+        self.assertEqual((entry["in_est"], entry["out_est"], entry["reported"]), (100, 50, None))
+        self.assertTrue(self.recent(entry["at"]))
+        self.assertTrue(self.committed_clean())
+
+    def test_ledger_add_refuses_invalid_state(self):
+        self.box.corrupt_worktree_state(
+            "040-writer", lambda s: s["timeline"][0].__setitem__("kind", "approval"))
+        before = self.state_path.read_text()
+        out = self.box.cli("ledger-add", "plan", "spec-builder", cwd=self.wt)
+        self.assertEqual(out.returncode, 1)
+        self.assertEqual(self.state_path.read_text(), before)
+
+    def test_wait_open_and_close(self):
+        out = self.box.cli("wait-open", "questions", "plan", "Round 1 (1 question)", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        wait_id = json.loads(out.stdout)["wait-id"]
+        entry = self.load()["timeline"][-1]
+        self.assertEqual((entry["kind"], entry["stage"], entry["summary"]),
+                         ("questions", "plan", "Round 1 (1 question)"))
+        self.assertIsNone(entry["answered_at"])
+        self.assertTrue(self.recent(entry["at"]))
+        out = self.box.cli("wait-close", str(wait_id), cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        closed = self.load()["timeline"][-1]
+        self.assertIsNotNone(closed["answered_at"])
+        self.assertGreaterEqual(closed["latency_ms"], 0)
+        self.assertEqual(self.box.cli("wait-close", "99", cwd=self.wt).returncode, 1)
+
+    def test_answer_writes_into_open_round(self):
+        self.box.corrupt_worktree_state(
+            "040-writer",
+            lambda s: s["relay"]["rounds"][0]["questions"].append({"id": "Q6", "text": "More"}))
+        out = self.box.cli("answer", "Q6", "custom answer", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        answer = self.load()["relay"]["rounds"][0]["answers"]["Q6"]
+        self.assertEqual(answer["answer"], "custom answer")
+        self.assertFalse(answer["auto"])
+        self.assertTrue(self.recent(answer["at"]))
+        out = self.box.cli("answer", "Q7", "fast!", "--auto", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertTrue(self.load()["relay"]["rounds"][0]["answers"]["Q7"]["auto"])
+
+    def test_set_status_records_history_and_end(self):
+        out = self.box.cli("set-status", "pr-open", "--pr-url", "https://x/pr/9", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        after = self.load()
+        self.assertEqual(after["status"], "pr-open")
+        self.assertEqual(after["pr_url"], "https://x/pr/9")
+        self.assertIsNotNone(after["ended_at"])
+        self.assertEqual((after["history"][-1]["event"], after["history"][-1]["stage"]),
+                         ("pr-open", "pr"))
+        self.assertTrue(self.committed_clean())
+
+    def test_set_status_aborted_appends_its_history_entry(self):
+        out = self.box.cli("set-status", "aborted", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        after = self.load()
+        self.assertEqual(after["status"], "aborted")
+        self.assertIsNotNone(after["ended_at"])
+        self.assertEqual((after["history"][-1]["event"], after["history"][-1]["stage"]),
+                         ("aborted", "plan"))
+
+    def test_set_status_halted_carries_reason_without_history(self):
+        out = self.box.cli("set-status", "halted", "--halt-reason", "red build", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        after = self.load()
+        self.assertEqual((after["status"], after["halt_reason"]), ("halted", "red build"))
+        self.assertIsNone(after["ended_at"])
+        self.assertEqual(after["history"][-1]["event"], "complete", "halt writes no history event")
+
+    def test_decisions_add_appends_record(self):
+        out = self.box.cli("decisions-add", "approver", "Q1", "Approve", "--kind", "approved",
+                           cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        entry = self.load()["decisions"][-1]
+        self.assertEqual((entry["stage"], entry["question"], entry["answer"], entry["kind"]),
+                         ("approver", "Q1", "Approve", "approved"))
+        self.assertIs(entry["auto"], False, "gate decisions are never auto")
+        self.assertTrue(self.recent(entry["at"]))
+        out = self.box.cli("decisions-add", "plan", "Q5", "B", cwd=self.wt)
+        self.assertEqual(self.load()["decisions"][-1]["kind"], "answer", "default kind is answer")
+
+    def test_writers_refuse_without_a_single_target(self):
+        out = self.box.cli("checkpoint", "plan")  # cwd is the repo root, not the worktree
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("no run", out.stderr)
+        self.box.pending_run("050-a", writer_state())
+        self.box.pending_run("051-b", writer_state())
+        out = self.box.cli("checkpoint", "plan")
+        self.assertEqual(out.returncode, 3, "two pending runs of this repo are ambiguous")
+
+    def test_checkpoint_on_pending_run_writes_without_commit(self):
+        self.box.pending_run("052-pend", writer_state())
+        out = self.box.cli("checkpoint", "plan")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        path = self.box.home / "pending" / "repo-052-pend.json"
+        after = json.loads(path.read_text())
+        self.assertEqual((after["stage"], after["version"]), ("tasks", 4))

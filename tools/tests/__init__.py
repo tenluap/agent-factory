@@ -37,13 +37,11 @@ class Sandbox:
         self.git("commit", "-q", "-m", "initial")
 
     def git(self, *args, cwd=None):
-        subprocess.run(
-            ["git", *args],
-            cwd=str(cwd or (self.repo if self.repo.exists() else self.dir)),
-            check=True,
-            capture_output=True,
-            text=True,
+        base = cwd or (self.repo if self.repo.exists() else self.dir)
+        out = subprocess.run(
+            ["git", *args], cwd=str(base), check=True, capture_output=True, text=True
         )
+        return out.stdout
 
     def worktree_run(self, branch, state, worktree=None, commit=True):
         """A worktree on `branch` carrying specs/<branch>/factory/state.json.
@@ -82,7 +80,7 @@ class Sandbox:
         path.write_text(json.dumps(state, indent=2) + "\n")
         return path
 
-    def cli(self, *args):
+    def cli(self, *args, cwd=None):
         """Run bin/factory as a process over the sandbox."""
         env = dict(os.environ, FACTORY_HOME=str(self.home))
         return subprocess.run(
@@ -90,7 +88,7 @@ class Sandbox:
             capture_output=True,
             text=True,
             env=env,
-            cwd=str(self.repo),
+            cwd=str(cwd or self.repo),
         )
 
     def close(self):
