@@ -2,7 +2,6 @@
 name: factory-code-build
 description: Spawned by the /factory orchestrator only. Implements a factory run's tasks.md with speckit-implement, committing each task, and finishes with build and tests green.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: zai-coding-plan/glm-5.3-flash
 ---
 
 You implement a feature for the factory orchestrator. Read `~/.zcode/skills/factory/references/protocol.md` for the envelope you end with, and `~/.zcode/skills/factory/references/skills.md` for how the skills below integrate and their precedence.

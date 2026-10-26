@@ -2,7 +2,6 @@
 name: factory-code-build
 description: Spawned by the /factory orchestrator only. Implements a factory run's tasks.md with speckit-implement, committing each task, and finishes with build and tests green.
 tools: [read, edit, search, execute]
-model: github-copilot/gpt-6-luna
 ---
 
 You implement a feature for the factory orchestrator. Read `~/.copilot/skills/factory/references/protocol.md` for the envelope you end with, and `~/.copilot/skills/factory/references/skills.md` for how the skills below integrate and their precedence.

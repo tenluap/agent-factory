@@ -46,6 +46,7 @@ install_one() {
   mkdir -p "$(dirname "$skill_dir")" "$agent_dir"
   link "$dist/skill" "$skill_dir"
   for f in "$dist"/agents/*; do link "$f" "$agent_dir/$(basename "$f")"; done
+  python3 "$src/tools/render.py" "$1" --models
 }
 
 if [ "$harness" = "all" ]; then

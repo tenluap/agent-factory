@@ -1,4 +1,5 @@
 """Checks for native agent output across the factory's harness adapters."""
+
 import json
 import os
 from pathlib import Path
@@ -21,10 +22,10 @@ class RenderAgentTests(unittest.TestCase):
         )
         self.assertEqual(
             output,
-            '---\npermissions:\n'
+            "---\npermissions:\n"
             '  - {"action": "edit", "resource": "*", "effect": "deny"}\n'
             '  - {"action": "subagent", "resource": "*", "effect": "deny"}\n'
-            '---\nBody\n',
+            "---\nBody\n",
         )
 
     def test_legacy_markdown_output_is_unchanged(self):
@@ -35,8 +36,8 @@ class RenderAgentTests(unittest.TestCase):
         ]
         self.assertEqual(
             render.render_agent({"agent_format": "markdown"}, fields, "Body\n"),
-            '---\ndescription: Example agent\ntools: [read, search, execute]\n'
-            'permission:\n  edit: deny\n  task: deny\n---\nBody\n',
+            "---\ndescription: Example agent\ntools: [read, search, execute]\n"
+            "permission:\n  edit: deny\n  task: deny\n---\nBody\n",
         )
 
     def test_toml_output_is_unchanged(self):
@@ -44,7 +45,7 @@ class RenderAgentTests(unittest.TestCase):
             render.render_agent(
                 {"agent_format": "toml"}, [("name", "factory_example")], "\nBody\n"
             ),
-            'name = "factory_example"\ndeveloper_instructions = \'\'\'\nBody\n\'\'\'\n',
+            "name = \"factory_example\"\ndeveloper_instructions = '''\nBody\n'''\n",
         )
 
     def test_toml_rejects_structured_fields(self):
@@ -59,15 +60,25 @@ class RenderAgentTests(unittest.TestCase):
         for role_file in sorted((render.ROOT / "core/roles").glob("*.md")):
             meta, body = render.frontmatter(role_file.read_text())
             with self.subTest(role=meta["name"]):
-                fields = render.agent_fields(adapter, meta, {"description": meta["description"]})
+                fields = render.agent_fields(
+                    adapter, meta, {"description": meta["description"]}
+                )
                 values = dict(fields)
                 expected = [{"action": "subagent", "resource": "*", "effect": "deny"}]
                 if meta["access"] == "read":
-                    expected.insert(0, {"action": "edit", "resource": "*", "effect": "deny"})
+                    expected.insert(
+                        0, {"action": "edit", "resource": "*", "effect": "deny"}
+                    )
                 self.assertEqual(values["mode"], "subagent")
                 self.assertEqual(values.get("permissions"), expected)
                 self.assertNotIn("permission", values)
-                self.assertEqual(values["model"], adapter["models"][meta["tier"]])
+                model = adapter["models"].get(meta["tier"], "")
+                if (
+                    model
+                ):  # only claude-code ships models; the rest inherit the session's
+                    self.assertEqual(values["model"], model)
+                else:
+                    self.assertNotIn("model", values)
                 output = render.render_agent(adapter, fields, body)
                 self.assertIn("\npermissions:\n  - {", output)
 
@@ -75,14 +86,17 @@ class RenderAgentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shutil.copytree(render.ROOT / "core", root / "core")
-            env = {"FACTORY_HOME": str(root / "factory-home"), "XDG_CONFIG_HOME": "~/.config"}
+            env = {
+                "FACTORY_HOME": str(root / "factory-home"),
+                "XDG_CONFIG_HOME": "~/.config",
+            }
             with patch.object(render, "ROOT", root), patch.dict(os.environ, env):
-                _, out = render.render("opencode")
+                _, out, _ = render.render("opencode")
             role_files = sorted((root / "core/roles").glob("*.md"))
             self.assertEqual(len(list((out / "agents").glob("*.md"))), len(role_files))
             for role_file in role_files:
                 meta, _ = render.frontmatter(role_file.read_text())
-                text = (out / "agents" / f'factory-{meta["name"]}.md').read_text()
+                text = (out / "agents" / f"factory-{meta['name']}.md").read_text()
                 self.assertIn("\nmode: subagent\npermissions:\n", text)
                 rules = [
                     json.loads(line[4:])
@@ -90,7 +104,9 @@ class RenderAgentTests(unittest.TestCase):
                     if line.startswith("  - ")
                 ]
                 actions = [rule["action"] for rule in rules]
-                expected = ["edit", "subagent"] if meta["access"] == "read" else ["subagent"]
+                expected = (
+                    ["edit", "subagent"] if meta["access"] == "read" else ["subagent"]
+                )
                 self.assertEqual(actions, expected)
             for name in render.known():
                 self.assertEqual(

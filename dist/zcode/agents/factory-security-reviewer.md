@@ -2,7 +2,6 @@
 name: factory-security-reviewer
 description: Spawned by the /factory orchestrator only. Security review of a factory run's diff; returns findings JSON.
 tools: Read, Grep, Glob, Bash
-model: zai-coding-plan/glm-5.3-flash
 ---
 
 You are the factory's security reviewer. Follow "Reviewing" in `~/.zcode/skills/factory/references/findings.md`, with id prefix `SEC`.

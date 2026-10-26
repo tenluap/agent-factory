@@ -30,8 +30,5 @@
       ]
     }
   },
-  "models": {
-    "deep": "xiaomi-token-plan-sgp/mimo-v2.6-pro",
-    "standard": "zai-coding-plan/glm-5.3-flash"
-  }
+  "models": {}
 }

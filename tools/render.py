@@ -9,6 +9,7 @@ Usage: render.py <harness>          render, print nothing
        render.py <harness> --paths  render, then print the install targets as shell assignments
        render.py --list             print the known harnesses
 """
+
 import json
 import os
 import re
@@ -26,7 +27,7 @@ def frontmatter(text):
     if not m:
         raise SystemExit("missing frontmatter")
     meta = dict(line.split(": ", 1) for line in m.group(1).splitlines())
-    return meta, text[m.end():]
+    return meta, text[m.end() :]
 
 
 def known():
@@ -39,9 +40,15 @@ def load_adapter(name):
         raise SystemExit(f"unknown harness '{name}' (known: {', '.join(known())})")
     adapter = json.loads(path.read_text())
     # User overrides: ${FACTORY_HOME}/config.json {"models": {"<harness>": {"deep": "...", "standard": "..."}}}
-    config = Path(os.path.expanduser(os.environ.get("FACTORY_HOME", "~/.factory"))) / "config.json"
-    if config.exists():
-        adapter["models"].update(json.loads(config.read_text()).get("models", {}).get(name, {}))
+    # Applied only when FACTORY_HOME is set explicitly, so a plain render (the committed
+    # dist, CI) is machine-independent; install time passes the user's home.
+    config_home = os.environ.get("FACTORY_HOME")
+    if config_home:
+        config = Path(config_home).expanduser() / "config.json"
+        if config.exists():
+            adapter["models"].update(
+                json.loads(config.read_text()).get("models", {}).get(name, {})
+            )
     home = os.environ.get(adapter["home"]["env"]) or adapter["home"]["default"]
     adapter["skill_dir"] = adapter["skill_dir"].format(home=home)
     adapter["agent_dir"] = adapter["agent_dir"].format(home=home)
@@ -82,7 +89,9 @@ def render_agent(adapter, fields, body):
         return f"---\n{head}\n---\n{body}"
     if adapter["agent_format"] == "toml":
         if "'''" in body:
-            raise SystemExit("role body contains ''' and cannot be a TOML literal string")
+            raise SystemExit(
+                "role body contains ''' and cannot be a TOML literal string"
+            )
         head = "\n".join(f"{key} = {toml_value(value)}" for key, value in fields)
         return f"{head}\ndeveloper_instructions = '''\n{body.lstrip(chr(10))}'''\n"
     raise SystemExit(f"unknown agent_format '{adapter['agent_format']}'")
@@ -90,6 +99,7 @@ def render_agent(adapter, fields, body):
 
 def render(name):
     adapter = load_adapter(name)
+    effective = []  # (role, model) per role, for the effective-model report
     out = ROOT / "dist" / name
     shutil.rmtree(out, ignore_errors=True)
 
@@ -99,7 +109,10 @@ def render(name):
     shutil.copytree(ROOT / "core" / "skills" / "factory", skill)
     (skill / "references" / "harness").mkdir()
     for other in known():
-        shutil.copy(ADAPTERS / other / "harness.md", skill / "references" / "harness" / f"{other}.md")
+        shutil.copy(
+            ADAPTERS / other / "harness.md",
+            skill / "references" / "harness" / f"{other}.md",
+        )
     (skill / "roles").mkdir()
     (out / "agents").mkdir()
 
@@ -114,7 +127,8 @@ def render(name):
         fields = agent_fields(adapter, meta, values)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
         (out / "agents" / adapter["agent_file"].format(**values)).write_text(text)
-    return adapter, out
+        effective.append((meta["name"], adapter["models"].get(meta["tier"], "")))
+    return adapter, out, effective
 
 
 def main():
@@ -124,10 +138,17 @@ def main():
         return
     if not args or args[0].startswith("-"):
         raise SystemExit(__doc__.strip())
-    adapter, out = render(args[0])
+    adapter, out, effective = render(args[0])
     if "--paths" in args:
-        for key, value in (("dist", str(out)), ("skill_dir", adapter["skill_dir"]), ("agent_dir", adapter["agent_dir"])):
+        for key, value in (
+            ("dist", str(out)),
+            ("skill_dir", adapter["skill_dir"]),
+            ("agent_dir", adapter["agent_dir"]),
+        ):
             print(f"{key}={shlex.quote(os.path.expanduser(value))}")
+    if "--models" in args:  # the effective model per role after overrides (FR-015)
+        for role, model in effective:
+            print(f"{role}: {model or '(session default)'}")
 
 
 if __name__ == "__main__":
