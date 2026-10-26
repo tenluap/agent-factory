@@ -122,24 +122,10 @@ def digest(state_dict, state_path, source):
     out["relay"] = relay_digest(state_dict.get("relay"))
     timeline = [e for e in state_dict.get("timeline") or [] if isinstance(e, dict)]
     closed = sum(1 for e in timeline if e.get("latency_ms") is not None)
-    out["waits"] = {
-        "total": len(timeline),
-        "open": len(timeline) - closed,
-        "human_ms": sum(
-            e["latency_ms"]
-            for e in timeline
-            if isinstance(e.get("latency_ms"), (int, float))
-        ),
-    }
+    # FR-015: counts only — the elapsed aggregates are the union totals
+    out["waits"] = {"total": len(timeline), "open": len(timeline) - closed}
     ledger = [e for e in state_dict.get("ledger") or [] if isinstance(e, dict)]
-    out["spawns"] = {
-        "total": len(ledger),
-        "agent_ms": sum(
-            e["duration_ms"]
-            for e in ledger
-            if isinstance(e.get("duration_ms"), (int, float))
-        ),
-    }
+    out["spawns"] = {"total": len(ledger)}
     out["totals"] = totals.compute(state_dict)
     out["decisions"] = veto_list(state_dict)
     out["history_tail"] = (state_dict.get("history") or [])[-3:]

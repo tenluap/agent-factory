@@ -86,7 +86,7 @@
 - [x] T030 [US4] Failing tests in `tools/tests/test_totals.py` — seam: `factory_cli.totals` interval unions — a run without `ended_at` measures wall clock from `started_at` to now (non-zero, growing), `bounded` stays true when `started_at` exists, and human + agent never exceed wall clock (FR-016).
 - [x] T031 [US4] Implement open-run wall clock in `core/skills/factory/bin/factory_cli/totals.py` `compute` (`ended_at` or now) (FR-016; seam: `factory_cli.totals` interval unions); then the build gate.
 - [x] T032 [US4] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — with overlapping spawns the `show` digest's elapsed aggregates come from `totals` alone and the summed `waits.human_ms` / `spawns.agent_ms` duplicates are absent (FR-015).
-- [ ] T033 [US4] Implement the digest's union-only aggregates in `core/skills/factory/bin/factory_cli/commands.py` `digest`, dropping the summed parallel duplicates (FR-015; seam: `bin/factory` CLI command surface); then the build gate.
+- [x] T033 [US4] Implement the digest's union-only aggregates in `core/skills/factory/bin/factory_cli/commands.py` `digest`, dropping the summed parallel duplicates (FR-015; seam: `bin/factory` CLI command surface); then the build gate.
 - [ ] T034 [US4] Failing tests in `tools/tests/test_commands.py` — seam: `bin/factory` CLI command surface — `runs` skips aborted runs as it already skips `pr-open`, since resume refuses both (FR-017).
 - [ ] T035 [US4] Implement the aborted-run skip in `core/skills/factory/bin/factory_cli/commands.py` `cmd_runs` (FR-017; seam: `bin/factory` CLI command surface); then the build gate.
 
