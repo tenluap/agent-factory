@@ -6,10 +6,14 @@ report sums parallel durations, so human + agent never exceeds wall clock
 whenever waits and spawns do not overlap (which the flow guarantees).
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 from factory_cli import state
+
+
+def now_utc():
+    return datetime.now(timezone.utc)
 
 
 def _intervals_from(entries, start_key, end_key, duration_key):
@@ -48,7 +52,8 @@ def _union_ms(intervals):
 
 def compute(state_dict):
     started = state.parse_iso(state_dict.get("started_at"))
-    ended = state.parse_iso(state_dict.get("ended_at")) or started
+    # FR-016: an open run measures wall clock from its start to now
+    ended = state.parse_iso(state_dict.get("ended_at")) or now_utc() or started
     wall_ms = int((ended - started).total_seconds() * 1000) if started else 0
     timeline = [e for e in state_dict.get("timeline") or [] if isinstance(e, dict)]
     ledger = [e for e in state_dict.get("ledger") or [] if isinstance(e, dict)]
