@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/008-install-models-advisories",
   "spec_dir": "specs/008-install-models-advisories",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -494,6 +494,13 @@
           "status": 0
         }
       ]
+    },
+    {
+      "at": "2026-10-26T17:12:56.999647Z",
+      "stage": "fix",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "decisions": []
