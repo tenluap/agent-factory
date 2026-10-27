@@ -120,6 +120,8 @@ Exempt: `DESIGN.md`, `README.md`, `docs/**`, `core/skills/factory/SKILL.md`, `co
 
 Overridden: none.
 
+Confirmed: 2026-10-27 - Q1 accepted - seams: issue-add writer, budget check, run-end backlog export, backlog surface, state schema v5, envelope partial/overrun shape, benchmark scorer and compare (exemptions as listed above)
+
 ## Phases
 
 - **Phase 0** — [research.md](research.md): all unknowns resolved (enforcement model, budget resolution, dedupe, stall bookkeeping, schema v5, export and claim gates, bench fixture, headless drivers, scorer single source, pass conditions, quality constraints).
