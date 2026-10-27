@@ -111,6 +111,18 @@
       "duration_ms": 36000,
       "started_at": "2026-10-27T01:02:25Z",
       "ended_at": "2026-10-27T01:03:01Z"
+    },
+    {
+      "at": "2026-10-27T01:06:15.909010Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "codex",
+      "in_est": 18000,
+      "out_est": 2500,
+      "reported": null,
+      "duration_ms": 146000,
+      "started_at": "2026-10-27T01:03:35Z",
+      "ended_at": "2026-10-27T01:06:01Z"
     }
   ],
   "review": {
