@@ -227,6 +227,18 @@
       "duration_ms": 343000,
       "started_at": "2026-10-27T01:37:17Z",
       "ended_at": "2026-10-27T01:43:00Z"
+    },
+    {
+      "at": "2026-10-27T01:59:26.193211Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 8587,
+      "out_est": 6185,
+      "reported": null,
+      "duration_ms": 982000,
+      "started_at": "2026-10-27T01:43:04Z",
+      "ended_at": "2026-10-27T01:59:26Z"
     }
   ],
   "review": {
