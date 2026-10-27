@@ -30,7 +30,7 @@ No foundational changes. Read the existing methods and accepted plan before the 
 
 ## Phase 4: Repository verification
 
-- [ ] T006 Run the full suite with `python3 -m unittest discover -s tools` from the worktree; require zero failures across `tools/tests/` (FR-005).
+- [x] T006 Run the full suite with `python3 -m unittest discover -s tools` from the worktree; require zero failures across `tools/tests/` (FR-005).
 - [ ] T007 Render all supported adapters using `for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h" || exit; done`, then require `bash -n install.sh` and `test -z "$(git status --porcelain -- dist/)"` to pass (FR-005). Never hand-edit `dist/`; porcelain does not inspect ignored contents, so retain successful render and existing render-test evidence.
 
 ## Dependencies and execution order
