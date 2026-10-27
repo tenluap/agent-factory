@@ -67,6 +67,7 @@ class InstallArgValidationTests(unittest.TestCase):
     def test_opencode_install_fails_clearly_on_conflicting_skill_path(self):
         with tempfile.TemporaryDirectory(prefix="factory-install-") as home:
             config = Path(home) / ".config"
+            (Path(home) / ".factory").mkdir()
             skill = config / "opencode/skills/factory"
             skill.parent.mkdir(parents=True)
             skill.write_text("user file")
