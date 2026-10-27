@@ -169,6 +169,37 @@ class OverrunDetectionTests(unittest.TestCase):
         unmarked = self.ledger_add(overrun={"cause": "other", "detail": "d"})
         self.assertIs(json.loads(unmarked.stdout)["issue"]["partial_return"], False)
 
+    def stalls_of(self, out):
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)["stalls"]
+
+    def partial_stop(self):
+        return self.ledger_add(
+            overrun={"cause": "test-loop", "detail": "deadline"}, marked=True
+        )
+
+    def test_repeat_partial_returns_without_commit_halt_on_the_third(self):
+        self.assertEqual(
+            self.stalls_of(self.partial_stop())["consecutive_no_commit"], 1
+        )
+        self.assertEqual(
+            self.stalls_of(self.partial_stop())["consecutive_no_commit"], 2
+        )
+        third = self.stalls_of(self.partial_stop())
+        self.assertEqual(third["consecutive_no_commit"], 3)
+        self.assertIs(third["halt"], True)
+        self.assertEqual(len(self.issues()), 3, "one record per spawn, none dropped")
+
+    def test_a_work_commit_between_partial_returns_resets_the_count(self):
+        self.partial_stop()
+        self.partial_stop()
+        (self.wt / "work.txt").write_text("progress")
+        self.box.git("add", "work.txt", cwd=self.wt)
+        self.box.git("commit", "-q", "-m", "T001: progress", cwd=self.wt)
+        fresh = self.stalls_of(self.partial_stop())
+        self.assertEqual(fresh["consecutive_no_commit"], 1)
+        self.assertIs(fresh["halt"], False)
+
 
 if __name__ == "__main__":
     unittest.main()

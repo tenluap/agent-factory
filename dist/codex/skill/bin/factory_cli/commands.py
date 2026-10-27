@@ -696,26 +696,10 @@ def cmd_analyze_record(repo, cwd, envelope):
     }
 
 
-def append_issue(state_dict, record, dedupe=None):
+def append_issue(state_dict, record):
     """The single issue append path (FR-008): one record per event onto the
-    append-only `issues` list. With `dedupe` (a (stage, role, commit, kind)
-    key), an already-recorded identical event is not appended twice — used
-    where two signals meet in one command (`ledger-add`'s self-report and
-    detection). Returns the record now in the list."""
+    append-only `issues` list. Returns the record now in the list."""
     issues = state_dict.get("issues") or []
-    if dedupe is not None:
-        for existing in issues:
-            if (
-                isinstance(existing, dict)
-                and (
-                    existing.get("stage"),
-                    existing.get("role"),
-                    existing.get("commit"),
-                    existing.get("kind"),
-                )
-                == dedupe
-            ):
-                return existing
     record = dict(record)
     issues.append(record)
     state_dict["issues"] = issues
@@ -854,9 +838,9 @@ def cmd_ledger_add(
             }
         ]
         if issue is not None:
-            # self-report and detection meet here: the same overrun of one
-            # spawn is recorded exactly once (FR-006)
-            append_issue(s, issue, dedupe=(stage, role, issue.get("commit"), "overrun"))
+            # self-report and detection meet in overrun_issue: one spawn,
+            # one record (FR-006); every call is a distinct spawn
+            append_issue(s, issue)
         return s
 
     updated = write_run(path, loaded, mutate)
@@ -993,13 +977,6 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
     return {"answered": qid, "auto": bool(auto)}
 
 
-def worktree_head(worktree):
-    """The worktree's short HEAD, or None without one."""
-    if not worktree:
-        return None
-    return git(worktree, "rev-parse", "--short", "HEAD").strip()
-
-
 def worktree_work_commit(worktree):
     """The worktree's latest non-`factory:` commit, or None without one.
 
@@ -1040,7 +1017,7 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
             "cause": None,
             "detail": halt_reason,
             "duration_ms": 0,
-            "commit": worktree_head(worktree),
+            "commit": worktree_work_commit(worktree),
             "partial_return": False,
         }
 
@@ -1131,7 +1108,7 @@ def cmd_verify(repo, cwd, passed, commands_payload):
             "cause": None,
             "detail": ", ".join(failing or [c for c, _ in commands_payload]),
             "duration_ms": 0,
-            "commit": worktree_head(worktree),
+            "commit": worktree_work_commit(worktree),
             "partial_return": False,
         }
 
