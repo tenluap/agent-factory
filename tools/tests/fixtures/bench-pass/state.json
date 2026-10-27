@@ -1,0 +1,31 @@
+{
+  "version": 5,
+  "started_at": "2026-10-27T10:00:00Z",
+  "ended_at": "2026-10-27T10:10:00Z",
+  "harness": "opencode",
+  "feature": "Uppercase greetings",
+  "repo": "/fixture",
+  "default_branch": "main",
+  "base": "main",
+  "branch": "001-greet",
+  "spec_dir": "specs/001-greet",
+  "status": "paused",
+  "stage": "approver",
+  "mode": {"chain": "lite", "fast": true},
+  "commands": {"build": "python3 -m compileall -q src", "test": "python3 -m unittest test_acceptance"},
+  "timeline": [
+    {"at": "2026-10-27T10:05:00Z", "kind": "questions", "stage": "plan", "summary": "Seam confirmation", "answered_at": "2026-10-27T10:06:00Z", "latency_ms": 60000}
+  ],
+  "ledger": [
+    {"at": "2026-10-27T10:00:00Z", "stage": "review", "role": "code-standards", "harness": "opencode", "started_at": "2026-10-27T10:00:00Z", "ended_at": "2026-10-27T10:03:00Z", "duration_ms": 180000, "in_est": 100, "out_est": 20, "reported": null},
+    {"at": "2026-10-27T10:01:00Z", "stage": "review", "role": "spec-conformance", "harness": "opencode", "started_at": "2026-10-27T10:01:00Z", "ended_at": "2026-10-27T10:04:00Z", "duration_ms": 180000, "in_est": 200, "out_est": 30, "reported": {"input_tokens": 220, "output_tokens": 40}}
+  ],
+  "issues": [
+    {"at": "2026-10-27T10:04:00Z", "kind": "overrun", "stage": "review", "role": "spec-conformance", "cause": "tool-slow", "detail": "Slow tool", "duration_ms": 180000, "commit": "abc1234", "partial_return": false}
+  ],
+  "review": {"round": 2, "fix_rounds": 1, "ui_diff": false},
+  "decisions": [],
+  "history": [
+    {"at": "2026-10-27T10:09:00Z", "stage": "implement", "event": "verify-pass", "commit": "abc1234", "harness": "opencode", "commands": [{"command": "python3 -m unittest test_acceptance", "status": "pass"}]}
+  ]
+}

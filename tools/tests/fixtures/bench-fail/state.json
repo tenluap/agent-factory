@@ -1,0 +1,15 @@
+{
+  "version": 5,
+  "started_at": "2026-10-27T10:00:00Z",
+  "ended_at": "2026-10-27T10:10:00Z",
+  "branch": "001-greet",
+  "stage": "fix",
+  "ledger": [],
+  "timeline": [],
+  "issues": [{"kind": "verify-fail", "cause": null}],
+  "review": {"round": 1, "fix_rounds": 1},
+  "history": [
+    {"at": "2026-10-27T10:08:00Z", "stage": "implement", "event": "verify-pass", "commands": [{"command": "python3 -m unittest test_acceptance", "status": "pass"}]},
+    {"at": "2026-10-27T10:09:00Z", "stage": "fix", "event": "verify-fail", "commands": [{"command": "python3 -m unittest test_acceptance", "status": "fail"}]}
+  ]
+}
