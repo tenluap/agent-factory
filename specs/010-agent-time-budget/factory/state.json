@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/010-agent-time-budget",
   "spec_dir": "specs/010-agent-time-budget",
   "status": "running",
-  "stage": "review",
+  "stage": "fix",
   "halt_reason": "Provider limit exhausted at implement (resets 2026-10-31 09:50 UTC)",
   "stop_at": null,
   "mode": {
@@ -842,6 +842,13 @@
           "status": "pass"
         }
       ]
+    },
+    {
+      "at": "2026-10-27T12:38:46.099469Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
     }
   ]
 }
