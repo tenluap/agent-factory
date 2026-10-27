@@ -5,5 +5,5 @@ A spawn past its time budget is asked to stop, never killed: a file-writing role
 ## Consequences
 
 - A role can overshoot its deadline by the unit of work in flight; the overshoot is recorded in the overrun report's detail rather than prevented.
-- Resumption is bounded by the stall cap on stops without new progress, not by the deadline: three consecutive `partial` returns of one stage with no new commit between them halt the run, counting every partial return whatever its stop reason and never the overrun records of never-stopped roles (FR-004 is the authority).
+- Resumption is bounded by the stall cap on stops without new progress, not by the deadline: three consecutive `partial` returns of one stage with no new commit between them halt the run, counting every partial return whatever its stop reason, never a failure-policy retry (a crash or unparseable output is not a partial return, and issue records carry a `partial_return` mark that tells the two apart), and never the overrun records of never-stopped roles (FR-004 is the authority).
 - Enforcement lives in role prompts and writer-recorded facts, so it needs no harness capability beyond the `deadline` spawn input.

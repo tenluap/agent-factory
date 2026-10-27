@@ -81,7 +81,7 @@ The piece of work a role commits as one piece — the task/commit granularity th
 _Avoid_: step, chunk, iteration
 
 **Stall cap**:
-The halt rule on resumption: three consecutive `partial` returns of one stage with no new commit between them halt the run; every partial return counts whatever its stop reason, and the overrun records of never-stopped roles never count.
+The halt rule on resumption: three consecutive `partial` returns of one stage with no new commit between them halt the run; every partial return counts whatever its stop reason, and neither a failure-policy retry (not a partial return; issue records carry a `partial_return` mark that tells the two apart) nor the overrun records of never-stopped roles ever count.
 _Avoid_: retry cap, resume limit
 
 ## Run state
