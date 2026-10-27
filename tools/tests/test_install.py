@@ -38,6 +38,7 @@ class InstallArgValidationTests(unittest.TestCase):
     def test_opencode_install_verifies_skill_and_agents(self):
         with tempfile.TemporaryDirectory(prefix="factory-install-") as home:
             config = Path(home) / ".config"
+            (Path(home) / ".factory").mkdir()
             env = dict(
                 os.environ,
                 HOME=home,
@@ -53,7 +54,10 @@ class InstallArgValidationTests(unittest.TestCase):
             self.assertEqual(out.returncode, 0, out.stderr)
             self.assertTrue((config / "opencode/skills/factory").is_symlink())
             installed = config / "opencode/agents"
-            expected = {path.name for path in (REPO / "dist/opencode/agents").glob("*")}
+            expected = {
+                f"factory-{path.stem}.md" for path in (REPO / "core/roles").glob("*.md")
+            }
+            self.assertTrue(expected)
             self.assertEqual(
                 {path.name for path in installed.glob("factory-*")}, expected
             )
@@ -63,6 +67,7 @@ class InstallArgValidationTests(unittest.TestCase):
     def test_opencode_install_fails_clearly_on_conflicting_skill_path(self):
         with tempfile.TemporaryDirectory(prefix="factory-install-") as home:
             config = Path(home) / ".config"
+            (Path(home) / ".factory").mkdir()
             skill = config / "opencode/skills/factory"
             skill.parent.mkdir(parents=True)
             skill.write_text("user file")
