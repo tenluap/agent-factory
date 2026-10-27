@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/009-fix-install-ci",
   "spec_dir": "specs/009-fix-install-ci",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -279,6 +279,14 @@
       "event": "complete",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-27T01:15:50.148484Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "codex",
+      "decision": "Q1"
     }
   ]
 }
