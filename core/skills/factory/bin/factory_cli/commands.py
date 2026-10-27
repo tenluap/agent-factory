@@ -799,7 +799,7 @@ def cmd_issue_add(
         "partial_return": bool(partial_return),
     }
     if record["commit"] is None and worktree:
-        record["commit"] = worktree_head(worktree)
+        record["commit"] = worktree_work_commit(worktree)
 
     def mutate(s):
         append_issue(s, record)
@@ -915,7 +915,7 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         "partial_return": bool(partial_return),
     }
     if record["commit"] is None and worktree:
-        record["commit"] = worktree_head(worktree)
+        record["commit"] = worktree_work_commit(worktree)
     return record
 
 
@@ -998,6 +998,24 @@ def worktree_head(worktree):
     if not worktree:
         return None
     return git(worktree, "rev-parse", "--short", "HEAD").strip()
+
+
+def worktree_work_commit(worktree):
+    """The worktree's latest non-`factory:` commit, or None without one.
+
+    The writers' own `factory:` commits move HEAD on every call, so the stall
+    rule (FR-004) keys on the last commit the work itself made."""
+    if not worktree:
+        return None
+    out = git(
+        worktree,
+        "log",
+        "-1",
+        "--format=%h",
+        "--grep=^factory:",
+        "--invert-grep",
+    ).strip()
+    return out or None
 
 
 def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):

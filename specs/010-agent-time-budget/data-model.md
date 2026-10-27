@@ -48,7 +48,7 @@ Append-only record of one thing that went wrong, in `state.json` `issues[]` (sch
 
 - `kind` closed: `overrun`, `agent-failure`, `retry`, `halt`, `verify-fail`.
 - `cause` is `null` for kinds other than `overrun`; for `overrun` it is required and comes from the six self-report causes plus `unreported` (detected only).
-- `duration_ms` the measured duration the issue is about; `commit` the worktree HEAD at record time (null where no worktree applies), the provenance behind the stall rule.
+- `duration_ms` the measured duration the issue is about; `commit` the worktree's last work commit (latest non-`factory:` commit) at record time (null where no worktree applies), the provenance behind the stall rule.
 - `partial_return` is `true` exactly when the record documents a `partial` return's stop (whatever its stop reason), `false` otherwise: failure-policy retries, post-hoc detections and the `agent-failure`/`halt`/`verify-fail` kinds are never partial returns. The mark is stamped by `issue-add --partial-return` / `ledger-add --partial-return`, accepted only for kinds `overrun`/`retry` of the file-writing roles (spec-builder, code-build, fixer); the writer refuses it otherwise.
 - Validation: kinds/causes are closed vocabularies with the offending location named; `issues[]` is append-only (the writer only appends; FR-008).
 - Relationships: one issue per event (dedupe is structural in `ledger-add`); three consecutive records marked `partial_return: true` of one stage sharing one `commit` are three stalled returns → halt (FR-004). Every `partial` return whatever its stop reason counts; a failure-policy retry is not a partial return and never counts; records of the never-stopped roles (reviewers, judge, orchestrator) never carry the mark.

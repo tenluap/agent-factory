@@ -69,9 +69,9 @@ class IssueAddTests(unittest.TestCase):
         for field in ("at", "detail"):
             self.assertTrue(issues[0][field], field)
 
-    def test_commit_defaults_to_worktree_head(self):
+    def test_commit_defaults_to_the_last_work_commit(self):
         head = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
+            ["git", "log", "-1", "--format=%h", "--grep=^factory:", "--invert-grep"],
             cwd=str(self.wt),
             capture_output=True,
             text=True,
@@ -277,6 +277,51 @@ class StallRuleTests(unittest.TestCase):
         self.assertEqual(other.returncode, 0, other.stderr)
         latest = self.result(self.add())
         self.assertEqual(latest["stalls"]["consecutive_no_commit"], 2)
+
+
+class StallRuleWorktreeCommitTests(unittest.TestCase):
+    """Without `--commit`, the recorded commit is the last work commit, which
+    the writers' own `factory:` commits never move (FR-004)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run("033-stall-head", V4)
+
+    def add_partial(self):
+        out = self.box.cli(
+            "issue-add",
+            "overrun",
+            "implement",
+            "code-build",
+            "--detail",
+            "d",
+            "--duration-ms",
+            "1000",
+            "--cause",
+            "other",
+            "--partial-return",
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)["stalls"]
+
+    def test_three_partial_returns_without_commit_halt_on_the_third(self):
+        self.assertEqual(self.add_partial()["consecutive_no_commit"], 1)
+        self.assertEqual(self.add_partial()["consecutive_no_commit"], 2)
+        third = self.add_partial()
+        self.assertEqual(third["consecutive_no_commit"], 3)
+        self.assertIs(third["halt"], True)
+
+    def test_a_work_commit_between_writes_resets_the_count(self):
+        self.add_partial()
+        self.add_partial()
+        (self.wt / "work.txt").write_text("progress")
+        self.box.git("add", "work.txt", cwd=self.wt)
+        self.box.git("commit", "-q", "-m", "T001: progress", cwd=self.wt)
+        fresh = self.add_partial()
+        self.assertEqual(fresh["consecutive_no_commit"], 1)
+        self.assertIs(fresh["halt"], False)
 
 
 class EventPathTests(unittest.TestCase):
