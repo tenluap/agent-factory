@@ -16,7 +16,8 @@ Every factory agent ends every turn with exactly one fenced `json` block, the **
 }
 ```
 
-- `status`: `done` (stage finished), `needs_input` (questions below; the agent stops, and a fresh one continues the stage once they are answered), `partial` (code-build only: context running low, progress committed), `failed` (`error` says why).
+- `status`: `done` (stage finished), `needs_input` (questions below; the agent stops, and a fresh one continues the stage once they are answered), `partial` (valid for all file-writing roles — spec-builder, code-build, fixer — that stop at a unit boundary: context running low or past the `deadline` given in the inputs, with progress committed), `failed` (`error` says why).
+- `overrun` (optional, on a `partial` envelope): the deadline-stop report `{ "cause", "detail" }` — `cause` from the closed list `large-input`, `test-loop`, `retry`, `tool-slow`, `scope-too-big`, `other`, and `detail` free text carrying the overshoot past the deadline (how far past, at which unit boundary). `envelope check` validates it when present. A `partial` stop without a deadline — e.g. low context — carries no `overrun`.
 - `questions` (with `needs_input`): the **whole frontier** for this round: every open question whose prerequisites are settled. Defer questions whose wording or options depend on unanswered decisions. Use the question shape below. IDs are unique within a stage; later rounds continue the numbering.
 - `analyze` (analyze stage only): `{ "report": "factory/analyze-<n>.md", "critical": 0, "high": 2, "medium": 1, "low": 0 }`.
 - `pending_clarify` (remediate stage only): findings that need a user decision, as clarify questions in the `questions` item shape. The orchestrator stores them in `state.analyze.pending_clarify` and hands them to the next `clarify`.
