@@ -25,6 +25,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
   analyze-record <envelope>         validate and record an analysis outcome
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
             [--in-est N] [--out-est N] [--reported '<json>']
+  issue-add <kind> <stage> <role> --detail <text> --duration-ms <n>
+            [--cause <cause>] [--commit <sha>] [--partial-return]
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
   wait-close <wait-id>                              close it
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
@@ -194,6 +196,38 @@ def main(argv):
                 reported=json_or_usage(flags["--reported"], "--reported")
                 if "--reported" in flags
                 else None,
+            )
+        elif command == "issue-add":
+            positional, flags = parse_flags(
+                rest,
+                command,
+                value_flags=(
+                    "--repo",
+                    "--detail",
+                    "--duration-ms",
+                    "--cause",
+                    "--commit",
+                ),
+                bool_flags=("--partial-return",),
+            )
+            if len(positional) != 3:
+                die_usage("issue-add needs <kind> <stage> <role>")
+            if not flags.get("--detail") or "--duration-ms" not in flags:
+                die_usage("issue-add needs --detail and --duration-ms")
+            try:
+                duration_ms = int(flags["--duration-ms"])
+            except ValueError:
+                commands.die(1, "issue-add: --duration-ms needs an integer")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_issue_add(
+                repo,
+                Path.cwd(),
+                *positional,
+                detail=flags["--detail"],
+                duration_ms=duration_ms,
+                cause=flags.get("--cause"),
+                commit=flags.get("--commit"),
+                partial_return=bool(flags.get("--partial-return")),
             )
         elif command == "wait-open":
             positional, flags = parse_flags(rest, command)

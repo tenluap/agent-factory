@@ -26,7 +26,7 @@ class IssueAddTests(unittest.TestCase):
         return self.box.cli("issue-add", *args, cwd=self.wt)
 
     def issues(self):
-        return json.loads(self.state_path.read_text())["issues"]
+        return json.loads(self.state_path.read_text()).get("issues") or []
 
     def test_appends_one_record_per_event(self):
         out = self.add(
@@ -115,7 +115,7 @@ class IssueAddTests(unittest.TestCase):
                     "--duration-ms",
                     "1",
                 ),
-                "kind",
+                "off-vocabulary",
             ),
             (
                 (
@@ -257,9 +257,7 @@ class StallRuleTests(unittest.TestCase):
 
     def test_records_of_other_stages_do_not_break_the_trailing_count(self):
         self.result(self.add())
-        self.result(
-            self.add("ledger-noise", kind="retry", marked=False),
-        )
+        self.result(self.add(kind="retry", marked=False))
         # a marked record of another stage in between the implement records
         other = self.box.cli(
             "issue-add",

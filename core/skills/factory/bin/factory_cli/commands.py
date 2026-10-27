@@ -655,6 +655,125 @@ def cmd_analyze_record(repo, cwd, envelope):
     }
 
 
+def append_issue(state_dict, record, dedupe=None):
+    """The single issue append path (FR-008): one record per event onto the
+    append-only `issues` list. With `dedupe` (a (stage, role, commit, kind)
+    key), an already-recorded identical event is not appended twice — used
+    where two signals meet in one command (`ledger-add`'s self-report and
+    detection). Returns the record now in the list."""
+    issues = state_dict.get("issues") or []
+    if dedupe is not None:
+        for existing in issues:
+            if (
+                isinstance(existing, dict)
+                and (
+                    existing.get("stage"),
+                    existing.get("role"),
+                    existing.get("commit"),
+                    existing.get("kind"),
+                )
+                == dedupe
+            ):
+                return existing
+    record = dict(record)
+    issues.append(record)
+    state_dict["issues"] = issues
+    return record
+
+
+def stall_rule(state_dict, stage, cap=3):
+    """The stall rule result over every record marked `partial_return: true`
+    of `stage` (FR-004): trailing marked records sharing one `commit`; any
+    new commit resets the count. Records of other stages never break the
+    chain, and unmarked records (failure-policy retries, post-hoc
+    detections) add nothing."""
+    trailing, commit = 0, None
+    for entry in reversed(state_dict.get("issues") or []):
+        if not isinstance(entry, dict) or entry.get("stage") != stage:
+            continue
+        if not entry.get("partial_return"):
+            continue
+        if commit is None:
+            commit = entry.get("commit")
+        elif entry.get("commit") != commit:
+            break
+        trailing += 1
+    return {
+        "stage": stage,
+        "consecutive_no_commit": trailing,
+        "cap": cap,
+        "halt": trailing >= cap,
+    }
+
+
+def cmd_issue_add(
+    repo,
+    cwd,
+    kind,
+    stage,
+    role,
+    detail,
+    duration_ms,
+    cause=None,
+    commit=None,
+    partial_return=False,
+):
+    """Append one issue (FR-008); a marked record reports the stall rule."""
+    if kind not in state.ISSUE_KINDS:
+        die(
+            1,
+            f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.ISSUE_KINDS)}",
+        )
+    if stage not in state.STAGES:
+        die(
+            1,
+            f"'{stage}' is off-vocabulary; expected one of: {', '.join(state.STAGES)}",
+        )
+    if kind == "overrun" and cause not in state.OVERRUN_CAUSES:
+        die(
+            1,
+            f"overrun needs --cause from: {', '.join(state.OVERRUN_CAUSES)}"
+            f" (got {cause!r})",
+        )
+    if kind != "overrun":
+        cause = None  # stored null for kinds other than overrun
+    if partial_return and (
+        kind not in state.PARTIAL_RETURN_KINDS or role not in state.PARTIAL_RETURN_ROLES
+    ):
+        die(
+            1,
+            "the partial_return mark is accepted only for overrun/retry of "
+            "the file-writing roles (spec-builder, code-build, fixer)",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    record = {
+        "at": now_iso(),
+        "kind": kind,
+        "stage": stage,
+        "role": role,
+        "cause": cause,
+        "detail": detail,
+        "duration_ms": duration_ms,
+        "commit": commit,
+        "partial_return": bool(partial_return),
+    }
+    if record["commit"] is None and worktree:
+        record["commit"] = git(worktree, "rev-parse", "--short", "HEAD").strip()
+
+    def mutate(s):
+        append_issue(s, record)
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    commit_worktree(
+        worktree, f"factory: issue-add {kind} {stage}", loaded.get("spec_dir")
+    )
+    result = {"added": {"kind": kind, "stage": stage, "role": role}}
+    if record["partial_return"]:
+        result["stalls"] = stall_rule(updated, stage)
+    return result
+
+
 def cmd_ledger_add(
     repo,
     cwd,
