@@ -1,0 +1,66 @@
+{
+  "version": 4,
+  "started_at": "2026-10-27T00:58:09.402205Z",
+  "harness": "codex",
+  "feature": "Fix CI installer test setup for the existing FACTORY_HOME policy",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "009-fix-install-ci",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/009-fix-install-ci",
+  "spec_dir": "specs/009-fix-install-ci",
+  "status": "running",
+  "stage": "grill",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.agents/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.agents/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.agents/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.agents/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.agents/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+    "test": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\""
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A: Fix test setup; preserve installer validation; full tests, five renders, dist drift and syntax checks; lite fast chain",
+      "auto": false,
+      "at": "2026-10-27T00:58:09.462911Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": []
+}
