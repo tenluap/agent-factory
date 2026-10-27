@@ -9,9 +9,9 @@
   "branch": "010-agent-time-budget",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/010-agent-time-budget",
   "spec_dir": "specs/010-agent-time-budget",
-  "status": "running",
+  "status": "halted",
   "stage": "implement",
-  "halt_reason": null,
+  "halt_reason": "code-build spawn failed: model provider weekly/monthly limit exhausted (resets 2026-10-31 09:50:20). Spec chain complete; implement not started.",
   "stop_at": null,
   "mode": {
     "chain": "lite",
