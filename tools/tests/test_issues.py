@@ -279,5 +279,46 @@ class StallRuleTests(unittest.TestCase):
         self.assertEqual(latest["stalls"]["consecutive_no_commit"], 2)
 
 
+class EventPathTests(unittest.TestCase):
+    """`set-status halted` and `verify --fail` record their issues through the
+    shared append path, exactly once each (FR-010)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run("032-events", fixture("state-v4.json"))
+        self.state_path = self.wt / "specs" / "032-events" / "factory" / "state.json"
+
+    def issues(self):
+        return json.loads(self.state_path.read_text()).get("issues") or []
+
+    def test_set_status_halted_records_halt_once(self):
+        out = self.box.cli(
+            "set-status", "halted", "--halt-reason", "loop exhausted", cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issues = self.issues()
+        self.assertEqual(len(issues), 1, "one halt record per halt")
+        self.assertEqual(issues[0]["kind"], "halt")
+        self.assertEqual(issues[0]["detail"], "loop exhausted")
+        self.assertEqual(issues[0]["stage"], "review")
+        self.assertIs(issues[0]["partial_return"], False)
+
+    def test_verify_fail_records_verify_fail_once(self):
+        commands = [
+            {"command": "make build", "status": 0},
+            {"command": "make test", "status": 1},
+        ]
+        out = self.box.cli(
+            "verify", "--fail", "--commands", json.dumps(commands), cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issues = self.issues()
+        self.assertEqual(len(issues), 1, "one verify-fail record per red verify")
+        self.assertEqual(issues[0]["kind"], "verify-fail")
+        self.assertIn("make test", issues[0]["detail"], "detail = failing commands")
+        self.assertIs(issues[0]["partial_return"], False)
+
+
 if __name__ == "__main__":
     unittest.main()

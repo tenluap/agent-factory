@@ -62,7 +62,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 
 **Independent Test**: drive each of the five event paths in the automated suite and assert exactly one issue record per event in the run state.
 
-- [ ] T015 [P] [US2] Failing test for seam: issue-add writer — the shared append path records `halt` (detail = `--halt-reason`) from `set-status halted` and `verify-fail` (detail = failing commands) from `verify --fail`, exactly once each — in `tools/tests/test_issues.py`
+- [X] T015 [P] [US2] Failing test for seam: issue-add writer — the shared append path records `halt` (detail = `--halt-reason`) from `set-status halted` and `verify-fail` (detail = failing commands) from `verify --fail`, exactly once each — in `tools/tests/test_issues.py`
 - [ ] T016 [US2] Implement issue recording inside `cmd_set_status` (halted) and `cmd_verify` (--fail) in `core/skills/factory/bin/factory_cli/commands.py` via `append_issue(...)` (seam: issue-add writer) (depends: T015, T005)
 - [ ] T017 [US2] Document schema v5 `issues[]` (record shape, closed vocabularies, append-only) and the issue-recording commands in `core/skills/factory/references/state.md` — Exempt: `core/skills/factory/references/*.md` - agent instructions only.
 - [ ] T018 [US2] Extend the failure policy in `core/skills/factory/SKILL.md`: a failure-policy retry records `retry` unmarked (`partial_return: false` — not a partial return, never counted by the stall cap), a second failure of the same agent records `agent-failure`, both through `factory issue-add` — Exempt: `core/skills/factory/SKILL.md` - agent instructions only.
