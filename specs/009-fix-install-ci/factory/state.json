@@ -123,6 +123,18 @@
       "duration_ms": 146000,
       "started_at": "2026-10-27T01:03:35Z",
       "ended_at": "2026-10-27T01:06:01Z"
+    },
+    {
+      "at": "2026-10-27T01:08:30.231364Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "codex",
+      "in_est": 11000,
+      "out_est": 140,
+      "reported": null,
+      "duration_ms": 12000,
+      "started_at": "2026-10-27T01:08:05Z",
+      "ended_at": "2026-10-27T01:08:17Z"
     }
   ],
   "review": {
@@ -187,7 +199,7 @@
       "at": "2026-10-27T01:07:55.304543Z",
       "stage": "verify",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "6160f9c",
       "harness": "codex",
       "commands": [
         {
