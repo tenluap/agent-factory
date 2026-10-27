@@ -47,14 +47,14 @@ A run owner reads the run state and finds one record for every overrun, agent fa
 **Acceptance Scenarios**:
 
 1. **Given** any overrun — self-reported, detected after the fact, or both, **When** the issue is recorded, **Then** exactly one issue exists for it, with cause `unreported` only when the role did not self-report.
-2. **Given** a retry under the failure policy, a second failure of the same agent, a halted run, and a red verify, **When** each happens, **Then** each records its issue with the matching kind (`retry`, `agent-failure`, `halt`, `verify-fail`).
+2. **Given** a non-deadline `partial` stop (e.g. low context), a retry under the failure policy, a second failure of the same agent, a halted run, and a red verify, **When** each happens, **Then** each records its issue with the matching kind (`retry`, `retry`, `agent-failure`, `halt`, `verify-fail`). Only the partial stop carries `partial_return: true`; a failure-policy retry is unmarked and never counts toward the stall cap. A deadline stop records `overrun` (FR-002), still marked when it is a `partial` return's stop.
 3. **Given** recorded issues, **When** the state is read by an older reader, **Then** the run state remains readable across schema versions.
 
 ---
 
 ### User Story 3 - The improvement backlog exists only after its run is over (Priority: P2)
 
-A run owner ends a run (pull request open or aborted) and only then does a backlog file for that run appear in the factory home, carrying the session's issues, the run totals and the factory version that produced them. Before the run ends, no claim can take it; the improvement route lists what is ready and suggests a feature text, and starting any improvement run stays a manual act.
+A run owner ends a run (pull request open or aborted) and only then does a backlog file for that run appear in the factory home, carrying the session's issues, the run totals and the factory version (`factory_sha`) that produced them. Before the run ends, no claim can take it; the improvement route lists what is ready and suggests a feature text, and starting any improvement run stays a manual act.
 
 **Why this priority**: the "pending improvement starts only after its session is done" rule is the safety property of the feature; it must be structural, not a convention.
 
@@ -94,6 +94,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 - Orchestrator verify time over budget is recorded as an overrun issue with role `orchestrator` and never stops anything.
 - A missing budget override, budget section, or usable value falls back to the 5-minute default; the deadline is always well-formed.
 - A run that ends with zero issues still produces its backlog file, keeping the gate structural.
+- The export succeeds with `factory_sha: null` when the factory install is not in a git tree.
 - `claim` on a missing or already-claimed name is refused with a message naming the problem, never a traceback.
 - A fixture run that halts or fails before the approver gate scores as a fail naming the condition, never a scorer crash.
 - Run state written by the new version stays readable by readers that predate this feature.
@@ -114,13 +115,13 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 **Session issues**
 
-- **FR-008**: A new writer command `factory issue-add <kind> <stage> <role> --cause --detail --duration-ms` MUST append an issue to the run state's `issues[]`. `kind` MUST be one of `overrun`, `agent-failure`, `retry`, `halt`, `verify-fail`. Issues are append-only and carry kind, stage, role, cause, detail and duration so they can be grouped later.
+- **FR-008**: A new writer command `factory issue-add <kind> <stage> <role> --detail --duration-ms [--cause] [--commit] [--partial-return]` MUST append an issue to the run state's `issues[]`. `kind` MUST be one of `overrun`, `agent-failure`, `retry`, `halt`, `verify-fail`. Issues are append-only records `{ at, kind, stage, role, cause, detail, duration_ms, commit, partial_return }` so they can be grouped later. `--cause` is required only for `overrun` (null otherwise); `--commit` defaults to the worktree HEAD. `--partial-return` marks a partial return's stop, accepted only on `overrun`/`retry` of file-writing roles; only marked records count toward FR-004's stall cap.
 - **FR-009**: The run state schema MUST advance to version 5 with `issues[]` added, and readers MUST accept schema versions 1 through 5.
-- **FR-010**: The existing event paths MUST record their issues: a failure-policy retry records `retry`; a second failure of the same agent records `agent-failure`; `set-status halted` records `halt`; `verify --fail` records `verify-fail`.
+- **FR-010**: The existing event paths MUST record their issues: a non-deadline `partial` stop (e.g. low context) records `retry` marked `partial_return: true`; a failure-policy retry also records `retry`, but unmarked and never counting toward the stall cap. A deadline stop is recorded as `overrun` (FR-002), still marked when it is a `partial` return's stop. A second failure of the same agent records `agent-failure`; `set-status halted` records `halt`; `verify --fail` records `verify-fail`. FR-004 counts only partial returns.
 
 **Gated improvement backlog**
 
-- **FR-011**: On `set-status pr-open|aborted`, the writer MUST export `${FACTORY_HOME}/improvements/<repo>-<branch>.json` containing the run's issues, its run totals, the factory git sha and status `ready`. The file MUST NOT exist before that end is recorded, so the gate is structural. The export MUST happen even when the run has zero issues.
+- **FR-011**: On `set-status pr-open|aborted`, the writer MUST export `${FACTORY_HOME}/improvements/<repo-name>-<branch>.json` containing the run's issues, its run totals, the factory version (`factory_sha`) and status `ready`. The file MUST NOT exist before that end is recorded, so the gate is structural. The export MUST happen even when the run has zero issues; `factory_sha` is null when the factory install is not in a git tree.
 - **FR-012**: `factory improvements` MUST list the ready backlogs; `factory improvements claim <name>` MUST refuse unless the source run has ended, naming the source run in the refusal.
 - **FR-013**: The `/factory improve` route MUST list ready backlogs and print a suggested feature text built from the recorded issues. Starting an improvement run MUST remain manual. The recursive improver agent is out of scope for this run.
 
@@ -141,7 +142,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 - **Time budget**: seconds allowed per spawned role — a default of 300 and per-role overrides; expressed to each spawn as an absolute deadline.
 - **Overrun report**: a role's own account of running long — a cause from a closed list plus free-text detail, including the overshoot past the deadline.
 - **Session issue**: an append-only record of one thing that went wrong — kind, stage, role, cause, detail, duration — collected in the run state.
-- **Improvement backlog**: the run-end export of one session's issues, run totals and factory version, marked `ready`; its existence is the gate on starting improvement work from it.
+- **Improvement backlog**: the run-end export of one session's issues, run totals and the factory version (`factory_sha`), marked `ready`; its existence is the gate on starting improvement work from it.
 - **Partial return**: a file-writing role's stopped-but-committed result, resumable by a fresh spawn from disk.
 - **Benchmark score**: one run's measured outcome — time, spawns, overruns, issues, token estimates, review rounds and a pass verdict — comparable against another score.
 
@@ -151,7 +152,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 - **SC-001**: With a reduced per-role budget, 100% of file-writing overruns produce exactly one issue with a valid cause and a continuation that resumes from committed progress; three consecutive `partial` returns without a new commit halt the stage in every test.
 - **SC-002**: Each of the five event kinds (`overrun`, `agent-failure`, `retry`, `halt`, `verify-fail`) is recorded exactly once per event across the automated tests, and a run written by this version is still read successfully by an older reader.
-- **SC-003**: In 100% of attempts, a backlog claim before its run ends is refused and no backlog file exists before the run ends; after the run ends the file exists with issues, totals, factory version and `ready` status, and is claimable.
+- **SC-003**: In 100% of attempts, a backlog claim before its run ends is refused and no backlog file exists before the run ends; after the run ends the file exists with issues, totals, the factory version (`factory_sha`) and `ready` status, and is claimable.
 - **SC-004**: Scoring a recorded run emits every listed metric, and comparing two scores prints a delta per metric; a fixture run that misses any pass condition reports a fail naming the condition, with zero scorer crashes.
 - **SC-005**: The full automated test suite passes and the build gate is clean — every harness re-rendered with no generated-output drift — after the change.
 
@@ -162,7 +163,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 - A "unit of work" is the role's existing unit of committed work (the task/commit granularity the roles already use); the feature relies on that boundary and invents no new one.
 - A missing budget section, missing role entry, or unusable budget value falls back to the 300-second default rather than failing the run; budget values are seconds and must be positive.
 - Ledger durations are the accepted measurement for post-hoc overrun detection; score token estimates are approximations for before/after comparison, not accounting.
-- The backlog file name `<repo>-<branch>` is derived from its run; a zero-issue run still exports so the gate stays structural. Schema v5 adds only `issues[]`; no existing field changes shape.
+- The backlog file name `<repo-name>-<branch>.json` is derived from its run; `factory_sha` records the factory version (null outside a git tree). A zero-issue run still exports so the gate stays structural. Schema v5 adds only `issues[]`; no existing field changes shape.
 - CLI command names, exit codes and file paths here are the product's user-facing contract (repository convention), not implementation detail.
 - Bench fixtures live in the repository so replay is reproducible; live benchmark runs cost tokens and stay manual, while the automated suite tests the scorer on recorded states.
 ### Quality and Verification Constraints
