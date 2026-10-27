@@ -58,8 +58,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve verified installer test fixture fix for PR, request changes, or abort",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-27T01:15:49.460085Z",
+      "latency_ms": 379180
     }
   ],
   "decisions": [
