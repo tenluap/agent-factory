@@ -17,6 +17,10 @@ from factory_cli import state, totals
 FACTORY_DIR = Path(__file__).resolve().parents[2]
 
 
+class ClaimError(Exception):
+    """A refused claim, with the reason (exit 1, never a traceback)."""
+
+
 def backlog_name(repo, branch):
     """`<repo-name>-<branch>.json` — one name per ended run."""
     return f"{Path(repo).name}-{branch}.json"
@@ -68,3 +72,89 @@ def export(home, run_state, now=None):
         tmp.unlink(missing_ok=True)
         raise
     return path
+
+
+def list_backlogs(home):
+    """Every `${FACTORY_HOME}/improvements/*.json` with its kind counts and a
+    suggested feature text for the user (FR-013); never started automatically."""
+    entries = []
+    for path in sorted((Path(home) / "improvements").glob("*.json")):
+        try:
+            body = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue  # skip an unreadable file, never crash the listing
+        if not isinstance(body, dict):
+            continue
+        counts = {}
+        causes = {}
+        for issue in body.get("issues") or []:
+            kind = issue.get("kind") if isinstance(issue, dict) else None
+            counts[kind or "unknown"] = counts.get(kind or "unknown", 0) + 1
+            cause = issue.get("cause") if isinstance(issue, dict) else None
+            if cause:
+                causes[cause] = causes.get(cause, 0) + 1
+        run = (body.get("run") or {}).get("branch") or body.get("name") or path.stem
+        summary = (
+            ", ".join(f"{count} {kind}(s)" for kind, count in sorted(counts.items()))
+            or "no recorded issues"
+        )
+        if causes:
+            summary += "; causes: " + ", ".join(
+                f"{count} {cause}" for cause, count in sorted(causes.items())
+            )
+        entries.append(
+            {
+                "name": body.get("name") or path.stem,
+                "run": run,
+                "status": body.get("status"),
+                "issues_by_kind": counts,
+                "suggested_feature": (
+                    f"Improve the factory from the recorded issues of run "
+                    f"{run}: {summary}."
+                ),
+            }
+        )
+    return {"improvements": entries}
+
+
+def claim(home, name, source_runs=()):
+    """Stamp `claimed`/`claimed_at` once (FR-012); the only transition a
+    backlog file ever takes after `ready`. `source_runs` carries
+    (branch-or-name, status) of the repo's discoverable runs so a claim on a
+    not-yet-ended source run is refused, naming that run."""
+    filename = name if name.endswith(".json") else f"{name}.json"
+    directory = (Path(home) / "improvements").resolve()
+    path = directory / filename
+    if Path(filename).name != filename or path.resolve().parent != directory:
+        raise ClaimError(f"invalid improvement backlog name '{name}'")
+    if not path.is_file():
+        raise ClaimError(f"no improvement backlog named '{name}'")
+    try:
+        body = json.loads(path.read_text())
+    except (OSError, ValueError) as e:
+        raise ClaimError(f"cannot read {path}: {e}") from e
+    status = body.get("status") if isinstance(body, dict) else None
+    if status != "ready":
+        raise ClaimError(f"'{name}' is {status!r}, not ready; it cannot be claimed")
+    branch = (body.get("run") or {}).get("branch")
+    for run_name, run_status in source_runs:
+        if run_name == branch and run_status not in ("pr-open", "aborted"):
+            raise ClaimError(
+                f"the source run '{branch}' has not ended ({run_status}); "
+                "its backlog cannot be claimed yet"
+            )
+    now = state.iso(datetime.now(timezone.utc))
+    body["status"] = "claimed"
+    body["claimed_at"] = now
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n")
+        os.replace(tmp, path)
+    except OSError as e:
+        tmp.unlink(missing_ok=True)
+        raise ClaimError(f"cannot claim '{name}': {e}") from e
+    return {
+        "claimed": body.get("name") or path.stem,
+        "status": "claimed",
+        "claimed_at": now,
+    }

@@ -119,6 +119,7 @@ class SurfaceTests(unittest.TestCase):
         )
         self.assertIn(self.branch, entry["suggested_feature"])
         self.assertIn("overrun", entry["suggested_feature"])
+        self.assertIn("test-loop", entry["suggested_feature"])
 
     def test_claim_stamps_claimed_once(self):
         out = self.box.cli("improvements", "claim", self.name)
@@ -136,6 +137,14 @@ class SurfaceTests(unittest.TestCase):
         out = self.box.cli("improvements", "claim", "repo-999-none")
         self.assertEqual(out.returncode, 1)
         self.assertIn("repo-999-none", out.stderr)
+
+    def test_claim_cannot_escape_improvements_directory(self):
+        outside = self.box.home / "outside.json"
+        original = json.dumps({"status": "ready", "run": {}})
+        outside.write_text(original)
+        out = self.box.cli("improvements", "claim", "../outside")
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(outside.read_text(), original)
 
     def test_claim_refuses_a_source_run_that_has_not_ended(self):
         self.box.worktree_run("052-running", fixture("state-v4.json"))

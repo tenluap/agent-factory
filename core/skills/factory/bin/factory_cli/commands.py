@@ -369,6 +369,24 @@ def cmd_budget(role):
     }
 
 
+def cmd_improvements():
+    """Every ready-or-claimed backlog in the factory home (FR-013)."""
+    return improvements.list_backlogs(factory_home())
+
+
+def cmd_improvements_claim(repo, name):
+    """Claim one backlog (FR-012), refusing a source run that has not ended."""
+    runs = [
+        (r[1].get("branch") or r[0].stem, r[1].get("status"))
+        for r in deduped(find_runs(repo))
+        if not isinstance(r, dict)
+    ]
+    try:
+        return improvements.claim(factory_home(), name, source_runs=runs)
+    except improvements.ClaimError as e:
+        die(1, str(e))
+
+
 # ---------------------------------------------------------------- writers ---
 # The single writer (FR-001): every mutation stamps its own time, is
 # validated by state.write_state, lands atomically, and commits on worktree
