@@ -1,0 +1,8 @@
+{
+  "name": "greet-001",
+  "fixture_repo": "conformance/fixture-repo",
+  "overlay": "overlay",
+  "brief": "brief.md",
+  "seed": "state-seed.json",
+  "acceptance": "python3 -m unittest test_acceptance"
+}

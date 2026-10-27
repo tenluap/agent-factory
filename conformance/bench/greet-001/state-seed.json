@@ -1,0 +1,32 @@
+{
+  "version": 5,
+  "started_at": null,
+  "ended_at": null,
+  "harness": null,
+  "feature": "Add optional uppercase greetings to src.greet.greet; preserve default behavior.",
+  "repo": null,
+  "default_branch": "main",
+  "base": "main",
+  "branch": null,
+  "worktree": null,
+  "spec_dir": null,
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": "approver",
+  "mode": {"chain": "lite", "fast": true},
+  "skills": {},
+  "commands": {
+    "build": "python3 -m compileall -q src",
+    "test": "python3 -m unittest discover && python3 -m unittest test_acceptance"
+  },
+  "analyze": {"pass": 0, "loops": 0, "reports": [], "remediations": [], "pending_clarify": []},
+  "relay": null,
+  "timeline": [],
+  "decisions": [],
+  "ledger": [],
+  "issues": [],
+  "review": {"round": 0, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false},
+  "pr_url": null,
+  "history": []
+}
