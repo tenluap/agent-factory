@@ -159,6 +159,18 @@
       "duration_ms": 15000,
       "started_at": "2026-10-27T01:08:21Z",
       "ended_at": "2026-10-27T01:08:36Z"
+    },
+    {
+      "at": "2026-10-27T01:09:29.786796Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "codex",
+      "in_est": 13000,
+      "out_est": 150,
+      "reported": null,
+      "duration_ms": 13000,
+      "started_at": "2026-10-27T01:09:03Z",
+      "ended_at": "2026-10-27T01:09:16Z"
     }
   ],
   "review": {
