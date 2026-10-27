@@ -1,0 +1,1 @@
+{"reviewer":"spec-conformance","round":3,"summary":"Round-2 SPEC-7 fix removes the ledger-add dedupe so repeat partial-return overruns reach the stall cap of 3; FR-004/FR-006 hold, Red proofs parse and match, no new defect.","findings":[]}
