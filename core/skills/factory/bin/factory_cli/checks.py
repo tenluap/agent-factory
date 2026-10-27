@@ -15,6 +15,9 @@ from factory_cli import state
 
 ENVELOPE_STATUSES = ("done", "needs_input", "partial", "failed")
 VERDICTS = ("pass", "fix")
+# the six self-report causes; `unreported` is detected-only (state.py) and
+# never valid in a role's own overrun report
+SELF_REPORT_CAUSES = tuple(c for c in state.OVERRUN_CAUSES if c != "unreported")
 
 
 def _str(value):
@@ -55,6 +58,19 @@ def block_problems(block, shape):
             )
         if status == "failed" and not _str(block.get("error")):
             bad("error", "a failed envelope carries its error")
+        overrun = block.get("overrun")
+        if overrun is not None:
+            if not isinstance(overrun, dict):
+                bad("overrun", "must be an object with cause and detail")
+            else:
+                if overrun.get("cause") not in SELF_REPORT_CAUSES:
+                    bad(
+                        "overrun.cause",
+                        f"{overrun.get('cause')!r} is off-vocabulary; expected "
+                        f"one of: {', '.join(SELF_REPORT_CAUSES)}",
+                    )
+                if not _str(overrun.get("detail")):
+                    bad("overrun.detail", "a non-empty detail is required")
         return problems
 
     if shape == "reviewer":
