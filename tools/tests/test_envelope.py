@@ -115,6 +115,52 @@ class MalformedVariantsRefused(unittest.TestCase):
         self.assertTrue(found)
 
 
+class OverrunShapeTests(unittest.TestCase):
+    """A deadline-stopped `partial` envelope carries `overrun`:
+    an object with a known cause and a non-empty detail (FR-002)."""
+
+    def problems(self, mutate):
+        import copy
+
+        block = copy.deepcopy(ENVELOPE)
+        block["status"] = "partial"
+        mutate(block)
+        return checks.block_problems(block, "envelope")
+
+    def locations(self, mutate):
+        return {p["location"]: p["reason"] for p in self.problems(mutate)}
+
+    def test_partial_without_overrun_is_valid(self):
+        self.assertEqual(self.problems(lambda b: None), [])
+
+    def test_valid_overrun_report(self):
+        found = self.problems(
+            lambda b: b.__setitem__(
+                "overrun", {"cause": "test-loop", "detail": "41s past deadline"}
+            )
+        )
+        self.assertEqual(found, [])
+
+    def test_overrun_must_be_an_object(self):
+        found = self.locations(lambda b: b.__setitem__("overrun", "ran long"))
+        self.assertIn("overrun", found)
+
+    def test_unknown_cause_refused(self):
+        found = self.locations(
+            lambda b: b.__setitem__("overrun", {"cause": "slow", "detail": "d"})
+        )
+        self.assertIn("overrun.cause", found)
+
+    def test_empty_or_missing_detail_refused(self):
+        for detail in (None, ""):
+            found = self.locations(
+                lambda b, d=detail: b.__setitem__(
+                    "overrun", {"cause": "other", "detail": d}
+                )
+            )
+            self.assertIn("overrun.detail", found, repr(detail))
+
+
 class ExtractFinalBlock(unittest.TestCase):
     def test_the_final_fenced_block_is_the_output(self):
         text = (
