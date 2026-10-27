@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import checks, lock, state, totals
+from factory_cli import budget, checks, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -149,9 +149,8 @@ def worktree_states(repo):
 
 
 def pending_states(repo):
-    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
     repo_real = os.path.realpath(repo)
-    for path in sorted((home / "pending").glob("*.json")):
+    for path in sorted((factory_home() / "pending").glob("*.json")):
         loaded, error = state.read_state(path)
         if error:
             print(
@@ -344,6 +343,26 @@ def cmd_validate(repo, name=None, all_runs=False):
         die(5, "validate needs a run name or --all")
     _, loaded, _ = one_run(repo, name)
     return state.validate_state(loaded)
+
+
+def factory_home():
+    """The harness-neutral factory home (${FACTORY_HOME:-~/.factory})."""
+    return Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+
+
+def cmd_budget(role):
+    """The role's resolved budget and derived deadline (FR-001); a missing or
+    malformed config falls back to the default and never fails."""
+    try:
+        config = json.loads((factory_home() / "config.json").read_text())
+    except (OSError, ValueError):
+        config = {}
+    seconds = budget.resolve(role, config)
+    return {
+        "role": role,
+        "seconds": seconds,
+        "deadline": budget.deadline_for(seconds),
+    }
 
 
 # ---------------------------------------------------------------- writers ---
@@ -1105,7 +1124,7 @@ def stale_pending_files():
     worktree (the pending state records one) or the run has ended
     (pr-open/aborted). A run whose only state is the pending file — no
     recorded worktree, still running — is never stale."""
-    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+    home = factory_home()
     stale = []
     for path in sorted((home / "pending").glob("*.json")):
         loaded, error = state.read_state(path)

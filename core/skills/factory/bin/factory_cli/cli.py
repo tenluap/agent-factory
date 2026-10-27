@@ -19,6 +19,7 @@ read:
   show <run> [--repo <path>]        resume digest for one run, JSON
   validate <run> | validate --all   validation violations; exit 1 when any
   resume <run>                      record the resumed entry, print the resume digest
+  budget <role>                     the role's resolved seconds and deadline, JSON
 
 write (the single writer; each stamps its time, validates, writes atomically):
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
@@ -229,6 +230,11 @@ def main(argv):
                 commit=flags.get("--commit"),
                 partial_return=bool(flags.get("--partial-return")),
             )
+        elif command == "budget":
+            positional, flags = parse_flags(rest, command)
+            if len(positional) != 1:
+                die_usage("budget needs exactly one <role>")
+            result = commands.cmd_budget(positional[0])
         elif command == "wait-open":
             positional, flags = parse_flags(rest, command)
             if len(positional) != 3:
