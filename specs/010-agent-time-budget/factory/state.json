@@ -149,8 +149,8 @@
       "kind": "questions",
       "stage": "grill-with-docs",
       "summary": "Q2 shared understanding (protected)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-27T08:14:40.015269Z",
+      "latency_ms": 114004
     }
   ],
   "decisions": [
