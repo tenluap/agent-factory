@@ -157,8 +157,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 010-agent-time-budget",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-27T12:55:49.745871Z",
+      "latency_ms": 38751
     }
   ],
   "decisions": [
