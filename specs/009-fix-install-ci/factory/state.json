@@ -53,7 +53,20 @@
       "kind": "answer"
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-10-27T00:59:15.170182Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 14500,
+      "out_est": 1800,
+      "reported": null,
+      "duration_ms": 0,
+      "started_at": "2026-10-27T00:58:20Z",
+      "ended_at": "2026-10-27T00:58:20Z"
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
