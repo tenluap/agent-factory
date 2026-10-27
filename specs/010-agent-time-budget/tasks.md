@@ -77,7 +77,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 
 **Independent Test**: attempt to claim the backlog before and after ending the source run; assert refusal before, presence and claimability after.
 
-- [ ] T019 [P] [US3] Failing test for seam: run-end backlog export — no file before run end; atomic export at `pr-open`/`aborted` with `issues[]` verbatim, `totals.compute` output, `factory_sha` (best-effort, `null` allowed), `status: ready`, `exported_at`; zero-issue run exports too — in `tools/tests/test_improvements.py`
+- [X] T019 [P] [US3] Failing test for seam: run-end backlog export — no file before run end; atomic export at `pr-open`/`aborted` with `issues[]` verbatim, `totals.compute` output, `factory_sha` (best-effort, `null` allowed), `status: ready`, `exported_at`; zero-issue run exports too — in `tools/tests/test_improvements.py`
 - [ ] T020 [US3] Implement the backlog export in `core/skills/factory/bin/factory_cli/improvements.py` (temp + `os.replace`) and hook it into `cmd_set_status` for `pr-open|aborted` in `commands.py` (seam: run-end backlog export) (depends: T019, T003)
 - [ ] T021 [US3] Failing test for seam: backlog surface — `factory improvements` lists every `${FACTORY_HOME}/improvements/*.json` with kind counts and `suggested_feature`; `claim` refuses an unknown name, a non-`ready` status and a discoverable source run that has not ended (message names the run), and stamps `claimed`/`claimed_at` once — in `tools/tests/test_improvements.py` (depends: T020)
 - [ ] T022 [US3] Implement `factory improvements` and `factory improvements claim <name>` in `core/skills/factory/bin/factory_cli/improvements.py`, `commands.py`, `cli.py` (seam: backlog surface) (depends: T021)
