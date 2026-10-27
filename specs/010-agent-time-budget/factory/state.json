@@ -101,6 +101,14 @@
       "summary": "Plan Q1: test-seam confirmation (protected)",
       "answered_at": "2026-10-27T07:14:37.015946Z",
       "latency_ms": 18909877
+    },
+    {
+      "at": "2026-10-27T07:30:16.218693Z",
+      "kind": "questions",
+      "stage": "analyze",
+      "summary": "Escalate to full chain or gate-override to remediate",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
