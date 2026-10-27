@@ -143,6 +143,14 @@
       "summary": "Provider limit exhausted at implement (retry)",
       "answered_at": "2026-10-27T10:50:09.893033Z",
       "latency_ms": 96979
+    },
+    {
+      "at": "2026-10-27T11:17:05.135522Z",
+      "kind": "halt",
+      "stage": "review",
+      "summary": "Provider limit on reviewers; model choice",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
