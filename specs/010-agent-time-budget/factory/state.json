@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/010-agent-time-budget",
   "spec_dir": "specs/010-agent-time-budget",
   "status": "running",
-  "stage": "worktree",
+  "stage": "specify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -235,6 +235,13 @@
     {
       "at": "2026-10-27T01:37:04.602571Z",
       "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T01:37:17.704594Z",
+      "stage": "worktree",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
