@@ -2,7 +2,7 @@
 name: factory
 description: Software factory orchestrator. Takes a feature from grilling through SpecKit, implementation, parallel reviews and your approval to a PR. Resumable.
 disable-model-invocation: true
-argument-hint: "[<feature description> | resume <branch>] [--lite | --full] [--fast | --no-fast] [--stop-at <stage>]"
+argument-hint: "[<feature description> | resume <branch> | improve] [--lite | --full] [--fast | --no-fast] [--stop-at <stage>]"
 metadata:
   opencode/slash: "true"
   opencode/autoinvoke: "false"
@@ -28,6 +28,7 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 
 - `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
 - `resume <branch>`: `SHELL: python3 <F>/bin/factory resume <branch-or-name>` — records the `resumed` history entry through the writer and prints the resume digest (state.md, "CLI") — then resume that run from the digest (state.md, "Resume").
+- `improve`: `SHELL: python3 <F>/bin/factory improvements`. Show each `ready` backlog's name, run, kind counts and `suggested_feature`; if none are ready, say so. Stop here. Starting an improvement run stays manual: the user submits the chosen feature text with `/factory <feature>`.
 - Anything else: the feature description of a new run. Classify its **intake intent** from the request text (DESIGN.md, "Skill routing"), deciding which stage starts the run:
   - **Exploration** — open-ended idea wording with no settled solution (e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."): after step 1, go to step 2 (`brainstorm`).
   - **Delivery** — concrete feature/change wording, or a request naming an existing spec (e.g. "add a `--no-fast` flag", "fix the resume path so..."): after step 1, go straight to step 3 (`grill`), skipping step 2.

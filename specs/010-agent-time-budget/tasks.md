@@ -81,7 +81,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 - [X] T020 [US3] Implement the backlog export in `core/skills/factory/bin/factory_cli/improvements.py` (temp + `os.replace`) and hook it into `cmd_set_status` for `pr-open|aborted` in `commands.py` (seam: run-end backlog export) (depends: T019, T003)
 - [X] T021 [US3] Failing test for seam: backlog surface — `factory improvements` lists every `${FACTORY_HOME}/improvements/*.json` with kind counts and `suggested_feature`; `claim` refuses an unknown name, a non-`ready` status and a discoverable source run that has not ended (message names the run), and stamps `claimed`/`claimed_at` once — in `tools/tests/test_improvements.py` (depends: T020)
 - [X] T022 [US3] Implement `factory improvements` and `factory improvements claim <name>` in `core/skills/factory/bin/factory_cli/improvements.py`, `commands.py`, `cli.py` (seam: backlog surface) (depends: T021)
-- [ ] T023 [US3] Route `/factory improve` in `core/skills/factory/SKILL.md` step 0 to `factory improvements`: show ready backlogs and their `suggested_feature`, stop; starting an improvement run stays manual — Exempt: `core/skills/factory/SKILL.md` - agent instructions only.
+- [X] T023 [US3] Route `/factory improve` in `core/skills/factory/SKILL.md` step 0 to `factory improvements`: show ready backlogs and their `suggested_feature`, stop; starting an improvement run stays manual — Exempt: `core/skills/factory/SKILL.md` - agent instructions only.
 
 **Checkpoint**: US3 functional — the backlog gate is structural.
 
