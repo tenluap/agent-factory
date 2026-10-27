@@ -133,8 +133,8 @@
       "kind": "halt",
       "stage": "implement",
       "summary": "Provider limit exhausted at implement",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-27T10:48:21.771158Z",
+      "latency_ms": 1094853
     }
   ],
   "decisions": [
