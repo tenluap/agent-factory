@@ -91,5 +91,73 @@ class ExportTests(unittest.TestCase):
         )
 
 
+class SurfaceTests(unittest.TestCase):
+    """`factory improvements` listing and `claim` (FR-012, FR-013)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "050-backlogs"
+        self.wt = self.box.worktree_run(self.branch, fixture("state-v5.json"))
+        out = self.box.cli("set-status", "aborted", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.name = f"{self.box.repo.name}-{self.branch}"
+        self.backlog = self.box.home / "improvements" / f"{self.name}.json"
+
+    def test_lists_kind_counts_and_suggested_feature(self):
+        out = self.box.cli("improvements")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        entries = json.loads(out.stdout)["improvements"]
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry["name"], self.name)
+        self.assertEqual(entry["run"], self.branch)
+        self.assertEqual(entry["status"], "ready")
+        self.assertEqual(
+            entry["issues_by_kind"],
+            {"overrun": 1, "retry": 1, "verify-fail": 1},
+        )
+        self.assertIn(self.branch, entry["suggested_feature"])
+        self.assertIn("overrun", entry["suggested_feature"])
+
+    def test_claim_stamps_claimed_once(self):
+        out = self.box.cli("improvements", "claim", self.name)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        body = json.loads(out.stdout)
+        self.assertEqual(body["claimed"], self.name)
+        self.assertEqual(body["status"], "claimed")
+        on_disk = json.loads(self.backlog.read_text())
+        self.assertEqual(on_disk["status"], "claimed")
+        self.assertEqual(on_disk["claimed_at"], body["claimed_at"])
+        again = self.box.cli("improvements", "claim", self.name)
+        self.assertEqual(again.returncode, 1, "a second claim is refused")
+
+    def test_claim_refuses_unknown_name(self):
+        out = self.box.cli("improvements", "claim", "repo-999-none")
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("repo-999-none", out.stderr)
+
+    def test_claim_refuses_a_source_run_that_has_not_ended(self):
+        self.box.worktree_run("052-running", fixture("state-v4.json"))
+        manual = (
+            self.box.home / "improvements" / f"{self.box.repo.name}-052-running.json"
+        )
+        manual.write_text(
+            json.dumps(
+                {
+                    "name": f"{self.box.repo.name}-052-running",
+                    "run": {"branch": "052-running", "status": "running"},
+                    "issues": [],
+                    "status": "ready",
+                    "exported_at": "2026-10-27T00:00:00Z",
+                    "claimed_at": None,
+                }
+            )
+        )
+        out = self.box.cli("improvements", "claim", f"{self.box.repo.name}-052-running")
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("052-running", out.stderr, "the refusal names the run")
+
+
 if __name__ == "__main__":
     unittest.main()
