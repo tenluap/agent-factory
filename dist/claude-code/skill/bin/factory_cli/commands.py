@@ -122,24 +122,10 @@ def digest(state_dict, state_path, source):
     out["relay"] = relay_digest(state_dict.get("relay"))
     timeline = [e for e in state_dict.get("timeline") or [] if isinstance(e, dict)]
     closed = sum(1 for e in timeline if e.get("latency_ms") is not None)
-    out["waits"] = {
-        "total": len(timeline),
-        "open": len(timeline) - closed,
-        "human_ms": sum(
-            e["latency_ms"]
-            for e in timeline
-            if isinstance(e.get("latency_ms"), (int, float))
-        ),
-    }
+    # FR-015: counts only — the elapsed aggregates are the union totals
+    out["waits"] = {"total": len(timeline), "open": len(timeline) - closed}
     ledger = [e for e in state_dict.get("ledger") or [] if isinstance(e, dict)]
-    out["spawns"] = {
-        "total": len(ledger),
-        "agent_ms": sum(
-            e["duration_ms"]
-            for e in ledger
-            if isinstance(e.get("duration_ms"), (int, float))
-        ),
-    }
+    out["spawns"] = {"total": len(ledger)}
     out["totals"] = totals.compute(state_dict)
     out["decisions"] = veto_list(state_dict)
     out["history_tail"] = (state_dict.get("history") or [])[-3:]
@@ -302,7 +288,8 @@ def cmd_runs(repo):
             continue
         path, loaded, identity, _ = run
         violations = state.validate_state(loaded)
-        if loaded.get("status") == "pr-open":
+        # FR-017: resume refuses both ended statuses, so runs lists neither
+        if loaded.get("status") in ("pr-open", "aborted"):
             continue
         entries.append(
             {
@@ -401,6 +388,13 @@ def resolve_target(repo, cwd):
         die(3, f"several pending runs of {repo}; name one")
     if not pending:
         die(1, f"no run to write from {cwd} in {repo}")
+    if pending[0][1].get("status") in ("pr-open", "aborted"):
+        # FR-009: the ended-status skip applies to pending selection too —
+        # an ended pending run is as unwritable as an ended worktree run
+        die(
+            1,
+            f"run is {pending[0][1].get('status')} and has ended; it is not writable",
+        )
     return pending[0]
 
 
@@ -536,16 +530,24 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             decisions = decisions + settled_answers(relay, relay_stage, now)
         s["decisions"] = decisions
         s["relay"] = None
-        entry = {
-            "at": now,
-            "stage": stage,
-            "event": permitted["kind"] if permitted else "complete",
-            "commit": None,
-            "harness": s.get("harness"),
-        }
-        if permitted:
-            entry["decision"] = permitted["question"]
-        s["history"] = (s.get("history") or []) + [entry]
+        history = s.get("history") or []
+        pending = history[-1] if history else None
+        if pending and pending.get("stage") == stage and pending.get("commit") is None:
+            # FR-011: a retry of a stage whose commit never landed reuses the
+            # pending entry instead of appending a second one
+            pending["at"] = now
+        else:
+            entry = {
+                "at": now,
+                "stage": stage,
+                "event": permitted["kind"] if permitted else "complete",
+                "commit": None,
+                "harness": s.get("harness"),
+            }
+            if permitted:
+                entry["decision"] = permitted["question"]
+            history = history + [entry]
+        s["history"] = history
         if target:
             s["stage"] = target
         return s
@@ -558,12 +560,37 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         dirty = dirty_paths(worktree)
         in_spec = [p for p in dirty if p.startswith(spec_prefix)]
         undeclared = [p for p in dirty if p not in declared and p not in in_spec]
-        commit = commit_worktree(
-            worktree,
-            f"factory: {stage} complete",
-            spec_dir=updated.get("spec_dir"),
-            extra=declared,
-        )
+        try:
+            commit = commit_worktree(
+                worktree,
+                f"factory: {stage} complete",
+                spec_dir=updated.get("spec_dir"),
+                extra=declared,
+            )
+        except CLIError as e:
+            reason = str(e)
+            print(f"factory: state written, commit failed: {reason}", file=sys.stderr)
+            return {
+                "checkpointed": stage,
+                "stage": updated["stage"],
+                "commit": None,
+                "commit_error": reason,
+                "declared": declared,
+                "undeclared": undeclared,
+                "source": source,
+            }
+        # FR-011: a retried checkpoint fills the reused pending entry with the
+        # commit that finally landed (a fresh checkpoint appends a new entry)
+        reused = len(updated.get("history") or []) == len(loaded.get("history") or [])
+        if commit and reused and updated.get("history"):
+
+            def stamp(s):
+                trailing = s.get("history") or []
+                if trailing and trailing[-1].get("stage") == stage:
+                    trailing[-1]["commit"] = commit
+                return s
+
+            write_run(path, updated, stamp)
     return {
         "checkpointed": stage,
         "stage": updated["stage"],
@@ -889,22 +916,33 @@ def cmd_rebind(repo, cwd, name, worktree):
     if probe.returncode != 0 or probe.stdout.strip() != "true":
         die(4, f"{target} is not a git worktree")
     path, loaded, source = one_run(repo, name)
+    if loaded.get("status") in ("pr-open", "aborted"):
+        die(
+            1,
+            f"run '{name}' is {loaded.get('status')} and has ended; nothing to rebind",
+        )
     branch = loaded.get("branch")
     if branch:
         current = git(str(target), "branch", "--show-current").strip()
         if current != branch:
             die(1, f"{target} is on branch '{current}'; the run records '{branch}'")
-    new_state = dict(loaded)
-    new_state["worktree"] = str(target.resolve())
-    new_state["repo"] = main_repo(target)
-    state.write_state(path, new_state)
+    rebound_worktree = str(target.resolve())
+    rebound_repo = main_repo(target)
+
+    def mutate(current):
+        # applied to the state freshly read under the run's lock (FR-008)
+        current["worktree"] = rebound_worktree
+        current["repo"] = rebound_repo
+        return current
+
+    write_run(path, loaded, mutate)
     commit_worktree(
         str(target), f"factory: rebind {branch}", spec_dir=loaded.get("spec_dir")
     )
     return {
         "rebound": name,
-        "worktree": new_state["worktree"],
-        "repo": new_state["repo"],
+        "worktree": rebound_worktree,
+        "repo": rebound_repo,
         "previous_worktree": loaded.get("worktree"),
     }
 

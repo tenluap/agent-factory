@@ -6,6 +6,7 @@ recorded host when the owner process is gone; takeover is explicit via
 lock lives beside its pending file.
 """
 
+import ast
 import json
 import os
 import socket
@@ -15,6 +16,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
@@ -273,6 +275,116 @@ class LifecycleTests(unittest.TestCase):
         )
 
 
+class LivenessTests(unittest.TestCase):
+    """FR-012: an owner PID the OS probe cannot evaluate counts as live and
+    never raises; only a proven-gone owner frees the lock."""
+
+    def lock_info(self, owner_pid):
+        return {
+            "owner_pid": owner_pid,
+            "host": HOST,
+            "harness": "opencode",
+            "at": "2026-10-23T12:00:00Z",
+        }
+
+    def test_unevaluable_pids_count_as_live_and_never_raise(self):
+        for pid in (0, -1, -12345, 999999999999, "not-a-pid", None):
+            with self.subTest(pid=pid):
+                self.assertTrue(lock._alive(pid), "unevaluable means live")
+
+    def test_unevaluable_owner_refuses_acquire(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            guard = Path(tmp) / "state.json"
+            lock.lock_path_for(guard).write_text(
+                json.dumps(self.lock_info(999999999999))
+            )
+            with self.assertRaises(lock.LockHeld):
+                lock.acquire(guard, harness="opencode")
+
+    def test_a_gone_owner_is_still_stale(self):
+        self.assertFalse(lock._alive(dead_pid()))
+
+
+class ForceTakeoverTests(unittest.TestCase):
+    """FR-013: --force is evaluated before liveness — a takeover with --force
+    succeeds even when the holder's liveness cannot be judged; without it a
+    live lock refuses with the owner reported."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.guard = Path(self.tmp.name) / "state.json"
+        self.lock_path = lock.lock_path_for(self.guard)
+
+    def write_lock(self, owner_pid):
+        self.lock_path.write_text(
+            json.dumps(
+                {
+                    "owner_pid": owner_pid,
+                    "host": HOST,
+                    "harness": "opencode",
+                    "at": "2026-10-23T12:00:00Z",
+                }
+            )
+        )
+
+    def test_force_takes_over_when_liveness_cannot_be_judged(self):
+        self.write_lock(999999999999)
+        with mock.patch.object(lock, "_alive", side_effect=OverflowError):
+            info = lock.take(self.guard, harness="opencode", force=True)
+        self.assertTrue(info["taken_over"])
+        self.assertEqual(lock.read(self.lock_path)["owner_pid"], os.getpid())
+
+    def test_without_force_a_live_lock_refuses_with_owner_reported(self):
+        self.write_lock(999999999999)
+        with self.assertRaises(lock.LockHeld) as caught:
+            lock.take(self.guard, harness="opencode")
+        self.assertIn("999999999999", str(caught.exception))
+
+
+class ReleaseIdentityTests(unittest.TestCase):
+    """FR-014: release unlinks only the file whose identity (st_dev, st_ino)
+    it just read — a lock replaced by another owner inside the release window
+    is left in place."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.guard = Path(self.tmp.name) / "state.json"
+        self.lock_path = lock.lock_path_for(self.guard)
+
+    def own_lock(self):
+        lock.acquire(self.guard, harness="opencode")
+        return lock.read(self.lock_path)
+
+    def test_release_removes_our_own_unchanged_lock(self):
+        self.own_lock()
+        lock.release(self.guard)
+        self.assertIsNone(lock.read(self.lock_path), "our own lock is removed")
+
+    def test_release_leaves_a_foreign_lock(self):
+        info = self.own_lock()
+        lock._write(self.lock_path, {**info, "owner_pid": 999999})
+        lock.release(self.guard)
+        self.assertIsNotNone(lock.read(self.lock_path), "a foreign lock stays")
+
+    def test_release_never_unlinks_a_lock_swapped_in_after_its_read(self):
+        self.own_lock()
+        real_read = lock.read
+
+        def read_then_swap(path):
+            info = real_read(path)  # release reads our own lock...
+            lock._write(path, {**info, "owner_pid": 999999})  # ...then a rival swaps in
+            return info
+
+        with mock.patch.object(lock, "read", side_effect=read_then_swap):
+            lock.release(self.guard)
+        self.assertIsNotNone(
+            lock.read(self.lock_path), "the rival's lock is left in place"
+        )
+        self.assertEqual(lock.read(self.lock_path)["owner_pid"], 999999)
+
+
 class LockCliTests(unittest.TestCase):
     def setUp(self):
         from tests import Sandbox, fixture
@@ -319,37 +431,38 @@ class LockCliTests(unittest.TestCase):
             self.lock_path.unlink(missing_ok=True)
 
 
+class TestModuleHygieneTests(unittest.TestCase):
+    """FR-018: each lock behaviour is exercised exactly once — no test method
+    is defined twice, and none is dead code after the runner's exit call."""
+
+    def test_no_test_method_is_defined_twice_or_after_the_runner(self):
+        tree = ast.parse(Path(__file__).read_text())
+        names = [
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test")
+        ]
+        duplicates = {name for name in names if names.count(name) > 1}
+        self.assertEqual(duplicates, set(), "every lock behaviour is defined once")
+        guard_line = None
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.If)
+                and isinstance(node.test, ast.Compare)
+                and getattr(node.test.left, "id", "") == "__name__"
+            ):
+                guard_line = node.lineno
+        self.assertIsNotNone(guard_line, "the module keeps its runner guard")
+        after = [
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name.startswith("test")
+            and guard_line
+            and node.lineno > guard_line
+        ]
+        self.assertEqual(after, [], "no test method lives after the runner's exit call")
+
+
 if __name__ == "__main__":
     unittest.main()
-
-    def test_lock_take_cli_refuses_live_and_takes_with_force(self):
-        lock.acquire(self.guard, harness="opencode")
-        out = self.box.cli("lock", "take", self.branch)
-        self.assertEqual(out.returncode, 1, out.stderr)
-        self.assertIn("locked by PID", out.stderr)
-        out = self.box.cli("lock", "take", self.branch, "--force")
-        self.assertEqual(out.returncode, 0, out.stderr)
-        on_disk = json.loads(self.lock_path.read_text())
-        self.assertTrue(on_disk["taken_over"])
-        self.assertEqual(on_disk["previous"]["harness"], "opencode")
-
-    def test_writers_refuse_under_a_live_foreign_lock(self):
-        holder = subprocess.Popen(["sleep", "30"])
-        try:
-            self.lock_path.write_text(
-                json.dumps(
-                    {
-                        "owner_pid": holder.pid,
-                        "host": HOST,
-                        "harness": "opencode",
-                        "at": "2026-10-20T10:00:00Z",
-                    }
-                )
-            )
-            out = self.box.cli("checkpoint", "implement", cwd=self.wt)
-            self.assertEqual(out.returncode, 1)
-            self.assertIn("locked by PID", out.stderr)
-        finally:
-            holder.terminate()
-            holder.wait()
-            self.lock_path.unlink(missing_ok=True)

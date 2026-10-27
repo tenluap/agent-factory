@@ -312,6 +312,32 @@ def _check_relay(state, bad):
         return
     for r, one_round in enumerate(rounds):
         _check_round(bad, f"relay.rounds[{r}]", one_round)
+    # FR-010: at most one open relay round, and only as the last; a null
+    # relay and a fully answered relay awaiting checkpoint conform
+    open_rounds = [r for r, one_round in enumerate(rounds) if _open_round(one_round)]
+    if len(open_rounds) > 1:
+        bad(
+            "relay",
+            f"{len(open_rounds)} open relay rounds; at most one may await answers",
+        )
+    for r in open_rounds:
+        if r < len(rounds) - 1:
+            bad(
+                f"relay.rounds[{r}]",
+                "holds unanswered questions; only the last round may stay open",
+            )
+
+
+def _open_round(one_round):
+    """True when the round holds at least one unanswered question."""
+    if not isinstance(one_round, dict):
+        return False
+    questions = one_round.get("questions") or []
+    answers = one_round.get("answers") or {}
+    return any(
+        isinstance(q, dict) and q.get("id") and q["id"] not in answers
+        for q in questions
+    )
 
 
 def _check_round(bad, location, one_round):

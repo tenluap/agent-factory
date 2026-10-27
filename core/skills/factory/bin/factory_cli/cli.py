@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from factory_cli import commands
+from factory_cli import commands, state
 from factory_cli.commands import CLIError
 
 USAGE = """usage: factory <command> [args]
@@ -93,6 +93,13 @@ def json_or_usage(value, flag):
         die_usage(f"{flag} needs JSON")
 
 
+def iso_or_usage(value, flag):
+    """An ISO-8601 UTC timestamp or a usage refusal naming the bad value."""
+    if value is None or not state.parse_iso(value):
+        die_usage(f"{flag} needs an ISO-8601 UTC timestamp, got '{value}'")
+    return value
+
+
 def emit(result):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -172,8 +179,12 @@ def main(argv):
                 Path.cwd(),
                 positional[0],
                 positional[1],
-                started_at=flags.get("--started-at"),
-                ended_at=flags.get("--ended-at"),
+                started_at=iso_or_usage(flags["--started-at"], "--started-at")
+                if "--started-at" in flags
+                else None,
+                ended_at=iso_or_usage(flags["--ended-at"], "--ended-at")
+                if "--ended-at" in flags
+                else None,
                 in_est=int_or_usage(flags["--in-est"], "--in-est")
                 if "--in-est" in flags
                 else 0,
@@ -305,6 +316,10 @@ def main(argv):
         else:
             die_usage(f"unknown command '{command}'")
         emit(result)
+        if isinstance(result, dict) and result.get("commit_error"):
+            # FR-011: the state write landed, the commit did not — the JSON
+            # above names it and the exit code says the command failed
+            raise SystemExit(1)
     except commands.state.StateError as e:  # a refused write names its reason
         print(f"factory: {e}", file=sys.stderr)
         raise SystemExit(1)

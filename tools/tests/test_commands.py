@@ -5,7 +5,9 @@ Covers `runs`, `show` and `validate` exit codes and digests (contracts/cli.md),
 """
 
 import json
+import os
 import shutil
+import socket
 import unittest
 from pathlib import Path
 from datetime import datetime, timezone
@@ -66,6 +68,19 @@ class DiscoveryTests(unittest.TestCase):
         branches = [r.get("branch") for r in json.loads(out.stdout)["runs"]]
         self.assertNotIn("012-done", branches)
 
+    def test_runs_skips_aborted_runs_too(self):
+        # FR-017: resume refuses an aborted run, so runs must not list it
+        self.box.worktree_run(
+            "013-aborted",
+            v4_state(status="aborted", ended_at="2026-10-23T12:00:00Z"),
+        )
+        out = self.box.cli("runs")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        branches = [r.get("branch") for r in json.loads(out.stdout)["runs"]]
+        self.assertNotIn(
+            "013-aborted", branches, "an aborted run never appears in runs"
+        )
+
 
 class ShowTests(unittest.TestCase):
     def setUp(self):
@@ -100,6 +115,51 @@ class ShowTests(unittest.TestCase):
         out = self.box.cli("show", "020-gamma")
         self.assertEqual(out.returncode, 3)
         self.assertIn("several", out.stderr)
+
+    def test_show_digest_aggregates_come_from_totals_alone(self):
+        # FR-015: with overlapping spawns the summed parallel duplicates are
+        # gone; the union totals are the only elapsed aggregates
+        self.box.worktree_run(
+            "025-overlap",
+            v4_state(
+                ledger=[
+                    {
+                        "at": "2026-10-23T10:00:00Z",
+                        "stage": "implement",
+                        "role": "code-build",
+                        "harness": "opencode",
+                        "started_at": "2026-10-23T10:00:00Z",
+                        "ended_at": "2026-10-23T10:05:00Z",
+                        "duration_ms": 300000,
+                        "in_est": 0,
+                        "out_est": 0,
+                        "reported": None,
+                    },
+                    {
+                        "at": "2026-10-23T10:01:00Z",
+                        "stage": "review",
+                        "role": "code-standards",
+                        "harness": "opencode",
+                        "started_at": "2026-10-23T10:01:00Z",
+                        "ended_at": "2026-10-23T10:04:00Z",
+                        "duration_ms": 180000,
+                        "in_est": 0,
+                        "out_est": 0,
+                        "reported": None,
+                    },
+                ],
+            ),
+        )
+        out = self.box.cli("show", "025-overlap")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        digest = json.loads(out.stdout)
+        self.assertNotIn("human_ms", digest["waits"], "the summed duplicate is gone")
+        self.assertNotIn("agent_ms", digest["spawns"], "the summed duplicate is gone")
+        self.assertEqual(
+            digest["totals"]["agent_ms"],
+            300000,
+            "the union of the overlapping intervals, never their sum",
+        )
 
     def test_show_missing_recorded_worktree_exits_four(self):
         self.box.worktree_run(
@@ -228,6 +288,87 @@ class UsageTests(unittest.TestCase):
     def test_missing_argument_exits_five(self):
         self.assertEqual(self.box.cli("show").returncode, 5)
         self.assertEqual(self.box.cli("runs", "--repo").returncode, 5)
+
+
+class EndedPendingRunTests(unittest.TestCase):
+    """FR-009: the ended-status skip applies to pending-run selection too;
+    an ended pending run can never be mutated."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.box.pending_run(
+            "050-ended",
+            v4_state(
+                status="pr-open",
+                pr_url="https://x/pr/9",
+                ended_at="2026-10-23T12:00:00Z",
+            ),
+        )
+
+    def test_write_to_ended_pending_run_is_refused_with_the_status_named(self):
+        out = self.box.cli("ledger-add", "plan", "spec-builder")
+        self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+        message = out.stderr + out.stdout
+        self.assertIn("pr-open", message, "the refusal names the ended status")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+
+    def test_aborted_pending_run_is_refused_too(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        box.pending_run(
+            "051-aborted",
+            v4_state(status="aborted", ended_at="2026-10-23T12:00:00Z"),
+        )
+        out = box.cli("ledger-add", "plan", "spec-builder")
+        self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+        self.assertIn("aborted", out.stderr + out.stdout)
+
+
+class LedgerTimestampTests(unittest.TestCase):
+    """FR-007: a malformed --started-at/--ended-at is a usage refusal (exit 5)
+    naming the offending value, never a traceback; the value never reaches the
+    duration arithmetic."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run("030-ledger", v4_state())
+
+    def run_ledger_add(self, *extra):
+        return self.box.cli("ledger-add", "plan", "spec-builder", *extra, cwd=self.wt)
+
+    def assert_usage_refusal(self, out, value):
+        self.assertEqual(out.returncode, 5, out.stderr + out.stdout)
+        message = out.stderr + out.stdout
+        self.assertIn(value, message, "the message names the offending value")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+
+    def test_malformed_started_at_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add("--started-at", "yesterday"), "yesterday"
+        )
+
+    def test_malformed_ended_at_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add("--ended-at", "soon-ish"), "soon-ish"
+        )
+
+    def test_empty_timestamp_exits_five(self):
+        out = self.run_ledger_add("--started-at", "")
+        self.assertEqual(out.returncode, 5, out.stderr + out.stdout)
+        self.assertNotIn("Traceback", out.stderr + out.stdout)
+
+    def test_missing_flag_value_exits_five(self):
+        self.assertEqual(self.run_ledger_add("--started-at").returncode, 5)
+
+    def test_good_start_with_bad_end_exits_five(self):
+        self.assert_usage_refusal(
+            self.run_ledger_add(
+                "--started-at", "2026-10-22T14:00:00Z", "--ended-at", "later"
+            ),
+            "later",
+        )
 
 
 class ReplayTests(unittest.TestCase):
@@ -640,6 +781,55 @@ class CheckpointStagingTests(unittest.TestCase):
         self.assertIn("docs/bare.md", json.loads(out.stdout)["declared"])
 
 
+class CheckpointCommitFailureTests(unittest.TestCase):
+    """FR-011: a checkpoint whose git commit fails after the state write
+    exits 1 with 'state written, commit failed: <reason>', its JSON carrying
+    commit: null and commit_error; a retry of the same stage reuses the
+    pending history entry instead of appending a second one."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "070-ckpt"
+        self.wt = self.box.worktree_run(self.branch, v4_state())
+        self.state_path = self.wt / "specs" / self.branch / "factory" / "state.json"
+        self.gitdir = self.box.repo / ".git" / "worktrees" / f"wt-{self.branch}"
+
+    def block_git(self):
+        (self.gitdir / "index.lock").write_text("")
+
+    def unblock_git(self):
+        (self.gitdir / "index.lock").unlink()
+
+    def history(self):
+        return json.loads(self.state_path.read_text())["history"]
+
+    def test_failed_commit_is_reported_without_a_traceback(self):
+        self.block_git()
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        message = out.stderr + out.stdout
+        self.assertEqual(out.returncode, 1, message)
+        self.assertIn("state written, commit failed", message)
+        self.assertNotIn("Traceback", message, "no traceback at the user")
+        result = json.loads(out.stdout)
+        self.assertIsNone(result["commit"], "the failed commit is named null")
+        self.assertIn("commit_error", result)
+        self.assertEqual(self.history()[-1]["stage"], "plan", "the state was written")
+
+    def test_retry_reuses_the_pending_history_entry(self):
+        self.block_git()
+        first = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(first.returncode, 1, first.stderr + first.stdout)
+        self.unblock_git()
+        second = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(second.returncode, 0, second.stderr + second.stdout)
+        entries = [e for e in self.history() if e["stage"] == "plan"]
+        self.assertEqual(len(entries), 1, "the retry does not duplicate history")
+        self.assertIsNotNone(
+            entries[-1]["commit"], "the reused entry carries the retry's commit"
+        )
+
+
 class RebindTests(unittest.TestCase):
     """rebind <run> --worktree <path>: validate branch, rewrite stored paths (FR-012)."""
 
@@ -675,6 +865,26 @@ class RebindTests(unittest.TestCase):
         )
         self.assertEqual(Path(state["repo"]).resolve(), self.box.repo.resolve())
 
+    def test_rebind_refuses_an_ended_run_and_leaves_its_state_unchanged(self):
+        # FR-009: an ended run's stored paths are never rewritten
+        for status in ("pr-open", "aborted"):
+            with self.subTest(status=status):
+                branch = f"091-{status}"
+                wt = self.box.worktree_run(
+                    branch,
+                    v4_state(
+                        branch=branch, status=status, ended_at="2026-10-23T12:00:00Z"
+                    ),
+                )
+                path = wt / "specs" / branch / "factory" / "state.json"
+                before = path.read_text()
+                out = self.box.cli(
+                    "rebind", branch, "--worktree", str(wt), cwd=self.box.repo
+                )
+                self.assertEqual(out.returncode, 1, out.stderr + out.stdout)
+                self.assertIn(status, out.stderr, "the refusal names the status")
+                self.assertEqual(path.read_text(), before, "the state is unchanged")
+
     def test_rebind_refuses_a_missing_worktree_with_exit_four(self):
         out = self.box.cli(
             "rebind",
@@ -702,6 +912,29 @@ class RebindTests(unittest.TestCase):
             "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
         )
         self.assertEqual(out.returncode, 3)
+
+    def test_rebind_under_a_live_lock_refuses_without_a_traceback(self):
+        # FR-008: the rewrite goes through the single writer, so a competing
+        # lock is refused by name instead of written over or crashing
+        wt_new = self.moved_worktree()
+        guard = self.state_path(wt_new).parent / "lock.json"
+        guard.write_text(
+            json.dumps(
+                {
+                    "owner_pid": os.getpid(),
+                    "host": socket.gethostname(),
+                    "harness": "opencode",
+                    "at": "2026-10-23T12:00:00Z",
+                }
+            )
+        )
+        out = self.box.cli(
+            "rebind", self.branch, "--worktree", str(wt_new), cwd=self.box.repo
+        )
+        message = out.stderr + out.stdout
+        self.assertEqual(out.returncode, 1, message)
+        self.assertIn("locked by", message, "the writer's refusal reports the owner")
+        self.assertNotIn("Traceback", message, "no traceback at the user")
 
 
 class PruneTests(unittest.TestCase):

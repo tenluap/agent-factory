@@ -91,7 +91,7 @@ class RenderAgentTests(unittest.TestCase):
                 "XDG_CONFIG_HOME": "~/.config",
             }
             with patch.object(render, "ROOT", root), patch.dict(os.environ, env):
-                _, out, _ = render.render("opencode")
+                out = render.render("opencode")
             role_files = sorted((root / "core/roles").glob("*.md"))
             self.assertEqual(len(list((out / "agents").glob("*.md"))), len(role_files))
             for role_file in role_files:

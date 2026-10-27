@@ -196,6 +196,39 @@ class UnionTests(unittest.TestCase):
         self.assertGreater(t["human_ms"] + t["agent_ms"], 0)
 
 
+class OpenRunTests(unittest.TestCase):
+    """FR-016: totals for an open run (no ended_at) measure wall clock from
+    the recorded start to now instead of reporting zero."""
+
+    def test_open_run_measures_wall_clock_to_now(self):
+        before = totals.compute(run("2026-10-23T10:00:00Z", None))
+        self.assertGreater(before["wall_ms"], 0, "an open run's wall clock is not zero")
+        after = totals.compute(run("2026-10-23T10:00:00Z", None))
+        self.assertGreaterEqual(
+            after["wall_ms"], before["wall_ms"], "wall clock grows with now"
+        )
+
+    def test_open_run_stays_bounded_when_started(self):
+        self.assertTrue(totals.compute(run("2026-10-23T10:00:00Z", None))["bounded"])
+
+    def test_open_run_effort_stays_within_wall_clock(self):
+        t = totals.compute(
+            run(
+                "2026-10-23T10:00:00Z",
+                None,
+                timeline=(wait("2026-10-23T10:00:30Z", "2026-10-23T10:01:30Z", 60000),),
+                spawns=(
+                    ledger("2026-10-23T10:00:00Z", "2026-10-23T10:05:00Z", 300000),
+                ),
+            )
+        )
+        self.assertLessEqual(
+            t["human_ms"] + t["agent_ms"],
+            t["wall_ms"],
+            "human + agent never exceed the open run's wall clock",
+        )
+
+
 class SentenceTests(unittest.TestCase):
     def test_sentence_format_names_all_parts(self):
         t = totals.compute(

@@ -32,9 +32,21 @@ _Avoid_: plugin, backend
 The per-harness skill and agent files produced from the core and the adapters, tracked in the repository and installed from it.
 _Avoid_: build output, artifacts, dist
 
+**Per-user render**:
+A harness tree rendered for one user's factory home with their personal model overrides merged, distinct from the tracked rendered distribution; what their harness directories link to.
+_Avoid_: personal dist, user build, local copy
+
+**Effective model report**:
+The per-role list of model ids the installed agents will actually use, resolved for one user's factory home.
+_Avoid_: models dump, config summary, model list
+
 **Relay**:
 The orchestrator carrying a role's whole question batch to the user and the answers back to a fresh agent for the same stage.
 _Avoid_: round trip, handoff, callback
+
+**Open relay round**:
+A relay round holding at least one unanswered question, awaiting the user's answers.
+_Avoid_: pending round, active round
 
 **Envelope**:
 The single fenced JSON block a role ends every turn with, carrying its status, files, questions and counts.
