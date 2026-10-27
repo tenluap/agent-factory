@@ -1,0 +1,1 @@
+{"reviewer":"security","round":2,"summary":"Round-1 blocking finding is fixed: `worktree_work_commit` is used by both `cmd_issue_add` and `overrun_issue` and introduces no injection, secret, trust-boundary or resource defect; new tests pass (13 OK).","findings":[]}
