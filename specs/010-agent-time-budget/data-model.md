@@ -49,7 +49,7 @@ Append-only record of one thing that went wrong, in `state.json` `issues[]` (sch
 - `cause` is `null` for kinds other than `overrun`; for `overrun` it is required and comes from the six self-report causes plus `unreported` (detected only).
 - `duration_ms` the measured duration the issue is about; `commit` the worktree HEAD at record time (null where no worktree applies), the provenance behind the stall rule.
 - Validation: kinds/causes are closed vocabularies with the offending location named; `issues[]` is append-only (the writer only appends; FR-008).
-- Relationships: one issue per event (dedupe is structural in `ledger-add`); three consecutive `overrun` issues of one stage sharing one `commit` are three stalled stops → halt (FR-004).
+- Relationships: one issue per event (dedupe is structural in `ledger-add`); three consecutive stop-and-resume records — `overrun` or `retry` — of one stage sharing one `commit` are three stalled returns → halt (FR-004). Every `partial` return whatever its stop reason counts; records of the never-stopped roles (reviewers, judge, orchestrator) never count.
 
 ### Improvement backlog
 
@@ -73,7 +73,7 @@ Run-end export, `${FACTORY_HOME}/improvements/<repo-name>-<branch>.json`:
 
 ### Partial return
 
-A file-writing role's (spec-builder, code-build, fixer) stopped-but-committed result: `status: "partial"` with `summary` naming the resume point and, for a deadline stop, an `overrun` report. Consumed by the orchestrator as a re-spawn instruction; the stall rule reads its recorded issue.
+A file-writing role's (spec-builder, code-build, fixer) stopped-but-committed result: `status: "partial"` with `summary` naming the resume point and, for a deadline stop, an `overrun` report. Consumed by the orchestrator as a re-spawn instruction. Every partial return is recorded as exactly one issue — a deadline stop as `overrun` (cause from the self-report, `unreported` when the report is missing), any other stop reason (e.g. low context) as `retry` — and the stall rule reads that record.
 
 ### Benchmark score
 
@@ -111,5 +111,5 @@ One run's measured outcome, emitted by `tools/bench.py score`:
 ## State schema change (v5)
 
 - `version: 5`; readers accept 1–5; first write upgrades in the same atomic write.
-- New top-level field: `issues[]` only. No existing field changes shape.
+- New top-level field: `issues[]` only. Every v4 key keeps its name and shape — the additive shape that keeps readers predating this feature working (SC-002).
 - No state transition changes: `history` events, statuses, stages keep their closed vocabularies; issue recording rides existing writer commands (`issue-add`, `ledger-add`, `set-status halted`, `verify --fail`).

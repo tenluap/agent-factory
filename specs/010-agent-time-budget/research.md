@@ -25,11 +25,11 @@ Phase 0 output. Every decision below was settled in the brief (brainstorm/grill 
 - **Rationale**: "recorded once" (FR-006, edge case 1) becomes structural instead of an orchestrator convention; the writer sees both signals in one locked write.
 - **Alternatives considered**: orchestrator-side dedupe (relies on prompt discipline, untestable); a separate `issue-dedupe` command (extra surface).
 
-## 5. Stall cap bookkeeping (FR-004, G1)
+## 5. Stall cap bookkeeping (FR-004, G1, grill-with-docs Q1)
 
-- **Decision**: every issue recorded for a deadline stop carries `commit` = worktree HEAD at record time. `issue-add`/`ledger-add` return `stalls: { "stage", "consecutive_no_commit", "cap": 3, "halt": <bool> }` for `overrun` issues: consecutive `overrun` issues of one stage with an identical `commit`. At 3 the orchestrator runs `set-status halted --halt-reason ...`, NOTIFYs and asks. Any stop carrying a new commit resets the count, so progress is uncapped.
-- **Rationale**: the count must survive resume and cross sessions (constitution IV), so it derives from append-only state rather than agent memory; the `commit` field is the minimal provenance that makes "no new commit between them" checkable.
-- **Alternatives considered**: a `partial_stops` state field (adds a second schema field beyond `issues[]`); counting low-context `partial` returns too (they are not deadline stops and already commit progress; the cap targets deadline-stop loops).
+- **Decision**: every `partial` return of a stage counts toward the three-strike stall cap when no new commit lands between them, whatever its stop reason (grill-with-docs Q1; FR-004 is the authority). Every `partial` return is recorded as exactly one issue: a deadline stop as `overrun` (cause from the self-report, `unreported` when the report is missing), any other stop reason (e.g. low context) as `retry` — the same record a failure-policy retry uses, since both are a stage stopped and re-spawned. Every counted record carries `commit` = worktree HEAD at record time. `issue-add`/`ledger-add` return `stalls: { "stage", "consecutive_no_commit", "cap": 3, "halt": <bool> }` for records that count: trailing `overrun`/`retry` issues of one stage whose role is a file-writing role (spec-builder, code-build, fixer), sharing one `commit`. At 3 the orchestrator runs `set-status halted --halt-reason ...`, NOTIFYs and asks. Any new commit resets the count, so committed progress is uncapped. Records of the never-stopped roles (reviewers, judge, orchestrator) never count — those roles never return `partial`, so their records are post-hoc detections — and neither do `agent-failure`, `halt` or `verify-fail`, which end or diagnose the run instead of resuming a stage.
+- **Rationale**: the count must survive resume and cross sessions (constitution IV), so it derives from append-only state rather than agent memory; the `commit` field is the minimal provenance that makes "no new commit between them" checkable. The counted set keys on kind and role, not on `cause`: `unreported` cannot distinguish a deadline stop whose report was missing from a slow finish, and both are overrun records of a role that can be stopped — the settlement excludes by role (never-stopped roles never count), not by cause.
+- **Alternatives considered**: counting deadline stops only (the earlier narrowing — rejected by grill-with-docs Q1: a loop of non-deadline `partial` returns with no new commit must halt too); a `partial_stops` state field (adds a second schema field beyond `issues[]`); keying the count on the `unreported` cause (it cannot tell a deadline stop from a slow finish).
 
 ## 6. State schema v5
 
@@ -38,8 +38,8 @@ Phase 0 output. Every decision below was settled in the brief (brainstorm/grill 
 
 ## 7. Existing event paths (FR-010)
 
-- **Decision**: `set-status halted` records `halt` (detail = `--halt-reason`) and `verify --fail` records `verify-fail` inside the writer; the orchestrator's failure policy records `retry` and `agent-failure` via `factory issue-add <kind> <stage> <role> --cause --detail --duration-ms`.
-- **Rationale**: two of the four paths are writer-owned already, so their issues cannot be forgotten; the two failure-policy events need the spawn context only the orchestrator has.
+- **Decision**: `set-status halted` records `halt` (detail = `--halt-reason`) and `verify --fail` records `verify-fail` inside the writer; the orchestrator's failure policy records `retry` and `agent-failure` via `factory issue-add <kind> <stage> <role> --detail --duration-ms [--cause] [--commit]` (the contract in `contracts/cli.md`; spec FR-008's older signature wording lags it — see plan.md "Spec alignment follow-ups"). A `partial` return's stop is recorded the same way: a deadline stop as `overrun` (via `ledger-add --overrun`/`issue-add`), any other stop reason as `retry` (§5).
+- **Rationale**: two of the four paths are writer-owned already, so their issues cannot be forgotten; the two failure-policy events and the non-deadline partial stop need the spawn context only the orchestrator has.
 
 ## 8. Backlog export (FR-011)
 

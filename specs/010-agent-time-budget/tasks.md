@@ -27,9 +27,9 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 
 **⚠️ CRITICAL**: no user story work begins until this phase is complete.
 
-- [ ] T002 [P] Failing test for seam: state schema v5 — `issues[]` validation, read acceptance of schema 1–5, v5 upgrade on first write, append-only — in `tools/tests/test_state.py` with fixture `tools/tests/fixtures/state-v5.json`
+- [ ] T002 [P] Failing test for seam: state schema v5 — `issues[]` validation, read acceptance of schema 1–5, v5 upgrade on first write with additive shape (every v4 key keeps its name and shape, `issues[]` the only new top-level key), append-only — in `tools/tests/test_state.py` with fixture `tools/tests/fixtures/state-v5.json`
 - [ ] T003 Implement schema v5 in `core/skills/factory/bin/factory_cli/state.py` — `VERSION` 5, issue record validation (closed kind/cause vocabularies naming the offending location), upgrade (seam: state schema v5) (depends: T002)
-- [ ] T004 [P] Failing test for seam: issue-add writer — the shared writer issue append path: one record per event, closed kinds `overrun|agent-failure|retry|halt|verify-fail`, cause required for `overrun`, stall rule result — in `tools/tests/test_issues.py`
+- [ ] T004 [P] Failing test for seam: issue-add writer — the shared writer issue append path: one record per event, closed kinds `overrun|agent-failure|retry|halt|verify-fail`, cause required for `overrun`, stall rule result over every partial-return record (`overrun`/`retry` of a file-writing role counts whatever the stop reason; never-stopped roles' records never count) — in `tools/tests/test_issues.py`
 - [ ] T005 Implement `factory issue-add <kind> <stage> <role> --detail --duration-ms [--cause] [--commit]` and the shared `append_issue(...)` helper with stall counting (`stalls.consecutive_no_commit`, cap 3) in `core/skills/factory/bin/factory_cli/commands.py`, routed in `core/skills/factory/bin/factory_cli/cli.py` (seam: issue-add writer) (depends: T004, T003)
 
 **Checkpoint**: foundation ready — user stories can begin.
@@ -50,7 +50,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 - [ ] T011 [US1] Implement envelope `overrun` validation in `core/skills/factory/bin/factory_cli/checks.py` (seam: envelope partial/overrun shape) (depends: T010)
 - [ ] T012 [US1] Extend `core/skills/factory/references/protocol.md`: `partial` valid for all file-writing roles (spec-builder, code-build, fixer), `overrun: { "cause", "detail" }` with the closed cause list and the overshoot in `detail` — Exempt: `core/skills/factory/references/*.md` - agent instructions only, no executable behavior.
 - [ ] T013 [US1] Add "check the clock between units of work; past the deadline finish the unit in flight, commit, return `partial` with the overrun report" to `core/roles/spec-builder.md`, `core/roles/code-build.md`, `core/roles/fixer.md` — Exempt: `core/roles/*.md` - agent instructions only.
-- [ ] T014 [US1] Extend `core/skills/factory/SKILL.md`: run `factory budget <role>` before every SPAWN/SPAWN_PARALLEL and pass `deadline` in the inputs; re-spawn a `partial` with the same inputs; halt after three deadline stops of one stage with no new commit; record orchestrator verify overruns without stopping anything — Exempt: `core/skills/factory/SKILL.md` - agent instructions only.
+- [ ] T014 [US1] Extend `core/skills/factory/SKILL.md`: run `factory budget <role>` before every SPAWN/SPAWN_PARALLEL and pass `deadline` in the inputs; re-spawn a `partial` with the same inputs, recording its stop as one issue (`overrun` for a deadline stop, `retry` for any other stop reason); halt after three partial returns of one stage with no new commit, whatever the stop reason, never counting never-stopped roles' records; record orchestrator verify overruns without stopping anything — Exempt: `core/skills/factory/SKILL.md` - agent instructions only.
 
 **Checkpoint**: US1 functional — deadlines bind spawns, overruns stop and resume correctly.
 

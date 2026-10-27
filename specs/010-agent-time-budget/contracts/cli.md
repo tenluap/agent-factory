@@ -42,18 +42,20 @@ Refusals (exit 1, message naming the problem or the run): unknown name; status n
 
 ### `factory issue-add <kind> <stage> <role> --detail <text> --duration-ms <n> [--cause <cause>] [--commit <sha>]`
 
-Appends one issue to `issues[]` (FR-008). `<kind>` ∈ `overrun` | `agent-failure` | `retry` | `halt` | `verify-fail`; `<stage>` in the stage vocabulary; `--cause` is required for `overrun` and must be one of `large-input`, `test-loop`, `retry`, `tool-slow`, `scope-too-big`, `other`, `unreported`; for other kinds it is optional (stored `null`). `--commit` defaults to the worktree HEAD. Refuses an unknown kind/cause or a non-integer duration (exit 1, named reason). For `kind: overrun` the result carries the stall rule:
+Appends one issue to `issues[]` (FR-008). `<kind>` ∈ `overrun` | `agent-failure` | `retry` | `halt` | `verify-fail`; `<stage>` in the stage vocabulary; `--cause` is required for `overrun` and must be one of `large-input`, `test-loop`, `retry`, `tool-slow`, `scope-too-big`, `other`, `unreported`; for other kinds it is optional (stored `null`). `retry` records every re-spawn of a stage after a stopped return: a failure-policy retry (FR-010) and a non-deadline `partial` stop (e.g. low context) alike. `--commit` defaults to the worktree HEAD. Refuses an unknown kind/cause or a non-integer duration (exit 1, named reason). For a record that counts toward the stall cap — kind `overrun` or `retry` of a file-writing role (spec-builder, code-build, fixer) — the result carries the stall rule:
 
 ```json
 { "added": { "kind": "overrun", "stage": "implement", "role": "code-build" },
   "stalls": { "stage": "implement", "consecutive_no_commit": 2, "cap": 3, "halt": false } }
 ```
 
-`stalls.consecutive_no_commit` counts trailing `overrun` issues of that stage sharing one `commit`; `halt: true` at 3 is the orchestrator's instruction to `set-status halted` (FR-004).
+`stalls.consecutive_no_commit` counts trailing `overrun`/`retry` issues of that stage sharing one `commit` — every `partial` return whatever its stop reason counts toward the three (FR-004, grill-with-docs Q1), and so does a failure-policy retry of a resumable role. Records of the never-stopped roles (reviewers, judge, orchestrator) never count, and neither do `agent-failure`, `halt` or `verify-fail`. Any new commit resets the count. `halt: true` at 3 is the orchestrator's instruction to `set-status halted` (FR-004).
+
+Spec alignment: spec FR-008's wording (`--cause` in the signature; records "carry kind, stage, role, cause, detail and duration") predates this contract — this signature's optional `--cause`/`--commit` and the record's `at`/`commit` are the authoritative superset (the `commit` provenance is what makes FR-004 checkable). The spec-side wording update is tracked in plan.md "Spec alignment follow-ups".
 
 ### `factory ledger-add <stage> <role> [--started-at ...] [--ended-at ...] [--in-est N] [--out-est N] [--reported '<json>'] [--overrun '<json>']`
 
-Unchanged fields plus `--overrun '<json>'` carrying the role's self-report `{ "cause", "detail" }`. After the ledger entry is appended the writer records **exactly one** issue when either signal holds: `--overrun` present → cause/detail from it; otherwise duration > role budget → `kind: overrun`, `cause: unreported`, detail naming the detected overrun; neither → no issue. The result carries `"issue"` and, for overruns, `"stalls"` as above (FR-006).
+Unchanged fields plus `--overrun '<json>'` carrying the role's self-report `{ "cause", "detail" }`. After the ledger entry is appended the writer records **exactly one** issue when either signal holds: `--overrun` present → cause/detail from it; otherwise duration > role budget → `kind: overrun`, `cause: unreported`, detail naming the detected overrun; neither → no issue. The result carries `"issue"` and, for records that count toward the stall cap, `"stalls"` as above (FR-006).
 
 ### `factory set-status halted ...` / `factory verify --fail --commands '<json>'`
 
