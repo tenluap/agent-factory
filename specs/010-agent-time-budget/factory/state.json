@@ -619,6 +619,18 @@
       "duration_ms": 119000,
       "started_at": "2026-10-27T12:22:45Z",
       "ended_at": "2026-10-27T12:24:44Z"
+    },
+    {
+      "at": "2026-10-27T12:34:16.591067Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 30000,
+      "out_est": 5000,
+      "reported": null,
+      "duration_ms": 572000,
+      "started_at": "2026-10-27T12:24:44Z",
+      "ended_at": "2026-10-27T12:34:16Z"
     }
   ],
   "review": {
