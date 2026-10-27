@@ -17,7 +17,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 
 **Purpose**: behaviour source of truth first (constitution I).
 
-- [ ] T001 Record the "Time budget, issues, improvement backlog, benchmark" behaviour section in `DESIGN.md` first — Exempt: `DESIGN.md` - documentation only, no executable behavior.
+- [X] T001 Record the "Time budget, issues, improvement backlog, benchmark" behaviour section in `DESIGN.md` first — Exempt: `DESIGN.md` - documentation only, no executable behavior.
 
 ---
 
