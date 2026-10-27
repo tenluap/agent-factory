@@ -247,6 +247,14 @@
       "auto": false,
       "at": "2026-10-27T07:15:46.587467Z",
       "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "ESCALATE",
+      "answer": "full: user chose escalation to full chain after analyze pass 1 (2 HIGH). mode.chain stays lite in state: CLI has no chain-update command (factory gap).",
+      "auto": false,
+      "at": "2026-10-27T07:34:42.549331Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
