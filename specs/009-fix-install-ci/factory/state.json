@@ -9,7 +9,7 @@
   "branch": "009-fix-install-ci",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/009-fix-install-ci",
   "spec_dir": "specs/009-fix-install-ci",
-  "status": "waiting_user",
+  "status": "running",
   "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
