@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import checks, lock, state, totals
+from factory_cli import budget, checks, improvements, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -149,9 +149,8 @@ def worktree_states(repo):
 
 
 def pending_states(repo):
-    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
     repo_real = os.path.realpath(repo)
-    for path in sorted((home / "pending").glob("*.json")):
+    for path in sorted((factory_home() / "pending").glob("*.json")):
         loaded, error = state.read_state(path)
         if error:
             print(
@@ -344,6 +343,48 @@ def cmd_validate(repo, name=None, all_runs=False):
         die(5, "validate needs a run name or --all")
     _, loaded, _ = one_run(repo, name)
     return state.validate_state(loaded)
+
+
+def factory_home():
+    """The harness-neutral factory home (${FACTORY_HOME:-~/.factory})."""
+    return Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+
+
+def read_config():
+    """The user's ${FACTORY_HOME}/config.json, {} when missing or malformed."""
+    try:
+        return json.loads((factory_home() / "config.json").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def cmd_budget(role):
+    """The role's resolved budget and derived deadline (FR-001); a missing or
+    malformed config falls back to the default and never fails."""
+    seconds = budget.resolve(role, read_config())
+    return {
+        "role": role,
+        "seconds": seconds,
+        "deadline": budget.deadline_for(seconds),
+    }
+
+
+def cmd_improvements():
+    """Every ready-or-claimed backlog in the factory home (FR-013)."""
+    return improvements.list_backlogs(factory_home())
+
+
+def cmd_improvements_claim(repo, name):
+    """Claim one backlog (FR-012), refusing a source run that has not ended."""
+    runs = [
+        (r[1].get("branch") or r[0].stem, r[1].get("status"))
+        for r in deduped(find_runs(repo))
+        if not isinstance(r, dict)
+    ]
+    try:
+        return improvements.claim(factory_home(), name, source_runs=runs)
+    except improvements.ClaimError as e:
+        die(1, str(e))
 
 
 # ---------------------------------------------------------------- writers ---
@@ -655,6 +696,109 @@ def cmd_analyze_record(repo, cwd, envelope):
     }
 
 
+def append_issue(state_dict, record):
+    """The single issue append path (FR-008): one record per event onto the
+    append-only `issues` list. Returns the record now in the list."""
+    issues = state_dict.get("issues") or []
+    record = dict(record)
+    issues.append(record)
+    state_dict["issues"] = issues
+    return record
+
+
+def stall_rule(state_dict, stage, cap=3):
+    """The stall rule result over every record marked `partial_return: true`
+    of `stage` (FR-004): trailing marked records sharing one `commit`; any
+    new commit resets the count. Records of other stages never break the
+    chain, and unmarked records (failure-policy retries, post-hoc
+    detections) add nothing."""
+    trailing, commit = 0, None
+    for entry in reversed(state_dict.get("issues") or []):
+        if not isinstance(entry, dict) or entry.get("stage") != stage:
+            continue
+        if not entry.get("partial_return"):
+            continue
+        if commit is None:
+            commit = entry.get("commit")
+        elif entry.get("commit") != commit:
+            break
+        trailing += 1
+    return {
+        "stage": stage,
+        "consecutive_no_commit": trailing,
+        "cap": cap,
+        "halt": trailing >= cap,
+    }
+
+
+def cmd_issue_add(
+    repo,
+    cwd,
+    kind,
+    stage,
+    role,
+    detail,
+    duration_ms,
+    cause=None,
+    commit=None,
+    partial_return=False,
+):
+    """Append one issue (FR-008); a marked record reports the stall rule."""
+    if kind not in state.ISSUE_KINDS:
+        die(
+            1,
+            f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.ISSUE_KINDS)}",
+        )
+    if stage not in state.STAGES:
+        die(
+            1,
+            f"'{stage}' is off-vocabulary; expected one of: {', '.join(state.STAGES)}",
+        )
+    if kind == "overrun" and cause not in state.OVERRUN_CAUSES:
+        die(
+            1,
+            f"overrun needs --cause from: {', '.join(state.OVERRUN_CAUSES)}"
+            f" (got {cause!r})",
+        )
+    if kind != "overrun":
+        cause = None  # stored null for kinds other than overrun
+    if partial_return and (
+        kind not in state.PARTIAL_RETURN_KINDS or role not in state.PARTIAL_RETURN_ROLES
+    ):
+        die(
+            1,
+            "the partial_return mark is accepted only for overrun/retry of "
+            "the file-writing roles (spec-builder, code-build, fixer)",
+        )
+    path, loaded, source, worktree = resolve_target(repo, cwd)
+    record = {
+        "at": now_iso(),
+        "kind": kind,
+        "stage": stage,
+        "role": role,
+        "cause": cause,
+        "detail": detail,
+        "duration_ms": duration_ms,
+        "commit": commit,
+        "partial_return": bool(partial_return),
+    }
+    if record["commit"] is None and worktree:
+        record["commit"] = worktree_work_commit(worktree)
+
+    def mutate(s):
+        append_issue(s, record)
+        return s
+
+    updated = write_run(path, loaded, mutate)
+    commit_worktree(
+        worktree, f"factory: issue-add {kind} {stage}", loaded.get("spec_dir")
+    )
+    result = {"added": {"kind": kind, "stage": stage, "role": role}}
+    if record["partial_return"]:
+        result["stalls"] = stall_rule(updated, stage)
+    return result
+
+
 def cmd_ledger_add(
     repo,
     cwd,
@@ -665,12 +809,17 @@ def cmd_ledger_add(
     in_est=0,
     out_est=0,
     reported=None,
+    overrun=None,
+    partial_return=False,
 ):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     start, end = started_at or now, ended_at or started_at or now
     duration = max(
         int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
+    )
+    issue = overrun_issue(
+        loaded, worktree, stage, role, duration, overrun, partial_return
     )
 
     def mutate(s):
@@ -688,11 +837,70 @@ def cmd_ledger_add(
                 "ended_at": end,
             }
         ]
+        if issue is not None:
+            # self-report and detection meet in overrun_issue: one spawn,
+            # one record (FR-006); every call is a distinct spawn
+            append_issue(s, issue)
         return s
 
-    write_run(path, loaded, mutate)
+    updated = write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: ledger-add {stage}", loaded.get("spec_dir"))
-    return {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+    result = {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+    if issue is not None:
+        result["issue"] = issue
+        if issue["partial_return"]:
+            result["stalls"] = stall_rule(updated, stage)
+    return result
+
+
+def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_return):
+    """The one issue a ledger-add records (FR-006), or None: the self-report
+    wins; else a duration over the role's budget yields cause `unreported`;
+    neither signal records nothing. `--partial-return` marks the spawn as a
+    partial return, subject to the shared mark rules."""
+    if partial_return and role not in state.PARTIAL_RETURN_ROLES:
+        die(
+            1,
+            "the partial_return mark is accepted only for overrun/retry of "
+            "the file-writing roles (spec-builder, code-build, fixer)",
+        )
+    cause = detail = None
+    if overrun is not None:
+        if not isinstance(overrun, dict):
+            die(1, "--overrun needs a JSON object with cause and detail")
+        cause = overrun.get("cause")
+        detail = overrun.get("detail")
+        if cause not in state.OVERRUN_CAUSES:
+            die(
+                1,
+                f"--overrun cause {cause!r} is off-vocabulary; expected one "
+                f"of: {', '.join(state.OVERRUN_CAUSES)}",
+            )
+        if not isinstance(detail, str) or not detail:
+            die(1, "--overrun needs a non-empty detail")
+    else:
+        seconds = budget.resolve(role, read_config())
+        if duration <= seconds * 1000:
+            return None
+        cause = "unreported"
+        detail = (
+            f"{role} ran {duration // 1000}s past its {seconds}s budget "
+            "without a self-report"
+        )
+    record = {
+        "at": now_iso(),
+        "kind": "overrun",
+        "stage": stage,
+        "role": role,
+        "cause": cause,
+        "detail": detail,
+        "duration_ms": duration,
+        "commit": None,
+        "partial_return": bool(partial_return),
+    }
+    if record["commit"] is None and worktree:
+        record["commit"] = worktree_work_commit(worktree)
+    return record
 
 
 def cmd_wait_open(repo, cwd, kind, stage, summary):
@@ -769,6 +977,24 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
     return {"answered": qid, "auto": bool(auto)}
 
 
+def worktree_work_commit(worktree):
+    """The worktree's latest non-`factory:` commit, or None without one.
+
+    The writers' own `factory:` commits move HEAD on every call, so the stall
+    rule (FR-004) keys on the last commit the work itself made."""
+    if not worktree:
+        return None
+    out = git(
+        worktree,
+        "log",
+        "-1",
+        "--format=%h",
+        "--grep=^factory:",
+        "--invert-grep",
+    ).strip()
+    return out or None
+
+
 def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     if status not in state.STATUSES:
         die(
@@ -781,11 +1007,25 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
         die(1, "set-status halted needs --halt-reason")
     if status == "pr-open" and not pr_url:
         die(1, "set-status pr-open needs --pr-url")
+    issue = None
+    if status == "halted":
+        issue = {
+            "at": now,
+            "kind": "halt",
+            "stage": loaded.get("stage"),
+            "role": "orchestrator",
+            "cause": None,
+            "detail": halt_reason,
+            "duration_ms": 0,
+            "commit": worktree_work_commit(worktree),
+            "partial_return": False,
+        }
 
     def mutate(s):
         s["status"] = status
         if status == "halted":
             s["halt_reason"] = halt_reason
+            append_issue(s, issue)
         if status == "pr-open":
             s["pr_url"] = pr_url
         if status in ("pr-open", "aborted"):
@@ -801,9 +1041,13 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
             ]
         return s
 
-    write_run(path, loaded, mutate)
+    updated = write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: set-status {status}", loaded.get("spec_dir"))
-    return {"status": status}
+    result = {"status": status}
+    if status in ("pr-open", "aborted"):
+        # FR-011: the structural gate — the backlog file exists only from here
+        result["improvements"] = str(improvements.export(factory_home(), updated))
+    return result
 
 
 def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
@@ -853,8 +1097,24 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"
+    issue = None
+    if not passed:
+        failing = [c for c, st in commands_payload if st]
+        issue = {
+            "at": now,
+            "kind": "verify-fail",
+            "stage": loaded.get("stage"),
+            "role": "orchestrator",
+            "cause": None,
+            "detail": ", ".join(failing or [c for c, _ in commands_payload]),
+            "duration_ms": 0,
+            "commit": worktree_work_commit(worktree),
+            "partial_return": False,
+        }
 
     def mutate(s):
+        if issue is not None:
+            append_issue(s, issue)
         s["history"] = (s.get("history") or []) + [
             {
                 "at": now,
@@ -986,7 +1246,7 @@ def stale_pending_files():
     worktree (the pending state records one) or the run has ended
     (pr-open/aborted). A run whose only state is the pending file — no
     recorded worktree, still running — is never stale."""
-    home = Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
+    home = factory_home()
     stale = []
     for path in sorted((home / "pending").glob("*.json")):
         loaded, error = state.read_state(path)

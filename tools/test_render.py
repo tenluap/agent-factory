@@ -4,11 +4,65 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import render
+
+
+class RenderHomeTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        shutil.copytree(render.ROOT / "core", self.root / "core")
+        self.enterContext(patch.object(render, "ROOT", self.root))
+        self.adapters = {
+            name: json.loads((render.ADAPTERS / name / "adapter.json").read_text())
+            for name in render.known()
+        }
+        env = {adapter["home"]["env"]: "" for adapter in self.adapters.values()}
+        env["FACTORY_HOME"] = str(self.root / "factory-home")
+        self.enterContext(patch.dict(os.environ, env))
+
+    def test_canonical_distribution_ignores_home_overrides(self):
+        for name, adapter in self.adapters.items():
+            with self.subTest(harness=name):
+                out = render.render(name)
+                expected = {
+                    path.relative_to(out): path.read_bytes()
+                    for path in out.rglob("*")
+                    if path.is_file()
+                }
+                env = {adapter["home"]["env"]: "/home/runner/.config"}
+                with patch.dict(os.environ, env):
+                    render.render(name)
+                actual = {
+                    path.relative_to(out): path.read_bytes()
+                    for path in out.rglob("*")
+                    if path.is_file()
+                }
+                self.assertEqual(actual.keys(), expected.keys())
+                for path in expected:
+                    self.assertEqual(actual[path], expected[path], str(path))
+
+    def test_out_preserves_home_overrides_in_agent_paths(self):
+        for name, adapter in self.adapters.items():
+            if "{home}" not in adapter["skill_dir"]:
+                continue
+            with self.subTest(harness=name):
+                home = str(self.root / "custom-home")
+                out = self.root / "user-dist" / name
+                env = {adapter["home"]["env"]: home}
+                argv = ["render.py", name, "--out", str(out)]
+                with patch.dict(os.environ, env), patch.object(sys, "argv", argv):
+                    render.main()
+                agents = list((out / "agents").iterdir())
+                self.assertTrue(agents)
+                for agent in agents:
+                    self.assertIn(adapter["skill_dir"].format(home=home), agent.read_text())
 
 
 class RenderAgentTests(unittest.TestCase):

@@ -1,9 +1,9 @@
 """State read, validate and atomic write: the single writer's core (FR-001..FR-004, FR-022).
 
-Readers accept versions 1-4 including legacy relay shapes and never rewrite
+Readers accept versions 1-5 including legacy relay shapes and never rewrite
 what they read. Writers validate first, refuse to rewrite the append-only
-`decisions` list, upgrade the run to the current version, and replace the
-file atomically (temp file + `os.replace` in the same directory).
+`decisions` and `issues` lists, upgrade the run to the current version, and
+replace the file atomically (temp file + `os.replace` in the same directory).
 """
 
 import json
@@ -13,7 +13,8 @@ from pathlib import Path
 
 from factory_cli import lock
 
-VERSION = 4
+VERSION = 5
+APPEND_ONLY = ("decisions", "issues")  # the writer only ever appends to these
 STATUSES = ("running", "waiting_user", "paused", "halted", "aborted", "pr-open")
 STAGES = (
     "brainstorm",
@@ -46,6 +47,20 @@ HISTORY_EVENTS = (
     "resumed",
 )
 DECISION_KINDS = ("answer", "approved", "gate-override")
+ISSUE_KINDS = ("overrun", "agent-failure", "retry", "halt", "verify-fail")
+# the six self-report causes plus `unreported` (detected only, never self-reported)
+OVERRUN_CAUSES = (
+    "large-input",
+    "test-loop",
+    "retry",
+    "tool-slow",
+    "scope-too-big",
+    "other",
+    "unreported",
+)
+# the mark is accepted only on these kinds of these file-writing roles
+PARTIAL_RETURN_KINDS = ("overrun", "retry")
+PARTIAL_RETURN_ROLES = ("spec-builder", "code-build", "fixer")
 COMMAND_STAGES = STAGES[
     STAGES.index("implement") :
 ]  # a run here and later carries commands
@@ -104,7 +119,7 @@ def validate_state(state):
 
     if not isinstance(state, dict):
         return [{"location": "", "reason": "state is not a JSON object"}]
-    if state.get("version") not in (1, 2, 3, VERSION):
+    if state.get("version") not in tuple(range(1, VERSION + 1)):
         bad(
             "version",
             f"unsupported version {state.get('version')!r}; readers accept 1-{VERSION}",
@@ -142,6 +157,7 @@ def validate_state(state):
     _check_timeline(state, bad)
     _check_ledger(state, bad)
     _check_relay(state, bad)
+    _check_issues(state, bad)
     return problems
 
 
@@ -294,6 +310,57 @@ def _check_ledger(state, bad):
             bad(f"ledger[{i}].ended_at", "spawn ends before it started")
 
 
+def _check_issues(state, bad):
+    """Well-formed issue records (schema v5): closed kind/cause vocabularies
+    naming the offending location, and the `partial_return` mark rules."""
+    issues = state.get("issues")
+    if issues is None:
+        return  # pre-v5 state: accepted and upgraded on first write
+    if not isinstance(issues, list):
+        bad("issues", "not a list")
+        return
+    for i, entry in enumerate(issues):
+        if not isinstance(entry, dict):
+            bad(f"issues[{i}]", "not an object")
+            continue
+        kind = entry.get("kind")
+        if kind not in ISSUE_KINDS:
+            bad(
+                f"issues[{i}].kind",
+                f"{kind!r} is off-vocabulary; expected one of: {', '.join(ISSUE_KINDS)}",
+            )
+        cause = entry.get("cause")
+        if kind == "overrun":
+            if cause not in OVERRUN_CAUSES:
+                bad(
+                    f"issues[{i}].cause",
+                    f"{cause!r} is off-vocabulary; expected one of: "
+                    f"{', '.join(OVERRUN_CAUSES)}",
+                )
+        elif cause is not None:
+            bad(f"issues[{i}].cause", f"cause is null for kind {kind!r}")
+        marked = entry.get("partial_return")
+        if not isinstance(marked, bool):
+            bad(f"issues[{i}].partial_return", "must be a boolean")
+        elif marked and (
+            kind not in PARTIAL_RETURN_KINDS
+            or entry.get("role") not in PARTIAL_RETURN_ROLES
+        ):
+            bad(
+                f"issues[{i}].partial_return",
+                "the mark is accepted only for overrun/retry of the "
+                "file-writing roles (spec-builder, code-build, fixer)",
+            )
+        duration = entry.get("duration_ms")
+        if duration is not None and (
+            not isinstance(duration, (int, float)) or duration < 0
+        ):
+            bad(f"issues[{i}].duration_ms", "negative or non-numeric duration")
+        at = parse_iso(entry.get("at"))
+        if entry.get("at") and not at:
+            bad(f"issues[{i}].at", "not an ISO-8601 UTC timestamp")
+
+
 def _check_relay(state, bad):
     relay = state.get("relay")
     if relay is None:
@@ -356,11 +423,13 @@ def _check_round(bad, location, one_round):
 
 
 def upgrade(state):
-    """The first-write upgrade to the current version: version 4, a decisions
-    list, and derived spawn intervals on ledger entries that lack them."""
+    """The first-write upgrade to the current version: version 5, a decisions
+    list, an `issues` list, and derived spawn intervals on ledger entries that
+    lack them."""
     state = dict(state)
     state["version"] = VERSION
     state.setdefault("decisions", [])
+    state.setdefault("issues", [])
     state["ledger"] = [_with_interval(entry) for entry in state.get("ledger") or []]
     return state
 
@@ -410,14 +479,17 @@ def write_state(path, state, mutate=None):
             raise StateError(f"refusing to write invalid state ({detail})")
         if path.exists():
             old, error = read_state(path)
-            if not error and isinstance(old.get("decisions"), list):
-                new = state.get("decisions") or []
-                recorded = old["decisions"]
-                if recorded != new[: len(recorded)]:
-                    raise StateError(
-                        "refusing to rewrite the append-only decisions list "
-                        f"({len(recorded)} recorded entries must persist unchanged)"
-                    )
+            if not error and isinstance(old, dict):
+                for key in APPEND_ONLY:
+                    if not isinstance(old.get(key), list):
+                        continue
+                    recorded = old[key]
+                    new = state.get(key) or []
+                    if recorded != new[: len(recorded)]:
+                        raise StateError(
+                            f"refusing to rewrite the append-only {key} list "
+                            f"({len(recorded)} recorded entries must persist unchanged)"
+                        )
         state = upgrade(state)
         text = json.dumps(state, indent=2, ensure_ascii=False) + "\n"
         tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")

@@ -1,8 +1,10 @@
 """State seam tests: the `factory_cli.state` module API (read, validate, write).
 
-Covers versions 1-4 read acceptance, legacy relay shapes, state copies in later
+Covers versions 1-5 read acceptance, legacy relay shapes, state copies in later
 worktrees, vocabulary and timestamp violations with their location, the atomic
-write, the first-write upgrade to v4 and the append-only `decisions` guard.
+write, the first-write upgrade to the current version, the append-only
+`decisions` guard, and the schema v5 `issues[]` validation and append-only
+guard.
 """
 
 import json
@@ -25,12 +27,13 @@ def fixture(name):
 
 
 class ReadAcceptanceTests(unittest.TestCase):
-    def test_read_accepts_versions_one_through_four(self):
+    def test_read_accepts_versions_one_through_five(self):
         for name, version in (
             ("state-v1.json", 1),
             ("state-v2.json", 2),
             ("state-v3.json", 3),
             ("state-v4.json", 4),
+            ("state-v5.json", 5),
         ):
             loaded, error = state.read_state(FIXTURES / name)
             self.assertIsNone(error, name)
@@ -143,6 +146,7 @@ class ValidationTests(unittest.TestCase):
             "state-v2.json",
             "state-v3.json",
             "state-v4.json",
+            "state-v5.json",
         ):
             self.assertEqual(state.validate_state(fixture(name)), [], name)
 
@@ -190,6 +194,69 @@ class ValidationTests(unittest.TestCase):
         )
 
 
+class IssueValidationTests(unittest.TestCase):
+    """Schema v5 `issues[]`: closed vocabularies naming the offending location
+    and the `partial_return` mark rules (data-model.md, Session issue)."""
+
+    def violations(self, mutate):
+        loaded = fixture("state-v5.json")
+        mutate(loaded)
+        return state.validate_state(loaded)
+
+    def locations(self, mutate):
+        return {v["location"]: v["reason"] for v in self.violations(mutate)}
+
+    def test_unknown_kind_names_the_record(self):
+        found = self.locations(lambda s: s["issues"][0].__setitem__("kind", "crash"))
+        self.assertIn("issues[0].kind", found)
+
+    def test_unknown_overrun_cause_names_the_record(self):
+        found = self.locations(lambda s: s["issues"][0].__setitem__("cause", "slow"))
+        self.assertIn("issues[0].cause", found)
+
+    def test_missing_cause_on_overrun_names_the_record(self):
+        found = self.locations(lambda s: s["issues"][0].__setitem__("cause", None))
+        self.assertIn("issues[0].cause", found)
+
+    def test_non_null_cause_on_non_overrun_kind_refused(self):
+        found = self.locations(
+            lambda s: s["issues"][2].__setitem__("cause", "test-loop")
+        )
+        self.assertIn("issues[2].cause", found)
+
+    def test_partial_return_refused_on_non_overrun_retry_kinds(self):
+        found = self.locations(
+            lambda s: s["issues"][2].__setitem__("partial_return", True)
+        )
+        self.assertIn("issues[2].partial_return", found)
+
+    def test_partial_return_refused_on_never_stopped_roles(self):
+        found = self.locations(
+            lambda s: s["issues"][0].__setitem__("role", "review-judge")
+        )
+        self.assertIn("issues[0].partial_return", found)
+
+    def test_non_boolean_partial_return_refused(self):
+        found = self.locations(
+            lambda s: s["issues"][0].__setitem__("partial_return", "yes")
+        )
+        self.assertIn("issues[0].partial_return", found)
+
+    def test_negative_duration_and_bad_timestamp_name_the_record(self):
+        found = self.locations(
+            lambda s: (
+                s["issues"][0].__setitem__("duration_ms", -1),
+                s["issues"][1].__setitem__("at", "not-a-time"),
+            )
+        )
+        self.assertIn("issues[0].duration_ms", found)
+        self.assertIn("issues[1].at", found)
+
+    def test_issues_not_a_list_is_reported(self):
+        found = self.locations(lambda s: s.__setitem__("issues", "nope"))
+        self.assertIn("issues", found)
+
+
 class ReplayVocabularyTests(unittest.TestCase):
     """FR-019: tools/tests/replay.py resolves its timestamp parsing and
     vocabularies from factory_cli.state, not private copies."""
@@ -212,7 +279,7 @@ class WriteTests(unittest.TestCase):
 
     def test_atomic_write_leaves_no_debris_and_complete_content(self):
         written = state.write_state(self.path, fixture("state-v3.json"))
-        self.assertEqual(written["version"], 4)
+        self.assertEqual(written["version"], 5)
         on_disk = json.loads(self.path.read_text())
         self.assertEqual(on_disk, written)
         leftovers = [
@@ -220,9 +287,9 @@ class WriteTests(unittest.TestCase):
         ]
         self.assertEqual(leftovers, [], "no temp files left behind")
 
-    def test_first_write_upgrades_to_v4(self):
+    def test_first_write_upgrades_to_the_current_version(self):
         written = state.write_state(self.path, fixture("state-v1.json"))
-        self.assertEqual(written["version"], 4)
+        self.assertEqual(written["version"], state.VERSION)
         self.assertEqual(written["decisions"], [])
         # a v3 ledger entry gains its derived spawn interval
         v3 = state.write_state(
@@ -231,6 +298,50 @@ class WriteTests(unittest.TestCase):
         entry = v3["ledger"][0]
         self.assertEqual(entry["started_at"], entry["at"])
         self.assertEqual(entry["ended_at"], "2026-10-22T14:03:43Z")
+
+    def test_first_write_upgrades_to_v5_additively(self):
+        """Schema v5: `issues[]` the only new top-level key; every v4 key keeps
+        its name and shape (data-model.md, State schema change)."""
+        written = state.write_state(self.path, fixture("state-v4.json"))
+        v4 = fixture("state-v4.json")
+        self.assertEqual(written["version"], 5)
+        self.assertEqual(written["issues"], [])
+        self.assertEqual(set(written) - set(v4), {"issues"})
+        for key, value in v4.items():
+            self.assertEqual(
+                written[key],
+                value if key != "version" else 5,
+                f"v4 key '{key}' keeps its name and shape",
+            )
+
+    def test_append_only_issues_never_rewritten(self):
+        first = fixture("state-v5.json")
+        state.write_state(self.path, first)
+        trimmed = fixture("state-v5.json")
+        trimmed["issues"] = trimmed["issues"][1:]  # dropped the earliest record
+        with self.assertRaises(state.StateError):
+            state.write_state(self.path, trimmed)
+        self.assertEqual(
+            json.loads(self.path.read_text())["issues"],
+            first["issues"],
+            "a refused write leaves the recorded issues untouched",
+        )
+        grown = fixture("state-v5.json")
+        grown["issues"] = first["issues"] + [
+            {
+                "at": "2026-10-23T11:00:00Z",
+                "kind": "halt",
+                "stage": "implement",
+                "role": "orchestrator",
+                "cause": None,
+                "detail": "three partial returns with no new commit",
+                "duration_ms": 1000,
+                "commit": "bbb0007",
+                "partial_return": False,
+            }
+        ]
+        state.write_state(self.path, grown)  # appending is allowed
+        self.assertEqual(len(json.loads(self.path.read_text())["issues"]), 4)
 
     def test_write_refuses_invalid_state_and_keeps_file(self):
         good = state.write_state(self.path, fixture("state-v4.json"))

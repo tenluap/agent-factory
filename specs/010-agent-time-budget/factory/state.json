@@ -1,0 +1,969 @@
+{
+  "version": 4,
+  "started_at": "2026-10-27T01:15:54Z",
+  "harness": "opencode",
+  "feature": "Improve the software/agent factory: put a work time limiter on every agent and sub agent (under 5 minutes). If an agent exceeds that time, stop it, identify why it took long, note the issue, and collect it into a pending issue for this session. Resume the stopped process to continue the factory flow. The saved pending improvement may start only once the session that created it is done. Use the session's identified issues to improve the factory recursively (agents, tools, skills). Add a benchmark to score and test before/after.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "010-agent-time-budget",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/010-agent-time-budget",
+  "spec_dir": "specs/010-agent-time-budget",
+  "status": "pr-open",
+  "stage": "pr",
+  "halt_reason": "Provider limit exhausted at implement (resets 2026-10-31 09:50 UTC)",
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md",
+    "brainstorming": "/Users/tenluap/.agents/skills/brainstorming/SKILL.md"
+  },
+  "commands": {
+    "build": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+    "test": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\""
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [
+      "factory/analyze-1.md",
+      "factory/analyze-2.md",
+      "factory/analyze-3.md"
+    ],
+    "remediations": [],
+    "pending_clarify": [],
+    "result": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "report": "factory/analyze-3.md",
+      "at": "2026-10-27T09:34:07.856235Z"
+    }
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-10-27T01:16:32.502774Z",
+      "kind": "questions",
+      "stage": "brainstorm",
+      "summary": "Brainstorm round 1: scope, enforcement, budget, trigger, benchmark, commands",
+      "answered_at": "2026-10-27T01:24:01.023380Z",
+      "latency_ms": 448520
+    },
+    {
+      "at": "2026-10-27T01:24:15.117421Z",
+      "kind": "questions",
+      "stage": "brainstorm",
+      "summary": "Brainstorm round 2: issue triggers, non-resumable roles, backlog location, benchmark driver",
+      "answered_at": "2026-10-27T01:27:06.818353Z",
+      "latency_ms": 171700
+    },
+    {
+      "at": "2026-10-27T01:27:06.874956Z",
+      "kind": "questions",
+      "stage": "brainstorm",
+      "summary": "Design confirmation",
+      "answered_at": "2026-10-27T01:30:42.122557Z",
+      "latency_ms": 215247
+    },
+    {
+      "at": "2026-10-27T01:30:57.119514Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grill round 1: resume cap, unit boundaries, orchestrator scope, bench stop point, bench pass",
+      "answered_at": "2026-10-27T01:36:22.285964Z",
+      "latency_ms": 325166
+    },
+    {
+      "at": "2026-10-27T01:36:22.339794Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grill closing: confirm shared understanding",
+      "answered_at": "2026-10-27T01:37:04.533191Z",
+      "latency_ms": 42193
+    },
+    {
+      "at": "2026-10-27T01:59:27.138456Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Plan Q1: test-seam confirmation (protected)",
+      "answered_at": "2026-10-27T07:14:37.015946Z",
+      "latency_ms": 18909877
+    },
+    {
+      "at": "2026-10-27T07:30:16.218693Z",
+      "kind": "questions",
+      "stage": "analyze",
+      "summary": "Escalate to full chain or gate-override to remediate",
+      "answered_at": "2026-10-27T07:34:42.306017Z",
+      "latency_ms": 266087
+    },
+    {
+      "at": "2026-10-27T08:04:16.281862Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q1 stall cap authority (protected)",
+      "answered_at": "2026-10-27T08:05:57.017027Z",
+      "latency_ms": 100735
+    },
+    {
+      "at": "2026-10-27T08:12:46.010583Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q2 shared understanding (protected)",
+      "answered_at": "2026-10-27T08:14:40.015269Z",
+      "latency_ms": 114004
+    },
+    {
+      "at": "2026-10-27T10:30:06.917989Z",
+      "kind": "halt",
+      "stage": "implement",
+      "summary": "Provider limit exhausted at implement",
+      "answered_at": "2026-10-27T10:48:21.771158Z",
+      "latency_ms": 1094853
+    },
+    {
+      "at": "2026-10-27T10:48:32.913824Z",
+      "kind": "halt",
+      "stage": "implement",
+      "summary": "Provider limit exhausted at implement (retry)",
+      "answered_at": "2026-10-27T10:50:09.893033Z",
+      "latency_ms": 96979
+    },
+    {
+      "at": "2026-10-27T11:17:05.135522Z",
+      "kind": "halt",
+      "stage": "review",
+      "summary": "Provider limit on reviewers; model choice",
+      "answered_at": "2026-10-27T12:17:50.111750Z",
+      "latency_ms": 3644976
+    },
+    {
+      "at": "2026-10-27T12:55:10.993951Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 010-agent-time-budget",
+      "answered_at": "2026-10-27T12:55:49.745871Z",
+      "latency_ms": 38751
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "brainstorm",
+      "question": "Q1",
+      "answer": "B: this run = time budget + issue log + gated backlog + benchmark core; recursive improver deferred to follow-up run",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q2",
+      "answer": "A: cooperative deadline in role inputs, role returns partial with slow-reason; orchestrator post-hoc ledger check; fresh spawn resumes",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q3",
+      "answer": "B: default 5m, per-role override in config.json",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q4",
+      "answer": "A: overrunning role self-reports cause; orchestrator attaches ledger facts",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q5",
+      "answer": "A: manual /factory improve; CLI refuses while source run not pr-open/aborted",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q6",
+      "answer": "A: replay fixture feature(s), score wall time, overruns, spawns, token estimates, review pass; scorer shared with recorded-state reading",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q7",
+      "answer": "B: overruns + agent failures/retries + halts + red verify, each tagged kind",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q8",
+      "answer": "A: hard stop + resume only for file-writing roles (spec-builder, code-build, fixer); reviewers/judge soft limit, record issue, finish",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q9",
+      "answer": "A: issues in run state.json via writer + backlog file FACTORY_HOME/improvements/<run>.json written at run end",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q10",
+      "answer": "A: pre-baked fixture run from worktree stage, fast, auto-approve, headless harness CLI, scorer reads state.json; manual path documented as fallback",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "brainstorm",
+      "question": "Q11",
+      "answer": "A: design approved as presented",
+      "auto": false,
+      "at": "2026-10-27T01:30:42.182319Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "G1",
+      "answer": "A: halt after 3 consecutive partial spawns with no new commit; unlimited while progress committed",
+      "auto": false,
+      "at": "2026-10-27T01:37:04.602571Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "G2",
+      "answer": "A: finish current unit then stop; overshoot recorded in issue detail",
+      "auto": false,
+      "at": "2026-10-27T01:37:04.602571Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "G3",
+      "answer": "A: budget enforced on spawned roles only; orchestrator verify over budget recorded as overrun issue role orchestrator, never stopped",
+      "auto": false,
+      "at": "2026-10-27T01:37:04.602571Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "G4",
+      "answer": "A: bench runs with --stop-at approver, scored there; no auto-approve flag, no PR",
+      "auto": false,
+      "at": "2026-10-27T01:37:04.602571Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "G5",
+      "answer": "B: reached approver + last verify green + no unresolved blocking findings + fixture acceptance test passes",
+      "auto": false,
+      "at": "2026-10-27T01:37:04.602571Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-27T07:15:46.587467Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "ESCALATE",
+      "answer": "full: user chose escalation to full chain after analyze pass 1 (2 HIGH). mode.chain stays lite in state: CLI has no chain-update command (factory gap).",
+      "auto": false,
+      "at": "2026-10-27T07:34:42.549331Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-27T08:14:40.232059Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-27T08:14:40.232059Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "implement",
+      "question": "halt-model",
+      "answer": "retry code-build on openai/gpt-6.1-sol#high",
+      "auto": false,
+      "at": "2026-10-27T10:50:10.340566Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "halt-model",
+      "answer": "remaining spawns on claude-code/claude-sonnet-5-5#high",
+      "auto": false,
+      "at": "2026-10-27T12:17:51.201614Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve with unresolved round-3 test-gap blocker",
+      "auto": false,
+      "at": "2026-10-27T12:55:49.990026Z",
+      "kind": "approved"
+    }
+  ],
+  "ledger": [
+    {
+      "at": "2026-10-27T01:43:00.699685Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 6389,
+      "out_est": 4345,
+      "reported": null,
+      "duration_ms": 343000,
+      "started_at": "2026-10-27T01:37:17Z",
+      "ended_at": "2026-10-27T01:43:00Z"
+    },
+    {
+      "at": "2026-10-27T01:59:26.193211Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 8587,
+      "out_est": 6185,
+      "reported": null,
+      "duration_ms": 982000,
+      "started_at": "2026-10-27T01:43:04Z",
+      "ended_at": "2026-10-27T01:59:26Z"
+    },
+    {
+      "at": "2026-10-27T07:15:46.348299Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 3624,
+      "out_est": 200,
+      "reported": null,
+      "duration_ms": 69000,
+      "started_at": "2026-10-27T07:14:37Z",
+      "ended_at": "2026-10-27T07:15:46Z"
+    },
+    {
+      "at": "2026-10-27T07:22:30.898696Z",
+      "stage": "tasks",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 11924,
+      "out_est": 2355,
+      "reported": null,
+      "duration_ms": 404000,
+      "started_at": "2026-10-27T07:15:46Z",
+      "ended_at": "2026-10-27T07:22:30Z"
+    },
+    {
+      "at": "2026-10-27T07:30:00.435245Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 12019,
+      "out_est": 2089,
+      "reported": null,
+      "duration_ms": 449000,
+      "started_at": "2026-10-27T07:22:31Z",
+      "ended_at": "2026-10-27T07:30:00Z"
+    },
+    {
+      "at": "2026-10-27T07:49:15.899662Z",
+      "stage": "clarify",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 11772,
+      "out_est": 400,
+      "reported": null,
+      "duration_ms": 873000,
+      "started_at": "2026-10-27T07:34:42Z",
+      "ended_at": "2026-10-27T07:49:15Z"
+    },
+    {
+      "at": "2026-10-27T08:04:15.333798Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 9255,
+      "out_est": 1077,
+      "reported": null,
+      "duration_ms": 898000,
+      "started_at": "2026-10-27T07:49:17Z",
+      "ended_at": "2026-10-27T08:04:15Z"
+    },
+    {
+      "at": "2026-10-27T08:12:45.758214Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 9000,
+      "out_est": 800,
+      "reported": null,
+      "duration_ms": 408000,
+      "started_at": "2026-10-27T08:05:57Z",
+      "ended_at": "2026-10-27T08:12:45Z"
+    },
+    {
+      "at": "2026-10-27T08:34:59.587397Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 17733,
+      "out_est": 2500,
+      "reported": null,
+      "duration_ms": 1219000,
+      "started_at": "2026-10-27T08:14:40Z",
+      "ended_at": "2026-10-27T08:34:59Z"
+    },
+    {
+      "at": "2026-10-27T08:40:52.728651Z",
+      "stage": "tasks",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 10589,
+      "out_est": 600,
+      "reported": null,
+      "duration_ms": 352000,
+      "started_at": "2026-10-27T08:35:00Z",
+      "ended_at": "2026-10-27T08:40:52Z"
+    },
+    {
+      "at": "2026-10-27T09:02:29.648343Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 17929,
+      "out_est": 2554,
+      "reported": null,
+      "duration_ms": 1296000,
+      "started_at": "2026-10-27T08:40:53Z",
+      "ended_at": "2026-10-27T09:02:29Z"
+    },
+    {
+      "at": "2026-10-27T09:20:33.334802Z",
+      "stage": "remediate",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 16000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 1077000,
+      "started_at": "2026-10-27T09:02:36Z",
+      "ended_at": "2026-10-27T09:20:33Z"
+    },
+    {
+      "at": "2026-10-27T09:34:07.591077Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 18000,
+      "out_est": 2411,
+      "reported": null,
+      "duration_ms": 813000,
+      "started_at": "2026-10-27T09:20:34Z",
+      "ended_at": "2026-10-27T09:34:07Z"
+    },
+    {
+      "at": "2026-10-27T09:36:32.676204Z",
+      "stage": "remediate",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 1200,
+      "reported": null,
+      "duration_ms": 144000,
+      "started_at": "2026-10-27T09:34:08Z",
+      "ended_at": "2026-10-27T09:36:32Z"
+    },
+    {
+      "at": "2026-10-27T10:30:06.459789Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 0,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 3213000,
+      "started_at": "2026-10-27T09:36:33Z",
+      "ended_at": "2026-10-27T10:30:06Z"
+    },
+    {
+      "at": "2026-10-27T10:48:32.468987Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 200,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 11000,
+      "started_at": "2026-10-27T10:48:21Z",
+      "ended_at": "2026-10-27T10:48:32Z"
+    },
+    {
+      "at": "2026-10-27T11:14:45.999068Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 60000,
+      "out_est": 12000,
+      "reported": null,
+      "duration_ms": 1475000,
+      "started_at": "2026-10-27T10:50:10Z",
+      "ended_at": "2026-10-27T11:14:45Z"
+    },
+    {
+      "at": "2026-10-27T11:17:04.428223Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 100,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 12000,
+      "started_at": "2026-10-27T11:16:52Z",
+      "ended_at": "2026-10-27T11:17:04Z"
+    },
+    {
+      "at": "2026-10-27T11:17:04.678989Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 100,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 12000,
+      "started_at": "2026-10-27T11:16:52Z",
+      "ended_at": "2026-10-27T11:17:04Z"
+    },
+    {
+      "at": "2026-10-27T11:17:04.911260Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 100,
+      "out_est": 0,
+      "reported": null,
+      "duration_ms": 12000,
+      "started_at": "2026-10-27T11:16:52Z",
+      "ended_at": "2026-10-27T11:17:04Z"
+    },
+    {
+      "at": "2026-10-27T12:22:45.270811Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 40000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 294000,
+      "started_at": "2026-10-27T12:17:51Z",
+      "ended_at": "2026-10-27T12:22:45Z"
+    },
+    {
+      "at": "2026-10-27T12:22:45.539814Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 40000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 294000,
+      "started_at": "2026-10-27T12:17:51Z",
+      "ended_at": "2026-10-27T12:22:45Z"
+    },
+    {
+      "at": "2026-10-27T12:22:45.772462Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 40000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 294000,
+      "started_at": "2026-10-27T12:17:51Z",
+      "ended_at": "2026-10-27T12:22:45Z"
+    },
+    {
+      "at": "2026-10-27T12:24:44.081190Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 30000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 119000,
+      "started_at": "2026-10-27T12:22:45Z",
+      "ended_at": "2026-10-27T12:24:44Z"
+    },
+    {
+      "at": "2026-10-27T12:34:16.591067Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 30000,
+      "out_est": 5000,
+      "reported": null,
+      "duration_ms": 572000,
+      "started_at": "2026-10-27T12:24:44Z",
+      "ended_at": "2026-10-27T12:34:16Z"
+    },
+    {
+      "at": "2026-10-27T12:37:54.191564Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 20000,
+      "out_est": 1500,
+      "reported": null,
+      "duration_ms": 90000,
+      "started_at": "2026-10-27T12:36:24Z",
+      "ended_at": "2026-10-27T12:37:54Z"
+    },
+    {
+      "at": "2026-10-27T12:37:54.489688Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 20000,
+      "out_est": 1500,
+      "reported": null,
+      "duration_ms": 90000,
+      "started_at": "2026-10-27T12:36:24Z",
+      "ended_at": "2026-10-27T12:37:54Z"
+    },
+    {
+      "at": "2026-10-27T12:37:54.717412Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 20000,
+      "out_est": 1500,
+      "reported": null,
+      "duration_ms": 90000,
+      "started_at": "2026-10-27T12:36:24Z",
+      "ended_at": "2026-10-27T12:37:54Z"
+    },
+    {
+      "at": "2026-10-27T12:38:45.817769Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 15000,
+      "out_est": 2000,
+      "reported": null,
+      "duration_ms": 50000,
+      "started_at": "2026-10-27T12:37:55Z",
+      "ended_at": "2026-10-27T12:38:45Z"
+    },
+    {
+      "at": "2026-10-27T12:48:28.534630Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 25000,
+      "out_est": 4000,
+      "reported": null,
+      "duration_ms": 582000,
+      "started_at": "2026-10-27T12:38:46Z",
+      "ended_at": "2026-10-27T12:48:28Z"
+    },
+    {
+      "at": "2026-10-27T12:54:16.212279Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 15000,
+      "out_est": 1200,
+      "reported": null,
+      "duration_ms": 218000,
+      "started_at": "2026-10-27T12:50:38Z",
+      "ended_at": "2026-10-27T12:54:16Z"
+    },
+    {
+      "at": "2026-10-27T12:54:16.457199Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 15000,
+      "out_est": 1200,
+      "reported": null,
+      "duration_ms": 218000,
+      "started_at": "2026-10-27T12:50:38Z",
+      "ended_at": "2026-10-27T12:54:16Z"
+    },
+    {
+      "at": "2026-10-27T12:54:16.683089Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 15000,
+      "out_est": 1200,
+      "reported": null,
+      "duration_ms": 218000,
+      "started_at": "2026-10-27T12:50:38Z",
+      "ended_at": "2026-10-27T12:54:16Z"
+    },
+    {
+      "at": "2026-10-27T12:55:06.288447Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 1500,
+      "reported": null,
+      "duration_ms": 50000,
+      "started_at": "2026-10-27T12:54:16Z",
+      "ended_at": "2026-10-27T12:55:06Z"
+    }
+  ],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": "2026-10-27T12:56:20.984682Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/6",
+  "history": [
+    {
+      "at": "2026-10-27T01:30:42.182319Z",
+      "stage": "brainstorm",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T01:37:04.602571Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T01:37:17.704594Z",
+      "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T01:43:04.366395Z",
+      "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T07:15:46.587467Z",
+      "stage": "plan",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T07:22:31.140092Z",
+      "stage": "tasks",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T07:34:42.763591Z",
+      "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T07:49:16.861037Z",
+      "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T08:14:40.232059Z",
+      "stage": "grill-with-docs",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T08:35:00.687101Z",
+      "stage": "plan",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T08:40:53.052635Z",
+      "stage": "tasks",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T09:02:36.024205Z",
+      "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T09:20:34.352962Z",
+      "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T09:34:08.069612Z",
+      "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T09:36:32.914735Z",
+      "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T10:47:59.996919Z",
+      "stage": "implement",
+      "event": "resumed",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T11:16:46.489478Z",
+      "stage": "implement",
+      "event": "verify-pass",
+      "commit": "fc90cc9",
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+          "status": "pass"
+        },
+        {
+          "command": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\"",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-27T12:24:44.331618Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T12:36:24.178054Z",
+      "stage": "fix",
+      "event": "verify-pass",
+      "commit": "bed3748",
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+          "status": "pass"
+        },
+        {
+          "command": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\"",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-27T12:38:46.099469Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T12:50:38.597167Z",
+      "stage": "fix",
+      "event": "verify-pass",
+      "commit": "4634570",
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+          "status": "pass"
+        },
+        {
+          "command": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\"",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-27T12:55:06.536879Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-27T12:55:50.211454Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "opencode",
+      "decision": "approve"
+    },
+    {
+      "at": "2026-10-27T12:56:20.984682Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ]
+}

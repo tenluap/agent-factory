@@ -72,6 +72,19 @@ The defaults are `--lite --fast`: a run with no flags uses the lite chain and au
 | `FACTORY_HARNESS` | Force a specific adapter's `harness.md` in preflight instead of auto-recognition. |
 | `FACTORY_HOME` | Where pending runs and `config.json` live (default `~/.factory`). |
 
+### Benchmark factory versions
+
+`python3 tools/bench.py run --harness opencode --bench greet-001` replays a
+pre-settled greeting feature in a disposable repository, stopping before the
+approver gate. This spends model tokens; nothing is approved and no PR opens.
+Headless drivers support `opencode` and `claude-code` only.
+
+Score recorded runs offline with `python3 tools/bench.py score <state.json>`;
+save two outputs and run `python3 tools/bench.py compare before.json after.json`.
+All four named conditions must pass. Missing evidence is a failed condition,
+not a successful benchmark. See [benchmark guide](docs/benchmark.md) for the
+manual fallback on other harnesses and reproducible comparison steps.
+
 ## Requirements
 
 - An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).

@@ -68,12 +68,14 @@ def config_models(name, home=None):
     return models
 
 
-def load_adapter(name):
+def load_adapter(name, *, use_env=True):
     path = ADAPTERS / name / "adapter.json"
     if not path.exists():
         raise SystemExit(f"unknown harness '{name}' (known: {', '.join(known())})")
     adapter = json.loads(path.read_text())
-    home = os.environ.get(adapter["home"]["env"]) or adapter["home"]["default"]
+    home = adapter["home"]["default"]
+    if use_env:
+        home = os.environ.get(adapter["home"]["env"]) or home
     adapter["skill_dir"] = adapter["skill_dir"].format(home=home)
     adapter["agent_dir"] = adapter["agent_dir"].format(home=home)
     return adapter
@@ -143,7 +145,7 @@ def render(name, out=None):
     default home's config.json models merge per key over the adapter
     defaults (FR-001, FR-003).
     """
-    adapter = load_adapter(name)
+    adapter = load_adapter(name, use_env=out is not None)
     merge = config_models(name) if out is not None else {}
     models = {**adapter["models"], **merge}
     target = Path(out) if out is not None else ROOT / "dist" / name

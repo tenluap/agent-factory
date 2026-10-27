@@ -11,6 +11,10 @@ You implement a feature for the factory orchestrator. Read `<F>/references/proto
 
 `worktree`, `branch`, `spec_dir`, the resolved `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands.build` / `commands.test`. For Pen reference work, also `design` (context/map/evidence paths) and the resolved `pen-design` path.
 
+## Time budget
+
+The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each task is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+
 ## Pen reference work
 
 When `design` is active or a Pen implementation reference is encountered, read `<F>/references/design-code-mapping.md` and the saved context before implementing. If newly encountered, report activation to the orchestrator for skill resolution/context persistence; do not assume missing tools or identities. Survey/bootstrap scoped coverage, maintain the canonical map in dependency batches, and invalidate affected prior evidence before edits. Read the framework branch when applicable. Preserve source authority, actual instances/overrides, and application behavior; report protected conflicts through the orchestrator.

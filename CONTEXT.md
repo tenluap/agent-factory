@@ -60,6 +60,30 @@ _Avoid_: issue, comment, violation
 The judge's merged, deduplicated, verified ruling over a review round's findings.
 _Avoid_: report, summary
 
+**Time budget**:
+The seconds one spawned role may work before it must stop: 300 by default, overridable per role.
+_Avoid_: timeout, quota, limit
+
+**Deadline**:
+The absolute UTC instant one spawn receives as the end of its role's time budget.
+_Avoid_: due time, expiry, cutoff
+
+**Overrun report**:
+A role's own account of running past its deadline: a cause from a closed list plus free-text detail carrying the overshoot.
+_Avoid_: timeout report, late report, overrun note
+
+**Partial return**:
+A file-writing role's stopped-but-committed result, resuming its stage from a fresh spawn over the work on disk.
+_Avoid_: truncated return, partial output
+
+**Unit of work**:
+The piece of work a role commits as one piece — the task/commit granularity the roles already use — and the boundary at which a stopped role stops.
+_Avoid_: step, chunk, iteration
+
+**Stall cap**:
+The halt rule on resumption: three consecutive `partial` returns of one stage with no new commit between them halt the run; every partial return counts whatever its stop reason, and neither a failure-policy retry (not a partial return; issue records carry a `partial_return` mark that tells the two apart) nor the overrun records of never-stopped roles ever count.
+_Avoid_: retry cap, resume limit
+
 ## Run state
 
 **State writer**:
@@ -81,6 +105,14 @@ _Avoid_: mutex, lock file
 **Stale pending file**:
 A pending file whose run has a worktree state or has ended; the file that is still the run's only state is never stale.
 _Avoid_: orphan state, old run
+
+**Session issue**:
+One append-only record of a single thing that went wrong in a factory run: an overrun, agent failure, retry, halt or red verify. Not a review finding.
+_Avoid_: finding, bug, incident
+
+**Improvement backlog**:
+The run-end export of one factory run's issues, totals and factory version; its appearance is what gates improvement work on that run.
+_Avoid_: issue list, export, pending improvements
 
 ## Skill routing
 
@@ -165,3 +197,13 @@ _Avoid_: duplication check, grep
 **Shared utility locations**:
 The bound of a reuse search beyond the module being changed: the directories the repository's own conventions name as shared (`helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/` and the like), plus any module the module being changed already imports for helpers. The search over them is keyword-level text matching, not a review of the whole repository.
 _Avoid_: helpers, common code, the codebase
+
+## Benchmark
+
+**Benchmark**:
+The replay of a pre-settled fixture feature against one factory version, stopped at the approver gate, so factory versions can be compared.
+_Avoid_: perf run, regression suite, test run
+
+**Benchmark score**:
+One run's measured outcome — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
+_Avoid_: metrics dump, report, summary

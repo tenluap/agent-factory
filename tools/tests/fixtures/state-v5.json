@@ -1,0 +1,74 @@
+{
+  "version": 5,
+  "started_at": "2026-10-23T08:00:00Z",
+  "ended_at": null,
+  "harness": "opencode",
+  "feature": "v5 state with session issues",
+  "repo": "/repo",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "005-v5-shape",
+  "worktree": "/repo-factory/005-v5-shape",
+  "spec_dir": "specs/005-v5-shape",
+  "status": "running",
+  "stage": "implement",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": { "chain": "full", "fast": true },
+  "skills": { "speckit-implement": "/skills/speckit-implement/SKILL.md" },
+  "commands": { "build": "make build", "test": "make test" },
+  "analyze": { "pass": 1, "loops": 0, "reports": ["factory/analyze-1.md"], "remediations": [], "pending_clarify": [] },
+  "relay": null,
+  "timeline": [
+    { "at": "2026-10-23T08:30:00Z", "kind": "questions", "stage": "grill", "summary": "Grilling round 1 (2 questions)", "answered_at": "2026-10-23T08:35:00Z", "latency_ms": 300000 },
+    { "at": "2026-10-23T09:00:00Z", "kind": "approver", "stage": "approver", "summary": "Approver screen", "answered_at": null, "latency_ms": null }
+  ],
+  "decisions": [
+    { "stage": "grill", "question": "Q1", "answer": "full", "auto": false, "at": "2026-10-23T08:34:00Z", "kind": "answer" }
+  ],
+  "ledger": [
+    { "at": "2026-10-23T08:20:00Z", "stage": "implement", "role": "code-build", "harness": "opencode", "in_est": 15000, "out_est": 4000, "reported": null, "duration_ms": 341000, "started_at": "2026-10-23T08:20:00Z", "ended_at": "2026-10-23T08:25:41Z" }
+  ],
+  "issues": [
+    {
+      "at": "2026-10-23T08:25:41Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "red test loop, 41s past deadline at unit boundary",
+      "duration_ms": 341000,
+      "commit": "bbb0002",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-23T09:40:00Z",
+      "kind": "retry",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "low context, stopped at unit boundary",
+      "duration_ms": 120000,
+      "commit": "bbb0005",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-23T10:10:00Z",
+      "kind": "verify-fail",
+      "stage": "implement",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "make test exited 1",
+      "duration_ms": 65000,
+      "commit": "bbb0006",
+      "partial_return": false
+    }
+  ],
+  "review": { "round": 1, "fix_rounds": 0, "ui_diff": false, "ui_reviewer_skipped": false },
+  "pr_url": null,
+  "history": [
+    { "at": "2026-10-23T08:10:00Z", "stage": "specify", "event": "complete", "commit": "bbb0001", "harness": "opencode" },
+    { "at": "2026-10-23T08:40:00Z", "stage": "implement", "event": "complete", "commit": "bbb0002", "harness": "opencode" },
+    { "at": "2026-10-23T08:50:00Z", "stage": "implement", "event": "verify-pass", "commit": "bbb0003", "harness": "opencode", "commands": [ { "command": "make build", "status": 0 }, { "command": "make test", "status": 0 } ] }
+  ]
+}
