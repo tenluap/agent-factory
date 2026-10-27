@@ -105,6 +105,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T028 Re-render every harness with the build command (`for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h" || exit; done`), run the test command (`python3 -m unittest discover -s tools && bash -n install.sh && test -z "$(git status --porcelain -- dist/)"`) and quickstart §1–2, and leave `dist/` clean and committed — Exempt: `dist/**` - generated output, exercised through the build gate.
+- [ ] T029 Apply the plan.md "Spec alignment follow-ups (spec.md wording)" to `specs/010-agent-time-budget/spec.md`: FR-008 adopts the design superset — signature `factory issue-add <kind> <stage> <role> --detail --duration-ms [--cause] [--commit]`, record `{ at, kind, stage, role, cause, detail, duration_ms, commit }`, `--cause` required only for `overrun`; FR-010 and US2 scenario 2 say `retry` records every re-spawn of a stage after a stopped return (a failure-policy retry and a non-deadline `partial` stop, e.g. low context, alike) and the stall cap reads that record; FR-011 and its assumption name the backlog file `<repo-name>-<branch>.json` and the exported sha `factory_sha`; add the edge case: the export succeeds with `factory_sha: null` when the factory install is not in a git tree — Exempt: `specs/010-agent-time-budget/spec.md` - specification wording only, no executable behavior (plan.md assigns these follow-ups to the pass that owns `spec.md`).
 
 ---
 
@@ -116,7 +117,7 @@ description: "Task list for: agent time budget, session issue backlog, benchmark
 - **US2 (P2)**: T016 ← T015, T005; independent of US1's budget work.
 - **US3 (P2)**: T020 ← T019, T003; T022 ← T021, T020; independent of US1/US2 beyond schema v5.
 - **US4 (P3)**: T026 ← T025, T020 (scorer reads exported/recorded state); depends on Foundational.
-- **Polish**: T028 after all desired stories (rendered dist must include every change).
+- **Polish**: T028 after all desired stories (rendered dist must include every change); T029 (spec.md wording follow-ups from plan.md) has no dependencies.
 
 Story order P1 → P2 → P3; US2 and US3 can proceed in parallel with each other once Phase 2 is done.
 
