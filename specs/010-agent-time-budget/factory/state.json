@@ -109,6 +109,14 @@
       "summary": "Escalate to full chain or gate-override to remediate",
       "answered_at": "2026-10-27T07:34:42.306017Z",
       "latency_ms": 266087
+    },
+    {
+      "at": "2026-10-27T08:04:16.281862Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q1 stall cap authority (protected)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
