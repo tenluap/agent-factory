@@ -15,7 +15,7 @@ Run from the worktree root. Nothing here needs a live harness except scenario 5,
 python3 -m unittest discover -s tools
 ```
 
-Expected: green, covering `issue-add` (kinds, causes, append-only), the stall rule (every partial-return record — `overrun`/`retry` of a file-writing role — counts toward the three with no new commit; never-stopped roles' records never count), the budget check (fallbacks, deadline, `ledger-add` overrun detection and single-issue dedupe), the export gate (no file before run end, file at `pr-open`/`aborted`, zero-issue export), claim refusals and the `claimed` transition, schema v5 migration (additive shape: every v4 key keeps its name and shape, `issues[]` the only new top-level key) and 1–5 read acceptance, the envelope `overrun` shape, and the scorer/compare on recorded states (`tools/tests/fixtures/bench-*`).
+Expected: green, covering `issue-add` (kinds, causes, append-only), the stall rule (every record marked `partial_return` — a `partial` return's stop — counts toward the three with no new commit; unmarked records and never-stopped roles' records never count), the budget check (fallbacks, deadline, `ledger-add` overrun detection and single-issue dedupe), the export gate (no file before run end, file at `pr-open`/`aborted`, zero-issue export), claim refusals and the `claimed` transition, schema v5 migration (additive shape: every v4 key keeps its name and shape, `issues[]` the only new top-level key) and 1–5 read acceptance, the envelope `overrun` shape, and the scorer/compare on recorded states (`tools/tests/fixtures/bench-*`).
 
 ## 2. Build gate (constitution III)
 
@@ -31,12 +31,13 @@ Expected: every `dist/<harness>/` tree re-rendered from `core/`+`adapters/`, no 
 ```sh
 FACTORY_HOME=/tmp/fh python3 core/skills/factory/bin/factory budget code-build
 FACTORY_HOME=/tmp/fh python3 core/skills/factory/bin/factory issue-add overrun implement code-build \
-  --cause test-loop --detail "41s past deadline" --duration-ms 341000   # repeat with --commit held fixed 3x -> "halt": true
+  --cause test-loop --detail "41s past deadline" --duration-ms 341000 --partial-return   # repeat with --commit held fixed 3x -> "halt": true
 FACTORY_HOME=/tmp/fh python3 core/skills/factory/bin/factory issue-add retry implement code-build \
-  --detail "low context at unit boundary"   # a non-deadline stop counts the same way
+  --detail "low context at unit boundary" --partial-return   # a non-deadline partial stop counts the same way
+# a failure-policy retry omits --partial-return and never counts
 ```
 
-Expected: `deadline` always well-formed (300s default, per-role override honoured); the third identical-commit stop returns `stalls.halt: true` whatever the stop reason; overrun records of reviewers/judge/orchestrator never move the count. Details in `contracts/cli.md`.
+Expected: `deadline` always well-formed (300s default, per-role override honoured); the third identical-commit marked stop returns `stalls.halt: true` whatever the stop reason; unmarked records (failure-policy retries) and overrun records of reviewers/judge/orchestrator never move the count. Details in `contracts/cli.md`.
 
 ## 4. Backlog gate by hand
 

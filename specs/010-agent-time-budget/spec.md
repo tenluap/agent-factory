@@ -24,14 +24,14 @@ A run owner sets a time budget (default 5 minutes, overridable per role) and eve
 
 **Why this priority**: unbounded agent time is the problem the feature exists to solve; the rest of the feature reads the records this story produces.
 
-**Independent Test**: Set a small budget for one file-writing role, run that stage, and observe the stopped return with its reason, the recorded overrun, and a continuation that picks up from committed progress.
+**Independent Test**: Set a small budget for one file-writing role, run that stage, and observe the `partial` return with its reason, the recorded overrun, and a continuation that picks up from committed progress.
 
 **Acceptance Scenarios**:
 
 1. **Given** a budget configuration with a per-role override, **When** a role is spawned, **Then** the spawn carries a deadline derived from that role's budget (default 5 minutes when no override applies).
-2. **Given** a file-writing role working past its deadline, **When** it reaches the end of the unit of work in flight, **Then** it commits that progress and returns stopped with a report of why it ran long, drawn from a closed list of causes plus a free-text detail, and the overshoot beyond the deadline is visible in that detail.
-3. **Given** such a stopped return, **When** the orchestrator continues the stage, **Then** a fresh spawn receives the same inputs and resumes from the work already on disk.
-4. **Given** three consecutive stopped returns for the same stage with no new commit between them, **When** the orchestrator checks, **Then** the run halts; while each stop is accompanied by committed progress, resumption continues without a cap.
+2. **Given** a file-writing role working past its deadline, **When** it reaches the end of the unit of work in flight, **Then** it commits that progress and returns `partial` with a report of why it ran long, drawn from a closed list of causes plus a free-text detail, and the overshoot beyond the deadline is visible in that detail.
+3. **Given** such a `partial` return, **When** the orchestrator continues the stage, **Then** a fresh spawn receives the same inputs and resumes from the work already on disk.
+4. **Given** three consecutive `partial` returns for the same stage with no new commit between them, **When** the orchestrator checks, **Then** the run halts; while each stop is accompanied by committed progress, resumption continues without a cap.
 5. **Given** a reviewer or the judge running past its budget, **When** the spawn finishes, **Then** it is never stopped and its overrun is recorded afterwards.
 
 ---
@@ -73,7 +73,7 @@ A run owner ends a run (pull request open or aborted) and only then does a backl
 
 A maintainer replays the same pre-settled fixture feature headlessly against a factory version, gets a score (wall time, agent time, spawns, overruns, issues by kind, token estimates, review rounds, pass/fail), and compares two scores to see the delta after a change.
 
-**Why this priority**: the feature's whole claim — "improve the factory recursively" — is unverifiable without a before/after measurement; but the score is only useful once the stories above exist.
+**Why this priority**: the claim "improve the factory recursively" is unverifiable without a before/after measurement; the score is only useful once the stories above exist.
 
 **Independent Test**: Score two recorded run states and assert the emitted metrics and the printed delta; run the fixture once end to end and assert the pass definition resolves to a clear verdict.
 
@@ -90,7 +90,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 - An overrun both self-reported and ledger-detected is recorded once, not twice.
 - A unit of work in flight at the deadline overshoots it; the overshoot is recorded in the issue detail, and the role still stops at the unit boundary.
-- A stage whose stopped returns each carry committed progress resumes without limit.
+- A stage whose `partial` returns each carry committed progress resumes without limit.
 - Orchestrator verify time over budget is recorded as an overrun issue with role `orchestrator` and never stops anything.
 - A missing budget override, budget section, or usable value falls back to the 5-minute default; the deadline is always well-formed.
 - A run that ends with zero issues still produces its backlog file, keeping the gate structural.
@@ -107,7 +107,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 - **FR-001**: The factory home configuration MUST carry a time budget of the form `budget: { default_s: 300, roles: { <role>: <seconds> } }`: 5 minutes by default, one override per role. Every spawn — including parallel and sub-agent spawns — MUST receive a deadline (absolute, in UTC) derived from its role's budget.
 - **FR-002**: File-writing roles (spec-builder, code-build, fixer) MUST check the clock between units of work. Past the deadline, the role MUST finish the unit in flight, commit that progress, and return `partial` with an `overrun` report `{ "cause", "detail" }`, with the overshoot past the deadline visible in `detail`. `cause` MUST come from the closed list `large-input`, `test-loop`, `retry`, `tool-slow`, `scope-too-big`, `other`.
 - **FR-003**: The `partial` return MUST be accepted from all three file-writing roles (not code-build alone), and the orchestrator MUST re-spawn a fresh agent with the same inputs so the stage resumes from work on disk.
-- **FR-004**: The orchestrator MUST halt the run after three consecutive `partial` returns for the same stage with no new commit between them; while `partial` returns carry committed progress, resumption MUST continue without a cap.
+- **FR-004**: The orchestrator MUST halt the run after three consecutive `partial` returns for the same stage with no new commit between them; while `partial` returns carry committed progress, resumption MUST continue without a cap. Failure-policy retries are not `partial` returns and MUST NOT count.
 - **FR-005**: Reviewers and the judge MUST NOT be stopped at their budget: they finish normally, and an overrun past their budget is recorded after the spawn.
 - **FR-006**: After every spawn, the orchestrator MUST detect overruns from the ledger duration against the role's budget. An overrun with no self-report MUST be recorded with cause `unreported`; an overrun both self-reported and detected MUST be recorded exactly once.
 - **FR-007**: The budget MUST bind spawned roles only. Orchestrator verify (build/test) time over budget MUST be recorded as an `overrun` issue with role `orchestrator` and MUST NOT stop anything.
@@ -149,7 +149,7 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 ### Measurable Outcomes
 
-- **SC-001**: With a reduced per-role budget, 100% of file-writing overruns produce exactly one issue with a valid cause and a continuation that resumes from committed progress; three consecutive stops without a new commit halt the stage in every test.
+- **SC-001**: With a reduced per-role budget, 100% of file-writing overruns produce exactly one issue with a valid cause and a continuation that resumes from committed progress; three consecutive `partial` returns without a new commit halt the stage in every test.
 - **SC-002**: Each of the five event kinds (`overrun`, `agent-failure`, `retry`, `halt`, `verify-fail`) is recorded exactly once per event across the automated tests, and a run written by this version is still read successfully by an older reader.
 - **SC-003**: In 100% of attempts, a backlog claim before its run ends is refused and no backlog file exists before the run ends; after the run ends the file exists with issues, totals, factory version and `ready` status, and is claimable.
 - **SC-004**: Scoring a recorded run emits every listed metric, and comparing two scores prints a delta per metric; a fixture run that misses any pass condition reports a fail naming the condition, with zero scorer crashes.
@@ -157,9 +157,9 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 ## Assumptions
 
-- The recursive improver agent, a hard-kill/watchdog enforcement, and publishing issues to GitHub are out of scope; this run delivers the time budget, the session issues, the gated backlog and the benchmark core. A follow-up run consumes the backlog.
+- The recursive improver agent, hard-kill/watchdog enforcement and publishing issues to GitHub are out of scope; this run delivers the time budget, session issues, gated backlog and benchmark core. A follow-up run consumes the backlog.
 - "Every agent and sub agent" means every spawn the factory performs, including parallel spawns, each on its own role's budget; the orchestrator is never stopped (FR-007).
-- A "unit of work" is the role's existing unit of committed work (the task/commit granularity the roles already use); the feature relies on that existing boundary and invents no new one.
+- A "unit of work" is the role's existing unit of committed work (the task/commit granularity the roles already use); the feature relies on that boundary and invents no new one.
 - A missing budget section, missing role entry, or unusable budget value falls back to the 300-second default rather than failing the run; budget values are seconds and must be positive.
 - Ledger durations are the accepted measurement for post-hoc overrun detection; score token estimates are approximations for before/after comparison, not accounting.
 - The backlog file name `<repo>-<branch>` is derived from its run; a zero-issue run still exports so the gate stays structural. Schema v5 adds only `issues[]`; no existing field changes shape.
