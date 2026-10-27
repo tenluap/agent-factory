@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, lock, state, totals
+from factory_cli import budget, checks, improvements, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -1028,9 +1028,13 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
             ]
         return s
 
-    write_run(path, loaded, mutate)
+    updated = write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: set-status {status}", loaded.get("spec_dir"))
-    return {"status": status}
+    result = {"status": status}
+    if status in ("pr-open", "aborted"):
+        # FR-011: the structural gate — the backlog file exists only from here
+        result["improvements"] = str(improvements.export(factory_home(), updated))
+    return result
 
 
 def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
