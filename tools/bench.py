@@ -3,7 +3,12 @@
 
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -148,6 +153,112 @@ def compare(a_path, b_path):
         print(f"cannot compare scores: {error}", file=sys.stderr)
 
 
+def run(args):
+    """Prepare a disposable repository; only the selected headless CLI spends tokens."""
+    drivers = {"claude-code": ["claude", "-p"], "opencode": ["opencode", "run"]}
+    if args.harness not in drivers:
+        raise ValueError(
+            f"unsupported headless harness '{args.harness}'; use the manual benchmark fallback"
+        )
+    driver = drivers[args.harness]
+    if not shutil.which(driver[0]):
+        raise ValueError(
+            f"harness '{args.harness}' command '{driver[0]}' is unavailable; use the manual benchmark fallback"
+        )
+    folder, config = load_bench(args.bench)
+    if args.out:
+        out = Path(args.out).expanduser().resolve()
+        out.mkdir(parents=True, exist_ok=False)
+    else:
+        out = Path(tempfile.mkdtemp(prefix="factory-bench-"))
+    repo = out / f"fixture-{args.bench}"
+    home = Path(args.home).expanduser().resolve() if args.home else out / "home"
+    shutil.copytree(
+        ROOT / config["fixture_repo"],
+        repo,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    # Reuse the repository's SpecKit scaffold, then apply fixture-specific policy.
+    for part in ("scripts", "templates"):
+        source = ROOT / ".specify" / part
+        if source.is_dir():
+            shutil.copytree(source, repo / ".specify" / part)
+    shutil.copytree(folder / config["overlay"], repo, dirs_exist_ok=True)
+    for command in (
+        ["init", "-q", "-b", "main"],
+        ["config", "user.name", "Factory Benchmark"],
+        ["config", "user.email", "benchmark@example.invalid"],
+        ["add", "-A"],
+        ["commit", "-q", "-m", "Benchmark fixture baseline"],
+        ["remote", "add", "origin", str(repo)],
+        ["fetch", "-q", "origin", "main"],
+    ):
+        subprocess.run(
+            ["git", *command], cwd=repo, check=True, capture_output=True, text=True
+        )
+    pending = home / "pending" / f"{repo.name}-{args.bench}.json"
+    pending.parent.mkdir(parents=True, exist_ok=True)
+    if pending.exists():
+        raise ValueError(f"pending benchmark already exists: {pending}")
+    now = state.iso(datetime.now(timezone.utc))
+    seed = json.loads((folder / config["seed"]).read_text())
+    seed.update(
+        started_at=now,
+        harness=args.harness,
+        repo=str(repo),
+        base="origin/main",
+        branch=args.bench,
+        spec_dir=f"specs/{args.bench}",
+    )
+    seed["decisions"].append(
+        {
+            "stage": "plan",
+            "question": "BENCH-SEAM",
+            "kind": "answer",
+            "auto": False,
+            "at": now,
+            "answer": "Fixture-author confirmation: src.greet.greet(name, uppercase=False); see seeded brief.",
+        }
+    )
+    problems = state.validate_state(seed)
+    if problems:
+        raise ValueError(f"invalid benchmark seed: {problems}")
+    pending.write_text(json.dumps(seed, indent=2) + "\n")
+    pending.with_suffix(".brief.md").write_text((folder / config["brief"]).read_text())
+    prompt = (
+        f"/factory resume {pending.stem} --stop-at approver\n"
+        "The seeded fixture brief contains settled decisions and explicit test-seam confirmation. "
+        "Resolve required skills for this harness before spawning roles. "
+        "Use the local origin/main base; no network remote is required. "
+        f"Record the fixture acceptance command separately in verify: {config['acceptance']}. "
+        "Stop before approver; do not approve or open a PR."
+    )
+    log = out / "harness.log"
+    with log.open("w") as stream:
+        process = subprocess.run(
+            [*driver, prompt],
+            cwd=repo,
+            env=dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness),
+            stdout=stream,
+            stderr=subprocess.STDOUT,
+        )
+    print(
+        json.dumps(
+            {
+                "repo": str(repo),
+                "home": str(home),
+                "pending": str(pending),
+                "log": str(log),
+                "exit_status": process.returncode,
+            }
+        )
+    )
+    if process.returncode:
+        raise ValueError(
+            f"harness '{args.harness}' exited {process.returncode}; see {log}"
+        )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -157,9 +268,27 @@ def main(argv=None):
     comparing = commands.add_parser("compare")
     comparing.add_argument("a")
     comparing.add_argument("b")
+    running = commands.add_parser("run")
+    running.add_argument("--harness", required=True)
+    running.add_argument("--bench", default="greet-001")
+    running.add_argument("--home")
+    running.add_argument("--out")
     args = parser.parse_args(argv)
     if args.command == "compare":
         compare(args.a, args.b)
+        return 0
+    if args.command == "run":
+        try:
+            run(args)
+        except (
+            OSError,
+            ValueError,
+            TypeError,
+            KeyError,
+            subprocess.CalledProcessError,
+        ) as error:
+            print(f"benchmark run: {error}", file=sys.stderr)
+            return 1
         return 0
     try:
         _, config = load_bench(args.bench)
