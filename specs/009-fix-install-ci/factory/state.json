@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/009-fix-install-ci",
   "spec_dir": "specs/009-fix-install-ci",
   "status": "running",
-  "stage": "worktree",
+  "stage": "specify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -66,6 +66,13 @@
     {
       "at": "2026-10-27T00:58:09.745693Z",
       "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "codex"
+    },
+    {
+      "at": "2026-10-27T00:58:09.979887Z",
+      "stage": "worktree",
       "event": "complete",
       "commit": null,
       "harness": "codex"
