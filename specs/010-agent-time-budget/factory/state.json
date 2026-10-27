@@ -133,8 +133,8 @@
       "kind": "questions",
       "stage": "grill-with-docs",
       "summary": "Q1 stall cap authority (protected)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-27T08:05:57.017027Z",
+      "latency_ms": 100735
     }
   ],
   "decisions": [
