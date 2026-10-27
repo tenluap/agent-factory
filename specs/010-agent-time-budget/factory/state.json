@@ -151,6 +151,14 @@
       "summary": "Provider limit on reviewers; model choice",
       "answered_at": "2026-10-27T12:17:50.111750Z",
       "latency_ms": 3644976
+    },
+    {
+      "at": "2026-10-27T12:55:10.993951Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 010-agent-time-budget",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
