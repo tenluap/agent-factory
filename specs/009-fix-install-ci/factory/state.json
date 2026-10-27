@@ -182,6 +182,31 @@
       "event": "complete",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-27T01:07:55.050472Z",
+      "stage": "verify",
+      "event": "verify-pass",
+      "commit": null,
+      "harness": "codex",
+      "commands": [
+        {
+          "command": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+          "status": 0
+        },
+        {
+          "command": "python3 -m unittest discover -s tools",
+          "status": 0
+        },
+        {
+          "command": "bash -n install.sh",
+          "status": 0
+        },
+        {
+          "command": "test -z porcelain output for dist/",
+          "status": 0
+        }
+      ]
     }
   ]
 }
