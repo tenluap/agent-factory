@@ -781,7 +781,7 @@ def cmd_issue_add(
         "partial_return": bool(partial_return),
     }
     if record["commit"] is None and worktree:
-        record["commit"] = git(worktree, "rev-parse", "--short", "HEAD").strip()
+        record["commit"] = worktree_head(worktree)
 
     def mutate(s):
         append_issue(s, record)
@@ -897,7 +897,7 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         "partial_return": bool(partial_return),
     }
     if record["commit"] is None and worktree:
-        record["commit"] = git(worktree, "rev-parse", "--short", "HEAD").strip()
+        record["commit"] = worktree_head(worktree)
     return record
 
 
@@ -975,6 +975,13 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
     return {"answered": qid, "auto": bool(auto)}
 
 
+def worktree_head(worktree):
+    """The worktree's short HEAD, or None without one."""
+    if not worktree:
+        return None
+    return git(worktree, "rev-parse", "--short", "HEAD").strip()
+
+
 def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     if status not in state.STATUSES:
         die(
@@ -987,11 +994,25 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
         die(1, "set-status halted needs --halt-reason")
     if status == "pr-open" and not pr_url:
         die(1, "set-status pr-open needs --pr-url")
+    issue = None
+    if status == "halted":
+        issue = {
+            "at": now,
+            "kind": "halt",
+            "stage": loaded.get("stage"),
+            "role": "orchestrator",
+            "cause": None,
+            "detail": halt_reason,
+            "duration_ms": 0,
+            "commit": worktree_head(worktree),
+            "partial_return": False,
+        }
 
     def mutate(s):
         s["status"] = status
         if status == "halted":
             s["halt_reason"] = halt_reason
+            append_issue(s, issue)
         if status == "pr-open":
             s["pr_url"] = pr_url
         if status in ("pr-open", "aborted"):
@@ -1059,8 +1080,24 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"
+    issue = None
+    if not passed:
+        failing = [c for c, st in commands_payload if st]
+        issue = {
+            "at": now,
+            "kind": "verify-fail",
+            "stage": loaded.get("stage"),
+            "role": "orchestrator",
+            "cause": None,
+            "detail": ", ".join(failing or [c for c, _ in commands_payload]),
+            "duration_ms": 0,
+            "commit": worktree_head(worktree),
+            "partial_return": False,
+        }
 
     def mutate(s):
+        if issue is not None:
+            append_issue(s, issue)
         s["history"] = (s.get("history") or []) + [
             {
                 "at": now,
