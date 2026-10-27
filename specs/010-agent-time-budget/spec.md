@@ -8,6 +8,12 @@
 
 **Input**: User description: "Improve the software/agent factory: put a work time limiter on every agent and sub agent (under 5 minutes). If an agent exceeds that time, stop it, identify why it took long, note the issue, and collect it into a pending issue for this session. Resume the stopped process to continue the factory flow. The saved pending improvement may start only once the session that created it is done. Use the session's identified issues to improve the factory recursively (agents, tools, skills). Add a benchmark to score and test before/after." (see `factory/brief.md` for the settled decisions)
 
+## Clarifications
+
+### Session 2026-10-27 (grill-with-docs)
+
+- Q: What is authoritative for the FR-004 stall cap? → A: The spec (FR-004 stands): every `partial` return counts toward the three, whatever its stop reason; overrun records of never-stopped roles (reviewers, judge, orchestrator) never count. Design artifacts widen in the plan re-run.
+
 ## User Scenarios & Testing *(mandatory)*
 
 The user is a developer running factory sessions who needs: no run silently eating hours of agent time, every thing that went wrong recorded where they can read it, improvement work startable only after its source run is over, and factory versions comparable on equal footing.
@@ -82,14 +88,14 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 
 ### Edge Cases
 
-- An overrun that is both self-reported and detected from the ledger is recorded once, not twice.
+- An overrun both self-reported and ledger-detected is recorded once, not twice.
 - A unit of work in flight at the deadline overshoots it; the overshoot is recorded in the issue detail, and the role still stops at the unit boundary.
-- A stage whose stopped returns each carry committed progress resumes without limit; only three consecutive stops with no new commit halt the run.
+- A stage whose stopped returns each carry committed progress resumes without limit.
 - Orchestrator verify time over budget is recorded as an overrun issue with role `orchestrator` and never stops anything.
-- A role with no budget override, an absent budget section, or an unusable budget entry falls back to the 5-minute default; the deadline is always well-formed.
-- A run that ends with zero issues still produces its backlog file, so the gate stays structural and run totals stay comparable.
-- `claim` on a name that does not exist, or a second `claim` on an already-claimed backlog, is refused with a message naming the problem, never a traceback.
-- A fixture run that halts or fails before the approver gate scores as a fail with the failing condition named, never as a crash in the scorer.
+- A missing budget override, budget section, or usable value falls back to the 5-minute default; the deadline is always well-formed.
+- A run that ends with zero issues still produces its backlog file, keeping the gate structural.
+- `claim` on a missing or already-claimed name is refused with a message naming the problem, never a traceback.
+- A fixture run that halts or fails before the approver gate scores as a fail naming the condition, never a scorer crash.
 - Run state written by the new version stays readable by readers that predate this feature.
 
 ## Requirements *(mandatory)*
@@ -152,12 +158,12 @@ A maintainer replays the same pre-settled fixture feature headlessly against a f
 ## Assumptions
 
 - The recursive improver agent, a hard-kill/watchdog enforcement, and publishing issues to GitHub are out of scope; this run delivers the time budget, the session issues, the gated backlog and the benchmark core. A follow-up run consumes the backlog.
-- "Every agent and sub agent" means every spawn the factory performs, including parallel spawns; each is budgeted on its own role's budget. The orchestrator itself is never stopped (FR-007).
+- "Every agent and sub agent" means every spawn the factory performs, including parallel spawns, each on its own role's budget; the orchestrator is never stopped (FR-007).
 - A "unit of work" is the role's existing unit of committed work (the task/commit granularity the roles already use); the feature relies on that existing boundary and invents no new one.
 - A missing budget section, missing role entry, or unusable budget value falls back to the 300-second default rather than failing the run; budget values are seconds and must be positive.
-- Ledger durations are the accepted measurement for post-hoc overrun detection; token estimates in the score are approximations adequate for before/after comparison, not accounting.
-- The backlog file name `<repo>-<branch>` is derived from the run it exports; a zero-issue run still exports so the gate is structural. Schema v5 adds only `issues[]`; no existing field changes shape.
-- CLI command names, exit-code conventions and file paths in this spec are the product's user-facing contract (repository convention), not implementation detail.
+- Ledger durations are the accepted measurement for post-hoc overrun detection; score token estimates are approximations for before/after comparison, not accounting.
+- The backlog file name `<repo>-<branch>` is derived from its run; a zero-issue run still exports so the gate stays structural. Schema v5 adds only `issues[]`; no existing field changes shape.
+- CLI command names, exit codes and file paths here are the product's user-facing contract (repository convention), not implementation detail.
 - Bench fixtures live in the repository so replay is reproducible; live benchmark runs cost tokens and stay manual, while the automated suite tests the scorer on recorded states.
 ### Quality and Verification Constraints
 
