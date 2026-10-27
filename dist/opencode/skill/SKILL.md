@@ -13,6 +13,7 @@ You are the **orchestrator** of a factory run. You run the loop below, spawn eve
 `<F>` below means this skill's base directory. `$ARGUMENTS` means the text the user passed after `/factory`.
 
 References, read when a step points at them:
+
 - [`references/verbs.md`](references/verbs.md): the verbs this file uses (`SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`).
 - `references/harness/<name>.md`: one file per harness (`claude-code`, `opencode`, `codex`, `copilot`, ...): how to perform each verb there, and its setup values. Preflight picks the one for the harness you are running in.
 - [`references/state.md`](references/state.md): `state.json` schema, checkpoints, discovery, resume.
@@ -42,7 +43,7 @@ The **default mode** is `lite` chain with `fast` on: wherever a flag did not pin
 
 ## 1. Preflight
 
-1. Pick your harness file: `references/harness/$FACTORY_HARNESS.md` when that environment variable is set, otherwise the file whose "Recognise it by" line describes you. No file fits: stop and say which harness you are and that it has no adapter. Read `verbs.md` and that file (from here on, `harness.md`). Record `harness` (its `name`) in the pending state. Use its mapping for every verb for the rest of the run.
+1. Pick your harness file: `references/harness/$FACTORY_HARNESS.md` when that environment variable is set, otherwise the file whose "Recognise it by" line describes you. No file fits: stop and say which harness you are and that it has no adapter. Read `verbs.md` and that file (from here on, `harness.md`). Before any state or worktree creation, check that required harness capabilities listed there are available. If not, stop with the missing capability and its recovery instructions; do not start a partial run. Record `harness` (its `name`) in the pending state. Use its mapping for every verb for the rest of the run.
 2. Confirm the current directory is inside a git repo. Record `repo` as the main checkout (the parent of `git rev-parse --path-format=absolute --git-common-dir`, so a run started from a worktree still anchors on the main checkout), the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `main`), and `base` = `origin/<default-branch>` after `git -C <repo> fetch origin <default-branch>`.
 3. `.specify/` missing: ask once to run `specify init --here <speckit_init>` (`harness.md`), then follow the resolved `speckit-constitution` file with the user. Declined: stop.
 4. `RESOLVE` every skill the run needs: `speckit-specify`, `speckit-clarify`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `grilling`, `domain-modeling`, `pr`. A missing speckit skill: apply the same guidance as a missing `.specify/` — name the exact `specify init --here <speckit_init>` command from this harness's `harness.md` (with its extra arguments) and offer to run it; declined, or still missing after it runs: stop and name the skill. A missing `grilling`, `domain-modeling` or `pr`: stop and name it. Also `RESOLVE` `ponytail` and `tdd` here, before the run ever commits to delivery; record whichever resolve in `skills`, but do not stop here if either is missing — code delivery (step 6, step 7) stops that work alone, naming the missing skill, when it is about to start. On the idea path only (intake intent is exploration), also `RESOLVE` `brainstorming`; missing there, stop and name it the same way as the always-required skills — it is never resolved on the feature path. `impeccable` is resolved later, only on a UI diff. On resume, `RESOLVE` any of these names still absent from `skills`, and every resolved path again when `harness` changed, before any role is spawned (state.md, "Resume").
@@ -87,7 +88,7 @@ Pass `design` (when active) and the resolved `pen-design` path to every spec sta
 
 Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have).
 
-After `analyze`, read the severity counts in the envelope:
+After `analyze`, save the returned envelope to a file and run `python3 <F>/bin/factory analyze-record <envelope>` before checkpointing. This records the report and severity counts through the state writer. Then read those counts:
 
 Lite chain:
 

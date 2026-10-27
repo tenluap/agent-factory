@@ -22,6 +22,7 @@ read:
 
 write (the single writer; each stamps its time, validates, writes atomically):
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
+  analyze-record <envelope>         validate and record an analysis outcome
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
             [--in-est N] [--out-est N] [--reported '<json>']
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
@@ -151,6 +152,12 @@ def main(argv):
                 files=flags.get("--files"),
                 envelope=flags.get("--envelope"),
             )
+        elif command == "analyze-record":
+            positional, flags = parse_flags(rest, command)
+            if len(positional) != 1:
+                die_usage("analyze-record needs exactly one <envelope>")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_analyze_record(repo, Path.cwd(), positional[0])
         elif command == "ledger-add":
             positional, flags = parse_flags(
                 rest,

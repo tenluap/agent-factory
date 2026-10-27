@@ -14,7 +14,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 
 `./install.sh --harness all` installs every adapter. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
 
-The OpenCode adapter targets V2's `subagent` and `shell` tools and native `permissions` rules. OpenCode translates supported V1 agent and skill files, so existing installations are intended to keep working. Re-run `./install.sh --harness opencode` after pulling to use the V2 adapter, then start a new session. See the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
+The OpenCode adapter requires V2's `subagent` and `shell` tools and uses native `permissions` rules. Install with `./install.sh --harness opencode`; it verifies the factory skill and role-agent links. Start a fresh OpenCode session after installation so it loads them. If an existing non-symlink blocks a link, resolve that path and rerun the installer. If `/factory` loads but reports a missing tool, enable that capability and restart the session; if `/factory` itself is unavailable, install and reload first. OpenCode translates supported V1 agent and skill files, so existing installations are intended to keep working. See the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
 
 ## Install
 

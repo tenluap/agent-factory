@@ -67,6 +67,15 @@ link() {
   echo "linked: $to"
 }
 
+verify_link() {
+  local from="$1" to="$2"
+  if [ ! -L "$to" ] || [[ "$(readlink "$to")" != "$from" ]]; then
+    echo "error: factory link not installed at $to" >&2
+    echo "       resolve any existing file at that path, then rerun: ./install.sh --harness $harness" >&2
+    return 1
+  fi
+}
+
 unlink_ours() {
   local to="$1"
   if [ -L "$to" ] && [[ "$(readlink "$to")" == "$factory_home"/dist/* ]]; then
@@ -90,7 +99,14 @@ install_one() {
   fi
   mkdir -p "$(dirname "$skill_dir")" "$agent_dir"
   link "$dist/skill" "$skill_dir"
-  for f in "$dist"/agents/*; do link "$f" "$agent_dir/$(basename "$f")"; done
+  verify_link "$dist/skill" "$skill_dir"
+  for f in "$dist"/agents/*; do
+    link "$f" "$agent_dir/$(basename "$f")"
+    verify_link "$f" "$agent_dir/$(basename "$f")"
+  done
+  if [ "$1" = "opencode" ]; then
+    echo "ready: OpenCode factory skill and role agents linked; start a fresh OpenCode session to load them."
+  fi
   python3 "$src/tools/render.py" "$1" --models
 }
 
