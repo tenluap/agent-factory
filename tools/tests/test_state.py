@@ -15,6 +15,7 @@ CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" /
 sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli import state  # noqa: E402
+from tests import replay  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -55,6 +56,20 @@ class ReadAcceptanceTests(unittest.TestCase):
             self.assertEqual(
                 copy.read_text(), original, "reading never rewrites the file"
             )
+
+
+def open_round(qid):
+    return {
+        "questions": [{"id": qid, "text": "Pick", "recommended": "A"}],
+        "answers": {},
+    }
+
+
+def answered_round(qid):
+    return {
+        "questions": [{"id": qid, "text": "Pick", "recommended": "A"}],
+        "answers": {qid: {"answer": "A", "at": "2026-10-23T10:00:00Z", "auto": True}},
+    }
 
 
 class ValidationTests(unittest.TestCase):
@@ -130,6 +145,63 @@ class ValidationTests(unittest.TestCase):
             "state-v4.json",
         ):
             self.assertEqual(state.validate_state(fixture(name)), [], name)
+
+    def test_null_relay_and_fully_answered_relay_conform(self):
+        self.assertEqual(self.violations(lambda s: s.__setitem__("relay", None)), [])
+        answered = self.violations(
+            lambda s: s.__setitem__(
+                "relay",
+                {
+                    "stage": "plan",
+                    "rounds": [answered_round("Q5"), answered_round("Q6")],
+                },
+            )
+        )
+        self.assertEqual(
+            answered, [], "a fully answered relay awaiting checkpoint conforms"
+        )
+
+    def test_several_open_rounds_report_at_relay(self):
+        found = self.violations(
+            lambda s: s.__setitem__(
+                "relay",
+                {"stage": "plan", "rounds": [open_round("Q7"), open_round("Q8")]},
+            )
+        )
+        self.assertTrue(
+            any(v["location"] == "relay" for v in found),
+            "several open rounds are reported at relay",
+        )
+
+    def test_unanswered_questions_in_a_non_last_round_report_at_the_round(self):
+        found = self.violations(
+            lambda s: s.__setitem__(
+                "relay",
+                {"stage": "plan", "rounds": [open_round("Q7"), answered_round("Q6")]},
+            )
+        )
+        self.assertTrue(
+            any(v["location"] == "relay.rounds[0]" for v in found),
+            "the early open round is named",
+        )
+        self.assertFalse(
+            any(v["location"] == "relay" for v in found),
+            "a single open round is not reported at relay",
+        )
+
+
+class ReplayVocabularyTests(unittest.TestCase):
+    """FR-019: tools/tests/replay.py resolves its timestamp parsing and
+    vocabularies from factory_cli.state, not private copies."""
+
+    def test_replay_shares_the_state_vocabularies(self):
+        self.assertIs(replay.parse_iso, state.parse_iso)
+        self.assertIs(replay.TIMELINE_KINDS, state.TIMELINE_KINDS)
+        self.assertIs(replay.HISTORY_EVENTS, state.HISTORY_EVENTS)
+        self.assertTrue(
+            set(replay.AGENT_STAGES) <= set(state.STAGES),
+            "the agent stages come from the shared stage vocabulary",
+        )
 
 
 class WriteTests(unittest.TestCase):

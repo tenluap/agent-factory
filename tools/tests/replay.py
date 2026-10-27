@@ -9,38 +9,24 @@ Run directly: ``python3 tools/tests/replay.py`` (exit non-zero on any gap).
 
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 MANIFEST = FIXTURES / "defects.json"
 
-TIMELINE_KINDS = ("questions", "notice", "approver", "halt")
-HISTORY_EVENTS = (
-    "complete",
-    "verify-pass",
-    "verify-fail",
-    "approved",
-    "gate-override",
-    "aborted",
-    "pr-open",
-    "resumed",
-)
+# FR-019: one vocabulary source — parse_iso and the closed vocabularies come
+# from the shared state module the CLI validates with.
+CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
+if str(CORE_BIN) not in sys.path:
+    sys.path.insert(0, str(CORE_BIN))
+
+from factory_cli.state import HISTORY_EVENTS, TIMELINE_KINDS, parse_iso  # noqa: E402
+
 AGENT_STAGES = (
     "implement",
     "review",
     "fix",
 )  # stages whose spawns belong in the ledger
-
-
-def parse_iso(value):
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
 
 def _backwards(entries):

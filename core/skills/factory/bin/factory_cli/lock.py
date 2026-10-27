@@ -46,16 +46,17 @@ def _now():
 
 
 def _alive(pid):
-    if not isinstance(pid, int):
-        return False
+    """Liveness judgment (FR-012): a PID the OS probe cannot evaluate —
+    wrong type, zero, negative, out of range — counts as live; only a
+    proven-gone owner frees the lock."""
+    if not isinstance(pid, int) or isinstance(pid, bool) or pid <= 0:
+        return True
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         return False
-    except PermissionError:
+    except (OverflowError, OSError):
         return True
-    except OSError:
-        return False
     return True
 
 
@@ -154,22 +155,30 @@ def acquire(state_path, harness):
 
 
 def release(state_path):
-    """Remove the lock only if this process still owns it."""
+    """Remove the lock only if this process still owns it. The unlink is
+    identity-checked (FR-014): the file is removed only when it is still the
+    same file (st_dev, st_ino) whose contents said so — a lock swapped in by
+    another owner inside the window is left in place."""
     path = lock_path_for(state_path)
+    identity = _identity(path)
     info = read(path)
     if (
         info
         and info.get("owner_pid") == os.getpid()
         and info.get("host") == socket.gethostname()
     ):
+        if _identity(path) != identity:
+            return  # replaced since the read; not ours to remove
         path.unlink(missing_ok=True)
 
 
 def take(state_path, harness, force=False):
-    """The only explicit takeover. Without --force it refuses a live lock."""
+    """The only explicit takeover. Force is evaluated before liveness
+    (FR-013): a failing probe never blocks --force. Without --force it
+    refuses a live lock."""
     path = lock_path_for(state_path)
     existing = read(path)
-    if existing and _live(existing) and not force:
+    if not force and existing and _live(existing):
         raise LockHeld(existing)
     info = {
         "owner_pid": os.getpid(),
