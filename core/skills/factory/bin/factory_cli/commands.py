@@ -350,14 +350,18 @@ def factory_home():
     return Path(os.environ.get("FACTORY_HOME", "~/.factory")).expanduser()
 
 
+def read_config():
+    """The user's ${FACTORY_HOME}/config.json, {} when missing or malformed."""
+    try:
+        return json.loads((factory_home() / "config.json").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
 def cmd_budget(role):
     """The role's resolved budget and derived deadline (FR-001); a missing or
     malformed config falls back to the default and never fails."""
-    try:
-        config = json.loads((factory_home() / "config.json").read_text())
-    except (OSError, ValueError):
-        config = {}
-    seconds = budget.resolve(role, config)
+    seconds = budget.resolve(role, read_config())
     return {
         "role": role,
         "seconds": seconds,
@@ -803,12 +807,17 @@ def cmd_ledger_add(
     in_est=0,
     out_est=0,
     reported=None,
+    overrun=None,
+    partial_return=False,
 ):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     start, end = started_at or now, ended_at or started_at or now
     duration = max(
         int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
+    )
+    issue = overrun_issue(
+        loaded, worktree, stage, role, duration, overrun, partial_return
     )
 
     def mutate(s):
@@ -826,11 +835,70 @@ def cmd_ledger_add(
                 "ended_at": end,
             }
         ]
+        if issue is not None:
+            # self-report and detection meet here: the same overrun of one
+            # spawn is recorded exactly once (FR-006)
+            append_issue(s, issue, dedupe=(stage, role, issue.get("commit"), "overrun"))
         return s
 
-    write_run(path, loaded, mutate)
+    updated = write_run(path, loaded, mutate)
     commit_worktree(worktree, f"factory: ledger-add {stage}", loaded.get("spec_dir"))
-    return {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+    result = {"added": {"stage": stage, "role": role, "duration_ms": duration}}
+    if issue is not None:
+        result["issue"] = issue
+        if issue["partial_return"]:
+            result["stalls"] = stall_rule(updated, stage)
+    return result
+
+
+def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_return):
+    """The one issue a ledger-add records (FR-006), or None: the self-report
+    wins; else a duration over the role's budget yields cause `unreported`;
+    neither signal records nothing. `--partial-return` marks the spawn as a
+    partial return, subject to the shared mark rules."""
+    if partial_return and role not in state.PARTIAL_RETURN_ROLES:
+        die(
+            1,
+            "the partial_return mark is accepted only for overrun/retry of "
+            "the file-writing roles (spec-builder, code-build, fixer)",
+        )
+    cause = detail = None
+    if overrun is not None:
+        if not isinstance(overrun, dict):
+            die(1, "--overrun needs a JSON object with cause and detail")
+        cause = overrun.get("cause")
+        detail = overrun.get("detail")
+        if cause not in state.OVERRUN_CAUSES:
+            die(
+                1,
+                f"--overrun cause {cause!r} is off-vocabulary; expected one "
+                f"of: {', '.join(state.OVERRUN_CAUSES)}",
+            )
+        if not isinstance(detail, str) or not detail:
+            die(1, "--overrun needs a non-empty detail")
+    else:
+        seconds = budget.resolve(role, read_config())
+        if duration <= seconds * 1000:
+            return None
+        cause = "unreported"
+        detail = (
+            f"{role} ran {duration // 1000}s past its {seconds}s budget "
+            "without a self-report"
+        )
+    record = {
+        "at": now_iso(),
+        "kind": "overrun",
+        "stage": stage,
+        "role": role,
+        "cause": cause,
+        "detail": detail,
+        "duration_ms": duration,
+        "commit": None,
+        "partial_return": bool(partial_return),
+    }
+    if record["commit"] is None and worktree:
+        record["commit"] = git(worktree, "rev-parse", "--short", "HEAD").strip()
+    return record
 
 
 def cmd_wait_open(repo, cwd, kind, stage, summary):

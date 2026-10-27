@@ -26,6 +26,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   analyze-record <envelope>         validate and record an analysis outcome
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
             [--in-est N] [--out-est N] [--reported '<json>']
+            [--overrun '<json>'] [--partial-return]
   issue-add <kind> <stage> <role> --detail <text> --duration-ms <n>
             [--cause <cause>] [--commit <sha>] [--partial-return]
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
@@ -172,7 +173,9 @@ def main(argv):
                     "--in-est",
                     "--out-est",
                     "--reported",
+                    "--overrun",
                 ),
+                bool_flags=("--partial-return",),
             )
             if len(positional) != 2:
                 die_usage("ledger-add needs <stage> <role>")
@@ -197,6 +200,10 @@ def main(argv):
                 reported=json_or_usage(flags["--reported"], "--reported")
                 if "--reported" in flags
                 else None,
+                overrun=json_or_usage(flags["--overrun"], "--overrun")
+                if "--overrun" in flags
+                else None,
+                partial_return=bool(flags.get("--partial-return")),
             )
         elif command == "issue-add":
             positional, flags = parse_flags(
