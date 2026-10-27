@@ -14,7 +14,7 @@ sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli import budget, state  # noqa: E402
 
-from tests import Sandbox  # noqa: E402
+from tests import Sandbox, fixture  # noqa: E402
 
 
 class ResolutionTests(unittest.TestCase):
@@ -83,6 +83,91 @@ class BudgetCommandTests(unittest.TestCase):
         out = self.cli("orchestrator")
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertEqual(json.loads(out.stdout)["seconds"], 600)
+
+
+class OverrunDetectionTests(unittest.TestCase):
+    """`factory ledger-add`'s overrun detection (FR-006): --overrun self-report
+    wins, a duration over the role's budget yields cause `unreported`, and an
+    overrun both self-reported and detected is recorded exactly once."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.config = self.box.home / "config.json"
+        self.config.write_text(json.dumps({"budget": {"roles": {"code-build": 100}}}))
+        self.wt = self.box.worktree_run("040-overruns", fixture("state-v4.json"))
+        self.state_path = self.wt / "specs" / "040-overruns" / "factory" / "state.json"
+
+    def ledger_add(self, *extra, role="code-build", overrun=None, marked=False):
+        args = [
+            "ledger-add",
+            "implement",
+            role,
+            "--started-at",
+            "2026-10-23T10:00:00Z",
+            "--ended-at",
+            "2026-10-23T10:03:20Z",
+        ]
+        if overrun is not None:
+            args += ["--overrun", json.dumps(overrun)]
+        if marked:
+            args += ["--partial-return"]
+        return self.box.cli(*args, *extra, cwd=self.wt)
+
+    def issues(self):
+        return json.loads(self.state_path.read_text()).get("issues") or []
+
+    def test_self_report_wins_over_detection(self):
+        out = self.ledger_add(
+            overrun={"cause": "test-loop", "detail": "red loop 41s past"}
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issues = self.issues()
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0]["kind"], "overrun")
+        self.assertEqual(issues[0]["cause"], "test-loop")
+        self.assertEqual(issues[0]["detail"], "red loop 41s past")
+        self.assertEqual(issues[0]["duration_ms"], 200000)
+        self.assertIs(issues[0]["partial_return"], False)
+
+    def test_detection_yields_unreported(self):
+        out = self.ledger_add()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issues = self.issues()
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0]["cause"], "unreported")
+        self.assertEqual(issues[0]["role"], "code-build")
+        self.assertTrue(issues[0]["detail"], "the detail names the detected overrun")
+
+    def test_no_issue_when_neither_signal_holds(self):
+        out = self.box.cli(
+            "ledger-add",
+            "implement",
+            "code-build",
+            "--started-at",
+            "2026-10-23T10:00:00Z",
+            "--ended-at",
+            "2026-10-23T10:01:30Z",  # 90s: over nothing else, under the 100s budget
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.issues(), [])
+
+    def test_both_signals_record_exactly_one_issue(self):
+        out = self.ledger_add(overrun={"cause": "tool-slow", "detail": "slow tool"})
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issues = self.issues()
+        self.assertEqual(len(issues), 1, "self-report and detection record once")
+        self.assertEqual(issues[0]["cause"], "tool-slow")
+
+    def test_partial_return_stamps_only_when_passed(self):
+        out = self.ledger_add(overrun={"cause": "other", "detail": "d"}, marked=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIs(self.issues()[0]["partial_return"], True)
+        result = json.loads(out.stdout)
+        self.assertIn("stalls", result, "a marked record reports the stall rule")
+        unmarked = self.ledger_add(overrun={"cause": "other", "detail": "d"})
+        self.assertIs(json.loads(unmarked.stdout)["issue"]["partial_return"], False)
 
 
 if __name__ == "__main__":
