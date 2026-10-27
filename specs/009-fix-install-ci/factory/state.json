@@ -52,7 +52,16 @@
     }
   },
   "relay": null,
-  "timeline": [],
+  "timeline": [
+    {
+      "at": "2026-10-27T01:09:30.279567Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve verified installer test fixture fix for PR, request changes, or abort",
+      "answered_at": null,
+      "latency_ms": null
+    }
+  ],
   "decisions": [
     {
       "stage": "grill",
