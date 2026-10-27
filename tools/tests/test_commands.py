@@ -680,7 +680,7 @@ class WriterTests(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         path = self.box.home / "pending" / "repo-052-pend.json"
         after = json.loads(path.read_text())
-        self.assertEqual((after["stage"], after["version"]), ("tasks", 4))
+        self.assertEqual((after["stage"], after["version"]), ("tasks", 5))
 
 
 class CheckpointStagingTests(unittest.TestCase):
