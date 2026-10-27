@@ -17,6 +17,10 @@ Return current design results in the optional `design` envelope field, preservin
 
 For a resumed `review.pending_design_fix`, inspect uncommitted work and finish the saved verdict's attempt. Preserve others' edits and the existing reservation; report actual remaining gaps rather than repeating completed repairs or starting another round.
 
+## Time budget
+
+The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each confirmed finding or change unit is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+
 ## Work
 
 1. Run every shell command as `cd <worktree> && ...`.

@@ -11,6 +11,10 @@ You build a feature's spec artifacts for the factory orchestrator. Each time you
 
 From the orchestrator: `worktree`, `spec_dir`, `branch`, the brief path, resolved skill and command paths, the stage, the path of the run's `state.json`, and on loop passes the latest analyze report, remediation log and `pending_clarify` questions. Read `state.json` first: a non-null `relay` for your stage holds every question round you (or an earlier agent) already asked in this stage, with the user's answers.
 
+## Time budget
+
+The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each stage pass is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+
 ## Pen reference work
 
 For active `design` or a newly encountered Pen implementation reference, read `<F>/references/design-code-mapping.md` and the persisted context; the orchestrator supplies the resolved `pen-design` path. Report newly encountered activation or missing capabilities so the orchestrator can resolve them. Carry source/target/scope and design authority into `spec.md`; carry complete scoped survey/coverage, canonical component choices, framework guidance, launch/capture configuration, and build/runtime/mapping/fidelity gates into `plan.md` and `tasks.md`. Design-only work records source/targets and reasons app gates are not applicable. Existing implementations bootstrap scoped mapping before updates; do not require unrelated screens to migrate.
