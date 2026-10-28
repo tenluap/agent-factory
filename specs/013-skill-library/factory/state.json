@@ -271,6 +271,14 @@
       "auto": false,
       "at": "2026-10-28T09:21:28.137567Z",
       "kind": "gate-override"
+    },
+    {
+      "stage": "fix",
+      "question": "H3",
+      "answer": "A (extended): fixer also runs on claude-code/claude-opus-5-5[1m] while openai quota is exhausted",
+      "auto": false,
+      "at": "2026-10-28T09:29:07.426831Z",
+      "kind": "gate-override"
     }
   ],
   "ledger": [
