@@ -432,6 +432,18 @@
       "duration_ms": 124172,
       "started_at": "2026-10-28T08:15:54.554374Z",
       "ended_at": "2026-10-28T08:17:58.726841+00:00"
+    },
+    {
+      "at": "2026-10-28T08:19:54.268356Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "codex",
+      "in_est": 11133,
+      "out_est": 49,
+      "reported": null,
+      "duration_ms": 140385,
+      "started_at": "2026-10-28T08:15:54.595988Z",
+      "ended_at": "2026-10-28T08:18:14.981189+00:00"
     }
   ],
   "issues": [
