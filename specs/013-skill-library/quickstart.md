@@ -3,7 +3,9 @@
 Run everything under a throwaway home so no real harness directory changes.
 
 ```bash
-export HOME="$(mktemp -d)" XDG_CONFIG_HOME="$HOME/.config"
+unset FACTORY_HOME CLAUDE_HOME CODEX_HOME COPILOT_HOME ZCODE_HOME
+export HOME="$(mktemp -d)"
+export XDG_CONFIG_HOME="$HOME/.config"   # separate line: must expand the new HOME
 ./install.sh --harness opencode
 ls -l "$XDG_CONFIG_HOME/opencode/skills"   # six library links into <repo>/skills/ plus factory
 ```
