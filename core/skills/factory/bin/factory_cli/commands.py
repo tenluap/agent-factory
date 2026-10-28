@@ -7,6 +7,7 @@ T015, `lock`); this module adds only discovery, digests and CLI errors.
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -396,6 +397,43 @@ def cmd_improvements_claim(repo, name):
 
 def now_iso():
     return state.iso(datetime.now(timezone.utc))
+
+
+def cmd_drop(repo, cwd):
+    matches = [
+        run
+        for run in deduped(find_runs(repo))
+        if not isinstance(run, dict)
+        and run[2]["source"] == "worktree"
+        and os.path.realpath(run[2]["worktree"]) == os.path.realpath(cwd)
+    ]
+    if not matches:
+        die(1, f"no run to drop from {cwd}")
+    path, loaded, identity, worktree = matches[0]
+    if loaded.get("status") != "pr-open":
+        die(1, f"run is {loaded.get('status')}; drop needs pr-open")
+    target = (
+        factory_home()
+        / "archive"
+        / improvements.backlog_name(repo, loaded["branch"])[:-5]
+    )
+    if target.exists():
+        die(1, f"archive {target} already exists; refusing to overwrite")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(path.parent, target, ignore=shutil.ignore_patterns("lock.json"))
+    folder = f"{identity['spec_dir']}/factory"
+    git(worktree, "rm", "-r", "-q", "--", folder)
+    git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", folder)
+    shutil.rmtree(path.parent, ignore_errors=True)
+    return {
+        "dropped": folder,
+        "archive": str(target),
+        "design": None,
+        "commit": git(worktree, "rev-parse", "--short", "HEAD").strip(),
+        "pr_url": loaded.get("pr_url"),
+        "totals_sentence": totals.sentence(totals.compute(loaded)),
+        "dropped_at": now_iso(),
+    }
 
 
 def resolve_target(repo, cwd):
