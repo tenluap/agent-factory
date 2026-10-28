@@ -1,7 +1,7 @@
 """Model-policy seam tests over `tools/render.py` render output (FR-015, FR-002).
 
-Exactly one adapter ships models (claude-code opus/sonnet); personal provider
-IDs ship nowhere; the canonical `render.py <harness>` render never reads
+Claude Code, OpenCode and Codex ship default models; Copilot and ZCode use
+the session model; personal provider IDs ship nowhere; the canonical `render.py <harness>` render never reads
 `config.json`, so the committed dist stays machine-independent whatever the
 environment; the README statement matches `adapters/`.
 """
@@ -21,6 +21,8 @@ ADAPTERS = REPO / "adapters"
 DIST = REPO / "dist"
 HARNESSES = ("claude-code", "codex", "copilot", "opencode", "zcode")
 PERSONAL_IDS = ("xiaomi-token-plan-sgp", "mimo-v2.6-pro")
+PINNING = ("claude-code", "codex", "opencode")
+OPENCODE_DEEP = json.loads((ADAPTERS / "opencode" / "adapter.json").read_text())["models"]["deep"]
 
 
 def render(harness, config=None):
@@ -87,7 +89,7 @@ class ModelPolicyTests(unittest.TestCase):
                 check=True,
             )
 
-    def test_exactly_claude_code_ships_models(self):
+    def test_pinning_adapters_ship_both_models(self):
         shipped = []
         for name in HARNESSES:
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
@@ -95,10 +97,9 @@ class ModelPolicyTests(unittest.TestCase):
             self.assertIsInstance(models, dict, name)
             if models:
                 shipped.append(name)
-                self.assertEqual(name, "claude-code", f"{name} ships models")
-                self.assertIn("opus", models.get("deep", ""), name)
-                self.assertIn("sonnet", models.get("standard", ""), name)
-        self.assertEqual(shipped, ["claude-code"])
+                self.assertTrue(models.get("deep"), name)
+                self.assertTrue(models.get("standard"), name)
+        self.assertEqual(sorted(shipped), sorted(PINNING))
 
     def test_no_personal_provider_ids_ship_in_adapters(self):
         for name in HARNESSES:
@@ -109,11 +110,11 @@ class ModelPolicyTests(unittest.TestCase):
     def test_readme_statement_matches_adapters(self):
         readme = (REPO / "README.md").read_text()
         self.assertIn(
-            "Only Claude Code pins agent models by default",
+            "Claude Code, OpenCode and Codex pin agent models by default",
             readme,
-            "the README names claude-code as the only defaults carrier",
+            "the README names the defaults carriers",
         )
-        other = [n for n in HARNESSES if n != "claude-code"]
+        other = [n for n in HARNESSES if n not in PINNING]
         for name in other:
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
             self.assertEqual(adapter.get("models"), {}, name)
@@ -286,7 +287,7 @@ class ReportTests(unittest.TestCase):
 
     def test_models_report_without_config_prints_defaults(self):
         out = render_to("opencode", flags=("--models",), exported=False)
-        self.assertIn("spec-builder: (session default)", out.stdout)
+        self.assertIn(f"spec-builder: {OPENCODE_DEEP}", out.stdout)
 
     def test_bad_config_fails_naming_the_file_without_a_traceback(self):
         for text in ("{not json", "[]", '{"models": 5}', '{"models": {"opencode": 1}}'):
