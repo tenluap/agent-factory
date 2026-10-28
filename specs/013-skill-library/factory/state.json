@@ -571,7 +571,7 @@
       "at": "2026-10-28T08:37:39.554247Z",
       "stage": "implement",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "49f813d",
       "harness": "opencode",
       "commands": [
         {
