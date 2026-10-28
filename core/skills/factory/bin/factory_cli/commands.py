@@ -5,6 +5,7 @@ their tasks land. Everything mechanical routes through `state` (and, from
 T015, `lock`); this module adds only discovery, digests and CLI errors.
 """
 
+import filecmp
 import json
 import os
 import shutil
@@ -420,10 +421,42 @@ def cmd_drop(repo, cwd):
     if target.exists():
         die(1, f"archive {target} already exists; refusing to overwrite")
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(path.parent, target, ignore=shutil.ignore_patterns("lock.json"))
+    tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    try:
+        shutil.copytree(path.parent, tmp, ignore=shutil.ignore_patterns("lock.json"))
+        pending = [filecmp.dircmp(path.parent, tmp, ignore=["lock.json"])]
+        problems = []
+        while pending:
+            comparison = pending.pop()
+            problems.extend(
+                str(Path(comparison.left) / name)
+                for name in comparison.left_only
+                + comparison.right_only
+                + comparison.funny_files
+            )
+            for name in comparison.common_files:
+                left, right = (
+                    Path(comparison.left) / name,
+                    Path(comparison.right) / name,
+                )
+                if not filecmp.cmp(left, right, shallow=False):
+                    problems.append(str(left))
+            pending.extend(comparison.subdirs.values())
+        if problems:
+            raise OSError(", ".join(problems))
+        os.rename(tmp, target)
+    except OSError as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        die(1, f"archive copy failed: {e}")
     folder = f"{identity['spec_dir']}/factory"
-    git(worktree, "rm", "-r", "-q", "--", folder)
-    git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", folder)
+    try:
+        git(worktree, "rm", "-r", "-q", "--", folder)
+        git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", folder)
+    except CLIError as e:
+        git(worktree, "reset", "-q", "HEAD", "--", folder)
+        git(worktree, "checkout", "-q", "HEAD", "--", folder)
+        shutil.rmtree(target, ignore_errors=True)
+        die(1, str(e))
     shutil.rmtree(path.parent, ignore_errors=True)
     return {
         "dropped": folder,

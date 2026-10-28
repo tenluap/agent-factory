@@ -1,14 +1,16 @@
 """End-of-run drop exercised through the public CLI."""
 
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from tests import Sandbox, fixture
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core/skills/factory/bin"))
-from factory_cli import totals
+from factory_cli import commands, improvements, totals
 
 
 class DropTests(unittest.TestCase):
@@ -71,3 +73,78 @@ class DropTests(unittest.TestCase):
             data["totals_sentence"], totals.sentence(totals.compute(state))
         )
         self.assertTrue(data["dropped_at"])
+
+    def test_archive_contains_all_bytes_except_lock(self):
+        (self.folder / "untracked").write_bytes(b"untracked\x00")
+        (self.folder / "lock.json").write_text("stale lock")
+        expected = {
+            str(p.relative_to(self.folder)): p.read_bytes()
+            for p in self.folder.rglob("*")
+            if p.is_file() and p.name != "lock.json"
+        }
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        archive = Path(json.loads(result.stdout)["archive"])
+        self.assertEqual(
+            archive,
+            self.box.home
+            / "archive"
+            / improvements.backlog_name(self.box.repo, "011-drop")[:-5],
+        )
+        self.assertEqual(
+            {
+                str(p.relative_to(archive)): p.read_bytes()
+                for p in archive.rglob("*")
+                if p.is_file()
+            },
+            expected,
+        )
+
+    def test_copy_failure_removes_partial_archive(self):
+        before = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+
+        def broken_copy(src, dest, **kwargs):
+            Path(dest).mkdir()
+            (Path(dest) / "partial").write_text("partial")
+            raise OSError("copy broke")
+
+        with (
+            mock.patch.dict(os.environ, FACTORY_HOME=str(self.box.home)),
+            mock.patch.object(commands.shutil, "copytree", side_effect=broken_copy),
+        ):
+            with self.assertRaises(commands.CLIError) as error:
+                commands.cmd_drop(str(self.box.repo), self.wt)
+        self.assertEqual(error.exception.code, 1)
+        self.assertIn("copy broke", str(error.exception))
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), before)
+        self.assertTrue((self.folder / "state.json").exists())
+        self.assertTrue(self.box.git("ls-files", "specs/011-drop/factory", cwd=self.wt))
+        self.assertEqual(list((self.box.home / "archive").glob("*")), [])
+
+    def test_verification_failure_names_file_and_removes_partial_archive(self):
+        before = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        with (
+            mock.patch.dict(os.environ, FACTORY_HOME=str(self.box.home)),
+            mock.patch("filecmp.cmp", return_value=False),
+        ):
+            with self.assertRaises(commands.CLIError) as error:
+                commands.cmd_drop(str(self.box.repo), self.wt)
+        self.assertEqual(error.exception.code, 1)
+        self.assertIn("brief.md", str(error.exception))
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), before)
+        self.assertTrue((self.folder / "state.json").exists())
+        self.assertTrue(self.box.git("ls-files", "specs/011-drop/factory", cwd=self.wt))
+        self.assertEqual(list((self.box.home / "archive").glob("*")), [])
+
+    def test_commit_failure_restores_run_and_removes_archive(self):
+        before = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        hook = self.box.repo / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\necho commit-failure >&2\nexit 1\n")
+        hook.chmod(0o755)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("commit-failure", result.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), before)
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), "")
+        self.assertTrue((self.folder / "state.json").exists())
+        self.assertEqual(list((self.box.home / "archive").glob("*")), [])
