@@ -9,9 +9,9 @@
   "branch": "013-skill-library",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
-  "status": "running",
+  "status": "halted",
   "stage": "implement",
-  "halt_reason": null,
+  "halt_reason": "T004 blocked: origin/main has dist drift from commit 6dd7a0e (adapter model changes not re-rendered); render gate cannot pass",
   "stop_at": null,
   "mode": {
     "chain": "full",
@@ -395,7 +395,19 @@
       "ended_at": "2026-10-28T08:02:22Z"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-10-28T08:02:22.352633Z",
+      "kind": "halt",
+      "stage": "implement",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "T004 blocked: origin/main has dist drift from commit 6dd7a0e (adapter model changes not re-rendered); render gate cannot pass",
+      "duration_ms": 0,
+      "commit": "2d88f72",
+      "partial_return": false
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
