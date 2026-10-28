@@ -1,0 +1,148 @@
+{
+  "version": 5,
+  "started_at": "2026-10-28T00:23:56Z",
+  "harness": "opencode",
+  "feature": "At the end of the whole factory flow, drop the factory folder the run adds under specs/<branch>/ so it is no longer committed in PRs.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "011-drop-factory-folder",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
+  "spec_dir": "specs/011-drop-factory-folder",
+  "status": "running",
+  "stage": "specify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\"; done; git diff --exit-code -- dist/",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-10-28T00:24:17.727623Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grilling round 1: drop factory folder",
+      "answered_at": "2026-10-28T00:34:28.897584Z",
+      "latency_ms": 611169
+    },
+    {
+      "at": "2026-10-28T00:38:29.666756Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grilling round 2",
+      "answered_at": "2026-10-28T00:38:29.930228Z",
+      "latency_ms": 263
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A final removal commit",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A archive to FACTORY_HOME/archive/<repo>-<branch>/",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A leave existing 007-010 folders",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A no opt-out, always drop",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A adapter.json out of scope",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A after PR opens: pr-open, archive, removal commit, push",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A new CLI write command factory drop",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q8",
+      "answer": "A only pr-open runs drop",
+      "auto": false,
+      "at": "2026-10-28T00:38:56.647240Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "issues": [],
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-10-28T00:38:56.647240Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ]
+}
