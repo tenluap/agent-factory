@@ -77,6 +77,7 @@ def load_adapter(name, *, use_env=True):
     if use_env:
         home = os.environ.get(adapter["home"]["env"]) or home
     adapter["skill_dir"] = adapter["skill_dir"].format(home=home)
+    adapter["skills_root"] = adapter["skills_root"].format(home=home)
     adapter["agent_dir"] = adapter["agent_dir"].format(home=home)
     return adapter
 
@@ -181,6 +182,7 @@ def print_paths(adapter, target):
     for key, value in (
         ("dist", str(target)),
         ("skill_dir", adapter["skill_dir"]),
+        ("skills_root", adapter["skills_root"]),
         ("agent_dir", adapter["agent_dir"]),
     ):
         print(f"{key}={shlex.quote(os.path.expanduser(value))}")

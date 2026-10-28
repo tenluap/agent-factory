@@ -5,6 +5,7 @@
     "default": "~/.config"
   },
   "skill_dir": "{home}/opencode/skills/factory",
+  "skills_root": "{home}/opencode/skills",
   "agent_dir": "{home}/opencode/agents",
   "agent_file": "factory-{role}.md",
   "agent_format": "markdown",

@@ -160,6 +160,32 @@ _Avoid_: UI flag, frontend change
 The one compact document (`core/skills/factory/references/skills.md`) holding skill precedence and loading rules for the orchestrator and both code-writing roles, linked rather than restated.
 _Avoid_: skills doc, integration guide
 
+## Skill library
+
+**Skill library**:
+The skills the factory installs into every selected harness from one place, in two layers: the repo layer and the per-user layer.
+_Avoid_: skill store, skill registry, skill pack
+
+**Library skill**:
+One folder in a library layer holding a `SKILL.md` whose frontmatter `name` equals the folder's name; dot-prefixed folders and a folder named `factory` (reserved for the factory skill) are never library skills.
+_Avoid_: plugin, package, module
+
+**Repo layer**:
+The committed library layer shipping verbatim, attributed copies of the skills the factory itself requires.
+_Avoid_: bundled skills, core skills, vendor dir
+
+**Per-user layer**:
+The library layer under one user's factory home holding the skills that user added; never committed, kept on disk by uninstall, and it wins a name clash with the repo layer.
+_Avoid_: local skills, custom skills, overrides
+
+**Skills root**:
+The directory a harness loads skills from, declared by that harness's adapter and moving with the harness home override where the harness has one; one root may serve more than one harness.
+_Avoid_: skills dir, install target
+
+**Library link**:
+A symlink in a skills root pointing into a library layer: the only thing the installer creates or removes for the library, including removal on re-run once its source folder is gone. Anything else at that path is user-owned and skipped.
+_Avoid_: install, copy, managed skill
+
 ## Engineering discipline
 
 **Engineering rules reference**:
