@@ -13,6 +13,7 @@
 ### Session 2026-10-28
 
 - Q: Where does step 9 get the run totals and PR URL once the drop has removed `state.json` from the worktree? → A: `factory drop` computes the totals sentence from the final state before removal and includes it, the PR URL and the archive path in its JSON output. Step 9 `NOTIFY`s from that output. The PR stage is done when the PR URL is recorded in the archived state and shown to the user.
+- Q: What does `factory drop` do with `specs/<branch>/factory/design/` on Pen design runs? → A: Everything in `factory/` leaves the branch. On a Pen run, the drop first moves `factory/design/` to the permanent path `docs/design/<branch>/` and rewrites every `docs/design-code-map.json` reference to it, in the same drop commit. The mapping contract (`design-code-mapping.md`, DESIGN.md) states that evidence moves to the permanent path at drop.
 - Q: How is a failed final push (after the drop commit) recovered, given the run is no longer discoverable? → A: The orchestrator retries the push once in the same turn. If the second attempt fails, it `NOTIFY`s the user to run `git push` from the named worktree path. No resume is involved.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -27,7 +28,7 @@ A developer runs `/factory` on a feature. When the run opens its PR, the reviewe
 
 **Acceptance Scenarios**:
 
-1. **Given** a run whose PR was just created and whose status was just set to `pr-open`, **When** the orchestrator runs `factory drop` and pushes, **Then** the branch's last commit is `factory: drop run artifacts`, it removes every file under `specs/<branch>/factory/`, and nothing else changes in that commit.
+1. **Given** a run whose PR was just created and whose status was just set to `pr-open`, **When** the orchestrator runs `factory drop` and pushes, **Then** the branch's last commit is `factory: drop run artifacts`, it removes every file under `specs/<branch>/factory/`, and nothing else changes in that commit except the design evidence move of FR-017 on Pen runs.
 2. **Given** the drop commit is pushed, **When** a reviewer opens the PR's file diff, **Then** no path under `specs/<branch>/factory/` appears.
 3. **Given** the run is in progress (any status other than `pr-open`), **When** the orchestrator checkpoints, resumes or discovers runs, **Then** behaviour is unchanged: the folder stays committed and readable on the branch.
 
@@ -76,6 +77,9 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 - Improvement backlog: `set-status pr-open` exports the backlog before the drop, so the export is unaffected. `factory improvements claim` treats a run with no discoverable state as ended, as it does for any non-discoverable run today.
 - Untracked or ignored files inside the folder: the archive copies the folder as it is on disk; the removal commit removes the tracked files. Any untracked leftovers are archived too.
 - Existing runs `specs/007..010/*/factory/` on the default branch: out of scope; left as they are.
+- Pen design run (`factory/design/` exists): the archive still copies it with the rest of the folder. The drop commit then moves it to `docs/design/<branch>/` and points the map at the new path, so the map never references a removed file.
+- Design evidence target `docs/design/<branch>/` already exists: the command refuses before any archive or git change, naming the path.
+- Non-Pen run: no `factory/design/`, so no move and no map edit.
 
 ## Requirements *(mandatory)*
 
@@ -86,23 +90,25 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 - **FR-003**: `factory drop` MUST copy the whole `specs/<branch>/factory/` folder to `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`, using the same `<repo-name>` derivation the improvement backlog export uses.
 - **FR-004**: `factory drop` MUST refuse, overwrite nothing and commit nothing when the archive target already exists. The message names the existing path.
 - **FR-005**: `factory drop` MUST verify the copy (same file set, identical content) before removing anything from git. A failed verification refuses and leaves git untouched.
-- **FR-006**: After a verified copy, `factory drop` MUST remove the folder from git (`git rm -r specs/<branch>/factory`) and create exactly one commit with the message `factory: drop run artifacts`, touching no other path.
+- **FR-006**: After a verified copy, `factory drop` MUST remove the folder from git (`git rm -r specs/<branch>/factory`) and create exactly one commit with the message `factory: drop run artifacts`, touching no other path except the FR-017 design evidence move.
 - **FR-007**: On success `factory drop` MUST print JSON that includes the archive path, the PR URL from the final state, and the run totals sentence computed from the final state before removal.
 - **FR-008**: `factory drop` MUST NOT push. Pushing stays with the orchestrator.
 - **FR-009**: SKILL.md step 9 MUST run, in order: push, `gh pr create`, `factory set-status pr-open --pr-url <url>`, `factory drop`, push, then `NOTIFY` the totals sentence and PR URL taken from the `factory drop` JSON output. If the final push fails, the orchestrator retries it once in the same turn; a second failure `NOTIFY`s the user to run `git push` from the named worktree path. The stage's "Done when" becomes: the PR URL is recorded in the archived state and shown to the user. The final state and the improvement backlog export of `set-status pr-open` are unchanged.
 - **FR-010**: Run state MUST stay committed throughout the run. Checkpoints, resume, discovery and the existing write commands keep their current behaviour; no history rewrite and no gitignore change.
 - **FR-011**: The drop MUST apply to every run that reaches `pr-open`, with no opt-out flag or configuration setting.
 - **FR-012**: `aborted` runs MUST keep their folder and worktree.
-- **FR-013**: DESIGN.md MUST record the new end-of-run behaviour (PR step, state CLI surface, archive location) before or with the core change (constitution I).
+- **FR-013**: DESIGN.md MUST record the new end-of-run behaviour (PR step, state CLI surface, archive location, design evidence move) before or with the core change (constitution I).
 - **FR-014**: references/state.md MUST document the archive under "Location" and `factory drop` under "CLI"; README MUST describe the drop and the archive location.
 - **FR-015**: `dist/` MUST be re-rendered for every harness and committed with the source change (constitution III).
-- **FR-016**: Unit tests in `tools/tests/` MUST cover: success (archive equals source, folder gone, one commit with the expected message touching only the folder, JSON output carrying archive path, PR URL and totals sentence), refusal for each non-`pr-open` status, refusal on archive collision, refusal under a live lock, and no git change on a failed verification.
+- **FR-016**: Unit tests in `tools/tests/` MUST cover: success (archive equals source, folder gone, one commit with the expected message touching only the folder, JSON output carrying archive path, PR URL and totals sentence), refusal for each non-`pr-open` status, refusal on archive collision, refusal under a live lock, no git change on a failed verification, and on a Pen run: `factory/design/` lands at `docs/design/<branch>/` with identical content, every map reference to the old path is rewritten, and an existing target refuses with no change.
+- **FR-017**: When `specs/<branch>/factory/design/` exists, `factory drop` MUST, in the drop commit, move it to `docs/design/<branch>/` (`git mv`) and rewrite every `specs/<branch>/factory/design/` path prefix in `docs/design-code-map.json` to `docs/design/<branch>/`, preserving all other map content. It MUST refuse with no change when the target exists. `design-code-mapping.md` MUST state that evidence lives under `factory/design/` during the run and at `docs/design/<branch>/` after the drop.
 
 ### Key Entities
 
 - **Run folder**: `specs/<branch>/factory/` in the worktree. Holds `state.json`, `brief.md`, analyze reports, remediation logs, review findings and other run artifacts.
 - **Run archive**: `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`. A byte-identical copy of the run folder at drop time. Written once, never overwritten by the factory.
-- **Drop commit**: the single commit `factory: drop run artifacts` that removes the run folder from the branch.
+- **Drop commit**: the single commit `factory: drop run artifacts` that removes the run folder from the branch and, on Pen runs, moves design evidence to its permanent home.
+- **Permanent design evidence**: `docs/design/<branch>/`. Pen design evidence after the drop; the canonical map references it.
 
 ## Success Criteria *(mandatory)*
 
