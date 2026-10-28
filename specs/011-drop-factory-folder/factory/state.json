@@ -207,6 +207,14 @@
       "auto": false,
       "at": "2026-10-28T01:00:45.458214Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve + dogfood drop",
+      "auto": false,
+      "at": "2026-10-28T01:54:25.279500Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
