@@ -10,6 +10,7 @@ src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 factory_home="${FACTORY_HOME:-$HOME/.factory}"
 harness="claude-code"
 uninstall=""
+add_path=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --harness)
@@ -20,9 +21,17 @@ while [ $# -gt 0 ]; do
       fi
       harness="$2"; shift 2 ;;
     --uninstall) uninstall=1; shift ;;
+    --add-skill)
+      if [ $# -lt 2 ] || [ -z "$2" ] || [[ "$2" == --* ]]; then
+        echo "usage: --add-skill <path>" >&2; exit 2
+      fi
+      add_path="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
+if [ -n "$uninstall" ] && [ -n "$add_path" ]; then
+  echo "usage: --add-skill cannot be combined with --uninstall" >&2; exit 2
+fi
 
 # Factory-home policy: a missing default home ~/.factory is created; an
 # explicitly configured home must exist as a writable directory — anything
@@ -36,9 +45,9 @@ if [ ! -d "$factory_home" ]; then
     echo "error: FACTORY_HOME does not exist: $factory_home" >&2
     exit 2
   fi
-  mkdir -p "$factory_home"
+  if [ -z "$add_path" ]; then mkdir -p "$factory_home"; fi
 fi
-if [ ! -w "$factory_home" ]; then
+if [ -d "$factory_home" ] && [ ! -w "$factory_home" ]; then
   echo "error: not writable: $factory_home" >&2
   exit 2
 fi
@@ -56,6 +65,46 @@ except Exception as error:
     exit 2
   fi
 fi
+
+add_skill() {
+  local path="$1" name dest temp error
+  if [[ "$path" == *://* ]] || [ ! -d "$path" ]; then
+    echo "error: $path: not a local directory" >&2; return 2
+  fi
+  name="$(basename "$path")"
+  if [ "$name" = factory ]; then echo "reserved: factory" >&2; return 2; fi
+  if [ ! -f "$path/SKILL.md" ]; then echo "error: $path: no SKILL.md" >&2; return 2; fi
+  if ! error="$(python3 - "$path/SKILL.md" "$name" 2>&1 <<'PY'
+import re, sys
+from pathlib import Path
+
+try:
+    text = Path(sys.argv[1]).read_text()
+    match = re.match(r'\A---\s*\n(.*?)\n---\s*(?:\n|\Z)', text, re.S)
+    name = re.search(r'^name:\s*(.*?)\s*$', match.group(1), re.M) if match else None
+    if not name or not name.group(1).strip(" '\""):
+        sys.exit('no frontmatter')
+    value = name.group(1).strip().strip("'\"")
+    if value != sys.argv[2]:
+        sys.exit(f"name '{value}' does not match folder '{sys.argv[2]}'")
+except (OSError, UnicodeError) as exc:
+    sys.exit(str(exc))
+PY
+  )"; then
+    echo "error: $path: $error" >&2; return 2
+  fi
+  dest="$factory_home/skills/$name"
+  if [ -e "$dest" ] || [ -L "$dest" ]; then echo "exists: $dest" >&2; return 2; fi
+  mkdir -p "$factory_home/skills"
+  temp="$factory_home/skills/.$name.tmp.$$"
+  if ! cp -RH "$path" "$temp" || ! mv "$temp" "$dest"; then
+    rm -rf "$temp"
+    echo "error: $path: copy failed" >&2; return 1
+  fi
+  echo "added: $dest"
+}
+
+[ -z "$add_path" ] || add_skill "$add_path"
 
 link() {
   local from="$1" to="$2"
