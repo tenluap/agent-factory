@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability",
   "spec_dir": "specs/012-run-reliability",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -672,6 +672,14 @@
       "event": "complete",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-28T08:34:44.655995Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "codex",
+      "decision": "approval"
     }
   ],
   "improvement_source": "/Users/tenluap/.factory/improvements/claude-factory-011-drop-factory-folder.json",
