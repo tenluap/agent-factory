@@ -464,6 +464,17 @@
       "duration_ms": 1128563,
       "commit": "d2eb19b",
       "partial_return": true
+    },
+    {
+      "at": "2026-10-28T08:02:48.936043Z",
+      "kind": "retry",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "Selected model is at capacity. Please try a different model. Native final-verification agent failed before useful work; retry fresh with unchanged inherited model.",
+      "duration_ms": 84177,
+      "commit": "d2eb19b",
+      "partial_return": false
     }
   ],
   "review": {
