@@ -116,4 +116,21 @@ T011 reconciled the completed matrix and limitations. T012 canonical-rendered al
 
 The installer expectation now checks both shipped deep/standard mappings from the adapter; existing override and clean-distribution assertions remain. `PYTHONPATH=tools python3 -m unittest tests.test_install.InstallFlowTests.test_install_without_config_reports_defaults` passed (1 test, 0.242 seconds); `git diff --check` passed. The full command stopped on the test failure, so its chained installer-syntax and clean-dist checks were not claimed as passed.
 
-**Pending:** rerun the exact full build/test commands, installer syntax, final clean-dist and whitespace checks in a fresh verification role, then independently in the orchestrator. T012 remains unchecked; no failed or unperformed check is a pass.
+**At the first attempt:** full checks remained pending after the focused fix. The fresh-role verification below completes T012; independent orchestrator repetition remains a separate gate.
+
+
+### Final repository verification — completed fresh role, 2026-10-28
+
+T012 reran the exact state commands against the committed installer-policy fix:
+
+```sh
+for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h" || exit; done
+python3 -m unittest discover -s tools && bash -n install.sh && test -z "$(git status --porcelain -- dist/)"
+git diff --check
+```
+
+All five harnesses rendered and both configured commands exited **0**. The full suite ran **277 tests, OK**; its successful command chain also completed installer syntax and the final clean-distribution gate. Whitespace passed. No source/model/budget change was made during this verification. Raw command, stdout/stderr, timing and checked-source evidence is retained in `specs/012-run-reliability/factory/verification-final.json`.
+
+The durable S2/S3/S4 output assessors were replayed: each observed old-output acceptance check exited 1 as expected, and each changed-output check exited 0. These expected red controls are separate from the passing repository suite. Requirements checklist remains 16/16; all twelve implementation tasks and their declared trials/checks are complete. The earlier invalid-fixture attempts, synthetic decision-trial limitations and usage-estimate caveat remain recorded.
+
+Independent orchestrator build/test repetition and review are still required; this role's result does not claim either gate.

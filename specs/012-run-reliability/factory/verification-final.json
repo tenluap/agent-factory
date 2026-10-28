@@ -1,0 +1,104 @@
+{
+  "started_at": "2026-10-28T08:09:46.639920+00:00",
+  "commands": [
+    {
+      "kind": "build",
+      "command": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+      "status": 0,
+      "duration_seconds": 0.18470262503251433,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "kind": "test",
+      "command": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\"",
+      "status": 0,
+      "duration_seconds": 148.40062720910646,
+      "stdout": "",
+      "stderr": ".....................................................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 277 tests in 148.298s\n\nOK\n"
+    }
+  ],
+  "ended_at": "2026-10-28T08:12:15.225756+00:00",
+  "whitespace": {
+    "command": "git diff --check",
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "source_head_before_verification_commit": "75737660c1d29c9985318bdaed6dff6e40e59740",
+  "trial_output_assessors": [
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s2/assess-generated-unit.py",
+        "before"
+      ],
+      "expected_status": 1,
+      "status": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/specs/012-run-reliability/factory/trials/s2/assess-generated-unit.py\", line 8, in <module>\n    assert len(checkboxes) == 1, f\"S2-new-generation-atomic-unit: expected one checkbox, observed {len(checkboxes)}\"\n           ^^^^^^^^^^^^^^^^^^^^\nAssertionError: S2-new-generation-atomic-unit: expected one checkbox, observed 2\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s2/assess-generated-unit.py",
+        "after"
+      ],
+      "expected_status": 0,
+      "status": 0,
+      "stdout": "S2-new-generation-atomic-unit passed: one native-generated behavior commit unit\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s3/assess-scope.py",
+        "before"
+      ],
+      "expected_status": 1,
+      "status": 1,
+      "stdout": "S3-failure-scope-acceptance: FAIL S3-git-path: required HIGH/block missing; S3-missing: required HIGH/block missing; S3-stale: required HIGH/block missing; S3-expand: protected confirmation missing\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s3/assess-scope.py",
+        "after"
+      ],
+      "expected_status": 0,
+      "status": 0,
+      "stdout": "S3-failure-scope-acceptance: PASS \n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s4/assess.py",
+        "specs/012-run-reliability/factory/trials/s4/s4-before-output.json"
+      ],
+      "expected_status": 1,
+      "status": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/specs/012-run-reliability/factory/trials/s4/assess.py\", line 9, in <module>\n    assert pending['status'] == 'partial', 'S4-required-check-admission: known broad check cannot fit existing-role boundary'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: S4-required-check-admission: known broad check cannot fit existing-role boundary\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "specs/012-run-reliability/factory/trials/s4/assess.py",
+        "specs/012-run-reliability/factory/trials/s4/s4-effective-output.json"
+      ],
+      "expected_status": 0,
+      "status": 0,
+      "stdout": "S4-required-check-admission: passed; optional and in-flight controls preserved\n",
+      "stderr": ""
+    }
+  ],
+  "requirements_checklist": {
+    "total": 16,
+    "checked": 16,
+    "unchecked": 0
+  },
+  "scope": "Fresh code-build mandatory repository verification; independent orchestrator repetition remains separate.",
+  "generated_output_gate": "Configured test chain exit0 proves installer syntax and clean-dist checks also completed after unittest success."
+}
