@@ -287,6 +287,14 @@
       "auto": false,
       "at": "2026-10-28T09:29:07.426831Z",
       "kind": "gate-override"
+    },
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve",
+      "auto": false,
+      "at": "2026-10-28T11:48:32.071056Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
