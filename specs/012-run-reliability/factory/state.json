@@ -475,6 +475,17 @@
       "duration_ms": 84177,
       "commit": "d2eb19b",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-28T08:08:01.780168Z",
+      "kind": "verify-fail",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "Full suite ran 277 tests with one stale installer model-policy assertion: InstallFlowTests.test_install_without_config_reports_defaults expected inherited OpenCode model despite approved shipped explicit selections. Narrow expectation fix and full rerun required.",
+      "duration_ms": 134833,
+      "commit": "d00ff71",
+      "partial_return": false
     }
   ],
   "review": {
