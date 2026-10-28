@@ -107,8 +107,8 @@
       "kind": "halt",
       "stage": "review",
       "summary": "standard-model reviewers blocked by provider usage limit",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T09:21:29.256629Z",
+      "latency_ms": 2326494
     }
   ],
   "decisions": [
