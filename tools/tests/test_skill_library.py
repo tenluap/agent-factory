@@ -179,3 +179,28 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.factory_home / "skills/sample").exists())
         self.assertEqual(list((self.factory_home / "skills").glob(".sample.tmp.*")), [])
+
+    def test_uninstall_removes_only_library_links_in_shared_root(self):
+        self.home.mkdir(parents=True)
+        personal = self.home / "skills/personal"
+        personal.mkdir(parents=True)
+        (personal / "SKILL.md").write_text("personal")
+        root = self.home / ".agents/skills"
+        root.mkdir(parents=True)
+        (root / "real-dir").mkdir()
+        (root / "real-file").write_text("keep")
+        (root / "outside").symlink_to(self.home / "missing")
+        result = self.run_install("--harness", "copilot")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((root / "personal").is_symlink())
+        result = self.run_install("--harness", "codex", "--uninstall")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name in (*SKILLS, "personal"):
+            self.assertFalse((root / name).is_symlink())
+            self.assertIn(f"removed: {root / name}", result.stdout)
+        self.assertTrue((root / "real-dir").is_dir())
+        self.assertEqual((root / "real-file").read_text(), "keep")
+        self.assertEqual((root / "outside").readlink(), self.home / "missing")
+        self.assertTrue(personal.is_dir())
+        for name in SKILLS:
+            self.assertTrue((self.checkout / "skills" / name / "SKILL.md").is_file())

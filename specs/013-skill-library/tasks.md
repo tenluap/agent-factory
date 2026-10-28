@@ -67,7 +67,7 @@ Seams (plan.md "Test seams"): **S1** `render.py --paths skills_root`; **S2** `in
 
 **Independent Test**: Pre-create a real directory in the skills root, install, uninstall; the directory survives and every library link is gone.
 
-- [ ] T013 [US3] Failing test for seam S4 (`install.sh --uninstall library links`) in `tools/tests/test_skill_library.py`: after install, `--uninstall` removes every link into `$src/skills/` and `${FACTORY_HOME}/skills/` printing `removed: <target>`, including links in `~/.agents/skills` that Copilot shares when uninstalling `--harness codex`; a real directory, a regular file and a symlink pointing elsewhere in the skills root survive; `skills/` and `${FACTORY_HOME}/skills/` survive unchanged.
+- [X] T013 [US3] Failing test for seam S4 (`install.sh --uninstall library links`) in `tools/tests/test_skill_library.py`: after install, `--uninstall` removes every link into `$src/skills/` and `${FACTORY_HOME}/skills/` printing `removed: <target>`, including links in `~/.agents/skills` that Copilot shares when uninstalling `--harness codex`; a real directory, a regular file and a symlink pointing elsewhere in the skills root survive; `skills/` and `${FACTORY_HOME}/skills/` survive unchanged.
 - [ ] T014 [US3] Implement seam S4 in `install.sh`: add `unlink_skills "$skills_root"` removing only symlinks whose `readlink` target starts with either layer prefix, called from the uninstall branch for each selected harness (FR-010).
 
 **Checkpoint**: US3 delivers SC-003.
