@@ -418,36 +418,45 @@ def cmd_drop(repo, cwd):
         / "archive"
         / improvements.backlog_name(repo, loaded["branch"])[:-5]
     )
-    if target.exists():
-        die(1, f"archive {target} already exists; refusing to overwrite")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
     try:
-        shutil.copytree(path.parent, tmp, ignore=shutil.ignore_patterns("lock.json"))
-        pending = [filecmp.dircmp(path.parent, tmp, ignore=["lock.json"])]
-        problems = []
-        while pending:
-            comparison = pending.pop()
-            problems.extend(
-                str(Path(comparison.left) / name)
-                for name in comparison.left_only
-                + comparison.right_only
-                + comparison.funny_files
+        lock.acquire(path, loaded.get("harness") or "unknown")
+    except lock.LockHeld as e:
+        die(1, str(e))
+    try:
+        if target.exists():
+            die(1, f"archive {target} already exists; refusing to overwrite")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+        try:
+            shutil.copytree(
+                path.parent, tmp, ignore=shutil.ignore_patterns("lock.json")
             )
-            for name in comparison.common_files:
-                left, right = (
-                    Path(comparison.left) / name,
-                    Path(comparison.right) / name,
+            pending = [filecmp.dircmp(path.parent, tmp, ignore=["lock.json"])]
+            problems = []
+            while pending:
+                comparison = pending.pop()
+                problems.extend(
+                    str(Path(comparison.left) / name)
+                    for name in comparison.left_only
+                    + comparison.right_only
+                    + comparison.funny_files
                 )
-                if not filecmp.cmp(left, right, shallow=False):
-                    problems.append(str(left))
-            pending.extend(comparison.subdirs.values())
-        if problems:
-            raise OSError(", ".join(problems))
-        os.rename(tmp, target)
-    except OSError as e:
-        shutil.rmtree(tmp, ignore_errors=True)
-        die(1, f"archive copy failed: {e}")
+                for name in comparison.common_files:
+                    left, right = (
+                        Path(comparison.left) / name,
+                        Path(comparison.right) / name,
+                    )
+                    if not filecmp.cmp(left, right, shallow=False):
+                        problems.append(str(left))
+                pending.extend(comparison.subdirs.values())
+            if problems:
+                raise OSError(", ".join(problems))
+            os.rename(tmp, target)
+        except OSError as e:
+            shutil.rmtree(tmp, ignore_errors=True)
+            die(1, f"archive copy failed: {e}")
+    finally:
+        lock.release(path)
     folder = f"{identity['spec_dir']}/factory"
     try:
         git(worktree, "rm", "-r", "-q", "--", folder)
