@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": "spec-builder model claude-code/opus-5.5 not accessible",
   "stop_at": null,
   "mode": {
@@ -51,25 +51,7 @@
       "at": "2026-10-28T00:51:48.024621Z"
     }
   },
-  "relay": {
-    "stage": "grill-with-docs",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "B: drop removes all of factory/; on Pen runs it first moves factory/design/ to a permanent path (e.g. docs/design/<branch>/) and rewrites docs/design-code-map.json references in the same commit; the mapping contract is updated accordingly",
-            "at": "2026-10-28T00:59:19.190508Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-10-28T00:24:17.727623Z",
@@ -207,6 +189,14 @@
       "answer": "A",
       "auto": true,
       "at": "2026-10-28T00:53:28.200787Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q1",
+      "answer": "B: drop removes all of factory/; on Pen runs it first moves factory/design/ to a permanent path (e.g. docs/design/<branch>/) and rewrites docs/design-code-map.json references in the same commit; the mapping contract is updated accordingly",
+      "auto": false,
+      "at": "2026-10-28T01:00:45.458214Z",
       "kind": "answer"
     }
   ],
@@ -413,6 +403,13 @@
     {
       "at": "2026-10-28T00:53:28.200787Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-28T01:00:45.458214Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
