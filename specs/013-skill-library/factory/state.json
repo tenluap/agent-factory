@@ -9,7 +9,7 @@
   "branch": "013-skill-library",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
-  "status": "halted",
+  "status": "running",
   "stage": "implement",
   "halt_reason": "T016: 4 tests encode the pre-6dd7a0e model policy (only Claude Code pins, sonnet standard)",
   "stop_at": null,
