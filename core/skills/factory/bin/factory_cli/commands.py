@@ -418,6 +418,13 @@ def cmd_drop(repo, cwd):
         / "archive"
         / improvements.backlog_name(repo, loaded["branch"])[:-5]
     )
+    folder = f"{identity['spec_dir']}/factory"
+    design = (
+        f"docs/design/{loaded['branch']}" if (path.parent / "design").is_dir() else None
+    )
+    design_path = Path(worktree) / design if design else None
+    map_name = "docs/design-code-map.json"
+    map_path = Path(worktree) / map_name
     try:
         lock.acquire(path, loaded.get("harness") or "unknown")
     except lock.LockHeld as e:
@@ -425,6 +432,8 @@ def cmd_drop(repo, cwd):
     try:
         if target.exists():
             die(1, f"archive {target} already exists; refusing to overwrite")
+        if design_path and design_path.exists():
+            die(1, f"design target {design_path} already exists")
         target.parent.mkdir(parents=True, exist_ok=True)
         tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
         try:
@@ -457,20 +466,46 @@ def cmd_drop(repo, cwd):
             die(1, f"archive copy failed: {e}")
     finally:
         lock.release(path)
-    folder = f"{identity['spec_dir']}/factory"
+    paths = [folder]
+    map_exists = bool(design and map_path.is_file())
+    map_bytes = None
     try:
+        if design:
+            design_path.parent.mkdir(parents=True, exist_ok=True)
+            git(worktree, "mv", "--", f"{folder}/design", design)
+            git(worktree, "add", "--", design)
+            paths.append(design)
+            if map_exists:
+                old = f'"{folder}/design/'.encode()
+                new = f'"{design}/'.encode()
+                map_bytes = map_path.read_bytes()
+                map_path.write_bytes(map_bytes.replace(old, new))
+                git(worktree, "add", "--", map_name)
+                paths.append(map_name)
         git(worktree, "rm", "-r", "-q", "--", folder)
-        git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", folder)
-    except CLIError as e:
-        git(worktree, "reset", "-q", "HEAD", "--", folder)
+        git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", *paths)
+    except (CLIError, OSError) as e:
+        restore_paths = (
+            [folder] + ([design] if design else []) + ([map_name] if map_exists else [])
+        )
+        git(worktree, "reset", "-q", "HEAD", "--", *restore_paths)
         git(worktree, "checkout", "-q", "HEAD", "--", folder)
+        if map_exists and git(worktree, "ls-files", "--", map_name).strip():
+            git(worktree, "checkout", "-q", "HEAD", "--", map_name)
+        if map_bytes is not None:
+            map_path.write_bytes(map_bytes)
+        if design_path:
+            shutil.rmtree(design_path, ignore_errors=True)
+            shutil.copytree(
+                target / "design", path.parent / "design", dirs_exist_ok=True
+            )
         shutil.rmtree(target, ignore_errors=True)
         die(1, str(e))
     shutil.rmtree(path.parent, ignore_errors=True)
     return {
         "dropped": folder,
         "archive": str(target),
-        "design": None,
+        "design": design,
         "commit": git(worktree, "rev-parse", "--short", "HEAD").strip(),
         "pr_url": loaded.get("pr_url"),
         "totals_sentence": totals.sentence(totals.compute(loaded)),

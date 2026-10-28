@@ -223,3 +223,119 @@ class DropTests(unittest.TestCase):
         self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
         self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), dirty)
         self.assertEqual(list((self.box.home / "archive").iterdir()), entries)
+
+    def prepare_design(self, with_map=True):
+        design = self.folder / "design"
+        (design / "nested").mkdir(parents=True)
+        (design / "nested/evidence.json").write_bytes(b'{"evidence": true}\n')
+        (design / "context.json").write_bytes(b"context\x00bytes")
+        map_path = self.wt / "docs/design-code-map.json"
+        if with_map:
+            map_path.parent.mkdir(parents=True, exist_ok=True)
+            map_path.write_bytes(
+                b'{\n "a": "specs/011-drop/factory/design/context.json",\n'
+                b' "b": "specs/011-drop/factory/design/nested/evidence.json",\n'
+                b' "other": "specs/other/factory/design/x"\n}\n'
+            )
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "add design evidence", cwd=self.wt)
+        return design, map_path
+
+    def test_design_evidence_moves_and_rewrites_map_in_drop_commit(self):
+        design, map_path = self.prepare_design()
+        expected = {
+            str(p.relative_to(design)): p.read_bytes()
+            for p in design.rglob("*")
+            if p.is_file()
+        }
+        original_map = map_path.read_bytes()
+        old_head = self.box.git("rev-parse", "HEAD", cwd=self.wt).strip()
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(result.stdout)
+        target = self.wt / "docs/design/011-drop"
+        self.assertEqual(data["design"], "docs/design/011-drop")
+        self.assertEqual(
+            {
+                str(p.relative_to(target)): p.read_bytes()
+                for p in target.rglob("*")
+                if p.is_file()
+            },
+            expected,
+        )
+        archive = Path(data["archive"]) / "design"
+        self.assertEqual(
+            {
+                str(p.relative_to(archive)): p.read_bytes()
+                for p in archive.rglob("*")
+                if p.is_file()
+            },
+            expected,
+        )
+        self.assertEqual(
+            map_path.read_bytes(),
+            original_map.replace(
+                b'"specs/011-drop/factory/design/', b'"docs/design/011-drop/'
+            ),
+        )
+        self.assertEqual(
+            self.box.git("log", "-1", "--format=%s", cwd=self.wt).strip(),
+            "factory: drop run artifacts",
+        )
+        self.assertEqual(
+            self.box.git("rev-parse", "HEAD^", cwd=self.wt).strip(), old_head
+        )
+        paths = self.box.git(
+            "diff", "--no-renames", "--name-only", "HEAD^", "HEAD", cwd=self.wt
+        ).splitlines()
+        self.assertTrue(
+            all(
+                p.startswith("specs/011-drop/factory/")
+                or p.startswith("docs/design/011-drop/")
+                or p == "docs/design-code-map.json"
+                for p in paths
+            ),
+            paths,
+        )
+        self.assertFalse(self.folder.exists())
+
+    def test_design_moves_without_creating_map(self):
+        self.prepare_design(with_map=False)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["design"], "docs/design/011-drop")
+        self.assertTrue((self.wt / "docs/design/011-drop/context.json").exists())
+        self.assertFalse((self.wt / "docs/design-code-map.json").exists())
+
+    def test_design_collision_refuses_without_changes(self):
+        self.prepare_design()
+        target = self.wt / "docs/design/011-drop"
+        target.mkdir(parents=True)
+        (target / "keep").write_text("keep")
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        dirty = self.box.git("status", "--porcelain", cwd=self.wt)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(str(target), result.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), dirty)
+        self.assertFalse((self.box.home / "archive").exists())
+        self.assertEqual((target / "keep").read_text(), "keep")
+
+    def test_design_commit_failure_restores_run_map_and_target(self):
+        design, map_path = self.prepare_design()
+        expected_map = map_path.read_bytes()
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        dirty = self.box.git("status", "--porcelain", cwd=self.wt)
+        hook = self.box.repo / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\necho design-commit-failure >&2\nexit 1\n")
+        hook.chmod(0o755)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("design-commit-failure", result.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), dirty)
+        self.assertEqual(map_path.read_bytes(), expected_map)
+        self.assertTrue((design / "context.json").exists())
+        self.assertFalse((self.wt / "docs/design/011-drop").exists())
+        self.assertEqual(list((self.box.home / "archive").glob("*")), [])
