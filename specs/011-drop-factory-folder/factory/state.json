@@ -9,9 +9,9 @@
   "branch": "011-drop-factory-folder",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
-  "status": "running",
+  "status": "halted",
   "stage": "specify",
-  "halt_reason": "spec-builder model claude-code/Opus-5-5 unavailable",
+  "halt_reason": "spec-builder model claude-code/opus-5.5 not accessible",
   "stop_at": null,
   "mode": {
     "chain": "lite",
@@ -171,6 +171,17 @@
       "role": "spec-builder",
       "cause": null,
       "detail": "Model claude-code/opus-5.5: may not exist or no access",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:42:16.188133Z",
+      "kind": "halt",
+      "stage": "specify",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "spec-builder model claude-code/opus-5.5 not accessible",
       "duration_ms": 0,
       "commit": "f896ce9",
       "partial_return": false
