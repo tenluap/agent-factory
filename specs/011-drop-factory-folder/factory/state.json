@@ -369,6 +369,18 @@
       "duration_ms": 138000,
       "started_at": "2026-10-28T01:07:03Z",
       "ended_at": "2026-10-28T01:09:21Z"
+    },
+    {
+      "at": "2026-10-28T01:14:42.086470Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 22000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 313000,
+      "started_at": "2026-10-28T01:09:22Z",
+      "ended_at": "2026-10-28T01:14:35Z"
     }
   ],
   "review": {
@@ -432,6 +444,17 @@
       "duration_ms": 0,
       "commit": "62681ee",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-28T01:14:42.086621Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "T007+T008 committed 8 seconds past deadline, at 2026-10-28T01:14:30Z.",
+      "duration_ms": 313000,
+      "commit": "ff67b1e",
+      "partial_return": true
     }
   ],
   "ended_at": null,
