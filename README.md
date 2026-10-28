@@ -102,6 +102,33 @@ The reference governs visual decisions. Mapped implementation requires current b
 
 Design repairs share the existing two automatic fix rounds. Missing or failed required evidence leaves the work partial/blocked; an explicit scoped exception can permit proceeding while retaining its unverified status. Ordinary approval and fast mode do not infer that exception. These are factory orchestration instructions, not a background synchronizer for standalone Pen invocations.
 
+### First run, pause, and resume
+
+1. Install the adapter for your harness (table above), then start a fresh session.
+2. In the repository to change, invoke `/factory <feature>` (Codex: `$factory <feature>`). Describe desired behaviour and constraints; the factory interviews you and confirms a brief before creating repository work.
+3. Answer relay questions by ID, for example `Q1: B`, `Q1: <answer>`, or `Q1: accept`. Bare `accept` accepts unanswered recommendations only. Fast mode may accept eligible recommendations automatically; every automatic decision appears in final approval and can be vetoed.
+4. Let the run plan, implement, verify, and review. At approval, choose **Approve**, **Request changes**, or **Abort**. Only approval allows push and PR creation; factory does not merge or deploy.
+
+Pause with `--stop-at <stage>` and continue with `/factory resume <branch>` (Codex: `$factory resume <branch>`). After a crash or session change, invoke `/factory` with no arguments to discover unfinished runs, then resume one. Worktrees are siblings of the main checkout; run state and evidence live in `specs/<branch>/factory/`. If a worktree was moved, rebind it with `python3 <factory-skill>/bin/factory rebind <branch> --worktree <new-path>`; sharing `FACTORY_HOME` alone does not move worktree files.
+
+### Feature inventory
+
+| Capability | What it does |
+|---|---|
+| Harness adapters | One shared workflow renders for Claude Code, OpenCode V2, Codex, GitHub Copilot, and ZCode; adapters own harness-specific tools, permissions, paths, and model settings. |
+| Idea intake | Exploratory requests can brainstorm alternatives before feature grilling; concrete requests go directly to grilling. The user confirms requirements before repository changes begin. |
+| Planning | Lite chain is `specify → plan → tasks → analyze`; full adds `clarify` and `grill-with-docs`, with bounded analysis/remediation loops. Serious findings in lite automatically escalate to full. |
+| Isolated delivery | Each feature gets its own branch and worktree. Stage checkpoints commit only the spec directory and role-declared files; unrelated dirty files are reported, not included. |
+| Specialist roles | Spec builder, implementation agent, security/code-standards/spec-conformance reviewers, conditional UI/UX reviewers, independent review judge, and fixer. Reviews run in parallel where supported. |
+| Verification and repair | Orchestrator independently runs repository build and test commands. Verdict-driven automatic fixes are capped at two rounds; failed checks, exhausted loops, and repeated agent failures halt for user direction. |
+| Resumable audit trail | Versioned state persists stage, answers and decisions, waits, role ledger, verification, findings, checkpoints, and PR URL. Resume can use another installed harness on the same machine when worktree paths remain valid. |
+| Pen design references | Scoped design-to-code mapping and rendered fidelity evidence apply when a Pen design is used as implementation reference; see [Pen design references](#pen-design-references). |
+| Run-state CLI | `factory runs`, `show`, and `validate` inspect state; writer commands enforce validated atomic updates, checkpoints, verification, locks, rebind, and safe pending-run pruning. State files are not edited by hand. |
+
+### Updating and removing
+
+After pulling updates, rerun the same install command; it re-renders the selected adapter and refreshes factory-owned links. Remove factory-owned links and rendered copies with `./install.sh --harness <name> --uninstall` (use `all` for every adapter). User configuration and pending runs under `${FACTORY_HOME:-~/.factory}` are separate from rendered adapters. The installer preserves existing non-symlink files rather than replacing them; resolve any reported path conflict, then rerun installation.
+
 ## Layout
 
 - `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
