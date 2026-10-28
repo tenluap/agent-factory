@@ -99,7 +99,13 @@
             "requires_user": true
           }
         ],
-        "answers": {}
+        "answers": {
+          "Q1": {
+            "answer": "A",
+            "at": "2026-10-28T03:03:06.500653Z",
+            "auto": false
+          }
+        }
       }
     ]
   },
