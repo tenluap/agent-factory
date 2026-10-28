@@ -115,8 +115,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 013-skill-library",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T11:48:30.811710Z",
+      "latency_ms": 7803642
     }
   ],
   "decisions": [
