@@ -381,6 +381,18 @@
       "duration_ms": 313000,
       "started_at": "2026-10-28T01:09:22Z",
       "ended_at": "2026-10-28T01:14:35Z"
+    },
+    {
+      "at": "2026-10-28T01:20:00.564254Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 22000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 310000,
+      "started_at": "2026-10-28T01:14:42Z",
+      "ended_at": "2026-10-28T01:19:52Z"
     }
   ],
   "review": {
@@ -454,6 +466,17 @@
       "detail": "T007+T008 committed 8 seconds past deadline, at 2026-10-28T01:14:30Z.",
       "duration_ms": 313000,
       "commit": "ff67b1e",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-28T01:20:00.564504Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "tool-slow",
+      "detail": "T011 commit completed 6 seconds past deadline, at 2026-10-28T01:19:48Z.",
+      "duration_ms": 310000,
+      "commit": "bfa8b57",
       "partial_return": true
     }
   ],
