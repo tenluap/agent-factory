@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -41,57 +41,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "grill-with-docs",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q5"
-          },
-          {
-            "id": "Q6"
-          },
-          {
-            "id": "Q7"
-          },
-          {
-            "id": "Q8"
-          },
-          {
-            "id": "Q9"
-          }
-        ],
-        "answers": {
-          "Q5": {
-            "answer": "A",
-            "at": "2026-10-28T23:21:36.628993Z",
-            "auto": true
-          },
-          "Q6": {
-            "answer": "A",
-            "at": "2026-10-28T23:21:36.924501Z",
-            "auto": true
-          },
-          "Q7": {
-            "answer": "A",
-            "at": "2026-10-28T23:21:37.228971Z",
-            "auto": true
-          },
-          "Q8": {
-            "answer": "A",
-            "at": "2026-10-28T23:21:37.533119Z",
-            "auto": true
-          },
-          "Q9": {
-            "answer": "A",
-            "at": "2026-10-28T23:21:37.841172Z",
-            "auto": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -189,6 +139,46 @@
       "auto": true,
       "at": "2026-10-28T23:20:07.581723Z",
       "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q5",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:23:18.324425Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q6",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:23:18.324425Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q7",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:23:18.324425Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q8",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:23:18.324425Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q9",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:23:18.324425Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -280,6 +270,13 @@
     {
       "at": "2026-10-28T23:20:07.581723Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-28T23:23:18.324425Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
