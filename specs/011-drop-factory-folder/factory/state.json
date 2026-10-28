@@ -101,6 +101,14 @@
       "summary": "Pen design evidence under factory/design",
       "answered_at": "2026-10-28T00:59:19.445655Z",
       "latency_ms": 276829
+    },
+    {
+      "at": "2026-10-28T01:53:42.016551Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "approve run 011",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
