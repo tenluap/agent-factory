@@ -1,0 +1,1 @@
+S2-new-generation-atomic-unit passed: one native-generated behavior commit unit

@@ -166,7 +166,7 @@ Show each as: branch (or slug), stage, status, last `history` time.
    - Pending `grill`: re-run grilling with the existing brief and saved relay answers as the starting point. Redisplay only unanswered questions in the existing open round before recomputing the frontier (protocol.md).
    - Pending `worktree`: run step 4.
    - Spec stages: `SPAWN` a fresh `spec-builder` with the state and the stage. It reads `relay` from the state: answered questions are settled, the agent asks only the rest.
-   - `implement`: `SPAWN` `code-build`; it continues from the tasks.md checkboxes and inspects any uncommitted work.
+   - `implement`: `SPAWN` `code-build`; it resolves commit units using engineering.md, inspects task status/worktree/test/commit evidence, and continues the first unfinished unit. Completed commits remain complete. A checked red half in an unambiguous legacy pair is not a finished unit; finish the pair together. Ambiguous pairing stops before behavior edits for resolution.
    - `verify`, `review`, `fix`: for an active design run with `review.pending_design_fix`, resume that saved fixer attempt first using its verdict/context and current uncommitted work, preserving the reservation and failure policy; clear it on completion, then verify/re-review. Otherwise re-run step 6's verify, then step 7 from its first sub-step for the current round.
    - `approver`: show the approver screen again.
    - `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded.
