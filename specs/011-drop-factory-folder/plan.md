@@ -104,7 +104,7 @@ specs/011-drop-factory-folder/
 ```text
 DESIGN.md                                   # PR section, Factory home bullet, Pen mapping paragraph
 README.md                                   # drop + archive location
-CONTEXT.md                                  # "Run archive", "Permanent design evidence" terms
+CONTEXT.md                                  # align existing "Run folder", "Run archive", "Drop", "Permanent design evidence" entries; no new headings
 core/skills/factory/SKILL.md                # step 9 order, push retry, NOTIFY from drop JSON
 core/skills/factory/references/state.md     # Location, CLI
 core/skills/factory/references/design-code-mapping.md  # evidence moves to docs/design/<branch>/ at drop

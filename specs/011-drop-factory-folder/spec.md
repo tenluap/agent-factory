@@ -101,7 +101,7 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 - **FR-014**: references/state.md MUST document the archive under "Location" and `factory drop` under "CLI"; README MUST describe the drop and the archive location.
 - **FR-015**: `dist/` MUST be re-rendered for every harness and committed with the source change (constitution III).
 - **FR-016**: Unit tests in `tools/tests/` MUST cover: success (archive equals source, folder gone, one commit with the expected message touching only the folder, JSON output carrying archive path, PR URL and totals sentence), refusal for each non-`pr-open` status, refusal on archive collision, refusal under a live lock, no git change on a failed verification, and on a Pen run: `factory/design/` lands at `docs/design/<branch>/` with identical content, every map reference to the old path is rewritten, and an existing target refuses with no change.
-- **FR-017**: When `specs/<branch>/factory/design/` exists, `factory drop` MUST, in the drop commit, move it to `docs/design/<branch>/` (`git mv`) and rewrite every `specs/<branch>/factory/design/` path prefix in `docs/design-code-map.json` to `docs/design/<branch>/`, preserving all other map content. It MUST refuse with no change when the target exists. `design-code-mapping.md` MUST state that evidence lives under `factory/design/` during the run and at `docs/design/<branch>/` after the drop.
+- **FR-017**: When `specs/<branch>/factory/design/` exists, `factory drop` MUST, in the drop commit, move it to `docs/design/<branch>/` (`git mv`) and rewrite every `specs/<branch>/factory/design/` path prefix in `docs/design-code-map.json` to `docs/design/<branch>/`, preserving all other map content. The canonical map path is `docs/design-code-map.json`; the drop rewrites no other file, and DESIGN.md MUST name that path without an "existing equivalent" alternative. It MUST refuse with no change when the target exists. `design-code-mapping.md` MUST state that evidence lives under `factory/design/` during the run and at `docs/design/<branch>/` after the drop.
 
 ### Key Entities
 
@@ -127,4 +127,4 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 - `set-status pr-open` has already written the final state before the drop, so the archived `state.json` is the run's final state.
 - The attached opencode `adapter.json` model edits are context only; uncommitted adapter edits on the default branch are not touched.
 - Existing `specs/007..010/*/factory/` folders on the default branch stay; only future runs drop.
-- Chain is lite with fast mode on.
+- Chain is full (escalated from lite) with fast mode on.

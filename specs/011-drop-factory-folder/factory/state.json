@@ -345,6 +345,18 @@
       "duration_ms": 103000,
       "started_at": "2026-10-28T01:04:28Z",
       "ended_at": "2026-10-28T01:06:11Z"
+    },
+    {
+      "at": "2026-10-28T01:07:03.134345Z",
+      "stage": "remediate",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 900,
+      "reported": null,
+      "duration_ms": 52000,
+      "started_at": "2026-10-28T01:06:11Z",
+      "ended_at": "2026-10-28T01:07:03Z"
     }
   ],
   "review": {
