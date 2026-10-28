@@ -1,0 +1,134 @@
+{
+  "version": 5,
+  "started_at": "2026-10-28T23:13:56Z",
+  "harness": "opencode",
+  "feature": "Add a ui-designer factory role: detects UI framework, maps design (Pen/Figma/image/text) to codebase, updates targeted file or whole project components and views",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "status": "running",
+  "stage": "specify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "full",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "speckit-constitution": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-constitution/SKILL.md",
+    "grilling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/tdd/SKILL.md",
+    "pen-design": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/pen-design/SKILL.md",
+    "ui-agent": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/skills/ui-agent/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q-placement",
+      "answer": "Write role in implement step",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-frameworks",
+      "answer": "Detect any; Avalonia + web first",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-sources",
+      "answer": "Pen file, images, Figma nodes, text-only restyle",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-scope",
+      "answer": "File named = that file + deps; none = whole UI surface in batches",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-quality",
+      "answer": "Share existing 2 fix rounds",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-tier",
+      "answer": "standard, write access",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-figma",
+      "answer": "Resolve a figma skill/MCP via RESOLVE; blocked if absent",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q-chain",
+      "answer": "full",
+      "auto": false,
+      "at": "2026-10-28T23:13:56Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-10-28T23:14:16.748608Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ],
+  "branch": "014-ui-designer-role",
+  "spec_dir": "specs/014-ui-designer-role",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/014-ui-designer-role"
+}
