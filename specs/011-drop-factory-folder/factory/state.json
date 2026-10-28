@@ -142,7 +142,20 @@
       "kind": "answer"
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-10-28T00:44:22.325800Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 9000,
+      "out_est": 2100,
+      "reported": null,
+      "duration_ms": 98000,
+      "started_at": "2026-10-28T00:42:44Z",
+      "ended_at": "2026-10-28T00:44:22Z"
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
