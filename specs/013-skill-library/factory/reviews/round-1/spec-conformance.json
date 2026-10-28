@@ -1,0 +1,17 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "All 14 FRs, US1-US3, edge cases, contract and T001-T016 implemented and verified; vendored files byte-identical to upstream; one low doc drift.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "install.sh",
+      "line": 5,
+      "summary": "Usage header comment omits --add-skill.",
+      "evidence": "contracts/install-cli.md synopsis; ENG-7",
+      "fix": "Update install.sh:5."
+    }
+  ]
+}

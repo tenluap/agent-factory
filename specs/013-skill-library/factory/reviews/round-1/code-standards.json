@@ -1,0 +1,47 @@
+{
+  "reviewer": "code-standards",
+  "round": 1,
+  "summary": "Installer, render path and tests follow the contract; suite green. Four non-blocking findings.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "medium",
+      "blocking": false,
+      "file": "tools/tests/test_skill_library.py",
+      "line": 33,
+      "summary": "Test imports sandbox as `from tools.tests import test_install`, unlike neighbouring `from tests import ...`; breaks `cd tools && python3 -m unittest tests.test_skill_library` and loads test_install twice, making the INSTALL patch copy-dependent.",
+      "evidence": "ENG-7, ENG-18",
+      "fix": "Use `from tests import test_install`."
+    },
+    {
+      "id": "STD-2",
+      "severity": "low",
+      "blocking": false,
+      "file": "tools/tests/test_skill_library.py",
+      "line": 30,
+      "summary": "Second import block mid-module.",
+      "evidence": "ENG-7",
+      "fix": "Move imports to the top block."
+    },
+    {
+      "id": "STD-3",
+      "severity": "low",
+      "blocking": false,
+      "file": "install.sh",
+      "line": 5,
+      "summary": "Usage header omits --add-skill.",
+      "evidence": "ENG-7; contracts/install-cli.md synopsis",
+      "fix": "Update the usage comment."
+    },
+    {
+      "id": "STD-4",
+      "severity": "low",
+      "blocking": false,
+      "file": "install.sh",
+      "line": 147,
+      "summary": "link_skill prints skip: to stdout while link() prints skip: to stderr.",
+      "evidence": "ENG-7",
+      "fix": "Use one stream (stderr) for skip: and assert it in tests."
+    }
+  ]
+}
