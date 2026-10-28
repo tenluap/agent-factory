@@ -44,6 +44,8 @@ Start a run from the repo you want the feature built in. On Claude Code, OpenCod
 
 A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage: a checkpoint commits the spec directory plus exactly the files the role's envelope declared, and reports anything else dirty without committing it. A run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even on a different harness. Sharing `${FACTORY_HOME}` alone does not move a run: after moving or copying a worktree, run `factory rebind <branch> --worktree <new-path>` to validate the branch and rewrite the run's stored paths.
 
+After the PR opens, `factory drop` archives the run folder at `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/` and commits its removal from the branch. The archive is verified before removal and excludes the transient lock. Design evidence, when present, moves to `docs/design/<branch>/` in the same commit.
+
 ### Flags
 
 Flags follow the feature description or `resume <branch>` and may combine; when both flags of a pair appear, the last one wins:
