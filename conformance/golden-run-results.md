@@ -22,9 +22,9 @@ Native workflow acceptance follows [run-reliability.md](run-reliability.md). Pac
 | Case | Instruction commit/hash | Native subject and input | Observed evidence | Before | After |
 |---|---|---|---|---|---|
 | S1 matrix | old `3cef63f`; changed S1 instructions | fresh native `s1_before` / `s1_after`, identical nine-case input | excerpts below; archived full outputs/hashes under run `factory/trials/s1/` | gate/recovery failures observed | 9 decision cases passed |
-| S2 matrix | pending | pending | pending | pending | pending |
-| S3 matrix | pending | pending | pending | pending | pending |
-| S4 matrix | pending | pending | pending | pending | pending |
+| S2 matrix | old `3cef63f`; changed `bbefbca` | fresh native before/after; symmetric healthy S2-new repeat | six fixture cases plus reviewer controls; task/git/test artifacts below | separate-checkbox conflict observed; passing controls retained | one ordered unit; resume and protected stop passed |
+| S3 matrix | old `3cef63f`; changed `ad65834` | fresh native before/after, identical eleven-case scope input | decision envelopes, artifact excerpts and hashes below | missing failure/acceptance blockers and same-name expansion gap | eleven stage-contract cases passed |
+| S4 matrix | old `3cef63f`; changed `d2eb19b` | fresh native before/after, affected-case v2 and verification resume | actual clocks/commands/commits, independent root fixture check and CLI controls below | required-check admission gap; optional/inflight controls retained | accurate pending handoff, no false overrun, verification completed |
 
 Each result must name actual envelope/fixture paths, decisive output excerpts, relevant git commits/checkboxes or CLI statuses, and any capability limitation. Keep before/after subjects fresh and record differing absolute paths/deadlines. Pending/unavailable cases do not count as completed acceptance. The model-policy baseline is recorded in `specs/012-run-reliability/factory/baseline.md`: 19 focused tests ran with three existing policy failures before behavior edits.
 
@@ -46,7 +46,7 @@ Two fresh native contexts read frozen old/new factory+OpenCode instructions and 
 
 These are native preflight/recovery **decision** trials using injected observations, not live provider access probes. Neither subject created production resources or launched a runtime retry. S1-reject preserves/assesses the bounded retry decision; actual generic retry/accounting execution remains covered by existing factory tests. Provider access and unavailable inventory APIs remain explicitly unverified. No model/configuration/credential changes occurred.
 
-Focused command: `python3 -m unittest discover -s tools -p test_render_models.py`. Before: 19 tests, three known model-policy failures. After: 19 tests, **OK**, including exact shipped selections, installed override behavior, canonical-config isolation and inherited-model reporting. All five harnesses rendered; adapter JSON mappings unchanged. Full-suite/final clean-dist checks remain pending T012 and independent orchestrator verification.
+Focused command: `python3 -m unittest discover -s tools -p test_render_models.py`. Before: 19 tests, three known model-policy failures. After: 19 tests, **OK**, including exact shipped selections, installed override behavior, canonical-config isolation and inherited-model reporting. All five harnesses rendered; adapter JSON mappings unchanged. Full-suite/final clean-dist checks are recorded in the final verification section; independent orchestrator verification is a separate required gate.
 
 
 ### S2 observed task-generation/resume — 2026-10-28
@@ -67,7 +67,7 @@ The healthy before subject disclosed the conflict between a separate failing-tes
 
 **Experiment correction:** initial S2-new fixtures omitted normal analysis/constitution prerequisites; one initial subject also used an incorrect default analyze transition. Those original reports are retained as invalid-fixture history and are excluded from the full-stage pass. Only fresh, symmetric `before-healthy` and `after-healthy` S2-new runs count for that case. The other five isolated cases retain their actual observed outcomes. The original before-fixture skill paths were corrected to the main checkout; those setup-only state changes are not product behavior evidence.
 
-All five harnesses canonical-rendered after the source changes. `python3 -m unittest discover -s tools -p 'test_render*.py'` passed **27 tests**; `git diff --check` passed. The configured budgets, runtime state schema, model mappings and mandatory final checks are unchanged. S3/S4 and T012 full verification remain pending.
+All five harnesses canonical-rendered after the source changes. `python3 -m unittest discover -s tools -p 'test_render*.py'` passed **27 tests**; `git diff --check` passed. The configured budgets, runtime state schema, model mappings and mandatory final checks are unchanged. S3/S4 evidence follows; T012 checks are recorded in the final verification section.
 
 
 ### S3 observed scope/confirmation contracts — 2026-10-28
@@ -88,7 +88,7 @@ Two fresh native subjects applied frozen old/new plan/analyze contracts to the s
 
 `S3-failure-scope-acceptance` assesses native outputs: `python3 specs/012-run-reliability/factory/trials/s3/assess-scope.py before` exits 1 for missing git-path/missing/stale blockers and same-name expansion; `... after` exits 0 for all eleven cases. Source uses one shared confirmed-scope definition; declarations and acceptance remain separate. Legacy name-only acceptance is reusable only with independent exact-scope evidence. No runtime state field, budget, model mapping or accounting change was introduced.
 
-All five harnesses canonical-rendered. Focused renderer/model suite passed **27 tests**; `git diff --check` passed. S4 and final full/independent checks remain pending.
+All five harnesses canonical-rendered. Focused renderer/model suite passed **27 tests**; `git diff --check` passed. S4 evidence follows; final repository checks and independent verification are separate gates.
 
 ### S4 observed boundary/handoff/accounting — 2026-10-28
 
@@ -107,4 +107,4 @@ The300s values are supplied historical fixture data for admission decisions, not
 
 `assess.py s4-before-output.json` fails admission as expected; `assess.py s4-effective-output.json` passes. The effective matrix explicitly combines unchanged original controls and the authoritative fresh v2 pending case. Native per-case clocks are separate from outer subject runtime budgets; no false fixture timing claim is made.
 
-Existing `python3 -m unittest discover -s tools -p test_budget.py`:16 tests OK before and after. All five distributions canonical-rendered; whitespace clean. Budgets, production state schema/CLI, issue provenance and stall limit unchanged. Full suite, final clean-dist and independent repository verification remain pending T012.
+Existing `python3 -m unittest discover -s tools -p test_budget.py`:16 tests OK before and after. All five distributions canonical-rendered; whitespace clean. Budgets, production state schema/CLI, issue provenance and stall limit unchanged. T012 repository checks are recorded in the final verification section; independent orchestrator verification remains a separate required gate.

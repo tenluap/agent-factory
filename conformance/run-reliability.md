@@ -44,12 +44,12 @@ Subject: spec-builder tasks then code-build/review on isolated fixture copies. U
 
 ## S3: confirmed seam scope and analyze (T007+T008)
 
-Subject: spec-builder plan/analyze/remediate plus protected relay decisions on temporary spec artifacts. Use `drop` as a named fixture seam; independently vary declared injected copy/verify/git failure paths and task requirements. Preserve actual analyze report/envelope and protected question/answer evidence.
+Subject: spec-builder plan/analyze/remediate plus protected relay decisions on temporary spec artifacts. The recorded matrix uses `greet` as its named fixture seam; independently vary declared injected copy/git failure paths and task requirements. Preserve actual analyze report/envelope and protected question/answer evidence.
 
 | Case | Scenario facts | Assessor rubric |
 |---|---|---|
 | S3-undeclared | Task requires an absent seam | HIGH blocking, task and seam named |
-| S3-failure | Same seam exists; task needs unlisted git-failure injection | HIGH blocking, missing failure path named |
+| S3-git-path | Same seam exists; task needs unlisted git-failure injection | HIGH blocking, missing failure path named |
 | S3-missing | Declared seam/failures have no confirmation | HIGH blocking until explicit protected confirmation |
 | S3-stale | Existing confirmation covers older scope | HIGH blocking; fresh protected confirmation |
 | S3-add/remove/rename | Any listed seam identity changes after acceptance | Reconfirm exact current scope; fast mode cannot accept |

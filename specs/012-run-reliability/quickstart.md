@@ -10,3 +10,9 @@ Work in `012-run-reliability`; use temporary fixture checkouts and throwaway rem
 6. Render every harness (`python3 tools/render.py <harness>` for claude-code, opencode, codex, copilot, zcode) and commit distributions with source changes. Run `python3 -m unittest discover -s tools`, `bash -n install.sh`, and `test -z "$(git status --porcelain -- dist/)"`. Record native trial results in `conformance/golden-run-results.md`; unavailable trials remain unverified.
 
 The orchestrator independently repeats the recorded build/test commands before review. A passing render, source assertion or fixture-state test never substitutes for observed native role behavior. Stop at the final factory approval gate; these validation trials do not authorize publication.
+
+## Recorded acceptance evidence
+
+All S1–S4 cases have recorded outcomes in `conformance/golden-run-results.md`, with raw reports, fixtures, commands and source/input hashes under `factory/trials/`. S1 and S3 are synthetic native decision/contract trials, not live provider probes or a full pipeline. S2-new uses the corrected symmetric healthy full-stage trials; the initial setup deviations remain disclosed and excluded. S4 retains the original passing optional/in-flight controls, the corrected v2 pending case, fresh verification and an independent root fixture check. Other writer-role adoption of the shared S4 protocol was inspected statically, not claimed as separate native trials.
+
+The final repository results are recorded separately from native acceptance. The orchestrator must repeat build/tests independently before review. Earlier token estimates overcounted generated output; see `factory/ledger-estimates.md`. Neither those estimates nor supplied fixture durations establish billed usage or a performance improvement.
