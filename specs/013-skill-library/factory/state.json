@@ -231,6 +231,14 @@
       "auto": true,
       "at": "2026-10-28T07:53:47.206721Z",
       "kind": "answer"
+    },
+    {
+      "stage": "implement",
+      "question": "H1",
+      "answer": "A: regenerate dist in this branch as a separate commit",
+      "auto": false,
+      "at": "2026-10-28T08:05:27.696802Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
