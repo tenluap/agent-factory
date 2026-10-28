@@ -9,7 +9,7 @@
   "branch": "012-run-reliability",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability",
   "spec_dir": "specs/012-run-reliability",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -593,8 +593,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-28T08:35:58.242266Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/8",
   "history": [
     {
       "at": "2026-10-28T02:54:03.636264Z",
@@ -680,6 +680,13 @@
       "commit": null,
       "harness": "codex",
       "decision": "approval"
+    },
+    {
+      "at": "2026-10-28T08:35:58.242266Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "codex"
     }
   ],
   "improvement_source": "/Users/tenluap/.factory/improvements/claude-factory-011-drop-factory-folder.json",
