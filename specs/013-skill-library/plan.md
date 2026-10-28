@@ -62,6 +62,7 @@ Exempt: README.md, DESIGN.md - documentation only
 Exempt: skills/<name>/ vendored content - verbatim third-party documentation; structure covered by the repo skill layer layout seam
 Exempt: adapters/*/adapter.json `skills_root` values - configuration; reported values covered by the `--paths` seam
 Overridden: none
+Confirmed: 2026-10-28 - Q1 accepted - seams: render.py --paths skills_root, install.sh library linking, install.sh --add-skill, install.sh --uninstall library links, repo skill layer layout
 
 ## New files, abstractions and dependencies
 
