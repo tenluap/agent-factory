@@ -1,6 +1,6 @@
 """Model-policy seam tests over `tools/render.py` render output (FR-015, FR-002).
 
-Exactly one adapter ships models (claude-code opus/sonnet); personal provider
+Claude Code, Codex and OpenCode ship explicit tier selections; personal provider
 IDs ship nowhere; the canonical `render.py <harness>` render never reads
 `config.json`, so the committed dist stays machine-independent whatever the
 environment; the README statement matches `adapters/`.
@@ -86,18 +86,25 @@ class ModelPolicyTests(unittest.TestCase):
                 check=True,
             )
 
-    def test_exactly_claude_code_ships_models(self):
+    def test_shipped_model_policy_preserves_explicit_tiers(self):
+        expected = {
+            "claude-code": {"deep": "anthropic/claude-opus-5-5", "standard": "anthropic/claude-haiku-5-5"},
+            "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
+            "opencode": {"deep": "claude-code/claude-opus-5-5[1m]", "standard": "openai/gpt-6.1-terra"},
+        }
         shipped = []
         for name in HARNESSES:
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
             models = adapter.get("models")
             self.assertIsInstance(models, dict, name)
+            self.assertEqual(models, expected.get(name, {}), name)
             if models:
                 shipped.append(name)
-                self.assertEqual(name, "claude-code", f"{name} ships models")
-                self.assertIn("opus", models.get("deep", ""), name)
-                self.assertIn("sonnet", models.get("standard", ""), name)
-        self.assertEqual(shipped, ["claude-code"])
+                self.assertEqual(set(models), {"deep", "standard"}, name)
+                for tier, selected in models.items():
+                    self.assertIsInstance(selected, str, (name, tier))
+                    self.assertTrue(selected.strip(), (name, tier))
+        self.assertEqual(shipped, ["claude-code", "codex", "opencode"])
 
     def test_no_personal_provider_ids_ship_in_adapters(self):
         for name in HARNESSES:
@@ -107,13 +114,9 @@ class ModelPolicyTests(unittest.TestCase):
 
     def test_readme_statement_matches_adapters(self):
         readme = (REPO / "README.md").read_text()
-        self.assertIn(
-            "Only Claude Code pins agent models by default",
-            readme,
-            "the README names claude-code as the only defaults carrier",
-        )
-        other = [n for n in HARNESSES if n != "claude-code"]
-        for name in other:
+        self.assertIn("Claude Code, Codex and OpenCode pin agent models by default", readme)
+        self.assertIn("Copilot and Zcode inherit the session model", readme)
+        for name in ("copilot", "zcode"):
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
             self.assertEqual(adapter.get("models"), {}, name)
 
@@ -285,7 +288,11 @@ class ReportTests(unittest.TestCase):
 
     def test_models_report_without_config_prints_defaults(self):
         out = render_to("opencode", flags=("--models",), exported=False)
-        self.assertIn("spec-builder: (session default)", out.stdout)
+        adapter = json.loads((ADAPTERS / "opencode" / "adapter.json").read_text())
+        self.assertIn(f"spec-builder: {adapter['models']['deep']}", out.stdout)
+        self.assertIn(f"code-build: {adapter['models']['standard']}", out.stdout)
+        inherited = render_to("copilot", flags=("--models",), exported=False)
+        self.assertIn("spec-builder: (session default)", inherited.stdout)
 
     def test_bad_config_fails_naming_the_file_without_a_traceback(self):
         for text in ("{not json", "[]", '{"models": 5}', '{"models": {"opencode": 1}}'):

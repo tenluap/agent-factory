@@ -21,8 +21,14 @@
 ## Notes
 
 - The factory's agents are TOML files in `~/.codex/agents/` (`factory_<role>.toml`). Subagents inherit the session's sandbox and approval policy, so read-only roles are read-only by instruction. The session needs write access to the worktree and network for `git push` and `gh`.
-- Agent models are not set by default, so every agent inherits the session's model. To pin them, set `models.codex.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness codex`.
+- Agent models come from the adapter defaults. To override them, set `models.codex.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness codex`.
 - If the review fan-out exceeds `agents.max_concurrent_threads_per_session`, spawn the rest as slots free up.
 - Never invoke the `speckit-*` skills or `grill-with-docs` as skills: read the resolved file and follow it.
 - Invoke the factory as `$factory <args>` (or pick it from `/skills`). `$ARGUMENTS` is whatever follows the skill name.
 - Ledger (reported usage): subagent results expose no token usage — record `reported: null` and rely on the estimates.
+
+## Model inspection and recovery
+
+Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
+
+For a rejected model, preserve the exact selection and original diagnostic. Name the installed agent or `${FACTORY_HOME}/config.json` source; guide correction through `models.codex.deep` / `.standard`, `./install.sh --harness codex`, then a fresh session and recheck. Preserve user model/credential choices; never guess aliases or silently substitute.

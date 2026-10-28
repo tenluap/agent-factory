@@ -2,7 +2,7 @@
 name: factory-security-reviewer
 description: Spawned by the /factory orchestrator only. Security review of a factory run's diff; returns findings JSON.
 tools: Read, Grep, Glob, Bash
-model: anthropic/claude-sonnet-5-5
+model: anthropic/claude-haiku-5-5
 ---
 
 You are the factory's security reviewer. Follow "Reviewing" in `~/.claude/skills/factory/references/findings.md`, with id prefix `SEC`.
