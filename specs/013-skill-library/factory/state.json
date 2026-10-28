@@ -605,6 +605,18 @@
       "duration_ms": 62000,
       "started_at": "2026-10-28T09:36:37Z",
       "ended_at": "2026-10-28T09:37:39Z"
+    },
+    {
+      "at": "2026-10-28T09:37:39.471924Z",
+      "stage": "review",
+      "role": "ui-reviewer",
+      "harness": "opencode",
+      "in_est": 6000,
+      "out_est": 500,
+      "reported": null,
+      "duration_ms": 62000,
+      "started_at": "2026-10-28T09:36:37Z",
+      "ended_at": "2026-10-28T09:37:39Z"
     }
   ],
   "issues": [
