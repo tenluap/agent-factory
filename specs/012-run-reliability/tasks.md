@@ -17,7 +17,7 @@ Trials use only plan-declared seams, synthetic selections/inventory, temporary f
 
 ## Phase 2: Foundational conformance contract
 
-- [ ] T002 Create `conformance/run-reliability.md` with reproducible S1–S4 scenario inputs, separate outcome rubrics, fresh old/new native-agent invocation instructions and evidence requirements; extend the existing `conformance/golden-run-results.md` format for before/after role outputs, fixture paths/commits, real command status, and pending/unavailable results. **Exempt: trial instructions/evidence format — documentation only**. Done: every case declared in `plan.md` is assigned to T003–T010, with no invented runtime helper or new seam.
+- [x] T002 Create `conformance/run-reliability.md` with reproducible S1–S4 scenario inputs, separate outcome rubrics, fresh old/new native-agent invocation instructions and evidence requirements; extend the existing `conformance/golden-run-results.md` format for before/after role outputs, fixture paths/commits, real command status, and pending/unavailable results. **Exempt: trial instructions/evidence format — documentation only**. Done: every case declared in `plan.md` is assigned to T003–T010, with no invented runtime helper or new seam.
 
 ## Phase 3: US1 — Detect unusable model setup (P1, MVP)
 
