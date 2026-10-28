@@ -204,6 +204,18 @@
       "duration_ms": 53202,
       "started_at": "2026-10-28T03:13:56.380458Z",
       "ended_at": "2026-10-28T03:14:49.582807+00:00"
+    },
+    {
+      "at": "2026-10-28T03:16:19.260275Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "codex",
+      "in_est": 15044,
+      "out_est": 117561,
+      "reported": null,
+      "duration_ms": 421823,
+      "started_at": "2026-10-28T03:09:17.335350Z",
+      "ended_at": "2026-10-28T03:16:19.158947+00:00"
     }
   ],
   "issues": [
@@ -217,6 +229,17 @@
       "duration_ms": 0,
       "commit": "3cef63f",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-28T03:16:19.260430Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "tool-slow",
+      "detail": "Finished in-flight T003+T004 after fresh native after-trial completion and evidence/commit boundary, 103 seconds past deadline at 2026-10-28T03:16:00.546856+00:00; no new unit started past deadline.",
+      "duration_ms": 421823,
+      "commit": "6ffbf74",
+      "partial_return": true
     }
   ],
   "review": {
