@@ -1,0 +1,30 @@
+[
+  {
+    "case": "optional",
+    "git_status": "?? trial-command-log.json\n",
+    "git_log": "3fdf2493f0951bec4fd7cfcffc3c36c6c4dbf774\nfixture: passing unit and probe\n\n",
+    "git_diff": "",
+    "probe_log": ""
+  },
+  {
+    "case": "uncertain",
+    "git_status": "?? trial-command-log.json\n",
+    "git_log": "366484e8e64212b39a896a9b54addf296742044d\nfixture: passing unit and probe\n\n",
+    "git_diff": "",
+    "probe_log": ""
+  },
+  {
+    "case": "pending",
+    "git_status": "?? invocations.jsonl\n?? trial-command-log.json\n",
+    "git_log": "366484e8e64212b39a896a9b54addf296742044d\nfixture: passing unit and probe\n\n",
+    "git_diff": "",
+    "probe_log": "{\"at\": 1793173550.414925, \"command\": \"broad-suite-probe\", \"result\": \"passed\"}\n"
+  },
+  {
+    "case": "inflight",
+    "git_status": "?? trial-command-log.json\n",
+    "git_log": "d8e3e8fc09232ad1a03e6ddc6edf42b970145dd1\nfactory(implement): T001 Complete tested behavior\n\n366484e8e64212b39a896a9b54addf296742044d\nfixture: passing unit and probe\n\n",
+    "git_diff": "",
+    "probe_log": ""
+  }
+]
