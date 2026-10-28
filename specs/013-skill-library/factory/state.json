@@ -101,6 +101,14 @@
       "summary": "model policy tests vs 6dd7a0e",
       "answered_at": "2026-10-28T08:33:39.645152Z",
       "latency_ms": 1105563
+    },
+    {
+      "at": "2026-10-28T08:42:42.762046Z",
+      "kind": "halt",
+      "stage": "review",
+      "summary": "standard-model reviewers blocked by provider usage limit",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
