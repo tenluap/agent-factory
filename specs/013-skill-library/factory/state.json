@@ -90,8 +90,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Plan: confirm test seams",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T07:42:24.119667Z",
+      "latency_ms": 15942675
     }
   ],
   "decisions": [
