@@ -15,6 +15,10 @@
 - Q: Does `--add-skill` create a missing per-user layer? → A: Yes, it creates `${FACTORY_HOME}/skills/` after validation passes and before copying (analyze U3).
 - Q: What does a re-run print for a library link that is already correct? → A: `linked: <target>` again, like the existing factory link helper; output and filesystem are identical across runs (analyze A1).
 - Q: Which folder name is checked against frontmatter `name` in `--add-skill`? → A: The basename of the path as given, before symlink resolution, so the adoption hint works for a symlink pointing outside the library (analyze U4).
+- Q: Does each harness's skills root follow the harness home override? → A: Yes. Claude Code and ZCode use `{home}/skills` (`CLAUDE_HOME`, `ZCODE_HOME`), OpenCode uses `{home}/opencode/skills` (`XDG_CONFIG_HOME`); Codex and Copilot stay on `~/.agents/skills` (grill Q1).
+- Q: What happens to a library link whose source folder was deleted? → A: A re-run removes it, printing `removed: <target>`, then relinks to the repo-layer copy if one exists; only links pointing into a library layer are touched (grill Q2).
+- Q: Is the skill name `factory` reserved? → A: Yes. `--add-skill` refuses with `reserved: factory`; a hand-placed `factory` folder in either layer is skipped with a `skip:` message (grill Q3).
+- Q: Does `--uninstall` keep the per-user layer? → A: Yes. It removes links only; `${FACTORY_HOME}/skills/` and its contents stay on disk and are relinked by the next install (grill Q4).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -63,7 +67,8 @@ The installer never deletes or overwrites user files, and `--uninstall` removes 
 **Acceptance Scenarios**:
 
 1. **Given** a target path exists and is not a symlink, **When** the installer runs, **Then** it skips that skill with a `skip:` message explaining how to adopt it (add it with `--add-skill`, remove the original, re-run).
-2. **Given** library links and unrelated skills exist, **When** the user runs `./install.sh --uninstall`, **Then** only links pointing into the repo or per-user library layer are removed.
+2. **Given** library links and unrelated skills exist, **When** the user runs `./install.sh --uninstall`, **Then** only links pointing into the repo or per-user library layer are removed, and `${FACTORY_HOME}/skills/` stays on disk.
+3. **Given** a per-user skill folder was deleted after install, **When** the user re-runs `./install.sh`, **Then** its link is removed with `removed: <target>` and, if the repo layer has a skill of that name, relinked to it.
 
 ---
 
@@ -77,6 +82,9 @@ The installer never deletes or overwrites user files, and `--uninstall` removes 
 - Dot-prefixed folders (such as a leftover temporary copy) in either layer are not library skills and are never linked.
 - `--add-skill` given a symlink pointing outside the library (the adoption hint): the link's own name is checked against frontmatter `name`.
 - Harnesses sharing a skills root (Codex and Copilot use `~/.agents/skills`): each skill is linked once, no error on the second harness; `--uninstall --harness codex` also removes the library links Copilot uses, and vice versa.
+- A library link whose source folder is gone: removed on re-run with `removed: <target>`; a dangling symlink pointing outside the library is user-owned and left alone.
+- A skill named `factory`: `--add-skill` refuses with `reserved: factory`; a hand-placed `factory` folder in either layer is skipped with a `skip:` message, so the factory skill link is never touched by the library.
+- Harness home override set (`CLAUDE_HOME`, `ZCODE_HOME`, `XDG_CONFIG_HOME`): the skills root moves with it; Codex and Copilot ignore their home override and stay on `~/.agents/skills`.
 - A vendored skill whose upstream license forbids redistribution, or whose upstream LICENSE file cannot be obtained: not vendored.
 
 ## Requirements *(mandatory)*
@@ -86,26 +94,26 @@ The installer never deletes or overwrites user files, and `--uninstall` removes 
 - **FR-001**: The repository MUST ship a repo layer `skills/<name>/` containing verbatim copies of `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd` and `brainstorming`.
 - **FR-002**: Each vendored skill MUST keep its upstream LICENSE file, copied verbatim from the upstream repository (never reconstructed), and `skills/SOURCES.md` MUST record source URL, path, commit and license per skill.
 - **FR-003**: The per-user layer `${FACTORY_HOME}/skills/<name>/` MUST hold the user's manual additions and MUST never be committed to the repository.
-- **FR-004**: Each adapter MUST declare its harness's skills root: Claude Code `~/.claude/skills`, OpenCode `~/.config/opencode/skills`, Codex and Copilot `~/.agents/skills`, ZCode `~/.zcode/skills`.
-- **FR-005**: `./install.sh` MUST symlink every skill from both layers into the skills root of each harness chosen by `--harness`, using symlinks as for the factory skill and role agents, under the library-link ownership rule of FR-007 (existing symlinks pointing outside the library are skipped, not replaced). Dot-prefixed folders are not linked.
+- **FR-004**: Each adapter MUST declare its harness's skills root relative to the harness home, so the root follows the home override: Claude Code `{home}/skills` (`CLAUDE_HOME`, default `~/.claude`), ZCode `{home}/skills` (`ZCODE_HOME`, default `~/.zcode`), OpenCode `{home}/opencode/skills` (`XDG_CONFIG_HOME`, default `~/.config`); Codex and Copilot use the fixed root `~/.agents/skills`.
+- **FR-005**: `./install.sh` MUST symlink every skill from both layers into the skills root of each harness chosen by `--harness`, using symlinks as for the factory skill and role agents, under the library-link ownership rule of FR-007 (existing symlinks pointing outside the library are skipped, not replaced). Dot-prefixed folders and folders named `factory` are not linked; a `factory` folder is skipped with a `skip:` message. Before linking, the installer MUST remove each library link whose source folder no longer exists, printing `removed: <target>`, then link the remaining winner (the repo-layer copy, if any).
 - **FR-006**: On a name clash between layers, the per-user skill MUST win.
 - **FR-007**: A target that exists and is not a symlink into the library MUST be skipped with a `skip:` message describing how to adopt it; the installer MUST NOT delete or overwrite user files.
-- **FR-008**: `./install.sh --add-skill <path>` MUST accept only a local folder path, validate that `SKILL.md` exists with frontmatter whose `name` matches the folder name, copy the folder into the per-user layer, then link it. The folder name checked is the basename of the path as given, not of its resolved symlink target.
+- **FR-008**: `./install.sh --add-skill <path>` MUST accept only a local folder path, validate that `SKILL.md` exists with frontmatter whose `name` matches the folder name, copy the folder into the per-user layer, then link it. The folder name checked is the basename of the path as given, not of its resolved symlink target. The name `factory` is reserved: `--add-skill` MUST refuse it with `reserved: factory` and change nothing.
 - **FR-009**: `--add-skill` MUST refuse with `exists: <path>` when the per-user folder already exists; updating requires deleting the folder and re-adding.
-- **FR-010**: `./install.sh --uninstall` MUST remove only links that point into a library layer.
+- **FR-010**: `./install.sh --uninstall` MUST remove only links that point into a library layer; it MUST NOT delete `${FACTORY_HOME}/skills/` or its contents.
 - **FR-011**: Library skills MUST be linked from their source folders and MUST NOT be rendered into `dist/`; `tools/render.py` output MUST NOT change because of library content.
 - **FR-012**: Factory preflight `RESOLVE` MUST stay unchanged.
-- **FR-013**: Tests in `tools/tests` MUST cover linking, conflict skip, add, add clash, per-user precedence and uninstall, run by `python3 -m unittest discover -s tools`.
+- **FR-013**: Tests in `tools/tests` MUST cover linking, conflict skip, add, add clash, reserved name, per-user precedence, stale-link removal, home-override skills roots and uninstall (per-user layer kept), run by `python3 -m unittest discover -s tools`.
 - **FR-014**: README and DESIGN.md MUST document both layers, `--add-skill`, conflict handling, the shared Codex/Copilot skills root on uninstall, and manual refresh of vendored skills (maintainer re-copies and updates `skills/SOURCES.md`; no sync tool).
 
 ### Key Entities
 
 Terms follow the "Skill library" section of `CONTEXT.md`; the linking decision is ADR 0009.
 
-- **Library skill**: a folder with `SKILL.md` (frontmatter `name` equals folder name) plus supporting files; dot-prefixed folders are never library skills.
+- **Library skill**: a folder with `SKILL.md` (frontmatter `name` equals folder name) plus supporting files; dot-prefixed folders and the reserved name `factory` are never library skills.
 - **Repo layer**: committed `skills/` directory with the factory-required set and `SOURCES.md`.
-- **Per-user layer**: `${FACTORY_HOME}/skills/`, user-managed, never committed; wins a name clash with the repo layer.
-- **Skills root**: per-harness directory where the installer places skill links, declared by the adapter; one root may serve several harnesses (Codex and Copilot).
+- **Per-user layer**: `${FACTORY_HOME}/skills/`, user-managed, never committed, kept by uninstall; wins a name clash with the repo layer.
+- **Skills root**: per-harness directory where the installer places skill links, declared by the adapter and following the harness home override where one applies; one root may serve several harnesses (Codex and Copilot).
 - **Library link**: a symlink in a skills root pointing into a library layer; the only thing the installer creates or removes.
 
 ## Success Criteria *(mandatory)*
