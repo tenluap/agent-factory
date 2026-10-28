@@ -26,6 +26,14 @@ The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copi
 - **Agents are stateless.** Every agent turn is a fresh `SPAWN`; nothing relies on continuing a live agent. Whatever a later turn needs is in `state.json` or on disk. This is what lets every harness, and a resume on a different harness, run the same flow.
 - **State CLI.** The skill carries `bin/factory`, the factory's single state writer (stdlib Python, thin entry over `bin/factory_cli/`). Read commands (`runs`, `show`, `validate`) do the mechanical discovery and digest work outside the orchestrator's context so routing cost stays flat; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`, `drop`) stamp, validate, write atomically and commit — the orchestrator never hand-edits `state.json`, and a missing Python 3 halts the run instead of falling back to manual writes. `envelope check`, `lock take` and `prune` complete the command surface (gates and hardening below).
 
+## Skill library
+
+The library has a committed repo layer, `skills/`, and a per-user layer, `${FACTORY_HOME}/skills/`. Per-user skills take precedence when names collide. Each selected harness links eligible folders containing `SKILL.md` into its skills root. Dot-prefixed folders are never linked, and `factory` is reserved for the factory skill.
+
+A library link is a symlink whose target starts with the current checkout's `$src/skills/` or `$factory_home/skills/`. Other paths are user-owned and skipped with an adoption hint. A link from another checkout or worktree, or from before the checkout moved, is user-owned: remove the old link and re-run to adopt it. Re-runs prune stale library links before linking the remaining skills. `--add-skill <path>` validates and copies a local skill into the per-user layer. Uninstall removes library links, retaining both layers. Codex and Copilot share `~/.agents/skills`, so uninstalling either removes the other's library links too.
+
+Library skills are linked, not rendered into `dist/` ([ADR 0009](docs/adr/0009-library-skills-are-linked-not-rendered.md)). Vendored skills are refreshed manually: maintainers re-copy each upstream skill and update `skills/SOURCES.md`; no sync tool is provided.
+
 ## OpenCode V2 adapter
 
 OpenCode V2 uses foreground `subagent` calls targeting the named `factory-<role>` agent with complete inputs. Parallel dispatch waits for every result; each spawn starts a fresh child session. `SHELL` uses `shell`. Question relay, skill resolution, all nine roles, global/project installation paths and model tiers remain unchanged.
