@@ -87,7 +87,19 @@
     }
   ],
   "ledger": [],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-10-28T02:54:41.458850Z",
+      "kind": "retry",
+      "stage": "specify",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Native custom agent factory_spec_builder reported unavailable; retrying fresh agent with the installed spec-builder role instructions.",
+      "duration_ms": 0,
+      "commit": "3cef63f",
+      "partial_return": false
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
