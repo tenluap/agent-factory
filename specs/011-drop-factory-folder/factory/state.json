@@ -133,7 +133,19 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-10-28T00:39:34.563274Z",
+      "kind": "agent-failure",
+      "stage": "specify",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Model unavailable: claude-code/Opus-5-5 (installed agent model from uncommitted adapters/opencode/adapter.json)",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    }
+  ],
   "ended_at": null,
   "pr_url": null,
   "history": [
