@@ -569,6 +569,18 @@
       "duration_ms": 257000,
       "started_at": "2026-10-28T09:29:07Z",
       "ended_at": "2026-10-28T09:33:24Z"
+    },
+    {
+      "at": "2026-10-28T09:37:38.530353Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 6000,
+      "out_est": 500,
+      "reported": null,
+      "duration_ms": 61000,
+      "started_at": "2026-10-28T09:36:37Z",
+      "ended_at": "2026-10-28T09:37:38Z"
     }
   ],
   "issues": [
