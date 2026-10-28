@@ -100,10 +100,12 @@ The installer never deletes or overwrites user files, and `--uninstall` removes 
 
 ### Key Entities
 
-- **Library skill**: a folder with `SKILL.md` (frontmatter `name` equals folder name) plus supporting files.
+Terms follow the "Skill library" section of `CONTEXT.md`; the linking decision is ADR 0009.
+
+- **Library skill**: a folder with `SKILL.md` (frontmatter `name` equals folder name) plus supporting files; dot-prefixed folders are never library skills.
 - **Repo layer**: committed `skills/` directory with the factory-required set and `SOURCES.md`.
-- **Per-user layer**: `${FACTORY_HOME}/skills/`, user-managed, never committed.
-- **Skills root**: per-harness directory where the installer places skill links, declared by the adapter.
+- **Per-user layer**: `${FACTORY_HOME}/skills/`, user-managed, never committed; wins a name clash with the repo layer.
+- **Skills root**: per-harness directory where the installer places skill links, declared by the adapter; one root may serve several harnesses (Codex and Copilot).
 - **Library link**: a symlink in a skills root pointing into a library layer; the only thing the installer creates or removes.
 
 ## Success Criteria *(mandatory)*

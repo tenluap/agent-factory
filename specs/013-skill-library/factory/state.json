@@ -57,16 +57,84 @@
       {
         "questions": [
           {
-            "id": "Q1"
+            "id": "Q1",
+            "title": "Should each harness's skills root follow the harness home override?",
+            "recommended": "A",
+            "options": [
+              {
+                "id": "A",
+                "label": "Follow the home override",
+                "description": "skills_root = {home}/skills (OpenCode {home}/opencode/skills, ZCode {home}/skills); Codex and Copilot stay on ~/.agents/skills."
+              },
+              {
+                "id": "B",
+                "label": "Fixed default paths"
+              },
+              {
+                "id": "C",
+                "label": "Something else"
+              }
+            ]
           },
           {
-            "id": "Q2"
+            "id": "Q2",
+            "title": "What happens to a library link whose source folder was deleted?",
+            "recommended": "A",
+            "options": [
+              {
+                "id": "A",
+                "label": "Prune on re-run",
+                "description": "Install removes library links whose source is gone (printing removed:), then relinks to the repo-layer copy if one exists."
+              },
+              {
+                "id": "B",
+                "label": "Leave until uninstall"
+              },
+              {
+                "id": "C",
+                "label": "Something else"
+              }
+            ]
           },
           {
-            "id": "Q3"
+            "id": "Q3",
+            "title": "Is the skill name 'factory' reserved?",
+            "recommended": "A",
+            "options": [
+              {
+                "id": "A",
+                "label": "Reserve it",
+                "description": "--add-skill refuses with reserved: factory; a hand-placed 'factory' folder in either layer is skipped with a skip: message."
+              },
+              {
+                "id": "B",
+                "label": "Rely on the conflict skip"
+              },
+              {
+                "id": "C",
+                "label": "Something else"
+              }
+            ]
           },
           {
-            "id": "Q4"
+            "id": "Q4",
+            "title": "Does --uninstall keep the per-user layer?",
+            "recommended": "A",
+            "options": [
+              {
+                "id": "A",
+                "label": "Keep it",
+                "description": "Uninstall removes links only; the per-user skills stay on disk and are relinked on the next install."
+              },
+              {
+                "id": "B",
+                "label": "Delete it"
+              },
+              {
+                "id": "C",
+                "label": "Something else"
+              }
+            ]
           }
         ],
         "answers": {
