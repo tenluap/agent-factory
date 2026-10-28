@@ -593,6 +593,18 @@
       "duration_ms": 61000,
       "started_at": "2026-10-28T09:36:37Z",
       "ended_at": "2026-10-28T09:37:38Z"
+    },
+    {
+      "at": "2026-10-28T09:37:39.163086Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "opencode",
+      "in_est": 6000,
+      "out_est": 500,
+      "reported": null,
+      "duration_ms": 62000,
+      "started_at": "2026-10-28T09:36:37Z",
+      "ended_at": "2026-10-28T09:37:39Z"
     }
   ],
   "issues": [
