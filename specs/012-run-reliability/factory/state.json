@@ -74,8 +74,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve reviewed reliability improvements, request changes, or abort before PR publication",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T08:34:43.473579Z",
+      "latency_ms": 760674
     }
   ],
   "decisions": [
