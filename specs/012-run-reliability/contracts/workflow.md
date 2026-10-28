@@ -18,4 +18,4 @@ Before another unit or optional repeated expensive check, account for remaining 
 
 ## Compatibility and evidence
 
-Canonical output remains config-independent; per-user overrides preserve exact selections. No state schema migration or new command. Native scenario evidence names role inputs, observed output and git/CLI proof; generated text checks alone establish no behavioral pass.
+Canonical output remains config-independent; per-user overrides preserve exact selections. Accepted plan Q2 preserves the shipped Claude Code, Codex and OpenCode mappings, including Claude Code's haiku standard model; documentation and tests must describe those mappings rather than silently changing them. No state schema migration or new command. Native scenario evidence names role inputs, observed output and git/CLI proof; generated text checks alone establish no behavioral pass.

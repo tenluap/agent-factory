@@ -12,7 +12,7 @@ Alternative rejected: fabricate a universal API, auto-fix aliases, switch models
 
 ## Existing model-policy mismatch
 
-DESIGN's model-policy paragraph, README and `test_render_models.py` require only Claude Code defaults with opus/sonnet. Current adapters ship Claude Code opus/haiku, Codex and OpenCode model mappings. The correct documented focused test command ran 19 tests with three policy failures and no errors; see [factory/baseline.md](factory/baseline.md). Explicit Q2 chooses whether to preserve the shipped selections and align policy/tests (recommended) or restore old inherited defaults. This is not ignored as an acceptable permanently red baseline.
+DESIGN's model-policy paragraph, README and `test_render_models.py` require only Claude Code defaults with opus/sonnet. Current adapters ship Claude Code opus/haiku, Codex and OpenCode model mappings. The correct documented focused test command ran 19 tests with three policy failures and no errors; see [factory/baseline.md](factory/baseline.md). Decision: the user explicitly accepted plan Q2 on 2026-10-28, preserving the shipped selections and aligning stale policy/tests. Rationale: this matches the approved scope and repairs the demonstrated mismatch without changing models. Alternative rejected by the accepted choice: restore old inherited/opus-sonnet defaults. This is not ignored as an acceptable permanently red baseline.
 
 ## Atomic task unit
 
@@ -26,4 +26,4 @@ Alternative rejected: tolerance windows hiding small overruns, raising budgets w
 
 ## Validation
 
-Decision: extend existing stdlib unittest renderer/accounting coverage and run native-agent fixture trials for prompt behavior. Static string tests can prove packaging contracts, never actual agent decisions. No new runtime dependencies. Planning uncertainty is limited to explicit Q2 and protected S1–S4 scope acceptance.
+Decision: extend existing stdlib unittest renderer/accounting coverage and run native-agent fixture trials for prompt behavior. Static string tests can prove packaging contracts, never actual agent decisions. No new runtime dependencies. Protected plan Q1 confirmed the complete declared S1–S4 scope and failure paths on 2026-10-28; Q2 confirmed the model policy on the same date. Both answers are explicit (`auto: false`) in the plan relay. No planning clarification remains.

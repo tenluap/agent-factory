@@ -2,7 +2,7 @@
 
 Work in `012-run-reliability`; use temporary fixture checkouts and throwaway remotes for native behavior trials. Read [contracts/workflow.md](contracts/workflow.md) and the confirmed S1–S4 scope in [plan.md](plan.md).
 
-1. Resolve protected model-policy Q2 and seam scope acceptance before implementation. Run `python3 -m unittest discover -s tools -p test_render_models.py` to record the existing model-policy failures; keep output before changing assertions or defaults.
+1. Read the accepted plan Q1/Q2 decisions: all S1–S4 cases are confirmed; preserve current shipped model selections and align stale policy/tests. The existing model-policy baseline is recorded in [factory/baseline.md](factory/baseline.md). Keep that evidence; rerun `python3 -m unittest discover -s tools -p test_render_models.py` after the policy/test alignment and require it to pass.
 2. Follow `conformance/run-reliability.md` once implemented. Exercise S1 inventory includes/excludes/error/unverified with synthetic IDs; confirm exact selections survive and rejected setup creates no resources. Never modify real credentials.
 3. Exercise S2 on the tiny fixture: red → implementation → one green commit; interrupt after red and resume; then inspect complete, partial and ambiguous legacy pairs. Inspect real boxes, commits and red proof.
 4. Exercise S3: omitted git-failure scope blocks analyze; expanded scope invalidates confirmation; fast mode waits; explicit acceptance repairs eligibility. Covered/exempt controls proceed.
