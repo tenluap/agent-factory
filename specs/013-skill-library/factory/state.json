@@ -263,6 +263,14 @@
       "auto": false,
       "at": "2026-10-28T08:33:38.556556Z",
       "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "H3",
+      "answer": "A: run code-standards and spec-conformance on claude-code/claude-opus-5-5[1m] this run",
+      "auto": false,
+      "at": "2026-10-28T09:21:28.137567Z",
+      "kind": "gate-override"
     }
   ],
   "ledger": [
