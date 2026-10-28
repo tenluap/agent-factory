@@ -422,6 +422,13 @@
       "event": "complete",
       "commit": null,
       "harness": "codex"
+    },
+    {
+      "at": "2026-10-28T07:42:00.919915Z",
+      "stage": "implement",
+      "event": "resumed",
+      "commit": null,
+      "harness": "codex"
     }
   ],
   "improvement_source": "/Users/tenluap/.factory/improvements/claude-factory-011-drop-factory-folder.json",
