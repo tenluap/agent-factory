@@ -26,3 +26,9 @@
 - The cloud coding agent (assigning an issue to Copilot on github.com) is not supported: it cannot relay questions or wait for the approver.
 - Invoke the factory as `/factory <args>`. `$ARGUMENTS` is whatever follows `/factory`.
 - Ledger (reported usage): delegation exposes no token usage — record `reported: null`. Tier-2 fallback: the `copilot --agent` output usually prints token usage; take `reported` from there when it does.
+
+## Model inspection and recovery
+
+Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
+
+For a rejected model, preserve the exact selection and original diagnostic. Name the installed agent or `${FACTORY_HOME}/config.json` source; guide correction through `models.copilot.deep` / `.standard`, `./install.sh --harness copilot`, then a fresh session and recheck. Preserve user model/credential choices; never guess aliases or silently substitute.

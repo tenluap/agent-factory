@@ -1,0 +1,34 @@
+...F.F.........F...
+======================================================================
+FAIL: test_exactly_claude_code_ships_models (tests.test_render_models.ModelPolicyTests.test_exactly_claude_code_ships_models)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/tools/tests/test_render_models.py", line 99, in test_exactly_claude_code_ships_models
+    self.assertIn("sonnet", models.get("standard", ""), name)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'sonnet' not found in 'anthropic/claude-haiku-5-5' : claude-code
+
+======================================================================
+FAIL: test_readme_statement_matches_adapters (tests.test_render_models.ModelPolicyTests.test_readme_statement_matches_adapters)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/tools/tests/test_render_models.py", line 118, in test_readme_statement_matches_adapters
+    self.assertEqual(adapter.get("models"), {}, name)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'deep': 'openai/gpt-6.1-sol', 'standard': 'openai/gpt-6.1-terra'} != {}
+- {'deep': 'openai/gpt-6.1-sol', 'standard': 'openai/gpt-6.1-terra'}
++ {} : codex
+
+======================================================================
+FAIL: test_models_report_without_config_prints_defaults (tests.test_render_models.ReportTests.test_models_report_without_config_prints_defaults)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/tools/tests/test_render_models.py", line 288, in test_models_report_without_config_prints_defaults
+    self.assertIn("spec-builder: (session default)", out.stdout)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'spec-builder: (session default)' not found in 'code-build: openai/gpt-6.1-terra\ncode-standards: openai/gpt-6.1-terra\nfixer: openai/gpt-6.1-terra\nreview-judge: claude-code/claude-opus-5-5[1m]\nsecurity-reviewer: openai/gpt-6.1-terra\nspec-builder: claude-code/claude-opus-5-5[1m]\nspec-conformance: openai/gpt-6.1-terra\nui-reviewer: openai/gpt-6.1-terra\nux-reviewer: openai/gpt-6.1-terra\n'
+
+----------------------------------------------------------------------
+Ran 19 tests in 2.959s
+
+FAILED (failures=3)

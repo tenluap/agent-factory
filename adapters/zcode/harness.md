@@ -25,3 +25,9 @@
 - Never invoke the `speckit-*` skills or `grill-with-docs` with the Skill tool: read the resolved file and follow it.
 - Invoke the factory as `/factory <args>`. `$ARGUMENTS` is whatever follows `/factory`.
 - Ledger (reported usage): Agent results expose no token usage — record `reported: null` and rely on the estimates.
+
+## Model inspection and recovery
+
+Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
+
+For a rejected model, preserve the exact selection and original diagnostic. Name the installed agent or `${FACTORY_HOME}/config.json` source; guide correction through `models.zcode.deep` / `.standard`, `./install.sh --harness zcode`, then a fresh session and recheck. Preserve user model/credential choices; never guess aliases or silently substitute.

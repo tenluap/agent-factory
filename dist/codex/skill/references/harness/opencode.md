@@ -30,3 +30,9 @@
 ## Compatibility
 
 This adapter targets OpenCode V2. Supported V1 agent and skill files remain compatible through OpenCode's translation, but V2 uses `subagent` and `shell` tools and native `permissions` rules. The factory uses neither the plugin API nor the server API. See the [migration guide](https://opencode.ai/v2/docs/migrate-v1), [tools](https://opencode.ai/v2/docs/tools), and [permissions](https://opencode.ai/v2/docs/permissions).
+
+## Model inspection and recovery
+
+Read effective model/variant selections from installed role agents, including per-user overrides; repository defaults alone are insufficient. Check local `opencode models --help` for this version, then use supported `opencode models` inventory. Treat it as authoritative for rejection only when its result is complete for the selected provider; partial, failed or unknown-coverage output is unverified. Inventory membership does not prove provider access. If no supported inventory or resolvable inherited ID exists, disclose unverified and retain bounded runtime retry/halt.
+
+For a rejected model, preserve its exact ID/variant, installed file/configuration source and original diagnostic. Guide the user to choose a valid accessible selection in `${FACTORY_HOME}/config.json` at `models.opencode.deep` / `.standard`, re-run `./install.sh --harness opencode`, start a fresh session and recheck. Do not guess an alias, silently choose another model or alter credentials.

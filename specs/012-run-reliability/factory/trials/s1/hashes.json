@@ -1,0 +1,10 @@
+{
+  "s1-before-output.json": "9d0efbbb4b3c8ca11db725f179bfc41f351c71f7988a74ef6f9b8696a8bc19e2",
+  "s1-after-output.json": "5296cb172c776aff050a835d6c48f0b1a040dfab72c3451907d0d1cdfe40b80b",
+  "s1-before-prompt.txt": "ca6a8db775fbc58ce35443b7a84dec41187c30230a8b8819a6b02108a6b34d97",
+  "s1-after-prompt.txt": "b18f78b836566150974c4648804aa9f9e6744f5d02fd452d1d8509f09c1aec5b",
+  "inputs.json": "6f68dd8b795b304eb73f1e12138498c6c4c21d98dfbc73bdd577d9225e398262",
+  "tested_before_skill": "464a5dec3f6f91802e4b11d8cf7028db50b73915a5f0db5ce2e8d46499a1bbb9",
+  "tested_after_skill": "b55dc624f593d23dbb40c92dc23a73c6c33ad3d17e3892f24e83f689cb900f05",
+  "committed_after_skill": "c9a485fc590541f032f7ef853bc3d5ffe7a75b22a47d9419db9e5d24ba284ddc"
+}

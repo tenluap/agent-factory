@@ -1,0 +1,101 @@
+[
+  {
+    "id": "S1-hit",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "complete",
+      "models": [
+        "fixture/selected"
+      ]
+    },
+    "role": "spec-builder",
+    "configuration_source": "installed agent"
+  },
+  {
+    "id": "S1-miss",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "complete",
+      "models": [
+        "fixture/other"
+      ]
+    },
+    "role": "spec-builder",
+    "configuration_source": "installed agent"
+  },
+  {
+    "id": "S1-error",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "error",
+      "diagnostic": "fixture inventory command exit 2"
+    },
+    "role": "spec-builder"
+  },
+  {
+    "id": "S1-partial",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "partial",
+      "models": [
+        "fixture/other"
+      ]
+    },
+    "role": "spec-builder"
+  },
+  {
+    "id": "S1-unsupported",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "unsupported"
+    },
+    "role": "spec-builder"
+  },
+  {
+    "id": "S1-inherit",
+    "effective": null,
+    "inventory": {
+      "status": "unsupported"
+    },
+    "role": "spec-builder"
+  },
+  {
+    "id": "S1-effective",
+    "effective": "fixture/installed",
+    "repository_default": "fixture/default",
+    "inventory": {
+      "status": "complete",
+      "models": [
+        "fixture/default"
+      ]
+    },
+    "role": "spec-builder",
+    "configuration_source": "installed agent override"
+  },
+  {
+    "id": "S1-reject",
+    "effective": "fixture/selected",
+    "inventory": {
+      "status": "complete",
+      "models": [
+        "fixture/selected"
+      ]
+    },
+    "spawn_error": "fixture/selected may not exist or access denied",
+    "attempt": 1,
+    "role": "spec-builder"
+  },
+  {
+    "id": "S1-resume",
+    "effective": "fixture/new",
+    "previous_effective": "fixture/old",
+    "harness_changed": true,
+    "inventory": {
+      "status": "complete",
+      "models": [
+        "fixture/other"
+      ]
+    },
+    "role": "spec-builder"
+  }
+]

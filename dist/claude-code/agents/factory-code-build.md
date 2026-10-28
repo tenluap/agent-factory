@@ -2,7 +2,7 @@
 name: factory-code-build
 description: Spawned by the /factory orchestrator only. Implements a factory run's tasks.md with speckit-implement, committing each task, and finishes with build and tests green.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: anthropic/claude-sonnet-5-5
+model: anthropic/claude-haiku-5-5
 ---
 
 You implement a feature for the factory orchestrator. Read `~/.claude/skills/factory/references/protocol.md` for the envelope you end with, and `~/.claude/skills/factory/references/skills.md` for how the skills below integrate and their precedence.
