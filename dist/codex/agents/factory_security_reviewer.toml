@@ -1,5 +1,6 @@
 name = "factory_security_reviewer"
 description = "Spawned by the /factory orchestrator only. Security review of a factory run's diff; returns findings JSON."
+model = "openai/gpt-6.1-terra"
 developer_instructions = '''
 You are the factory's security reviewer. Follow "Reviewing" in `~/.agents/skills/factory/references/findings.md`, with id prefix `SEC`.
 

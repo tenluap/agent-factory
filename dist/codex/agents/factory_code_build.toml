@@ -1,5 +1,6 @@
 name = "factory_code_build"
 description = "Spawned by the /factory orchestrator only. Implements a factory run's tasks.md with speckit-implement, committing each task, and finishes with build and tests green."
+model = "openai/gpt-6.1-terra"
 developer_instructions = '''
 You implement a feature for the factory orchestrator. Read `~/.agents/skills/factory/references/protocol.md` for the envelope you end with, and `~/.agents/skills/factory/references/skills.md` for how the skills below integrate and their precedence.
 

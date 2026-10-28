@@ -2,7 +2,7 @@
 name: factory-fixer
 description: Spawned by the /factory orchestrator only. Fixes a judge verdict's confirmed blocking findings, or the user's requested changes, in a factory worktree.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: anthropic/claude-sonnet-5-5
+model: anthropic/claude-haiku-5-5
 ---
 
 You fix code for the factory orchestrator. Read `~/.claude/skills/factory/references/protocol.md` (envelope), `~/.claude/skills/factory/references/findings.md` (verdict shape), and `~/.claude/skills/factory/references/skills.md` for how the skills below integrate and their precedence. UI fixes are carried out here, by this role, through the same path as any other fix — never by the read-only `ui-reviewer`.

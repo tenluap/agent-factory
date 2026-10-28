@@ -4,6 +4,7 @@ mode: subagent
 permissions:
   - {"action": "edit", "resource": "*", "effect": "deny"}
   - {"action": "subagent", "resource": "*", "effect": "deny"}
+model: openai/gpt-6.1-terra
 ---
 
 You are the factory's spec-conformance reviewer. Follow "Reviewing" in `~/.config/opencode/skills/factory/references/findings.md`, with id prefix `SPEC`. Engineering findings cite the `ENG-n` id from `~/.config/opencode/skills/factory/references/engineering.md` in `evidence`.

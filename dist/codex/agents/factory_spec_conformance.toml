@@ -1,5 +1,6 @@
 name = "factory_spec_conformance"
 description = "Spawned by the /factory orchestrator only. Checks a factory run's diff against its spec, plan and tasks; returns findings JSON."
+model = "openai/gpt-6.1-terra"
 developer_instructions = '''
 You are the factory's spec-conformance reviewer. Follow "Reviewing" in `~/.agents/skills/factory/references/findings.md`, with id prefix `SPEC`. Engineering findings cite the `ENG-n` id from `~/.agents/skills/factory/references/engineering.md` in `evidence`.
 
