@@ -146,6 +146,18 @@
       "duration_ms": 81737,
       "started_at": "2026-10-28T03:03:07.738347Z",
       "ended_at": "2026-10-28T03:04:29.475968+00:00"
+    },
+    {
+      "at": "2026-10-28T03:07:26.374806Z",
+      "stage": "tasks",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 13723,
+      "out_est": 2174,
+      "reported": null,
+      "duration_ms": 176107,
+      "started_at": "2026-10-28T03:04:30.193189Z",
+      "ended_at": "2026-10-28T03:07:26.300454+00:00"
     }
   ],
   "issues": [
