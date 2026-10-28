@@ -465,6 +465,18 @@
       "duration_ms": 303000,
       "started_at": "2026-10-28T01:34:35Z",
       "ended_at": "2026-10-28T01:39:38Z"
+    },
+    {
+      "at": "2026-10-28T01:44:36.993724Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 15000,
+      "out_est": 600,
+      "reported": null,
+      "duration_ms": 134000,
+      "started_at": "2026-10-28T01:42:22Z",
+      "ended_at": "2026-10-28T01:44:36Z"
     }
   ],
   "review": {
@@ -671,7 +683,7 @@
       "at": "2026-10-28T01:42:22.102952Z",
       "stage": "fix",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "afda50e",
       "harness": "opencode",
       "commands": [
         {
