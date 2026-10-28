@@ -96,7 +96,7 @@ No setup: the runner, `Sandbox` helper (`tools/tests/`) and the `factory_cli` pa
 - [x] T011 [P] Describe the end-of-run drop and the archive location in `README.md` (FR-014). Exempt: `README.md` - documentation only.
 - [x] T012 Re-render `dist/` for all five harnesses: `export FACTORY_HOME="$(mktemp -d)"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done`; commit `dist/**` with the source change (FR-015). Exempt: `dist/**` - generated output, checked by the build gate.
 - [x] T016 [P] In `core/skills/factory/references/design-code-mapping.md`, state that Pen design evidence lives under `specs/<branch>/factory/design/` during the run and at `docs/design/<branch>/` after `factory drop`, which moves it and rewrites `docs/design-code-map.json` references in the drop commit (FR-017). Exempt: `core/skills/factory/references/design-code-mapping.md` - agent instructions only.
-- [ ] T013 Run the gates from `quickstart.md`: `python3 -m unittest discover -s tools`, then render all five harnesses and check `test -z "$(git status --porcelain -- dist/)"` (constitution "Development Workflow"; a bare `git diff --exit-code -- dist/` misses untracked files and is not the gate) (SC-005). Exempt: verification only, no code change.
+- [x] T013 Run the gates from `quickstart.md`: `python3 -m unittest discover -s tools`, then render all five harnesses and check `test -z "$(git status --porcelain -- dist/)"` (constitution "Development Workflow"; a bare `git diff --exit-code -- dist/` misses untracked files and is not the gate) (SC-005). Exempt: verification only, no code change.
 
 ---
 
