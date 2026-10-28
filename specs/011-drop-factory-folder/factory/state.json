@@ -58,6 +58,14 @@
       "summary": "Grilling round 2",
       "answered_at": "2026-10-28T00:38:29.930228Z",
       "latency_ms": 263
+    },
+    {
+      "at": "2026-10-28T00:39:35.171536Z",
+      "kind": "halt",
+      "stage": "specify",
+      "summary": "invalid deep model id",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
