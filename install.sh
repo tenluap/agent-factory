@@ -112,11 +112,14 @@ install_skills() {
       echo "removed: $f"
     fi
   done
-  for f in "$src"/skills/*; do
+  for f in "$src"/skills/* "$factory_home"/skills/*; do
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
     name="$(basename "$f")"
     if [ "$name" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
+      continue
+    fi
+    if [[ "$f" == "$src"/skills/* ]] && [ -f "$factory_home/skills/$name/SKILL.md" ]; then
       continue
     fi
     link_skill "$f" "$root/$name"
