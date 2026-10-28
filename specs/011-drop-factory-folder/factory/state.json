@@ -9,7 +9,7 @@
   "branch": "011-drop-factory-folder",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
-  "status": "halted",
+  "status": "running",
   "stage": "specify",
   "halt_reason": "spec-builder model claude-code/opus-5.5 not accessible",
   "stop_at": null,
