@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "clarify",
+  "stage": "grill-with-docs",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -41,49 +41,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "clarify",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          },
-          {
-            "id": "Q2"
-          },
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-10-28T23:17:50.567588Z",
-            "auto": true
-          },
-          "Q2": {
-            "answer": "A",
-            "at": "2026-10-28T23:17:50.869877Z",
-            "auto": true
-          },
-          "Q3": {
-            "answer": "A",
-            "at": "2026-10-28T23:17:51.175578Z",
-            "auto": true
-          },
-          "Q4": {
-            "answer": "A",
-            "at": "2026-10-28T23:17:51.483799Z",
-            "auto": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -149,6 +107,38 @@
       "auto": false,
       "at": "2026-10-28T23:13:56Z",
       "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q1",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:20:07.581723Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q2",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:20:07.581723Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q3",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:20:07.581723Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q4",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-10-28T23:20:07.581723Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -209,6 +199,13 @@
     {
       "at": "2026-10-28T23:16:37.351306Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-28T23:20:07.581723Z",
+      "stage": "clarify",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
