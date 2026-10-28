@@ -14,7 +14,7 @@
   "halt_reason": null,
   "stop_at": null,
   "mode": {
-    "chain": "lite",
+    "chain": "full",
     "fast": true
   },
   "skills": {
