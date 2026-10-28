@@ -68,3 +68,24 @@ The healthy before subject disclosed the conflict between a separate failing-tes
 **Experiment correction:** initial S2-new fixtures omitted normal analysis/constitution prerequisites; one initial subject also used an incorrect default analyze transition. Those original reports are retained as invalid-fixture history and are excluded from the full-stage pass. Only fresh, symmetric `before-healthy` and `after-healthy` S2-new runs count for that case. The other five isolated cases retain their actual observed outcomes. The original before-fixture skill paths were corrected to the main checkout; those setup-only state changes are not product behavior evidence.
 
 All five harnesses canonical-rendered after the source changes. `python3 -m unittest discover -s tools -p 'test_render*.py'` passed **27 tests**; `git diff --check` passed. The configured budgets, runtime state schema, model mappings and mandatory final checks are unchanged. S3/S4 and T012 full verification remain pending.
+
+
+### S3 observed scope/confirmation contracts — 2026-10-28
+
+Two fresh native subjects applied frozen old/new plan/analyze contracts to the same eleven independent task/plan/spec artifact sets. Inputs explicitly supplied unrelated prerequisites as satisfied and used an unambiguously paired legacy red/implementation task, compatible with both task formats. These are **stage-contract decision trials**: actual envelopes/findings and proposed confirmation edits are recorded in reports; no full SpecKit pipeline, live user relay, production state or fixture edits are claimed. Raw reports, identical artifact bytes, neutral prompts and tested source hashes are retained under `specs/012-run-reliability/factory/trials/s3/` for archival.
+
+| Case | Old observed contract result | Changed observed contract result | Assessment |
+|---|---|---|---|
+| S3-undeclared | HIGH, ineligible | HIGH, ineligible; acceptance of another seam does not declare it | Preserved blocking control |
+| S3-git-path | Same seam name sufficed; HIGH 0, eligible despite undeclared git failure | HIGH 1, ineligible; names T001/T002 and missing git failure | Observed red→green |
+| S3-missing | HIGH 0, eligible without scope acceptance | HIGH 1, ineligible; acceptance absent | Observed red→green |
+| S3-stale | HIGH 0, eligible although saved scope lacked added git failure | HIGH 1, ineligible; accepted snapshot mismatches declaration | Observed red→green |
+| S3-add/remove/rename | Protected needs_input, initially ineligible | Same protected needs_input for exact current scope | Preserved controls |
+| S3-expand | Plan reused equal seam names; done/eligible | needs_input, ineligible; same-name failure expansion requires acceptance | Observed red→green |
+| S3-covered | HIGH 0, eligible | HIGH 0, eligible | Preserved valid coverage/confirmation |
+| S3-exempt | Eligible without invented runtime seam | Eligible under valid documentation exemption | Preserved exemption |
+| S3-protected | Fast mode did not answer protected question; supplied explicit reply permitted continuation | Same initial protected wait, zero auto accepts; explicit fixture reply produced `Confirmed: ... seams: greet; failure paths: greet={copy failure}` and eligible continuation | Preserved protection; complete scope now retained |
+
+`S3-failure-scope-acceptance` assesses native outputs: `python3 specs/012-run-reliability/factory/trials/s3/assess-scope.py before` exits 1 for missing git-path/missing/stale blockers and same-name expansion; `... after` exits 0 for all eleven cases. Source uses one shared confirmed-scope definition; declarations and acceptance remain separate. Legacy name-only acceptance is reusable only with independent exact-scope evidence. No runtime state field, budget, model mapping or accounting change was introduced.
+
+All five harnesses canonical-rendered. Focused renderer/model suite passed **27 tests**; `git diff --check` passed. S4 and final full/independent checks remain pending.

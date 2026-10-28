@@ -63,6 +63,12 @@ On resume, inspect task status, worktree changes, test output and commit history
 
 Generation, analysis, execution, fixing and review use this same definition. A fix may group related changes in its existing single passing fix commit while retaining the required red proof per behavior-changing fix.
 
+## Confirmed test scope
+
+The plan's declarations list each public test seam and its required injected failure paths (`none` when no injection is needed). Task requirements map to those declarations. Confirmation is separate evidence of explicit acceptance of that exact seam-to-failure-path scope; it never declares a seam. Store the accepted scope with the `Confirmed:` line or a referenced immutable snapshot. Reuse legacy name-only confirmation only when separate explicit acceptance evidence proves the complete current scope.
+
+Adding, removing, renaming or expanding a declared seam or failure path invalidates prior confirmation. Missing coverage or absent/stale scope acceptance blocks implementation with a HIGH finding; obtain fresh protected confirmation through the orchestrator. Valid documentation/configuration exemptions remain exempt. Later-discovered gaps stop implementation/fixing under ENG-4.
+
 ## Red proof
 
 Exactly two forms count, each on its own line in the task's commit body:

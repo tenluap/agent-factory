@@ -1,0 +1,172 @@
+[
+  {
+    "id": "S3-undeclared",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-undeclared/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-undeclared/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-undeclared/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-git-path",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-git-path/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-git-path/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-git-path/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-missing",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-missing/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-missing/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-missing/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": null,
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-stale",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-stale/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-stale/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-stale/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-add",
+    "stage": "plan",
+    "plan": "/tmp/factory012-trials/s3-after/S3-add/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-add/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-add/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-remove",
+    "stage": "plan",
+    "plan": "/tmp/factory012-trials/s3-after/S3-remove/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-remove/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-remove/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ],
+      "save": [
+        "write failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-rename",
+    "stage": "plan",
+    "plan": "/tmp/factory012-trials/s3-after/S3-rename/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-rename/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-rename/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-expand",
+    "stage": "plan",
+    "plan": "/tmp/factory012-trials/s3-after/S3-expand/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-expand/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-expand/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-covered",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-covered/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-covered/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-covered/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": {
+      "greet": [
+        "copy failure"
+      ]
+    },
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-exempt",
+    "stage": "analyze",
+    "plan": "/tmp/factory012-trials/s3-after/S3-exempt/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-exempt/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-exempt/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": null,
+    "explicit_reply_after_initial_envelope": null
+  },
+  {
+    "id": "S3-protected",
+    "stage": "plan",
+    "plan": "/tmp/factory012-trials/s3-after/S3-protected/plan.md",
+    "tasks": "/tmp/factory012-trials/s3-after/S3-protected/tasks.md",
+    "spec": "/tmp/factory012-trials/s3-after/S3-protected/spec.md",
+    "mode": {
+      "fast": true
+    },
+    "accepted_scope_evidence": null,
+    "explicit_reply_after_initial_envelope": {
+      "answer": "Accept the exact current declared seams and injected failure paths.",
+      "auto": false
+    }
+  }
+]
