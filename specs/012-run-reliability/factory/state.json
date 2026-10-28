@@ -312,6 +312,18 @@
       "duration_ms": 68773,
       "started_at": "2026-10-28T03:31:54.994679Z",
       "ended_at": "2026-10-28T03:33:03.768417+00:00"
+    },
+    {
+      "at": "2026-10-28T03:34:48.812266Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "codex",
+      "in_est": 15458,
+      "out_est": 138387,
+      "reported": null,
+      "duration_ms": 350377,
+      "started_at": "2026-10-28T03:28:58.343762Z",
+      "ended_at": "2026-10-28T03:34:48.721034+00:00"
     }
   ],
   "issues": [
@@ -346,6 +358,17 @@
       "detail": "Finished in-flight T005+T006 at safe passing commit boundary, 423 seconds past deadline at 2026-10-28T03:28:22.440142+00:00; fresh symmetric S2-new trials corrected missing initial fixture prerequisites, and native subjects/evidence were awaited. No new unit or optional broad verification started past deadline.",
       "duration_ms": 758346,
       "commit": "bbefbca",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-28T03:34:48.812429Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "tool-slow",
+      "detail": "Finished in-flight T007+T008 at passing commit/evidence boundary 38 seconds past deadline at 2026-10-28T03:34:36.287512+00:00; awaited fresh native after-trial, started no new unit or optional broad verification.",
+      "duration_ms": 350377,
+      "commit": "ad65834",
       "partial_return": true
     }
   ],
