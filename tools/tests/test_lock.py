@@ -230,9 +230,12 @@ class LifecycleTests(unittest.TestCase):
             if calls["n"] != 2:
                 return original_read(p)
             observed = self.lock_path.read_text()  # the comparison sees the stale lock
-            # a racer's takeover lands: its own stale clear plus exclusive create
-            self.lock_path.unlink()
-            self.lock_path.write_text(json.dumps(fresh))
+            # a racer's takeover lands. Its file is created while the stale
+            # lock still exists, so the filesystem cannot reuse the stale
+            # inode (unlink-then-create can on ext4, making the race vanish).
+            racer = self.lock_path.with_name("lock.racer")
+            racer.write_text(json.dumps(fresh))
+            os.replace(racer, self.lock_path)
             return json.loads(observed)
 
         lock.read = racing_read
