@@ -409,6 +409,18 @@
       "duration_ms": 132000,
       "started_at": "2026-10-28T08:00:10Z",
       "ended_at": "2026-10-28T08:02:22Z"
+    },
+    {
+      "at": "2026-10-28T08:15:13.517272Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 30000,
+      "out_est": 9000,
+      "reported": null,
+      "duration_ms": 861000,
+      "started_at": "2026-10-28T08:05:39Z",
+      "ended_at": "2026-10-28T08:20:00Z"
     }
   ],
   "issues": [
@@ -421,6 +433,17 @@
       "detail": "T004 blocked: origin/main has dist drift from commit 6dd7a0e (adapter model changes not re-rendered); render gate cannot pass",
       "duration_ms": 0,
       "commit": "2d88f72",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T08:15:13.517571Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "unreported",
+      "detail": "code-build ran 861s past its 300s budget without a self-report",
+      "duration_ms": 861000,
+      "commit": "6ccd8ee",
       "partial_return": false
     }
   ],
