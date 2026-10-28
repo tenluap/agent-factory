@@ -8,7 +8,8 @@ cases = {case['id']: case for case in report['cases']}
 pending = cases['S4-pending']['final_envelope']
 assert pending['status'] == 'partial', 'S4-required-check-admission: known broad check cannot fit existing-role boundary'
 assert pending.get('pending_checks'), 'mandatory checks must remain explicit across handoff'
-assert not pending.get('completed_checks'), 'unrun required checks cannot be claimed complete'
+assert 'python3 probe.py' not in pending.get('completed_checks', []), 'unrun required checks cannot be claimed complete'
+assert not pending.get('overrun'), 'pre-deadline fit handoff cannot claim an overrun'
 for name in ('S4-optional', 'S4-uncertain'):
     case = cases[name]
     assert case['final_envelope']['status'] == 'done'

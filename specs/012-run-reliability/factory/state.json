@@ -360,6 +360,18 @@
       "duration_ms": 68198,
       "started_at": "2026-10-28T07:50:42.150441Z",
       "ended_at": "2026-10-28T07:51:50.349240+00:00"
+    },
+    {
+      "at": "2026-10-28T07:58:04.002751Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "codex",
+      "in_est": 15652,
+      "out_est": 26,
+      "reported": null,
+      "duration_ms": 353266,
+      "started_at": "2026-10-28T07:52:10.680630Z",
+      "ended_at": "2026-10-28T07:58:03.947293+00:00"
     }
   ],
   "issues": [
@@ -406,6 +418,17 @@
       "duration_ms": 350377,
       "commit": "ad65834",
       "partial_return": true
+    },
+    {
+      "at": "2026-10-28T07:58:04.002906Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "unreported",
+      "detail": "code-build ran 353s past its 300s budget without a self-report",
+      "duration_ms": 353266,
+      "commit": "ad65834",
+      "partial_return": false
     }
   ],
   "review": {
