@@ -16,13 +16,14 @@ Expected: `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming
 mkdir -p /tmp/demo && printf -- '---\nname: demo\ndescription: d\n---\n' > /tmp/demo/SKILL.md
 ./install.sh --harness opencode --add-skill /tmp/demo   # added: ~/.factory/skills/demo
 ./install.sh --harness opencode --add-skill /tmp/demo   # exists: ..., exit 2
+rm -rf ~/.factory/skills/demo && ./install.sh --harness opencode   # removed: .../opencode/skills/demo
 ```
 
 ## Conflict and uninstall
 
 ```bash
 mkdir "$XDG_CONFIG_HOME/opencode/skills/mine"
-./install.sh --harness opencode --uninstall   # library links removed; mine/ untouched
+./install.sh --harness opencode --uninstall   # library links removed; mine/ and ~/.factory/skills/ untouched
 ```
 
 ## Gates
