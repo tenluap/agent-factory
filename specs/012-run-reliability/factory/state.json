@@ -1,0 +1,110 @@
+{
+  "version": 5,
+  "started_at": "2026-10-28T02:52:42.975542Z",
+  "harness": "codex",
+  "feature": "Improve the factory from the recorded issues of run 011-drop-factory-folder: 2 agent failures, 2 halts, 3 overruns, 1 retry; causes: 2 test loops, 1 slow tool.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "012-run-reliability",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability",
+  "spec_dir": "specs/012-run-reliability",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.agents/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.agents/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.agents/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.agents/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.agents/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit; done",
+    "test": "python3 -m unittest discover -s tools && bash -n install.sh && test -z \"$(git status --porcelain -- dist/)\""
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-10-28T02:52:59.449742Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Confirm concrete reliability scope, lite chain, and repository verification commands",
+      "answered_at": "2026-10-28T02:54:03.374369Z",
+      "latency_ms": 63924
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "intake-writer-exception",
+      "answer": "User accepted Q2: use validated state-writer API for initial pending creation and new intake question rounds; CLI wherever supported.",
+      "auto": false,
+      "at": "2026-10-28T02:52:43.288972Z",
+      "kind": "gate-override"
+    },
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-28T02:54:03.636264Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-28T02:54:03.636264Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-28T02:54:03.636264Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-10-28T02:54:03.636264Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "codex"
+    }
+  ],
+  "improvement_source": "/Users/tenluap/.factory/improvements/claude-factory-011-drop-factory-folder.json",
+  "intake_note": "Q1/Q2 were presented before pending storage existed; accepted together by user. Created through validated writer API under explicit Q2 exception. Earlier wait/spawn timestamps unavailable and not reconstructed."
+}

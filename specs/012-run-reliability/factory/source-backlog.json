@@ -1,0 +1,117 @@
+{
+  "name": "claude-factory-011-drop-factory-folder",
+  "run": {
+    "branch": "011-drop-factory-folder",
+    "spec_dir": "specs/011-drop-factory-folder",
+    "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
+    "status": "pr-open",
+    "ended_at": "2026-10-28T01:54:47.809246Z"
+  },
+  "issues": [
+    {
+      "at": "2026-10-28T00:39:34.563274Z",
+      "kind": "agent-failure",
+      "stage": "specify",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Model unavailable: claude-code/Opus-5-5 (installed agent model from uncommitted adapters/opencode/adapter.json)",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:39:34.935948Z",
+      "kind": "halt",
+      "stage": "specify",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "spec-builder model claude-code/Opus-5-5 unavailable",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:42:15.926902Z",
+      "kind": "agent-failure",
+      "stage": "specify",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Model claude-code/opus-5.5: may not exist or no access",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:42:16.188133Z",
+      "kind": "halt",
+      "stage": "specify",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "spec-builder model claude-code/opus-5.5 not accessible",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T01:09:22.125382Z",
+      "kind": "retry",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "T003/T004 test/impl split conflicts with ENG-3; T005 git-failure injection seam question",
+      "duration_ms": 0,
+      "commit": "62681ee",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T01:14:42.086621Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "T007+T008 committed 8 seconds past deadline, at 2026-10-28T01:14:30Z.",
+      "duration_ms": 313000,
+      "commit": "ff67b1e",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-28T01:20:00.564504Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "tool-slow",
+      "detail": "T011 commit completed 6 seconds past deadline, at 2026-10-28T01:19:48Z.",
+      "duration_ms": 310000,
+      "commit": "bfa8b57",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-28T01:39:54.189121Z",
+      "kind": "overrun",
+      "stage": "fix",
+      "role": "fixer",
+      "cause": "test-loop",
+      "detail": "Stopped at verification boundary 3 seconds past deadline; full test suite had not finished.",
+      "duration_ms": 303000,
+      "commit": "492344a",
+      "partial_return": true
+    }
+  ],
+  "totals": {
+    "bounded": true,
+    "wall_ms": 5451809,
+    "human_ms": 1084105,
+    "agent_ms": 3246000,
+    "overhead_ms": 1121704,
+    "waits": 7,
+    "open_waits": 0,
+    "spawns": 31,
+    "in_est": 490000,
+    "out_est": 44000,
+    "reported": []
+  },
+  "factory_sha": null,
+  "status": "ready",
+  "exported_at": "2026-10-28T01:54:48.070780Z",
+  "claimed_at": null
+}
