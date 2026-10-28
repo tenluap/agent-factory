@@ -51,7 +51,25 @@
       "at": "2026-10-28T00:51:48.024621Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "grill-with-docs",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "B: drop removes all of factory/; on Pen runs it first moves factory/design/ to a permanent path (e.g. docs/design/<branch>/) and rewrites docs/design-code-map.json references in the same commit; the mapping contract is updated accordingly",
+            "at": "2026-10-28T00:59:19.190508Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-28T00:24:17.727623Z",
