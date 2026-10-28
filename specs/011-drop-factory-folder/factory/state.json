@@ -92,6 +92,14 @@
       "summary": "test seam confirmation",
       "answered_at": "2026-10-28T00:48:18.199463Z",
       "latency_ms": 71894
+    },
+    {
+      "at": "2026-10-28T00:54:42.616123Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Pen design evidence under factory/design",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
