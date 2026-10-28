@@ -175,6 +175,16 @@ install_skills() {
   done
 }
 
+unlink_skills() {
+  local f
+  for f in "$1"/*; do
+    if library_link "$f"; then
+      rm "$f"
+      echo "removed: $f"
+    fi
+  done
+}
+
 install_one() {
   local dist skill_dir agent_dir skills_root
   echo "== $1"
@@ -182,6 +192,7 @@ install_one() {
   python3 "$src/tools/render.py" "$1" --out "$dist"
   eval "$(python3 "$src/tools/render.py" "$1" --paths --out "$dist")"
   if [ -n "$uninstall" ]; then
+    unlink_skills "$skills_root"
     unlink_ours "$skill_dir"
     for f in "$dist"/agents/*; do unlink_ours "$agent_dir/$(basename "$f")"; done
     rm -rf "$dist"
