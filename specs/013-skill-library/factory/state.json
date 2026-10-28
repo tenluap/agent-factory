@@ -9,7 +9,7 @@
   "branch": "013-skill-library",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
-  "status": "waiting_user",
+  "status": "running",
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
