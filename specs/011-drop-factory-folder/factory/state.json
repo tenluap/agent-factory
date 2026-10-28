@@ -116,8 +116,8 @@
       "kind": "questions",
       "stage": "grill-with-docs",
       "summary": "Pen design evidence under factory/design",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T00:59:19.445655Z",
+      "latency_ms": 276829
     }
   ],
   "decisions": [
