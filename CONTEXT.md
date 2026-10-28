@@ -114,6 +114,22 @@ _Avoid_: finding, bug, incident
 The run-end export of one factory run's issues, totals and factory version; its appearance is what gates improvement work on that run.
 _Avoid_: issue list, export, pending improvements
 
+**Run folder**:
+The `specs/<branch>/factory/` directory of run artifacts (state, brief, reports, findings and design evidence), committed on the feature branch while the run is in progress.
+_Avoid_: factory dir, run dir
+
+**Run archive**:
+The verified, byte-identical copy of the run folder at `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`, excluding transient `lock.json`; written once and never overwritten.
+_Avoid_: backup, export
+
+**Drop**:
+The single end-of-run step after the PR opens that archives the run folder and produces the `factory: drop run artifacts` commit removing it from the branch, rehoming any design evidence first.
+_Avoid_: cleanup, purge
+
+**Permanent design evidence**:
+Pen design evidence after the drop, living at `docs/design/<branch>/` and referenced by `docs/design-code-map.json`.
+_Avoid_: design archive, design folder
+
 ## Skill routing
 
 **Intake intent**:

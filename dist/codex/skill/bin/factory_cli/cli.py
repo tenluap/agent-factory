@@ -23,6 +23,7 @@ read:
   improvements                      backlogs, kind counts and suggested features, JSON
 
 write (the single writer; each stamps its time, validates, writes atomically):
+  drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
@@ -140,6 +141,12 @@ def main(argv):
             )
             emit(result)
             raise SystemExit(1 if result else 0)
+        elif command == "drop":
+            positional, flags = parse_flags(rest, command)
+            if positional:
+                die_usage("drop takes no positional arguments")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_drop(repo, Path.cwd())
         elif command == "checkpoint":
             positional, flags = parse_flags(
                 rest,
