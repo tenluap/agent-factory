@@ -107,8 +107,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "approve run 011",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T01:54:25.023729Z",
+      "latency_ms": 43007
     }
   ],
   "decisions": [
