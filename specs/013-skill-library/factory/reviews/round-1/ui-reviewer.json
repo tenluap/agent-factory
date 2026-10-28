@@ -1,9 +1,0 @@
-{
-  "reviewer": "ui-reviewer",
-  "round": 1,
-  "summary": "Rendered fixture and static review found two accessibility issues in vendored UI. Browser checks used a simulated content fragment, not the full companion server. FR-001 requires verbatim vendoring, so fixes need an upstream update or an approved scope change.",
-  "findings": [
-    {"id": "UI-1", "severity": "medium", "blocking": false, "file": "skills/brainstorming/scripts/frame-template.html", "line": 110, "summary": "Documented choice cards cannot be selected using the keyboard.", "evidence": "In a rendered 320px fixture, both options had tabIndex -1; Tab did not focus either.", "fix": "Obtain an upstream fix, then refresh the vendored skill and source pin."},
-    {"id": "UI-2", "severity": "medium", "blocking": false, "file": "skills/brainstorming/scripts/frame-template.html", "line": 29, "summary": "Secondary text and connection status lack sufficient contrast.", "evidence": "#86868b renders at 3.62:1 on white; #34c759 on white at 2.22:1, below WCAG AA 4.5:1.", "fix": "Obtain upstream theme colors meeting contrast requirements, then refresh the vendored skill and source pin."}
-  ]
-}
