@@ -401,15 +401,21 @@ def now_iso():
 
 
 def cmd_drop(repo, cwd):
+    branch = git(str(cwd), "branch", "--show-current").strip()
     matches = [
         run
-        for run in deduped(find_runs(repo))
+        for run in find_runs(repo)
         if not isinstance(run, dict)
         and run[2]["source"] == "worktree"
         and os.path.realpath(run[2]["worktree"]) == os.path.realpath(cwd)
+        and is_authoritative(run)
+        and branch
+        and run[1].get("branch") == branch
     ]
     if not matches:
         die(1, f"no run to drop from {cwd}")
+    if len(matches) > 1:
+        die(1, f"several runs claim {cwd}: {', '.join(str(run[0]) for run in matches)}")
     path, loaded, identity, worktree = matches[0]
     if loaded.get("status") != "pr-open":
         die(1, f"run is {loaded.get('status')}; drop needs pr-open")
@@ -425,6 +431,16 @@ def cmd_drop(repo, cwd):
     design_path = Path(worktree) / design if design else None
     map_name = "docs/design-code-map.json"
     map_path = Path(worktree) / map_name
+    checked_paths = [folder] + ([design, map_name] if design else [])
+    dirty = git(
+        worktree, "status", "--porcelain", "--untracked-files=no", "--", *checked_paths
+    )
+    if design and map_path.exists():
+        dirty += git(
+            worktree, "status", "--porcelain", "--untracked-files=all", "--", map_name
+        )
+    if dirty:
+        die(1, f"drop paths have uncommitted changes:\n{dirty.strip()}")
     try:
         lock.acquire(path, loaded.get("harness") or "unknown")
     except lock.LockHeld as e:
@@ -438,7 +454,11 @@ def cmd_drop(repo, cwd):
         tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
         try:
             shutil.copytree(
-                path.parent, tmp, ignore=shutil.ignore_patterns("lock.json")
+                path.parent,
+                tmp,
+                ignore=lambda directory, names: {"lock.json"}
+                if Path(directory) == path.parent
+                else set(),
             )
             pending = [filecmp.dircmp(path.parent, tmp, ignore=["lock.json"])]
             problems = []
@@ -457,7 +477,14 @@ def cmd_drop(repo, cwd):
                     )
                     if not filecmp.cmp(left, right, shallow=False):
                         problems.append(str(left))
-                pending.extend(comparison.subdirs.values())
+                pending.extend(
+                    filecmp.dircmp(
+                        Path(comparison.left) / name,
+                        Path(comparison.right) / name,
+                        ignore=[],
+                    )
+                    for name in comparison.common_dirs
+                )
             if problems:
                 raise OSError(", ".join(problems))
             os.rename(tmp, target)
@@ -473,7 +500,6 @@ def cmd_drop(repo, cwd):
         if design:
             design_path.parent.mkdir(parents=True, exist_ok=True)
             git(worktree, "mv", "--", f"{folder}/design", design)
-            git(worktree, "add", "--", design)
             paths.append(design)
             if map_exists:
                 old = f'"{folder}/design/'.encode()

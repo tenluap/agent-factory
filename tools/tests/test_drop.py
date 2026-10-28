@@ -32,6 +32,43 @@ class DropTests(unittest.TestCase):
         self.box.git("add", "-A", cwd=self.wt)
         self.box.git("commit", "-qm", "add run files", cwd=self.wt)
 
+    def test_drop_ignores_inherited_orphan_and_wrong_branch(self):
+        original = json.loads((self.folder / "state.json").read_text())
+        for name, home in (
+            ("001-orphan", str(self.box.dir / "gone")),
+            ("002-wrong-branch", str(self.wt)),
+        ):
+            other = self.wt / "specs" / name / "factory"
+            other.mkdir(parents=True)
+            (other / "state.json").write_text(
+                json.dumps(
+                    dict(original, branch=name, worktree=home, spec_dir=f"specs/{name}")
+                )
+            )
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "inherited runs", cwd=self.wt)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["dropped"], "specs/011-drop/factory")
+        self.assertTrue((self.wt / "specs/001-orphan/factory/state.json").exists())
+        self.assertTrue(
+            (self.wt / "specs/002-wrong-branch/factory/state.json").exists()
+        )
+
+    def test_drop_refuses_multiple_authoritative_matches(self):
+        duplicate = self.wt / "specs/duplicate/factory"
+        duplicate.mkdir(parents=True)
+        (duplicate / "state.json").write_bytes(
+            (self.folder / "state.json").read_bytes()
+        )
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "duplicate state", cwd=self.wt)
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("several", result.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
     def test_drop_commits_only_run_deletions_and_returns_summary(self):
         state = json.loads((self.folder / "state.json").read_text())
         remote = self.box.dir / "remote.git"
@@ -131,6 +168,33 @@ class DropTests(unittest.TestCase):
         self.assertTrue(self.box.git("ls-files", "specs/011-drop/factory", cwd=self.wt))
         self.assertEqual(list((self.box.home / "archive").glob("*")), [])
 
+    def test_nested_lock_is_archived_and_verified(self):
+        nested_lock = self.folder / "nested/lock.json"
+        nested_lock.write_bytes(b"important nested lock")
+        compare = commands.filecmp.cmp
+
+        with (
+            mock.patch.dict(os.environ, FACTORY_HOME=str(self.box.home)),
+            mock.patch.object(
+                commands.filecmp,
+                "cmp",
+                side_effect=lambda left, right, shallow: False
+                if Path(left).name == "lock.json"
+                else compare(left, right, shallow=shallow),
+            ),
+        ):
+            with self.assertRaises(commands.CLIError) as error:
+                commands.cmd_drop(str(self.box.repo), self.wt)
+        self.assertIn("lock.json", str(error.exception))
+        self.assertTrue(nested_lock.exists())
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        archive = Path(json.loads(result.stdout)["archive"])
+        self.assertEqual(
+            (archive / "nested/lock.json").read_bytes(), b"important nested lock"
+        )
+        self.assertFalse((archive / "lock.json").exists())
+
     def test_verification_failure_names_file_and_removes_partial_archive(self):
         before = self.box.git("rev-parse", "HEAD", cwd=self.wt)
         with (
@@ -158,6 +222,27 @@ class DropTests(unittest.TestCase):
         self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), "")
         self.assertTrue((self.folder / "state.json").exists())
         self.assertEqual(list((self.box.home / "archive").glob("*")), [])
+
+    def test_dirty_run_folder_refused_without_losing_changes(self):
+        file = self.folder / "brief.md"
+        for staged in (False, True):
+            with self.subTest(staged=staged):
+                file.write_text("valuable change\n")
+                if staged:
+                    self.box.git("add", str(file), cwd=self.wt)
+                head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+                dirty = self.box.git("status", "--porcelain", cwd=self.wt)
+                result = self.box.cli("drop", cwd=self.wt)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("brief.md", result.stderr)
+                self.assertEqual(file.read_text(), "valuable change\n")
+                self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+                self.assertEqual(
+                    self.box.git("status", "--porcelain", cwd=self.wt), dirty
+                )
+                self.assertFalse((self.box.home / "archive").exists())
+                self.box.git("reset", "-q", "HEAD", "--", str(file), cwd=self.wt)
+                self.box.git("checkout", "--", str(file), cwd=self.wt)
 
     def test_refuses_each_non_pr_open_status_without_changes(self):
         state_path = self.folder / "state.json"
@@ -299,6 +384,27 @@ class DropTests(unittest.TestCase):
         )
         self.assertFalse(self.folder.exists())
 
+    def test_dirty_map_refused_without_losing_changes(self):
+        _, map_path = self.prepare_design()
+        for staged in (False, True):
+            with self.subTest(staged=staged):
+                map_path.write_text('{"valuable": true}\n')
+                if staged:
+                    self.box.git("add", str(map_path), cwd=self.wt)
+                head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+                dirty = self.box.git("status", "--porcelain", cwd=self.wt)
+                result = self.box.cli("drop", cwd=self.wt)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("design-code-map.json", result.stderr)
+                self.assertEqual(map_path.read_text(), '{"valuable": true}\n')
+                self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+                self.assertEqual(
+                    self.box.git("status", "--porcelain", cwd=self.wt), dirty
+                )
+                self.assertFalse((self.box.home / "archive").exists())
+                self.box.git("reset", "-q", "HEAD", "--", str(map_path), cwd=self.wt)
+                self.box.git("checkout", "--", str(map_path), cwd=self.wt)
+
     def test_design_moves_without_creating_map(self):
         self.prepare_design(with_map=False)
         result = self.box.cli("drop", cwd=self.wt)
@@ -306,6 +412,18 @@ class DropTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)["design"], "docs/design/011-drop")
         self.assertTrue((self.wt / "docs/design/011-drop/context.json").exists())
         self.assertFalse((self.wt / "docs/design-code-map.json").exists())
+
+    def test_untracked_design_file_is_not_committed(self):
+        design, _ = self.prepare_design()
+        (design / "private.txt").write_text("private\n")
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(result.stdout)
+        self.assertEqual(
+            (Path(data["archive"]) / "design/private.txt").read_text(), "private\n"
+        )
+        committed = self.box.git("ls-tree", "-r", "--name-only", "HEAD", cwd=self.wt)
+        self.assertNotIn("docs/design/011-drop/private.txt", committed)
 
     def test_design_collision_refuses_without_changes(self):
         self.prepare_design()
