@@ -9,7 +9,7 @@
   "branch": "013-skill-library",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": "code-standards and spec-conformance failed twice: OpenAI subscription usage limit on openai/gpt-6.1-terra",
   "stop_at": null,
@@ -777,8 +777,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-28T11:49:00.236603Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/9",
   "history": [
     {
       "at": "2026-10-28T03:11:56.897089Z",
@@ -923,6 +923,13 @@
       "commit": null,
       "harness": "opencode",
       "decision": "approve"
+    },
+    {
+      "at": "2026-10-28T11:49:00.236603Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
     }
   ]
 }
