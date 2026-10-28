@@ -9,9 +9,9 @@
   "branch": "013-skill-library",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
-  "status": "running",
+  "status": "halted",
   "stage": "review",
-  "halt_reason": "T016: 4 tests encode the pre-6dd7a0e model policy (only Claude Code pins, sonnet standard)",
+  "halt_reason": "code-standards and spec-conformance failed twice: OpenAI subscription usage limit on openai/gpt-6.1-terra",
   "stop_at": null,
   "mode": {
     "chain": "full",
@@ -574,6 +574,17 @@
       "cause": null,
       "detail": "subscription_sharing_usage_limit_exceeded on openai/gpt-6.1-terra, twice",
       "duration_ms": 1000,
+      "commit": "deba097",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T08:42:42.434091Z",
+      "kind": "halt",
+      "stage": "review",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "code-standards and spec-conformance failed twice: OpenAI subscription usage limit on openai/gpt-6.1-terra",
+      "duration_ms": 0,
       "commit": "deba097",
       "partial_return": false
     }
