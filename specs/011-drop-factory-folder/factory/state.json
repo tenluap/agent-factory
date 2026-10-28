@@ -228,6 +228,18 @@
       "duration_ms": 94000,
       "started_at": "2026-10-28T00:50:13Z",
       "ended_at": "2026-10-28T00:51:47Z"
+    },
+    {
+      "at": "2026-10-28T00:52:43.879875Z",
+      "stage": "clarify",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 9000,
+      "out_est": 900,
+      "reported": null,
+      "duration_ms": 49000,
+      "started_at": "2026-10-28T00:51:54Z",
+      "ended_at": "2026-10-28T00:52:43Z"
     }
   ],
   "review": {
