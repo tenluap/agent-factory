@@ -8,7 +8,7 @@ The original `ENG-1`..`ENG-11` ids retain their meanings; the 2026-10-25 revisio
 
 - **ENG-1** Test behaviour and important boundaries, including relevant failure paths and edge cases. Use unit tests for focused logic, integration tests for real interactions, and end-to-end tests for critical journeys where appropriate; coverage percentage alone is not proof of quality. Write or extend a failing test before implementing the behaviour, then the smallest passing code, then refactor while tests stay green. This yields to a test-first exemption the plan declares.
 - **ENG-2** Record the red step in the task's commit body, in one of the two forms below. This yields to a test-first exemption the plan declares: an exempt task's commit carries no `Red:` line.
-- **ENG-3** Commit a task once, test and implementation together; create no separate red commit.
+- **ENG-3** Complete each commit unit once, with test and implementation together in one passing commit; use the commit-unit definition below for new tasks and legacy resume.
 - **ENG-4** Put under test only the seams the plan lists; never invent a seam. When a task needs an unlisted seam, stop and report the missing seam as a failure.
 - **ENG-5** Skip a test only where the plan states the exemption and its reason, and only for a part that is documentation or configuration.
 - **ENG-6** Give each business rule or piece of knowledge a clear source of truth (DRY). Before a new function or method, search the changed module and shared utility locations once by the concept's keywords; reuse or extend a suitable implementation. Similar-looking code can represent different concepts: abstract only when shared meaning justifies the coupling.
@@ -54,6 +54,20 @@ The rules above are self-contained; external reading is optional:
 - [OWASP: secure code review](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Code_Review_Cheat_Sheet.html) — trust boundaries, security controls and sensitive data.
 - [Martin Fowler: continuous integration](https://martinfowler.com/articles/continuousIntegration.html) — repeatable automated builds and checks.
 - [Google SRE: monitoring distributed systems](https://sre.google/sre-book/monitoring-distributed-systems/) — useful service signals and monitoring.
+
+## Commit units
+
+A new behavior-changing task has one checkbox containing ordered failing-test, implementation and passing-verification steps, the mapped test seam, required red proof and an observable completion condition. The test step alone is unfinished work. Observe red, implement, verify green, then check the unit and commit its test, implementation and task status together. Documentation/configuration exemptions retain ENG-5.
+
+On resume, inspect task status, worktree changes, test output and commit history before selecting the first unfinished unit. Preserve a completed passing commit; continue unfinished work without duplicating it. Adjacent legacy test/implementation entries form one unit only when their named target, dependencies or explicit pairing identify one unambiguous pair; adjacency alone is insufficient. A checked test half does not prove a completed unit: reconcile the evidence, finish the implementation and passing checks, then check both entries in the same passing commit. Preserve existing commits rather than rewriting history. Ambiguous pairing stops before behavior edits and is reported for resolution.
+
+Generation, analysis, execution, fixing and review use this same definition. A fix may group related changes in its existing single passing fix commit while retaining the required red proof per behavior-changing fix.
+
+## Confirmed test scope
+
+The plan's declarations list each public test seam and its required injected failure paths (`none` when no injection is needed). Task requirements map to those declarations. Confirmation is separate evidence of explicit acceptance of that exact seam-to-failure-path scope; it never declares a seam. Store the accepted scope with the `Confirmed:` line or a referenced immutable snapshot. Reuse legacy name-only confirmation only when separate explicit acceptance evidence proves the complete current scope.
+
+Adding, removing, renaming or expanding a declared seam or failure path invalidates prior confirmation. Missing coverage or absent/stale scope acceptance blocks implementation with a HIGH finding; obtain fresh protected confirmation through the orchestrator. Valid documentation/configuration exemptions remain exempt. Later-discovered gaps stop implementation/fixing under ENG-4.
 
 ## Red proof
 

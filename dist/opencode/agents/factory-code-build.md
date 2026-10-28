@@ -14,7 +14,7 @@ You implement a feature for the factory orchestrator. Read `~/.config/opencode/s
 
 ## Time budget
 
-The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each task is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+The inputs carry a `deadline` (absolute ISO UTC). Check time between units (each commit unit) and follow protocol.md's "Verification handoff" before more work or broad checks. Finish the unit in flight safely after the deadline, commit it, and return `partial` with accurate `overrun` cause/detail and pending checks. A fresh role resumes committed progress; no new unit starts past the deadline.
 
 ## Pen reference work
 
@@ -29,15 +29,15 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
 3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
    - Skip every "extension hooks" section.
-   - Tasks already checked are done; start at the first unchecked one.
-   - Commit each task once, per ENG-3.
+   - Resolve commit units and reconcile checked/partial work against worktree, tests and commit evidence per engineering.md. Start at the first unfinished unit; preserve completed commits. An ambiguous legacy pairing stops before behavior edits and is reported for resolution.
+   - Commit each passing unit once, per ENG-3. A legacy test/implementation pair is one unit; its red half is never checked or committed alone.
    - Per behaviour-changing task, put one `Red:` line in that commit's body, in one of the two forms engineering.md's "Red proof" section defines (ENG-2).
-   - Use only the seams `plan.md`'s "Test seams" section lists, never the plan's `Confirmed:` line (that is the user's seam confirmation, not a seam source) (ENG-4); a task needing an unlisted seam: stop and return `failed` naming the task and the missing seam. Never ask the user directly and never invent a seam.
+   - Use only the seams `plan.md`'s "Test seams" section lists, never the plan's `Confirmed:` line (that is the user's seam confirmation, not a seam source) (ENG-4); a task needing an undeclared seam/failure path or lacking current explicit scope confirmation: stop and return `failed` naming the task and missing path or stale confirmation per engineering.md's "Confirmed test scope". Never ask the user directly and never invent a seam.
    - When the repository has a test runner but its test command cannot be run: stop the same way, per engineering.md's "When the red step cannot be observed at all" definition. Return `failed` naming the task, the un-runnable command and the error it produced.
    - Skip a test only per ENG-5, and state the exemption.
-   - After each task: tick its checkbox and commit code plus `tasks.md` together as `factory(implement): <task id> <task title>`.
-4. Run applicable `commands.build` and `commands.test`. Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
+   - After each passing unit: tick its checkbox (both entries for a legacy pair) and commit test, implementation and `tasks.md` together as `factory(implement): <task id(s)> <task title>`.
+4. Complete applicable `commands.build` and `commands.test`, or preserve exact pending checks through protocol.md's "Verification handoff". Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
 
-Done = every box in `tasks.md` checked, every implementation task actually completed, every task committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
+Done = every box in `tasks.md` checked, every implementation unit actually completed, every passing unit committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
 
 When your context runs low before that, commit what is finished and return `partial` with the next unchecked task id in `summary`; a fresh agent continues from there, bound by the same `ENG-2`/`ENG-3`/`ENG-5` and missing-runner rules above, including for the task it resumes mid-way. Stuck on a red build or test you cannot fix: return `failed` with the failing output trimmed to the decisive lines.

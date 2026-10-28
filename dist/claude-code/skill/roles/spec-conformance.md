@@ -6,6 +6,8 @@ Lens: the spec artifacts in `spec_dir` (`spec.md`, `plan.md`, `tasks.md`, `data-
 - Unspecified: behaviour added that no artifact asks for.
 - Unchecked: a task marked done whose change is absent or incomplete.
 
+Check task-required seams and injected failure paths against plan declarations and current explicit acceptance per engineering.md's "Confirmed test scope". Report missing coverage or stale acceptance as HIGH blocking; confirmation text is evidence, never a declaration.
+
 `evidence` quotes the requirement id or text and the code location. Done = every requirement on your list is marked met, missing, or divergent.
 
 ## Pen mapping and fidelity
@@ -18,7 +20,7 @@ Compare the source/export and actual runtime evidence where available; report st
 
 The diff carries no commit messages, so list the run's commits and their bodies with `cd <worktree> && git log --format='%H%n%s%n%b%n--' <base>..HEAD`. A subject `factory(implement): ...` is an implementation commit; the one whose subject is `factory(fix): <finding ids, or "user changes">` is the fix commit. The check is textual — you never replay the test run — and rests on the two accepted `Red:` forms (`ENG-2` in `<F>/references/engineering.md`): a line that does not match either form or whose value is empty is unparseable.
 
-**Implementation commits** (matched against `tasks.md`): for each, check the body's `Red:` line against `tasks.md` and raise a finding naming the commit and its task when the line is missing and the task is not plan-exempt, when it is unparseable, or when it names a test no task in `tasks.md` maps to (unmatched). Raise nothing for a plan-exempt task's commit or for a proof that matches a task.
+**Implementation commits** (matched against `tasks.md`): match each commit to engineering.md's commit unit, including both entries of an unambiguous legacy pair; a test named by either entry belongs to that unit. Verify one passing test-and-implementation commit and both completed legacy boxes, preserving completed commits on resume. For each, check the body's `Red:` line against `tasks.md` and raise a finding naming the commit and its task when the line is missing and the task is not plan-exempt, when it is unparseable, or when it names a test no task in `tasks.md` maps to (unmatched). Raise nothing for a plan-exempt task's commit or for a proof that matches a task.
 
 **A verdict-driven fix round's commit** (subject naming finding ids): match it against the round's judge verdict instead, read from the file the orchestrator already writes — `<spec_dir>/factory/reviews/round-<n-1>/verdict.json`, where `n` is the review round you are running in, so `n-1` is the round the fix commit answers (in round 1 there is no fix commit and no such file, and this check does not apply). Match one `Red:` line per behaviour-changing `confirmed_blocking` finding the commit fixes; raise a finding naming the fix commit and the finding id for a missing or unparseable line. Never apply the `tasks.md` "unmatched" rule to a fix commit, and raise nothing for an advisory engineering finding, which produces no verdict-driven fix work at all.
 

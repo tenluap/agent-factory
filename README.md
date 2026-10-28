@@ -26,7 +26,7 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 { "models": { "claude-code": { "deep": "opus", "standard": "sonnet" }, "opencode": { "deep": "anthropic/<model-id>" } } }
 ```
 
-Claude Code, OpenCode and Codex pin agent models by default; on Copilot and ZCode agents use the session's model until you pin them here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
+Claude Code, Codex and OpenCode pin agent models by default; Copilot and Zcode inherit the session model. The mappings in `adapters/<harness>/adapter.json` are authoritative. Override tier selections here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
 
 ### Skill library
 

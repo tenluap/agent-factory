@@ -1,0 +1,65 @@
+# Tasks: Factory Run Reliability
+
+**Input**: `specs/012-run-reliability/{spec.md,plan.md,research.md,data-model.md,contracts/workflow.md,quickstart.md}`.
+**Prerequisites**: plan Q1 explicitly confirmed S1–S4 and all declared failure paths; plan Q2 explicitly preserved shipped model selections. Existing Python unittest runner remains in use. Extension hooks are skipped by the factory.
+
+## Execution contract
+
+This run uses the installed factory's adjacent red-test/implementation entries, grouped as **one passing commit unit**: T003+T004, T005+T006, T007+T008, T009+T010. Start at the first unfinished unit. Write/observe the failing trial before editing behavior; finish implementation and passing focused checks; then tick both boxes and commit once with the required `Red:` proof. Never tick or commit the red half alone. Resume inspects git/worktree evidence and continues the same pair; preserve completed units.
+
+Every source-changing unit updates `DESIGN.md` first, changes authoritative `core/` or adapter instructions second, and renders/commits **all five** `dist/` targets together. Use canonical config-independent rendering, preserving exact shipped adapter IDs and personal-override isolation. Generated changes already present from baseline test renders belong to this run; inspect them and include canonical output in the relevant source unit. Do not edit `.agents/` or `.specify/` skills/templates.
+
+Trials use only plan-declared seams, synthetic selections/inventory, temporary fixture checkouts and throwaway remotes. Fresh native-agent trials read the tested old/new role instructions with identical scenario inputs; expected outcomes stay in the trial rubric, not advice added to the subject's instructions. Capture actual envelopes, task boxes, git log and CLI results in `conformance/golden-run-results.md` with stable evidence excerpts. The orchestrator supplies native trial contexts where the writing role cannot launch them: send the parent a concise dispatch request naming fixture/input paths and stage, then continue independent work while the parent returns results; a missing capability is unverified/pending, never a static-check pass. If an existing trial/test already covers the behavior and passes old guidance, preserve that observation and use the supported `Red: not applicable - <existing test> already covers this` proof rather than manufacturing a failure. Required pending trials/checks remain unchecked across partial handoff. No credentials, user config, budget values or production state schema changes.
+
+## Phase 1: Setup
+
+- [x] T001 Record the approved model/setup, atomic-unit, seam-scope and deadline contracts in `DESIGN.md` before core/adapter edits, including preservation of current shipped selections and protected confirmations. **Exempt: design prose — documentation only**. Done: design matches approved `plan.md` without changing runtime/model configuration.
+
+## Phase 2: Foundational conformance contract
+
+- [x] T002 Create `conformance/run-reliability.md` with reproducible S1–S4 scenario inputs, separate outcome rubrics, fresh old/new native-agent invocation instructions and evidence requirements; extend the existing `conformance/golden-run-results.md` format for before/after role outputs, fixture paths/commits, real command status, and pending/unavailable results. **Exempt: trial instructions/evidence format — documentation only**. Done: every case declared in `plan.md` is assigned to T003–T010, with no invented runtime helper or new seam.
+
+## Phase 3: US1 — Detect unusable model setup (P1, MVP)
+
+**Independent test**: model setup outcomes preserve exact effective selection; definite rejection creates no run resources; unsupported/failed checks remain unverified. Existing renderer tests describe shipped mappings and preserve override isolation.
+
+- [x] T003 [US1] **Red half of T003+T004; seam S1**: execute the model matrix from `conformance/run-reliability.md` against old preflight/adapter guidance and record an observed contract failure in `conformance/golden-run-results.md`. Include complete inventory hit/miss; errored/partial/unsupported inventory; inherited unresolved ID; installed-vs-default mismatch; later spawn rejection and resume setup change. Run `python3 -m unittest discover -s tools -p test_render_models.py` and retain the three known policy failures from `specs/012-run-reliability/factory/baseline.md`. Do not commit or tick separately.
+- [x] T004 [US1] **Green half; seam S1**: implement the setup/recovery contract in `core/skills/factory/SKILL.md` and `core/skills/factory/references/state.md`; put actual capability/recovery guidance in `adapters/{claude-code,codex,opencode,copilot,zcode}/harness.md`. OpenCode uses locally supported inventory; unknown/partial/error results remain unverified, listed is not access proof, and explicit choices never change. Align `README.md`, relevant adapter notes and `tools/tests/test_render_models.py` with the accepted shipped mappings, retaining effective-selection and canonical-render isolation checks. Render `dist/`; replay the identical native S1 cases and focused tests green; record results. Done: both boxes tick together in one passing commit with red proof, exact adapter IDs preserved and no resources created in confirmed-rejection trials.
+
+## Phase 4: US2 — Atomic test-first tasks and resume (P1)
+
+**Independent test**: new task generation leads to observed red→green and one passing commit; interrupted/legacy work resumes without duplicate completed commits or a red-only commit.
+
+- [x] T005 [US2] **Red half of T005+T006; seam S2**: run fresh task-generation/execution/resume trials on temporary copies of `conformance/fixture-repo` using old instructions, recording the `S2-new-generation-atomic-unit` output check and separate-task/commit conflict in `conformance/golden-run-results.md`. Cover interruption after red, completed-unit resume, unambiguous complete/partial legacy test+implementation pairs and an ambiguous pairing that must stop before behavior changes. Inspect real `tasks.md` boxes, git log and `Red:` proof; include reviewer assessment of commit-unit evidence. Do not commit or tick separately.
+- [x] T006 [US2] **Green half; seam S2**: define the authoritative commit unit in `core/skills/factory/references/engineering.md`, then align `core/roles/{spec-builder,code-build,fixer,code-standards,spec-conformance}.md` and resume guidance in `core/skills/factory/references/state.md`. New behavior tasks use one checkbox containing ordered red, implementation and passing verification; retain both accepted red-proof forms and valid documentation/config exemptions. Legacy adjacent pairs complete together only when unambiguous; reconcile partial boxes with worktree/git evidence and stop ambiguous pairing before edits. Render `dist/`, replay S2 trials with changed guidance and record observed passing results. Done: one green pair commit and no contradictory separate-red-task rule remains in the touched workflow.
+
+## Phase 5: US3 — Confirm complete test scope before implementation (P1)
+
+**Independent test**: analyze blocks missing seam/failure-path scope and stale confirmation; covered and validly exempt controls pass; expanded scope requires explicit protected acceptance.
+
+- [x] T007 [US3] **Red half of T007+T008; seam S3**: run `S3-failure-scope-acceptance` against native old plan/analyze outputs from temporary task/plan text containing an undeclared seam, the original-style same-seam omitted git-failure injection, missing/stale confirmation, added/removed/renamed seams and expanded failure-path scope. Include fully covered and valid documentation/config-exempt controls, and fast-mode protected confirmation. Record observed coverage/confirmation failures in `conformance/golden-run-results.md`; confirmation text is never a seam declaration. Do not commit or tick separately.
+- [x] T008 [US3] **Green half; seam S3**: align plan/tasks/analyze/remediate contracts in `core/roles/spec-builder.md`, the shared scope definition in `core/skills/factory/references/engineering.md`, protected confirmation guidance in `core/skills/factory/references/protocol.md`, and relevant implementation/review/resume pointers in `core/roles/{code-build,fixer,spec-conformance}.md` and `core/skills/factory/references/state.md`. Declarations include required injected failures; explicit confirmation accepts exactly that scope. Missing coverage/acceptance is HIGH blocking; identity or failure-scope change requires fresh protected confirmation; maintain the later-discovered-gap stop guard. Render `dist/`, replay the identical S3 cases through failure→protected acceptance→eligible continuation, and record outcomes. Done: both pair boxes/one green commit; no name-only comparison bypasses changed failure scope.
+
+## Phase 6: US4 — Useful deadline handoffs (P2)
+
+**Independent test**: near-deadline roles preserve passing work and pending checks, avoid optional repeated broad verification, and report real overshoot while budgets and stall enforcement remain unchanged.
+
+- [x] T009 [US4] **Red half of T009+T010; seam S4**: run `S4-required-check-admission` against native old file-writing-role output with controlled short-deadline fixture inputs at a passing boundary and in-flight work boundary; retain actual clock/duration evidence in `conformance/golden-run-results.md`. Exercise optional repeated suite, required checks pending, resumed independent verification, advancing work commits and three same-commit partials. Use existing `factory budget`, `ledger-add`, `issue-add`, `verify` seams and run `python3 -m unittest discover -s tools -p test_budget.py`; record the workflow gap without inventing a slow-test claim. Do not commit or tick separately.
+- [x] T010 [US4] **Green half; seam S4**: align `core/roles/{spec-builder,code-build,fixer}.md` time-boundary guidance and `core/skills/factory/{SKILL.md,references/protocol.md,references/state.md}` handoff/verification contracts. Check remaining time before another unit or optional repeated expensive check; use available observed check duration, hand off when fit is insufficient/uncertain near deadline, finish in-flight work safely and name next unit/pending required checks. Preserve mandatory role/orchestrator verification, configured budgets, actual overshoot, issue provenance and stall limits. Render `dist/`, replay S4 workflow cases and budget tests, and record passing evidence. Done: one green pair commit; no pending check represented as passed and no budget/accounting change.
+
+## Phase 7: Cross-cutting evidence and final verification
+
+- [x] T011 Reconcile `conformance/run-reliability.md`, `conformance/golden-run-results.md`, `README.md` and `specs/012-run-reliability/quickstart.md` with the implemented contracts and actual S1–S4 results. **Exempt: documentation/evidence reconciliation — documentation only**. Done: every declared case links to observed evidence or remains explicitly pending/unverified; no static assertion substitutes for native behavior and no old model-policy claim remains. This task cannot waive an unfinished trial required by T003–T010.
+- [x] T012 **Verification-only task; seams S1–S4; no behavior implementation**: after passing unit commits, execute state `commands.build` and `commands.test`, check `git diff --check`, and record exact commands/outcomes in `conformance/golden-run-results.md`. Commit any canonical generated output with its source before the final clean-dist check, then require full unittest suite, installer syntax and `test -z "$(git status --porcelain -- dist/)"` green. Verify every prior task/trial is complete. Leave this task unchecked and name pending checks on a partial handoff; orchestrator must independently repeat required verification before review.
+
+## Dependencies and execution order
+
+`T001 → T002 → (T003+T004) → (T005+T006) → (T007+T008) → (T009+T010) → T011 → T012`.
+
+Shared role/reference files make source-changing pairs sequential. Each pair begins with its red entry immediately before implementation, uses only the listed S1/S2/S3/S4 scope, and finishes in one passing commit. T012 verifies existing behavior rather than implementing a new task, so it has no synthetic red-test predecessor. T001/T002/T011 carry the plan's documentation exemption.
+
+## Parallel opportunities and implementation strategy
+
+No task is marked `[P]`: all story pairs touch shared instructions or the evidence ledger. Within a story, native read-only scenario cases can run concurrently in **separate temporary fixtures**, with one evidence writer; for US1 inventory cases, US2 distinct resume fixtures, US3 separate malformed plans, and US4 separate accounting runs. Keep each old/new comparison sequential and preserve one result per case.
+
+MVP is setup/foundation plus US1; validate that increment before continuing. The approved delivery includes all four stories, followed by evidence reconciliation and mandatory full verification. At every partial return, preserve passing commits, the next unfinished pair and all pending verification; do not turn a deadline into an exemption.

@@ -27,3 +27,9 @@
 ## After-PR extras
 
 - When the desktop app's PR tools are available, offer (do not do) binding the PR to the Auto-fix monitor.
+
+## Model inspection and recovery
+
+Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
+
+For a rejected model, preserve the exact selection and original diagnostic. Name the installed agent or `${FACTORY_HOME}/config.json` source; guide correction through `models.claude-code.deep` / `.standard`, `./install.sh --harness claude-code`, then a fresh session and recheck. Preserve user model/credential choices; never guess aliases or silently substitute.

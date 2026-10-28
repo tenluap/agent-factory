@@ -15,7 +15,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 INSTALL = REPO / "install.sh"
-OPENCODE_DEEP = json.loads((REPO / "adapters" / "opencode" / "adapter.json").read_text())["models"]["deep"]
 
 
 class InstallArgValidationTests(unittest.TestCase):
@@ -202,7 +201,9 @@ class InstallFlowTests(InstallSandbox, unittest.TestCase):
     def test_install_without_config_reports_defaults(self):
         proc = self.run_install()
         self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-        self.assertIn(f"spec-builder: {OPENCODE_DEEP}", proc.stdout)
+        adapter = json.loads((REPO / "adapters/opencode/adapter.json").read_text())
+        self.assertIn(f"spec-builder: {adapter['models']['deep']}", proc.stdout)
+        self.assertIn(f"code-build: {adapter['models']['standard']}", proc.stdout)
         self.assertEqual(self.dist_porcelain(), "", "the committed dist is untouched")
 
 
