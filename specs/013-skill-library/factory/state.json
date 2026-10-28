@@ -537,6 +537,18 @@
       "duration_ms": 357000,
       "started_at": "2026-10-28T09:21:29Z",
       "ended_at": "2026-10-28T09:27:26Z"
+    },
+    {
+      "at": "2026-10-28T09:28:49.396810Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "opencode",
+      "in_est": 25000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 83000,
+      "started_at": "2026-10-28T09:27:26Z",
+      "ended_at": "2026-10-28T09:28:49Z"
     }
   ],
   "issues": [
