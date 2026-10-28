@@ -9,7 +9,7 @@
   "branch": "011-drop-factory-folder",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": "spec-builder model claude-code/opus-5.5 not accessible",
   "stop_at": null,
@@ -687,8 +687,8 @@
       "partial_return": true
     }
   ],
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-28T01:54:47.809246Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/7",
   "history": [
     {
       "at": "2026-10-28T00:38:56.647240Z",
@@ -846,6 +846,13 @@
       "commit": null,
       "harness": "opencode",
       "decision": "approve"
+    },
+    {
+      "at": "2026-10-28T01:54:47.809246Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
     }
   ]
 }
