@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": "spec-builder model claude-code/opus-5.5 not accessible",
   "stop_at": null,
   "mode": {
@@ -752,7 +752,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-10-28T01:51:08.068552Z",
+      "at": "2026-10-28T01:51:08.335590Z",
       "stage": "fix",
       "event": "verify-pass",
       "commit": null,
