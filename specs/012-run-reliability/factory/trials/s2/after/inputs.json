@@ -1,0 +1,56 @@
+[
+  {
+    "id": "S2-new",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-new",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-new/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-new-setup.json",
+    "stage": "tasks then implement"
+  },
+  {
+    "id": "S2-red-resume",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-red-resume",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-red-resume/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-red-resume-setup.json",
+    "stage": "implement resume"
+  },
+  {
+    "id": "S2-complete",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-complete",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-complete/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-complete-setup.json",
+    "stage": "implement resume"
+  },
+  {
+    "id": "S2-legacy-complete",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-legacy-complete",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-legacy-complete/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-legacy-complete-setup.json",
+    "stage": "implement resume"
+  },
+  {
+    "id": "S2-legacy-partial",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-legacy-partial",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-legacy-partial/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-legacy-partial-setup.json",
+    "stage": "implement resume"
+  },
+  {
+    "id": "S2-ambiguous",
+    "worktree": "/tmp/factory012-trials/s2-after/S2-ambiguous",
+    "spec_dir": "specs/001-greet",
+    "state_path": "/tmp/factory012-trials/s2-after/S2-ambiguous/specs/001-greet/factory/state.json",
+    "requested_behavior": "Treat empty or whitespace-only names as stranger, preserving all other names: greet(\"\") and greet(\"  \") return \"Hello, stranger!\"; greet(\"world\") stays \"Hello, world!\".",
+    "setup_evidence": "/tmp/factory012-trials/s2-after/S2-ambiguous-setup.json",
+    "stage": "implement resume"
+  }
+]

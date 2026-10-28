@@ -1,0 +1,31 @@
+[
+  {
+    "argv": [
+      "git",
+      "log",
+      "--format=%H%n%s%n%b%n--"
+    ],
+    "status": 0,
+    "output": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n2d833e2987def412ec07b14009af5b7ea17f7dc0\ninitial fixture\n\n--\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "status": 0,
+    "output": "?? .specify/feature.json\n"
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--",
+      "src/greet.py",
+      "test_greet.py"
+    ],
+    "status": 0,
+    "output": ""
+  }
+]

@@ -1,0 +1,2 @@
+- [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.
+- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.

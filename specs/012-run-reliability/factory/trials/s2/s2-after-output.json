@@ -1,0 +1,879 @@
+{
+  "instructions": "/tmp/factory012-trials/after-s2",
+  "cases": [
+    {
+      "id": "S2-new",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "f926c2d318198dee98fca9b9ebc8bfca95bd0afc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "f926c2d318198dee98fca9b9ebc8bfca95bd0afc\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/setup-tasks.sh --json",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-new/specs/001-greet\",\"AVAILABLE_DOCS\":[],\"TASKS_TEMPLATE\":\"/private/tmp/factory012-trials/s2-after/S2-new/.specify/templates/tasks-template.md\",\"TASKS_TEMPLATE_CONTENT\":\"---\\n\\ndescription: \\\"Task list template for feature implementation\\\"\\n---\\n\\n# Tasks: [FEATURE NAME]\\n\\n**Input**: Design documents from `/specs/[###-feature-name]/`\\n\\n**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/\\n\\n**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.\\n\\n**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.\\n\\n## Format: `[ID] [P?] [Story] Description`\\n\\n- **[P]**: Can run in parallel (different files, no dependencies)\\n- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)\\n- Include exact file paths in descriptions\\n\\n## Path Conventions\\n\\n- **Single project**: `src/`, `tests/` at repository root\\n- **Web app**: `backend/src/`, `frontend/src/`\\n- **Mobile**: `api/src/`, `ios/src/` or `android/src/`\\n- Paths shown below assume single project - adjust based on plan.md structure\\n\\n<!--\\n  ============================================================================\\n  IMPORTANT: The tasks below are SAMPLE TASKS for illustration purposes only.\\n\\n  The /speckit-tasks command MUST replace these with actual tasks based on:\\n  - User stories from spec.md (with their priorities P1, P2, P3...)\\n  - Feature requirements from plan.md\\n  - Entities from data-model.md\\n  - Endpoints from contracts/\\n\\n  Tasks MUST be organized by user story so each story can be:\\n  - Implemented independently\\n  - Tested independently\\n  - Delivered as an MVP increment\\n\\n  DO NOT keep these sample tasks in the generated tasks.md file.\\n  ============================================================================\\n-->\\n\\n## Phase 1: Setup (Shared Infrastructure)\\n\\n**Purpose**: Project initialization and basic structure\\n\\n- [ ] T001 Create project structure per implementation plan\\n- [ ] T002 Initialize [language] project with [framework] dependencies\\n- [ ] T003 [P] Configure linting and formatting tools\\n\\n---\\n\\n## Phase 2: Foundational (Blocking Prerequisites)\\n\\n**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented\\n\\n**\u26a0\ufe0f CRITICAL**: No user story work can begin until this phase is complete\\n\\nExamples of foundational tasks (adjust based on your project):\\n\\n- [ ] T004 Setup database schema and migrations framework\\n- [ ] T005 [P] Implement authentication/authorization framework\\n- [ ] T006 [P] Setup API routing and middleware structure\\n- [ ] T007 Create base models/entities that all stories depend on\\n- [ ] T008 Configure error handling and logging infrastructure\\n- [ ] T009 Setup environment configuration management\\n\\n**Checkpoint**: Foundation ready - user story implementation can now begin in parallel\\n\\n---\\n\\n## Phase 3: User Story 1 - [Title] (Priority: P1) \ud83c\udfaf MVP\\n\\n**Goal**: [Brief description of what this story delivers]\\n\\n**Independent Test**: [How to verify this story works on its own]\\n\\n### Tests for User Story 1 (OPTIONAL - only if tests requested) \u26a0\ufe0f\\n\\n> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**\\n\\n- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py\\n- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py\\n\\n### Implementation for User Story 1\\n\\n- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py\\n- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py\\n- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)\\n- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py\\n- [ ] T016 [US1] Add validation and error handling\\n- [ ] T017 [US1] Add logging for user story 1 operations\\n\\n**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently\\n\\n---\\n\\n## Phase 4: User Story 2 - [Title] (Priority: P2)\\n\\n**Goal**: [Brief description of what this story delivers]\\n\\n**Independent Test**: [How to verify this story works on its own]\\n\\n### Tests for User Story 2 (OPTIONAL - only if tests requested) \u26a0\ufe0f\\n\\n- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py\\n- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py\\n\\n### Implementation for User Story 2\\n\\n- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py\\n- [ ] T021 [US2] Implement [Service] in src/services/[service].py\\n- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py\\n- [ ] T023 [US2] Integrate with User Story 1 components (if needed)\\n\\n**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently\\n\\n---\\n\\n## Phase 5: User Story 3 - [Title] (Priority: P3)\\n\\n**Goal**: [Brief description of what this story delivers]\\n\\n**Independent Test**: [How to verify this story works on its own]\\n\\n### Tests for User Story 3 (OPTIONAL - only if tests requested) \u26a0\ufe0f\\n\\n- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py\\n- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py\\n\\n### Implementation for User Story 3\\n\\n- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py\\n- [ ] T027 [US3] Implement [Service] in src/services/[service].py\\n- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py\\n\\n**Checkpoint**: All user stories should now be independently functional\\n\\n---\\n\\n[Add more user story phases as needed, following the same pattern]\\n\\n---\\n\\n## Phase N: Polish & Cross-Cutting Concerns\\n\\n**Purpose**: Improvements that affect multiple user stories\\n\\n- [ ] TXXX [P] Documentation updates in docs/\\n- [ ] TXXX Code cleanup and refactoring\\n- [ ] TXXX Performance optimization across all stories\\n- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/\\n- [ ] TXXX Security hardening\\n- [ ] TXXX Run quickstart.md validation\\n\\n---\\n\\n## Dependencies & Execution Order\\n\\n### Phase Dependencies\\n\\n- **Setup (Phase 1)**: No dependencies - can start immediately\\n- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories\\n- **User Stories (Phase 3+)**: All depend on Foundational phase completion\\n  - User stories can then proceed in parallel (if staffed)\\n  - Or sequentially in priority order (P1 \u2192 P2 \u2192 P3)\\n- **Polish (Final Phase)**: Depends on all desired user stories being complete\\n\\n### User Story Dependencies\\n\\n- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories\\n- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1 but should be independently testable\\n- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - May integrate with US1/US2 but should be independently testable\\n\\n### Within Each User Story\\n\\n- Tests (if included) MUST be written and FAIL before implementation\\n- Models before services\\n- Services before endpoints\\n- Core implementation before integration\\n- Story complete before moving to next priority\\n\\n### Parallel Opportunities\\n\\n- All Setup tasks marked [P] can run in parallel\\n- All Foundational tasks marked [P] can run in parallel (within Phase 2)\\n- Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)\\n- All tests for a user story marked [P] can run in parallel\\n- Models within a story marked [P] can run in parallel\\n- Different user stories can be worked on in parallel by different team members\\n\\n---\\n\\n## Parallel Example: User Story 1\\n\\n```bash\\n# Launch all tests for User Story 1 together (if tests requested):\\nTask: \\\"Contract test for [endpoint] in tests/contract/test_[name].py\\\"\\nTask: \\\"Integration test for [user journey] in tests/integration/test_[name].py\\\"\\n\\n# Launch all models for User Story 1 together:\\nTask: \\\"Create [Entity1] model in src/models/[entity1].py\\\"\\nTask: \\\"Create [Entity2] model in src/models/[entity2].py\\\"\\n```\\n\\n---\\n\\n## Implementation Strategy\\n\\n### MVP First (User Story 1 Only)\\n\\n1. Complete Phase 1: Setup\\n2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)\\n3. Complete Phase 3: User Story 1\\n4. **STOP and VALIDATE**: Test User Story 1 independently\\n5. Deploy/demo if ready\\n\\n### Incremental Delivery\\n\\n1. Complete Setup + Foundational \u2192 Foundation ready\\n2. Add User Story 1 \u2192 Test independently \u2192 Deploy/Demo (MVP!)\\n3. Add User Story 2 \u2192 Test independently \u2192 Deploy/Demo\\n4. Add User Story 3 \u2192 Test independently \u2192 Deploy/Demo\\n5. Each story adds value without breaking previous stories\\n\\n### Parallel Team Strategy\\n\\nWith multiple developers:\\n\\n1. Team completes Setup + Foundational together\\n2. Once Foundational is done:\\n   - Developer A: User Story 1\\n   - Developer B: User Story 2\\n   - Developer C: User Story 3\\n3. Stories complete and integrate independently\\n\\n---\\n\\n## Notes\\n\\n- [P] tasks = different files, no dependencies\\n- [Story] label maps task to specific user story for traceability\\n- Each user story should be independently completable and testable\\n- Verify tests fail before implementing\\n- Commit after each task or logical group\\n- Stop at any checkpoint to validate story independently\\n- Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence\\n\"}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 /tmp/factory012-trials/after-s2/factory/bin/factory checkpoint tasks",
+          "exit_code": 0,
+          "stdout": "{\n  \"checkpointed\": \"tasks\",\n  \"stage\": \"analyze\",\n  \"commit\": \"945f22a\",\n  \"declared\": [],\n  \"undeclared\": [\n    \".specify/feature.json\"\n  ],\n  \"source\": \"worktree\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-new/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi'",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet wc -w specs/001-greet/spec.md specs/001-greet/plan.md specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "      25 specs/001-greet/spec.md\n      33 specs/001-greet/plan.md\n     204 specs/001-greet/tasks.md\n     262 total\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 /tmp/factory012-trials/after-s2/factory/bin/factory analyze-record specs/001-greet/factory/analyze-envelope.json",
+          "exit_code": 0,
+          "stdout": "{\n  \"recorded\": \"factory/analyze-1.md\",\n  \"counts\": {\n    \"critical\": 0,\n    \"high\": 0,\n    \"medium\": 0,\n    \"low\": 0\n  }\n}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 /tmp/factory012-trials/after-s2/factory/bin/factory checkpoint analyze",
+          "exit_code": 0,
+          "stdout": "{\n  \"checkpointed\": \"analyze\",\n  \"stage\": \"remediate\",\n  \"commit\": \"3541e5c\",\n  \"declared\": [],\n  \"undeclared\": [\n    \".specify/feature.json\"\n  ],\n  \"source\": \"worktree\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-new/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest test_greet.GreetTests.test_blank_names",
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "FFF\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names) (name='')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-new/test_greet.py\", line 13, in test_blank_names\n    self.assertEqual(greet(name), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello, !' != 'Hello, stranger!'\n- Hello, !\n+ Hello, stranger!\n\n\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names) (name='  ')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-new/test_greet.py\", line 13, in test_blank_names\n    self.assertEqual(greet(name), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello,   !' != 'Hello, stranger!'\n- Hello,   !\n+ Hello, stranger!\n\n\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names) (name='\\t\\n')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-new/test_greet.py\", line 13, in test_blank_names\n    self.assertEqual(greet(name), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello, \\t\\n!' != 'Hello, stranger!'\n+ Hello, stranger!\n- Hello, \t\n- !\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nFAILED (failures=3)\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet rg -n 'greet|stranger|strip' src test_greet.py",
+          "exit_code": 0,
+          "stdout": "test_greet.py:3:from src.greet import greet\ntest_greet.py:7:    def test_greets_by_name(self):\ntest_greet.py:8:        self.assertEqual(greet(\"world\"), \"Hello, world!\")\ntest_greet.py:13:                self.assertEqual(greet(name), \"Hello, stranger!\")\ntest_greet.py:14:        self.assertEqual(greet(\" world \"), \"Hello,  world !\")\nsrc/greet.py:1:def greet(name):\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git add src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git commit -m 'factory(implement): T001 blank-name greeting' -m 'Red: GreetTests.test_blank_names failed as expected'",
+          "exit_code": 0,
+          "stdout": "[001-greet 647af0d] factory(implement): T001 blank-name greeting\n 3 files changed, 8 insertions(+), 2 deletions(-)\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-list --max-parents=0 HEAD",
+          "exit_code": 0,
+          "stdout": "f926c2d318198dee98fca9b9ebc8bfca95bd0afc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n-- f926c2d318198dee98fca9b9ebc8bfca95bd0afc..HEAD",
+          "exit_code": 0,
+          "stdout": "647af0d41483781389ba5763e0bd9e5fe55f09e6\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n3541e5cd90460144e4c7d4b099ec8a81dd7cfa98\nfactory: analyze complete\n\n--\ndce891929d46e0429645b0917bd40430585d0c01\nfactory: analyze-record\n\n--\n945f22a10af01a26745a7c6216b51769bf8fae65\nfactory: tasks complete\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git diff f926c2d318198dee98fca9b9ebc8bfca95bd0afc HEAD -- src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 37a5b81..5a396e8 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1,21 @@\n-# Generate tasks for spec and plan\n+# Tasks: Blank names\n+\n+Input: spec.md and plan.md. Existing stdlib unittest runner.\n+\n+## Phase 1: Setup\n+Existing project and runner need no changes.\n+\n+## Phase 2: Foundation\n+No additional prerequisites.\n+\n+## Phase 3: US1 \u2014 Blank names (P1, MVP)\n+Goal: Empty and whitespace-only names receive the stranger greeting while all other names remain unchanged.\n+Independent check: `python3 -m unittest discover -s .`.\n+\n+- [x] T001 [US1] Implement blank-name greeting through planned seam `greet` (`src.greet.greet`): first add `GreetTests.test_blank_names` in `test_greet.py` asserting empty and whitespace-only names return `Hello, stranger!` and preserve ordinary/nonblank padded names; run it and observe expected failure; then implement the fallback in `src/greet.py`; finally run `python3 -m unittest discover -s .` passing. Required commit proof: `Red: GreetTests.test_blank_names failed as expected` (or the ENG-2 existing-test form if already covered). Done when blank inputs fall back, every nonblank name is preserved, all tests pass, and test/code/task checkbox are committed together once.\n+\n+## Final phase: Verification\n+Passing verification is included in T001; no separate test-only or implementation-only commit.\n+\n+## Dependencies and execution\n+T001 is the sole unit; no parallel opportunities because test and implementation form one commit. US1 is the MVP and full scope. Run red, implementation, passing verification sequentially, then mark complete and commit.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..3d49e84 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -7,6 +7,12 @@ class GreetTests(unittest.TestCase):\n     def test_greets_by_name(self):\n         self.assertEqual(greet(\"world\"), \"Hello, world!\")\n \n+    def test_blank_names(self):\n+        for name in (\"\", \"  \", \"\\t\\n\"):\n+            with self.subTest(name=name):\n+                self.assertEqual(greet(name), \"Hello, stranger!\")\n+        self.assertEqual(greet(\" world \"), \"Hello,  world !\")\n+\n \n if __name__ == \"__main__\":\n     unittest.main()\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "647af0d41483781389ba5763e0bd9e5fe55f09e6\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "647af0d41483781389ba5763e0bd9e5fe55f09e6\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n3541e5cd90460144e4c7d4b099ec8a81dd7cfa98\nfactory: analyze complete\n\n--\ndce891929d46e0429645b0917bd40430585d0c01\nfactory: analyze-record\n\n--\n945f22a10af01a26745a7c6216b51769bf8fae65\nfactory: tasks complete\n\n--\nf926c2d318198dee98fca9b9ebc8bfca95bd0afc\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-new && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 /tmp/factory012-trials/after-s2/factory/bin/factory checkpoint analyze --next implement",
+          "exit_code": 0,
+          "stdout": "{\n  \"checkpointed\": \"analyze\",\n  \"stage\": \"implement\",\n  \"commit\": \"5c36f55\",\n  \"declared\": [],\n  \"undeclared\": [\n    \".specify/feature.json\"\n  ],\n  \"source\": \"worktree\"\n}\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "done",
+          "stage": "tasks",
+          "summary": "Generated one US1 commit unit; no parallel work, runner setup already present.",
+          "files": [
+            "specs/001-greet/tasks.md"
+          ],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        },
+        {
+          "status": "done",
+          "stage": "analyze",
+          "summary": "All three requirements map to T001; no findings.",
+          "files": [
+            "specs/001-greet/factory/analyze-1.md"
+          ],
+          "questions": [],
+          "analyze": {
+            "report": "factory/analyze-1.md",
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0
+          },
+          "error": null
+        },
+        {
+          "status": "done",
+          "stage": "implement",
+          "summary": "Every unit completed; passing commits preserved or finished once, build and tests green.",
+          "files": [
+            "src/greet.py",
+            "test_greet.py",
+            "specs/001-greet/tasks.md"
+          ],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        }
+      ],
+      "initial_head": "f926c2d318198dee98fca9b9ebc8bfca95bd0afc",
+      "initial_commits": "f926c2d318198dee98fca9b9ebc8bfca95bd0afc\ninitial fixture\n\n--\n",
+      "initial_tasks": "# Generate tasks for spec and plan\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name}!\"\n",
+      "generated_tasks": "# Tasks: Blank names\n\nInput: spec.md and plan.md. Existing stdlib unittest runner.\n\n## Phase 1: Setup\nExisting project and runner need no changes.\n\n## Phase 2: Foundation\nNo additional prerequisites.\n\n## Phase 3: US1 \u2014 Blank names (P1, MVP)\nGoal: Empty and whitespace-only names receive the stranger greeting while all other names remain unchanged.\nIndependent check: `python3 -m unittest discover -s .`.\n\n- [ ] T001 [US1] Implement blank-name greeting through planned seam `greet` (`src.greet.greet`): first add `GreetTests.test_blank_names` in `test_greet.py` asserting empty and whitespace-only names return `Hello, stranger!` and preserve ordinary/nonblank padded names; run it and observe expected failure; then implement the fallback in `src/greet.py`; finally run `python3 -m unittest discover -s .` passing. Required commit proof: `Red: GreetTests.test_blank_names failed as expected` (or the ENG-2 existing-test form if already covered). Done when blank inputs fall back, every nonblank name is preserved, all tests pass, and test/code/task checkbox are committed together once.\n\n## Final phase: Verification\nPassing verification is included in T001; no separate test-only or implementation-only commit.\n\n## Dependencies and execution\nT001 is the sole unit; no parallel opportunities because test and implementation form one commit. US1 is the MVP and full scope. Run red, implementation, passing verification sequentially, then mark complete and commit.\n",
+      "red_observed": true,
+      "review_log": "647af0d41483781389ba5763e0bd9e5fe55f09e6\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n3541e5cd90460144e4c7d4b099ec8a81dd7cfa98\nfactory: analyze complete\n\n--\ndce891929d46e0429645b0917bd40430585d0c01\nfactory: analyze-record\n\n--\n945f22a10af01a26745a7c6216b51769bf8fae65\nfactory: tasks complete\n\n--\n",
+      "review_diff": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 37a5b81..5a396e8 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1,21 @@\n-# Generate tasks for spec and plan\n+# Tasks: Blank names\n+\n+Input: spec.md and plan.md. Existing stdlib unittest runner.\n+\n+## Phase 1: Setup\n+Existing project and runner need no changes.\n+\n+## Phase 2: Foundation\n+No additional prerequisites.\n+\n+## Phase 3: US1 \u2014 Blank names (P1, MVP)\n+Goal: Empty and whitespace-only names receive the stranger greeting while all other names remain unchanged.\n+Independent check: `python3 -m unittest discover -s .`.\n+\n+- [x] T001 [US1] Implement blank-name greeting through planned seam `greet` (`src.greet.greet`): first add `GreetTests.test_blank_names` in `test_greet.py` asserting empty and whitespace-only names return `Hello, stranger!` and preserve ordinary/nonblank padded names; run it and observe expected failure; then implement the fallback in `src/greet.py`; finally run `python3 -m unittest discover -s .` passing. Required commit proof: `Red: GreetTests.test_blank_names failed as expected` (or the ENG-2 existing-test form if already covered). Done when blank inputs fall back, every nonblank name is preserved, all tests pass, and test/code/task checkbox are committed together once.\n+\n+## Final phase: Verification\n+Passing verification is included in T001; no separate test-only or implementation-only commit.\n+\n+## Dependencies and execution\n+T001 is the sole unit; no parallel opportunities because test and implementation form one commit. US1 is the MVP and full scope. Run red, implementation, passing verification sequentially, then mark complete and commit.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..3d49e84 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -7,6 +7,12 @@ class GreetTests(unittest.TestCase):\n     def test_greets_by_name(self):\n         self.assertEqual(greet(\"world\"), \"Hello, world!\")\n \n+    def test_blank_names(self):\n+        for name in (\"\", \"  \", \"\\t\\n\"):\n+            with self.subTest(name=name):\n+                self.assertEqual(greet(name), \"Hello, stranger!\")\n+        self.assertEqual(greet(\" world \"), \"Hello,  world !\")\n+\n \n if __name__ == \"__main__\":\n     unittest.main()\n",
+      "review": {
+        "status": "done",
+        "findings": [],
+        "requirements": {
+          "empty-name": "met",
+          "whitespace-only": "met",
+          "other-names": "met"
+        },
+        "red_proof": "Implementation commit uses accepted first form and maps GreetTests.test_blank_names to T001 (or either entry of unambiguous legacy pair).",
+        "legacy_pair": null
+      },
+      "final_tasks": "# Tasks: Blank names\n\nInput: spec.md and plan.md. Existing stdlib unittest runner.\n\n## Phase 1: Setup\nExisting project and runner need no changes.\n\n## Phase 2: Foundation\nNo additional prerequisites.\n\n## Phase 3: US1 \u2014 Blank names (P1, MVP)\nGoal: Empty and whitespace-only names receive the stranger greeting while all other names remain unchanged.\nIndependent check: `python3 -m unittest discover -s .`.\n\n- [x] T001 [US1] Implement blank-name greeting through planned seam `greet` (`src.greet.greet`): first add `GreetTests.test_blank_names` in `test_greet.py` asserting empty and whitespace-only names return `Hello, stranger!` and preserve ordinary/nonblank padded names; run it and observe expected failure; then implement the fallback in `src/greet.py`; finally run `python3 -m unittest discover -s .` passing. Required commit proof: `Red: GreetTests.test_blank_names failed as expected` (or the ENG-2 existing-test form if already covered). Done when blank inputs fall back, every nonblank name is preserved, all tests pass, and test/code/task checkbox are committed together once.\n\n## Final phase: Verification\nPassing verification is included in T001; no separate test-only or implementation-only commit.\n\n## Dependencies and execution\nT001 is the sole unit; no parallel opportunities because test and implementation form one commit. US1 is the MVP and full scope. Run red, implementation, passing verification sequentially, then mark complete and commit.\n",
+      "final_head": "5c36f55c3aa0f9599f41097fcb93641cddd6819e",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "5c36f55c3aa0f9599f41097fcb93641cddd6819e\nfactory: analyze complete\n\n--\n647af0d41483781389ba5763e0bd9e5fe55f09e6\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n3541e5cd90460144e4c7d4b099ec8a81dd7cfa98\nfactory: analyze complete\n\n--\ndce891929d46e0429645b0917bd40430585d0c01\nfactory: analyze-record\n\n--\n945f22a10af01a26745a7c6216b51769bf8fae65\nfactory: tasks complete\n\n--\nf926c2d318198dee98fca9b9ebc8bfca95bd0afc\ninitial fixture\n\n--\n",
+      "runner_deviation": "After actual clean analysis was recorded, checkpoint analyze was accidentally called without --next implement, so state advanced to remediate. The implementation unit ran before that routing mistake was detected. State corrected afterward through CLI with checkpoint analyze --next implement; no refused gate was bypassed and history retained. Treat stage-sequencing comparison as limited by runner error.",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    },
+    {
+      "id": "S2-red-resume",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "34a57dbc4e9b501457bfc5d5849fbd3df49b049d\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": " M test_greet.py\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "34a57dbc4e9b501457bfc5d5849fbd3df49b049d\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-red-resume/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest test_greet.GreetTests.test_blank_names",
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "F\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-red-resume/test_greet.py\", line 6, in test_blank_names\n    self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello, !' != 'Hello, stranger!'\n- Hello, !\n+ Hello, stranger!\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet rg -n 'greet|stranger|strip' src test_greet.py",
+          "exit_code": 0,
+          "stdout": "test_greet.py:2:from src.greet import greet\ntest_greet.py:4:    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\ntest_greet.py:6:        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\ntest_greet.py:7:        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\nsrc/greet.py:1:def greet(name):\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git add src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git commit -m 'factory(implement): T001 blank-name greeting' -m 'Red: GreetTests.test_blank_names failed as expected'",
+          "exit_code": 0,
+          "stdout": "[001-greet aad6b5d] factory(implement): T001 blank-name greeting\n 3 files changed, 6 insertions(+), 11 deletions(-)\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-list --max-parents=0 HEAD",
+          "exit_code": 0,
+          "stdout": "34a57dbc4e9b501457bfc5d5849fbd3df49b049d\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n-- 34a57dbc4e9b501457bfc5d5849fbd3df49b049d..HEAD",
+          "exit_code": 0,
+          "stdout": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git diff 34a57dbc4e9b501457bfc5d5849fbd3df49b049d HEAD -- src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 9b8862a..da5244d 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1 @@\n-- [ ] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n+- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-red-resume && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n34a57dbc4e9b501457bfc5d5849fbd3df49b049d\ninitial fixture\n\n--\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "done",
+          "stage": "implement",
+          "summary": "Every unit completed; passing commits preserved or finished once, build and tests green.",
+          "files": [
+            "src/greet.py",
+            "test_greet.py",
+            "specs/001-greet/tasks.md"
+          ],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        }
+      ],
+      "initial_head": "34a57dbc4e9b501457bfc5d5849fbd3df49b049d",
+      "initial_commits": "34a57dbc4e9b501457bfc5d5849fbd3df49b049d\ninitial fixture\n\n--\n",
+      "initial_tasks": "- [ ] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name}!\"\n",
+      "red_observed": true,
+      "review_log": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+      "review_diff": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 9b8862a..da5244d 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1 @@\n-- [ ] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n+- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+      "review": {
+        "status": "done",
+        "findings": [],
+        "requirements": {
+          "empty-name": "met",
+          "whitespace-only": "met",
+          "other-names": "met"
+        },
+        "red_proof": "Implementation commit uses accepted first form and maps GreetTests.test_blank_names to T001 (or either entry of unambiguous legacy pair).",
+        "legacy_pair": null
+      },
+      "final_tasks": "- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n",
+      "final_head": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "aad6b5dd509eac634ea7c4c717ce48fd7e395c13\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n34a57dbc4e9b501457bfc5d5849fbd3df49b049d\ninitial fixture\n\n--\n",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    },
+    {
+      "id": "S2-complete",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "a08dab69034586667eeb8c140bcc4c09478bb6dc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n2d833e2987def412ec07b14009af5b7ea17f7dc0\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-complete/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-list --max-parents=0 HEAD",
+          "exit_code": 0,
+          "stdout": "2d833e2987def412ec07b14009af5b7ea17f7dc0\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n-- 2d833e2987def412ec07b14009af5b7ea17f7dc0..HEAD",
+          "exit_code": 0,
+          "stdout": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git diff 2d833e2987def412ec07b14009af5b7ea17f7dc0 HEAD -- src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 9b8862a..da5244d 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1 @@\n-- [ ] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n+- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "a08dab69034586667eeb8c140bcc4c09478bb6dc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n2d833e2987def412ec07b14009af5b7ea17f7dc0\ninitial fixture\n\n--\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "done",
+          "stage": "implement",
+          "summary": "Every unit completed; passing commits preserved or finished once, build and tests green.",
+          "files": [],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        }
+      ],
+      "initial_head": "a08dab69034586667eeb8c140bcc4c09478bb6dc",
+      "initial_commits": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n2d833e2987def412ec07b14009af5b7ea17f7dc0\ninitial fixture\n\n--\n",
+      "initial_tasks": "- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name if name.strip() else 'stranger'}!\"\n",
+      "review_log": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+      "review_diff": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 9b8862a..da5244d 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1 +1 @@\n-- [ ] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n+- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+      "review": {
+        "status": "done",
+        "findings": [],
+        "requirements": {
+          "empty-name": "met",
+          "whitespace-only": "met",
+          "other-names": "met"
+        },
+        "red_proof": "Implementation commit uses accepted first form and maps GreetTests.test_blank_names to T001 (or either entry of unambiguous legacy pair).",
+        "legacy_pair": null
+      },
+      "final_tasks": "- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.\n",
+      "final_head": "a08dab69034586667eeb8c140bcc4c09478bb6dc",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "a08dab69034586667eeb8c140bcc4c09478bb6dc\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n2d833e2987def412ec07b14009af5b7ea17f7dc0\ninitial fixture\n\n--\n",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    },
+    {
+      "id": "S2-legacy-complete",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "4abc8446f33d002d987d9593c19d3bd4be7a4560\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n4bd17da801bcf443b560be2503844d31c47cc112\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-legacy-complete/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-list --max-parents=0 HEAD",
+          "exit_code": 0,
+          "stdout": "4bd17da801bcf443b560be2503844d31c47cc112\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n-- 4bd17da801bcf443b560be2503844d31c47cc112..HEAD",
+          "exit_code": 0,
+          "stdout": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git diff 4bd17da801bcf443b560be2503844d31c47cc112 HEAD -- src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 2d71960..10b7498 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1,2 +1,2 @@\n - [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n-- [ ] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n+- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "4abc8446f33d002d987d9593c19d3bd4be7a4560\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-complete && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n4bd17da801bcf443b560be2503844d31c47cc112\ninitial fixture\n\n--\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "done",
+          "stage": "implement",
+          "summary": "Every unit completed; passing commits preserved or finished once, build and tests green.",
+          "files": [],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        }
+      ],
+      "initial_head": "4abc8446f33d002d987d9593c19d3bd4be7a4560",
+      "initial_commits": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n4bd17da801bcf443b560be2503844d31c47cc112\ninitial fixture\n\n--\n",
+      "initial_tasks": "- [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name if name.strip() else 'stranger'}!\"\n",
+      "review_log": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+      "review_diff": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 2d71960..10b7498 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1,2 +1,2 @@\n - [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n-- [ ] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n+- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+      "review": {
+        "status": "done",
+        "findings": [],
+        "requirements": {
+          "empty-name": "met",
+          "whitespace-only": "met",
+          "other-names": "met"
+        },
+        "red_proof": "Implementation commit uses accepted first form and maps GreetTests.test_blank_names to T001 (or either entry of unambiguous legacy pair).",
+        "legacy_pair": "Named blank-name greeting target plus test mapping identifies T001/T002 as one unit; both checked; original completed commit preserved."
+      },
+      "final_tasks": "- [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n",
+      "final_head": "4abc8446f33d002d987d9593c19d3bd4be7a4560",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "4abc8446f33d002d987d9593c19d3bd4be7a4560\nfactory(implement): T001 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n4bd17da801bcf443b560be2503844d31c47cc112\ninitial fixture\n\n--\n",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    },
+    {
+      "id": "S2-legacy-partial",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "1b496ce423342b6ca2cac24ad7b16748c3827e3d\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": " M test_greet.py\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "1b496ce423342b6ca2cac24ad7b16748c3827e3d\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-legacy-partial/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest test_greet.GreetTests.test_blank_names",
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "F\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-legacy-partial/test_greet.py\", line 6, in test_blank_names\n    self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello, !' != 'Hello, stranger!'\n- Hello, !\n+ Hello, stranger!\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet rg -n 'greet|stranger|strip' src test_greet.py",
+          "exit_code": 0,
+          "stdout": "test_greet.py:2:from src.greet import greet\ntest_greet.py:4:    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\ntest_greet.py:6:        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\ntest_greet.py:7:        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\nsrc/greet.py:1:def greet(name):\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git add src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git commit -m 'factory(implement): T001 T002 blank-name greeting' -m 'Red: GreetTests.test_blank_names failed as expected'",
+          "exit_code": 0,
+          "stdout": "[001-greet 7f0b60c] factory(implement): T001 T002 blank-name greeting\n 3 files changed, 6 insertions(+), 11 deletions(-)\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet python3 -m unittest discover -s .",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-list --max-parents=0 HEAD",
+          "exit_code": 0,
+          "stdout": "1b496ce423342b6ca2cac24ad7b16748c3827e3d\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n-- 1b496ce423342b6ca2cac24ad7b16748c3827e3d..HEAD",
+          "exit_code": 0,
+          "stdout": "7f0b60c280102bf9e214e5d82b3f36a442b11c32\nfactory(implement): T001 T002 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git diff 1b496ce423342b6ca2cac24ad7b16748c3827e3d HEAD -- src/greet.py test_greet.py specs/001-greet/tasks.md",
+          "exit_code": 0,
+          "stdout": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 2d71960..10b7498 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1,2 +1,2 @@\n - [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n-- [ ] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n+- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "7f0b60c280102bf9e214e5d82b3f36a442b11c32\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-legacy-partial && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "7f0b60c280102bf9e214e5d82b3f36a442b11c32\nfactory(implement): T001 T002 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n1b496ce423342b6ca2cac24ad7b16748c3827e3d\ninitial fixture\n\n--\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "done",
+          "stage": "implement",
+          "summary": "Every unit completed; passing commits preserved or finished once, build and tests green.",
+          "files": [
+            "src/greet.py",
+            "test_greet.py",
+            "specs/001-greet/tasks.md"
+          ],
+          "questions": [],
+          "analyze": null,
+          "error": null
+        }
+      ],
+      "initial_head": "1b496ce423342b6ca2cac24ad7b16748c3827e3d",
+      "initial_commits": "1b496ce423342b6ca2cac24ad7b16748c3827e3d\ninitial fixture\n\n--\n",
+      "initial_tasks": "- [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n- [ ] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name}!\"\n",
+      "red_observed": true,
+      "review_log": "7f0b60c280102bf9e214e5d82b3f36a442b11c32\nfactory(implement): T001 T002 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n",
+      "review_diff": "diff --git a/specs/001-greet/tasks.md b/specs/001-greet/tasks.md\nindex 2d71960..10b7498 100644\n--- a/specs/001-greet/tasks.md\n+++ b/specs/001-greet/tasks.md\n@@ -1,2 +1,2 @@\n - [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n-- [ ] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n+- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\ndiff --git a/src/greet.py b/src/greet.py\nindex 097a41c..9eb6529 100644\n--- a/src/greet.py\n+++ b/src/greet.py\n@@ -1,2 +1,2 @@\n def greet(name):\n-    return f\"Hello, {name}!\"\n+    return f\"Hello, {name if name.strip() else 'stranger'}!\"\ndiff --git a/test_greet.py b/test_greet.py\nindex 252bd1a..0804569 100644\n--- a/test_greet.py\n+++ b/test_greet.py\n@@ -1,12 +1,7 @@\n import unittest\n-\n from src.greet import greet\n-\n-\n class GreetTests(unittest.TestCase):\n-    def test_greets_by_name(self):\n-        self.assertEqual(greet(\"world\"), \"Hello, world!\")\n-\n-\n-if __name__ == \"__main__\":\n-    unittest.main()\n+    def test_greets_by_name(self): self.assertEqual(greet(\"world\"), \"Hello, world!\")\n+    def test_blank_names(self):\n+        self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n+        self.assertEqual(greet(\"  \"), \"Hello, stranger!\")\n",
+      "review": {
+        "status": "done",
+        "findings": [],
+        "requirements": {
+          "empty-name": "met",
+          "whitespace-only": "met",
+          "other-names": "met"
+        },
+        "red_proof": "Implementation commit uses accepted first form and maps GreetTests.test_blank_names to T001 (or either entry of unambiguous legacy pair).",
+        "legacy_pair": "Named blank-name greeting target plus test mapping identifies T001/T002 as one unit; both checked; original completed commit preserved."
+      },
+      "final_tasks": "- [x] T001 Add failing GreetTests.test_blank_names coverage for blank-name greeting; seam `greet`.\n- [x] T002 Implement blank-name greeting; seam `greet`; run tests passing.\n",
+      "final_head": "7f0b60c280102bf9e214e5d82b3f36a442b11c32",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "7f0b60c280102bf9e214e5d82b3f36a442b11c32\nfactory(implement): T001 T002 blank-name greeting\nRed: GreetTests.test_blank_names failed as expected\n\n--\n1b496ce423342b6ca2cac24ad7b16748c3827e3d\ninitial fixture\n\n--\n",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    },
+    {
+      "id": "S2-ambiguous",
+      "commands": [
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "ae9034b55bd13e57580a394b678f0b10e922d630\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "ae9034b55bd13e57580a394b678f0b10e922d630\ninitial fixture\n\n--\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks",
+          "exit_code": 0,
+          "stdout": "{\"FEATURE_DIR\":\"/private/tmp/factory012-trials/s2-after/S2-ambiguous/specs/001-greet\",\"AVAILABLE_DOCS\":[\"tasks.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet sh -c 'if [ -d specs/001-greet/checklists ]; then rg \"^- \\[\" specs/001-greet/checklists; fi; if [ -f .specify/memory/constitution.md ]; then cat .specify/memory/constitution.md; fi; cat .gitignore'",
+          "exit_code": 0,
+          "stdout": "__pycache__/\n*.pyc\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git rev-parse HEAD",
+          "exit_code": 0,
+          "stdout": "ae9034b55bd13e57580a394b678f0b10e922d630\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git status --short",
+          "exit_code": 0,
+          "stdout": "?? .specify/feature.json\n",
+          "stderr": ""
+        },
+        {
+          "command": "cd /tmp/factory012-trials/s2-after/S2-ambiguous && SPECIFY_FEATURE=001-greet SPECIFY_FEATURE_DIRECTORY=specs/001-greet git log --format=%H%n%s%n%b%n--",
+          "exit_code": 0,
+          "stdout": "ae9034b55bd13e57580a394b678f0b10e922d630\ninitial fixture\n\n--\n",
+          "stderr": ""
+        }
+      ],
+      "envelopes": [
+        {
+          "status": "failed",
+          "stage": "implement",
+          "summary": "Ambiguous legacy pairing: T001 may map to either T002 or T003. Stopped before behavior edits.",
+          "files": [],
+          "questions": [],
+          "analyze": null,
+          "error": "ENG-3: T001 explicitly says coverage may apply to either next task; no unambiguous test/implementation pair. Requires orchestrator resolution."
+        }
+      ],
+      "initial_head": "ae9034b55bd13e57580a394b678f0b10e922d630",
+      "initial_commits": "ae9034b55bd13e57580a394b678f0b10e922d630\ninitial fixture\n\n--\n",
+      "initial_tasks": "- [ ] T001 Add blank-name coverage; seam greet; tests may apply to either next task.\n- [ ] T002 Implement empty-name fallback; seam greet.\n- [ ] T003 Implement whitespace-name fallback; seam greet.\n",
+      "initial_source": "def greet(name):\n    return f\"Hello, {name}!\"\n",
+      "review": {
+        "status": "incomplete",
+        "findings": [
+          {
+            "id": "SPEC-001",
+            "severity": "HIGH",
+            "evidence": "ENG-3: ambiguous T001/T002/T003 pair; task units cannot be resolved before behavior edits."
+          }
+        ],
+        "requirements": {
+          "empty-name": "missing",
+          "whitespace-only": "missing",
+          "other-names": "met"
+        }
+      },
+      "final_tasks": "- [ ] T001 Add blank-name coverage; seam greet; tests may apply to either next task.\n- [ ] T002 Implement empty-name fallback; seam greet.\n- [ ] T003 Implement whitespace-name fallback; seam greet.\n",
+      "final_head": "ae9034b55bd13e57580a394b678f0b10e922d630",
+      "final_status": "?? .specify/feature.json\n",
+      "final_commits": "ae9034b55bd13e57580a394b678f0b10e922d630\ninitial fixture\n\n--\n",
+      "setup_side_effect": "SpecKit setup/prerequisites created untracked .specify/feature.json; preserved and not committed into behavior unit."
+    }
+  ],
+  "controls": {
+    "red_failed": {
+      "text": "Red: GreetTests.test_blank_names failed as expected",
+      "accepted": true,
+      "basis": "ENG-2 first form; task-mapped test"
+    },
+    "red_existing": {
+      "text": "Red: not applicable - GreetTests.test_blank_names already covers this",
+      "accepted": true,
+      "basis": "ENG-2 second form; task-mapped existing test"
+    },
+    "documentation_exemption": {
+      "accepted": true,
+      "conditions": "plan declares documentation/configuration exemption and reason; such commit requires no Red line",
+      "basis": "ENG-5 and reviewer Red proofs exemption"
+    },
+    "invalid_red": {
+      "text": "Red: tests passed",
+      "accepted": false,
+      "basis": "matches neither ENG-2 form"
+    }
+  },
+  "review_method": "Read-only inspection of actual source, tasks and git diff plus implementation commit bodies; no replay required for textual red-proof review. No external conformance rubric consulted."
+}

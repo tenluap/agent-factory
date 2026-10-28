@@ -1,0 +1,31 @@
+[
+  {
+    "argv": [
+      "git",
+      "log",
+      "--format=%H%n%s%n%b%n--"
+    ],
+    "status": 0,
+    "output": "f0468a8c945e65e0ba4f6e5b26a4cd0548a87cd2\nfactory: implement complete\n\n--\ncd05b162c36a1cbb04019c87f178f0532e230579\nfactory(implement): T001 Handle blank names while preserving nonblank names\nRed: test_greet.GreetTests.test_blank_names_use_stranger failed as expected\n\n--\n972acb04043e795f78dc3d2bd890aa0812f9f3df\nfactory: analyze complete\n\n--\nf10cef307e1b0172de08004b5aa78aa0fc9066a5\nfactory: analyze-record\n\n--\n03076fb40155e9cbdd9916c336ed554cf9891ac3\nfactory: tasks complete\n\n--\n070e530e53addbcfb58b26217db009538e9149ad\ninitial healthy fixture\n\n--\n"
+  },
+  {
+    "argv": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "argv": [
+      "git",
+      "diff",
+      "--",
+      "src/greet.py",
+      "test_greet.py"
+    ],
+    "status": 0,
+    "output": ""
+  }
+]

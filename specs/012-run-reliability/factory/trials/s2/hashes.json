@@ -1,0 +1,23 @@
+{
+  "before": {
+    "roles/spec-builder.md": "98ed6d83ac501a9d0760b23205ad1e3b24e6835d28938db701a898c34e081728",
+    "roles/code-build.md": "3ade6b2c1086449bacbfd8a3adfe717abd035e6c6a335d120ef1429073fc54b1",
+    "roles/fixer.md": "671271c40ed5df4e03d45e7ceddcf292eb14cef682b31b6ee1077c4b818cf110",
+    "roles/code-standards.md": "d5fc699008026ce50da03ca2fba1edc37ed5fed5f06ec44ba90ddd5525b55e45",
+    "roles/spec-conformance.md": "b7430daa5a30f5327525b9fb99d2534be4b174b95822b4daa8ff0cb076022ae3",
+    "factory/references/engineering.md": "5bac85259a0e604f0cf5ef3fbecf1db24a1719eb7a15239706561d71400ea0e7",
+    "factory/references/state.md": "bd8806f2d67bb4b7fda0e6cdfac81c7e7f56ade3422db4056412810d5e23dce3"
+  },
+  "after": {
+    "roles/spec-builder.md": "028dd72986c9ccb22f9cfece70a16a8f661d09c836cc8cc580a94b0d8a850072",
+    "roles/code-build.md": "e224cff0d7cd1ab1e8b9d652ce11b3636ac372c472f1ccda2a5afc65fda09417",
+    "roles/fixer.md": "b6b1c94e43fd324cc9086d564e6244d9c2a8ff3621cbe50f5ad5b40d988b93c6",
+    "roles/code-standards.md": "a3814034dfa28267c9a707612f9a6ddcd21564ab7fd3340b9e453d64cb7753e1",
+    "roles/spec-conformance.md": "08a69087051e0f6d47a0531643ef151c46d06ca22d703d2b856a0c67dacb074c",
+    "factory/references/engineering.md": "4a697f1fa988afef8f56bad8097ab506a99ad37f5a604e4232210823413445cc",
+    "factory/references/state.md": "8167a9ec267f9b6b8bce6a126ec1cc718fe58b22f0cad207a753bdf0e445e18d"
+  },
+  "parent_source_base": "6ffbf74",
+  "baseline_frozen_source_base": "3cef63f",
+  "fixture_correction": "Original S2-new omitted normal analyze/constitution prerequisites; original observations retained but excluded from healthy full-stage pass. Fresh healthy before/after fixtures include normal prerequisites, identical specs/plans and explicit normal lite transitions. Original baseline state skill paths were corrected before use; setup-only dirt is not behavior evidence."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "S2-new-healthy",
+  "worktree": "/tmp/factory012-trials/s2-after-healthy/S2-new",
+  "spec_dir": "specs/001-greet",
+  "state_path": "/tmp/factory012-trials/s2-after-healthy/S2-new/specs/001-greet/factory/state.json",
+  "stage_sequence": [
+    "tasks",
+    "analyze",
+    "implement"
+  ],
+  "chain": "lite",
+  "initial_commit": "070e530e53addbcfb58b26217db009538e9149ad"
+}
