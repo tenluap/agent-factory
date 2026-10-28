@@ -62,7 +62,7 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 ### Edge Cases
 
 - Aborted runs: never dropped. Their folder and worktree stay as they are.
-- Copy fails midway (disk full, permission error): the command refuses, leaves the folder in git untouched, and leaves the partial archive in place for inspection so a retry hits the collision refusal and needs a manual decision. The message names the partial path.
+- Copy fails midway (disk full, permission error): the copy goes to a temporary sibling under `${FACTORY_HOME:-~/.factory}/archive/` and is renamed into place only after verification. On failure the command removes the temporary copy, leaves the folder in git untouched, and refuses; no partial archive remains, so a retry is not blocked.
 - The PR exists but the second push fails: the drop commit stays local; resume of the `pr` stage repeats only the push (the folder is already gone and the archive exists).
 - Resume after the drop: discovery no longer finds the run on the branch, which matches today's behaviour for `pr-open` runs (they are already excluded from discovery).
 - Improvement backlog: `set-status pr-open` exports the backlog before the drop, so the export is unaffected. `factory improvements claim` treats a run with no discoverable state as ended, as it does for any non-discoverable run today.
@@ -109,7 +109,7 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 ## Assumptions
 
 - The repository name used in the archive path matches the one the improvement backlog export uses (`<repo-name>-<branch>`), so both artifacts of one run share a key.
-- A partial archive left by a failed copy is acceptable; the collision rule then forces a deliberate manual cleanup instead of a silent overwrite.
+- A failed copy leaves no archive behind (temporary copy plus atomic rename), so the collision rule only ever sees complete archives.
 - `set-status pr-open` has already written the final state before the drop, so the archived `state.json` is the run's final state.
 - The attached opencode `adapter.json` model edits are context only; uncommitted adapter edits on the default branch are not touched.
 - Existing `specs/007..010/*/factory/` folders on the default branch stay; only future runs drop.
