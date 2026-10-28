@@ -41,7 +41,68 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1",
+            "title": "Confirm the proposed test seams and failure paths?",
+            "text": "S1: model setup and effective rendered selection, including missing/failed/partial inventory, unresolved inheritance, installed-vs-default mismatch, later rejection and changed setup. S2: task generation/execution/resume with real red-to-green commit, interruption, completed units and legacy/ambiguous pairs. S3: scope confirmation/analyze with undeclared seams, omitted git-failure injection, stale/missing acceptance, scope changes and valid exemptions. S4: deadline handoff/accounting with near-deadline boundary, optional repeat omitted, in-flight overshoot, pending checks, resumed independent verification and stall enforcement. Use synthetic inputs, temporary repos and existing renderer/state CLI seams. Full definitions in plan.md Test seams.",
+            "helper": "Confirm all four seams and their listed failure paths, or describe adjustments before implementation.",
+            "options": [
+              {
+                "id": "A",
+                "label": "Confirm S1–S4",
+                "description": "Use this complete scope for task generation, analysis and implementation.",
+                "emoji": "🧪"
+              },
+              {
+                "id": "B",
+                "label": "Something else",
+                "description": "Describe the scope changes you want.",
+                "emoji": "💬"
+              }
+            ],
+            "recommended": "A",
+            "rationale": "Covers the approved requirements and original missing git-failure path while preserving runtime contracts.",
+            "requires_user": true
+          },
+          {
+            "id": "Q2",
+            "title": "Which model policy should the factory preserve?",
+            "text": "Shipped adapters currently pin models for Claude Code, Codex and OpenCode; Claude Code standard is haiku. DESIGN/README and tests still expect only Claude Code pins and sonnet. The focused baseline ran 19 tests with three policy failures and no errors.",
+            "helper": "Choose the intended policy; personal overrides and exact selected model IDs remain preserved.",
+            "options": [
+              {
+                "id": "A",
+                "label": "Preserve current shipped selections",
+                "description": "Align stale DESIGN/README, adapter notes and model-policy tests with current adapter mappings.",
+                "emoji": "📌"
+              },
+              {
+                "id": "B",
+                "label": "Restore the old default policy",
+                "description": "Return Codex/OpenCode to inherited models and Claude Code to opus/sonnet.",
+                "emoji": "↩️"
+              },
+              {
+                "id": "C",
+                "label": "Something else",
+                "description": "Specify the intended shipped defaults.",
+                "emoji": "💬"
+              }
+            ],
+            "recommended": "A",
+            "rationale": "Preserves current selections and repairs the demonstrated mismatch without an implicit model change.",
+            "requires_user": true
+          }
+        ],
+        "answers": {}
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-28T02:52:59.449742Z",
@@ -98,6 +159,18 @@
       "duration_ms": 135976,
       "started_at": "2026-10-28T02:54:41.787994Z",
       "ended_at": "2026-10-28T02:56:57.764186+00:00"
+    },
+    {
+      "at": "2026-10-28T03:01:09.947755Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "codex",
+      "in_est": 8548,
+      "out_est": 3052,
+      "reported": null,
+      "duration_ms": 251357,
+      "started_at": "2026-10-28T02:56:58.493653Z",
+      "ended_at": "2026-10-28T03:01:09.851055+00:00"
     }
   ],
   "issues": [
