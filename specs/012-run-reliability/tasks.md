@@ -13,7 +13,7 @@ Trials use only plan-declared seams, synthetic selections/inventory, temporary f
 
 ## Phase 1: Setup
 
-- [ ] T001 Record the approved model/setup, atomic-unit, seam-scope and deadline contracts in `DESIGN.md` before core/adapter edits, including preservation of current shipped selections and protected confirmations. **Exempt: design prose — documentation only**. Done: design matches approved `plan.md` without changing runtime/model configuration.
+- [x] T001 Record the approved model/setup, atomic-unit, seam-scope and deadline contracts in `DESIGN.md` before core/adapter edits, including preservation of current shipped selections and protected confirmations. **Exempt: design prose — documentation only**. Done: design matches approved `plan.md` without changing runtime/model configuration.
 
 ## Phase 2: Foundational conformance contract
 
