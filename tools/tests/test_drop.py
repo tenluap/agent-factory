@@ -42,15 +42,22 @@ class DropTests(unittest.TestCase):
             other.mkdir(parents=True)
             (other / "state.json").write_text(
                 json.dumps(
-                    dict(original, branch=name, worktree=home, spec_dir=f"specs/{name}")
+                    dict(
+                        original,
+                        branch=original["branch"] if name == "001-orphan" else name,
+                        worktree=home,
+                        spec_dir=f"specs/{name}",
+                    )
                 )
             )
         self.box.git("add", "-A", cwd=self.wt)
         self.box.git("commit", "-qm", "inherited runs", cwd=self.wt)
+        orphan = self.wt / "specs/001-orphan/factory/state.json"
+        orphan_bytes = orphan.read_bytes()
         result = self.box.cli("drop", cwd=self.wt)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["dropped"], "specs/011-drop/factory")
-        self.assertTrue((self.wt / "specs/001-orphan/factory/state.json").exists())
+        self.assertEqual(orphan.read_bytes(), orphan_bytes)
         self.assertTrue(
             (self.wt / "specs/002-wrong-branch/factory/state.json").exists()
         )
@@ -404,6 +411,27 @@ class DropTests(unittest.TestCase):
                 self.assertFalse((self.box.home / "archive").exists())
                 self.box.git("reset", "-q", "HEAD", "--", str(map_path), cwd=self.wt)
                 self.box.git("checkout", "--", str(map_path), cwd=self.wt)
+
+    def test_untracked_map_refused_without_changes(self):
+        _, map_path = self.prepare_design(with_map=False)
+        map_path.parent.mkdir(parents=True, exist_ok=True)
+        original = b'{"path": "specs/011-drop/factory/design/context.json"}\n'
+        map_path.write_bytes(original)
+        archive = self.box.home / "archive"
+        archive.mkdir()
+        (archive / "keep").write_bytes(b"existing archive")
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        dirty = self.box.git("status", "--porcelain", cwd=self.wt)
+
+        result = self.box.cli("drop", cwd=self.wt)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("design-code-map.json", result.stderr)
+        self.assertEqual(map_path.read_bytes(), original)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), dirty)
+        self.assertEqual(list(archive.iterdir()), [archive / "keep"])
+        self.assertEqual((archive / "keep").read_bytes(), b"existing archive")
 
     def test_design_moves_without_creating_map(self):
         self.prepare_design(with_map=False)
