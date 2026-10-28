@@ -76,7 +76,7 @@ Seams (plan.md "Test seams"): **S1** `render.py --paths skills_root`; **S2** `in
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T015 [P] Add a skill library section to `README.md`: both layers, `--add-skill`, reserved name `factory`, `skip:` conflict handling and adoption, links from another checkout or a moved checkout treated as user-owned (remove the old link and re-run), stale-link removal, uninstall (shared Codex/Copilot root: uninstalling either removes library links for both), manual refresh of vendored skills, and a note in the install table (FR-014). Exempt: README.md - documentation only
+- [X] T015 [P] Add a skill library section to `README.md`: both layers, `--add-skill`, reserved name `factory`, `skip:` conflict handling and adoption, links from another checkout or a moved checkout treated as user-owned (remove the old link and re-run), stale-link removal, uninstall (shared Codex/Copilot root: uninstalling either removes library links for both), manual refresh of vendored skills, and a note in the install table (FR-014). Exempt: README.md - documentation only
 - [ ] T016 Run the build command (render all five harnesses, `git diff --exit-code -- dist/`, then the constitution's porcelain gate `test -z "$(git status --porcelain -- dist/)"`), `python3 -m unittest discover -s tools` and `bash -n install.sh`; confirm all pass (SC-004). Verification task, no seam.
 
 ---

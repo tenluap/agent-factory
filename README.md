@@ -12,7 +12,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | GitHub Copilot (CLI, VS Code agent mode) | `./install.sh --harness copilot` | `/factory <feature>` | `~/.copilot/agents/factory-*.agent.md` |
 | ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |
 
-`./install.sh --harness all` installs every adapter. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
+`./install.sh --harness all` installs every adapter and links the skill library described below. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
 
 The OpenCode adapter requires V2's `subagent` and `shell` tools and uses native `permissions` rules. Install with `./install.sh --harness opencode`; it verifies the factory skill and role-agent links. Start a fresh OpenCode session after installation so it loads them. If an existing non-symlink blocks a link, resolve that path and rerun the installer. If `/factory` loads but reports a missing tool, enable that capability and restart the session; if `/factory` itself is unavailable, install and reload first. OpenCode translates supported V1 agent and skill files, so existing installations are intended to keep working. See the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
 
@@ -27,6 +27,14 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 ```
 
 Only Claude Code pins agent models by default (its harness requires defaults); on the other harnesses agents use the session's model until you pin them here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
+
+### Skill library
+
+The installer links skills from this checkout's `skills/` and `${FACTORY_HOME:-~/.factory}/skills/` into the selected harness's skill root. The per-user layer wins when names match. Add a local skill with `./install.sh --harness opencode --add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
+
+Existing files, directories, and links outside the current library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun installation. Links made from another checkout or before moving this checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically.
+
+Uninstall removes library links but keeps both layers. Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared library links. Maintainers refresh vendored skills manually by copying the upstream skill and license and updating `skills/SOURCES.md` with the source commit; no sync tool is provided.
 
 ## Usage
 
