@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability",
   "spec_dir": "specs/012-run-reliability",
   "status": "running",
-  "stage": "verify",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -582,7 +582,7 @@
       "harness": "codex"
     },
     {
-      "at": "2026-10-28T08:15:53.858364Z",
+      "at": "2026-10-28T08:15:54.221471Z",
       "stage": "verify",
       "event": "verify-pass",
       "commit": null,
