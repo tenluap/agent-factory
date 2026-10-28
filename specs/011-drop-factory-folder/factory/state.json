@@ -64,8 +64,8 @@
       "kind": "halt",
       "stage": "specify",
       "summary": "invalid deep model id",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-28T00:40:28.373287Z",
+      "latency_ms": 53201
     }
   ],
   "decisions": [
