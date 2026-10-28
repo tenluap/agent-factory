@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": "S4-pending",
+      "worktree": "/tmp/factory012-trials/s4-pending-v2",
+      "role": "code-build",
+      "stage": "implement",
+      "deadline_offset_seconds": 45,
+      "facts": {
+        "unit": "passing committed unit, all behavior tasks checked",
+        "required_checks": "mandatory full checks still pending",
+        "optional_repeat": null,
+        "prior_broad_check_seconds": 300,
+        "remaining_work": "no additional behavior unit",
+        "commands": {
+          "build": "python3 -c \"print(\"fixture build passed\")\"",
+          "test": "python3 probe.py"
+        },
+        "probe_boundary": "probe.py is the disposable invocation recorder for a broad check; its supplied historical duration is fixture data, not an observed real test-performance claim"
+      }
+    }
+  ],
+  "clock_instruction": "At each case boundary, record actual UTC time and calculate case deadline from now using deadline_offset_seconds. Then apply tested role time/verification guidance; record actual decision time, any command invocation and final envelope. The configured durations below are supplied fixture observations of prior broad checks, not measurements of this fast probe command."
+}

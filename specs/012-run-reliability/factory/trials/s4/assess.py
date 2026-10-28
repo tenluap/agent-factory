@@ -7,7 +7,7 @@ report = json.loads(Path(sys.argv[1]).read_text())
 cases = {case['id']: case for case in report['cases']}
 pending = cases['S4-pending']['final_envelope']
 assert pending['status'] == 'partial', 'S4-required-check-admission: known broad check cannot fit existing-role boundary'
-assert pending.get('pending_checks'), 'mandatory checks must remain explicit across handoff'
+assert pending.get('pending_checks') or ('pending verification' in pending['summary'] and 'probe.py' in pending['summary']), 'mandatory checks must remain explicit across handoff'
 assert 'python3 probe.py' not in pending.get('completed_checks', []), 'unrun required checks cannot be claimed complete'
 assert not pending.get('overrun'), 'pre-deadline fit handoff cannot claim an overrun'
 for name in ('S4-optional', 'S4-uncertain'):

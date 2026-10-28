@@ -16,7 +16,7 @@ Every factory agent ends every turn with exactly one fenced `json` block, the **
 }
 ```
 
-- `status`: `done` (stage finished), `needs_input` (questions below; the agent stops, and a fresh one continues the stage once they are answered), `partial` (valid for all file-writing roles — spec-builder, code-build, fixer — that stop at a unit boundary: context running low or past the `deadline` given in the inputs, with progress committed), `failed` (`error` says why).
+- `status`: `done` (stage finished), `needs_input` (questions below; the agent stops, and a fresh one continues the stage once they are answered), `partial` (valid for all file-writing roles — spec-builder, code-build, fixer — that stop at a unit boundary: context running low, deadline reached, or remaining time insufficient for the next required broad check, with progress committed), `failed` (`error` says why).
 - `overrun` (optional, on a `partial` envelope): the deadline-stop report `{ "cause", "detail" }` — `cause` from the closed list `large-input`, `test-loop`, `retry`, `tool-slow`, `scope-too-big`, `other`, and `detail` free text carrying the overshoot past the deadline (how far past, at which unit boundary). `envelope check` validates it when present. A `partial` stop without a deadline — e.g. low context — carries no `overrun`.
 - `questions` (with `needs_input`): the **whole frontier** for this round: every open question whose prerequisites are settled. Defer questions whose wording or options depend on unanswered decisions. Use the question shape below. IDs are unique within a stage; later rounds continue the numbering.
 - `analyze` (analyze stage only): `{ "report": "factory/analyze-<n>.md", "critical": 0, "high": 2, "medium": 1, "low": 0 }`.
@@ -26,6 +26,12 @@ Every factory agent ends every turn with exactly one fenced `json` block, the **
 A well-formed `design` gate failure or missing capability is a verification/activation result: use the mapping contract's shared review/repair or protected halt/exception path, not the malformed-agent retry policy. `status: failed` still identifies unfinished role/task work and carries its error; an exception cannot mark unfinished tasks complete. `partial` retains its existing code-build-only meaning. Reviewers/judge keep their existing findings/verdict shapes and describe design evidence/gaps/exceptions in their summaries/findings.
 
 Reviewers and the judge return their report or verdict (findings.md) as their final fenced block instead.
+
+## Verification handoff
+
+At each passing commit-unit boundary, check actual time before another unit or broad verification. Use available observed check duration. Omit optional repeats that cannot reasonably fit, or whose fit is uncertain near the deadline. If all work and required checks are already complete, return `done` without an unnecessary repeat.
+
+When a required broad check cannot reasonably fit, return `partial` with committed progress, next unit and the exact pending checks. A pre-deadline fit handoff explains the decision in `summary` and omits `overrun`; that report is only for actual overshoot after crossing the deadline. Pending is not passed: a fresh role starts the pending mandatory verification as its next unit, even when the observed check duration exceeds a full fresh budget, and finishes that in-flight check safely. This prevents repeated deferral. The orchestrator independently verifies before review. Resume preserves completed commits and runs pending checks before claiming `done`. Finish in-flight work safely; report actual overshoot after the deadline and start no further unit. Keep configured budgets, issue provenance and the no-progress stall limit unchanged.
 
 ## Questions
 

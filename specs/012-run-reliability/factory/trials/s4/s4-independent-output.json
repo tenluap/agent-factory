@@ -1,0 +1,29 @@
+{
+  "verifier": "root orchestrator, independent of native subject",
+  "at": "2026-10-28T07:51:50.312188+00:00",
+  "worktree": "/tmp/factory012-trials/s4-after/pending",
+  "invocations_before": 1,
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "-c",
+        "print('fixture build passed')"
+      ],
+      "status": 0,
+      "stdout": "fixture build passed\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "probe.py"
+      ],
+      "status": 0,
+      "stdout": "fixture broad-suite probe: passed\n",
+      "stderr": ""
+    }
+  ],
+  "invocations_after": 2,
+  "passed": true
+}

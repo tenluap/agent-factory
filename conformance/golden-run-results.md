@@ -89,3 +89,22 @@ Two fresh native subjects applied frozen old/new plan/analyze contracts to the s
 `S3-failure-scope-acceptance` assesses native outputs: `python3 specs/012-run-reliability/factory/trials/s3/assess-scope.py before` exits 1 for missing git-path/missing/stale blockers and same-name expansion; `... after` exits 0 for all eleven cases. Source uses one shared confirmed-scope definition; declarations and acceptance remain separate. Legacy name-only acceptance is reusable only with independent exact-scope evidence. No runtime state field, budget, model mapping or accounting change was introduced.
 
 All five harnesses canonical-rendered. Focused renderer/model suite passed **27 tests**; `git diff --check` passed. S4 and final full/independent checks remain pending.
+
+### S4 observed boundary/handoff/accounting — 2026-10-28
+
+Evidence: `specs/012-run-reliability/factory/trials/s4/` retains native neutral prompts, input facts, original/changed/v2 reports, tested source snapshots/hashes, real git/command evidence, resume and independent verification reports, accounting CLI records and runnable `assess.py`. Subjects had no outcome rubric. Code-build was the native subject; the other file-writing roles share the same protocol and were inspected statically, not claimed as separate native trials.
+
+| Case | Before observation | After observation | Assessment |
+|---|---|---|---|
+| S4-optional / uncertain | Already omitted unnecessary repeats; done with supplied required checks complete | Same behavior; omitted probes with known/unknown fit rationale | Preserved controls, no manufactured red |
+| S4-pending | Started broad-check probe despite supplied prior300s vs45s remaining; old contract had no admission handoff | Explicit partial, exact mandatory checks pending, no invocation; v2 replay omits false overrun | Observed `S4-required-check-admission` red→green |
+| S4-inflight | Committed in-flight work and reported actual1.412s overshoot | Same safe commit/partial with actual clock and overshoot | Preserved control |
+| S4-resume | Existing role-check completion retained | Fresh45s verification role started pending check despite historical300s, completed commands, preserved commit | Anti-deferral control; required checks not skipped |
+| Independent verification | Not inferred from role report | Root reran build/test separately: both0; actual probe invocation count1→2 | Independent fixture verification observed |
+| S4-progress / stall | Existing behavior | Actual budget/ledger/issue/verify CLI: new work commit resets count; third same-commit partial returns halt:true | Existing accounting preserved |
+
+The300s values are supplied historical fixture data for admission decisions, not measurements of the fast invocation probe or a claimed speedup. Required checks remain mandatory; the fresh-role exception prevents endless deferral when duration exceeds a fresh budget. A first after-subject incorrectly attached a0s overrun to an early partial; that report is preserved as a failed ambiguity. Shared protocol now explicitly omits overrun before deadline; a fresh affected-case v2 replay confirmed partial/no invocation/no overrun. Original before build probe had a shell-quoting error, corrected and disclosed by the subject; it is not product red evidence.
+
+`assess.py s4-before-output.json` fails admission as expected; `assess.py s4-effective-output.json` passes. The effective matrix explicitly combines unchanged original controls and the authoritative fresh v2 pending case. Native per-case clocks are separate from outer subject runtime budgets; no false fixture timing claim is made.
+
+Existing `python3 -m unittest discover -s tools -p test_budget.py`:16 tests OK before and after. All five distributions canonical-rendered; whitespace clean. Budgets, production state schema/CLI, issue provenance and stall limit unchanged. Full suite, final clean-dist and independent repository verification remain pending T012.

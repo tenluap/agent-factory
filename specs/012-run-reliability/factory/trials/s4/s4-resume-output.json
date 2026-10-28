@@ -1,0 +1,160 @@
+{
+  "tested_instructions": [
+    "/tmp/factory012-trials/after-s4/roles/code-build.md",
+    "/tmp/factory012-trials/after-s4/factory/references/engineering.md",
+    "/tmp/factory012-trials/after-s4/factory/references/protocol.md"
+  ],
+  "id": "S4-pending-resume",
+  "source_report": "/tmp/factory012-trials/s4-after-output.json",
+  "source_case": "S4-pending",
+  "boundary_at": "2026-10-28T07:51:34.112093+00:00",
+  "deadline": "2026-10-28T07:52:19.112093+00:00",
+  "parent_role_deadline": "2026-10-28T07:55:42.150441Z",
+  "decision_at": "2026-10-28T07:51:34.231380+00:00",
+  "finished_at": "2026-10-28T07:51:34.416565+00:00",
+  "actual_overshoot_seconds": 0,
+  "historical_broad_check_seconds": 300,
+  "historical_duration_provenance": "Supplied fixture data, not measured probe runtime.",
+  "decision_reason": "Protocol Verification handoff requires a fresh role to start pending mandatory verification as its next unit even when the supplied historical duration exceeds the fresh 45-second budget. No behavior work remains.",
+  "prior_pending_checks": [
+    "python3 probe.py"
+  ],
+  "chosen_commands": [
+    {
+      "argv": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.113685+00:00",
+      "ended_at": "2026-10-28T07:51:34.157539+00:00",
+      "exit_code": 0,
+      "stdout": "?? trial-invocations.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.157665+00:00",
+      "ended_at": "2026-10-28T07:51:34.190743+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "log",
+        "-1",
+        "--format=fuller"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.190771+00:00",
+      "ended_at": "2026-10-28T07:51:34.231290+00:00",
+      "exit_code": 0,
+      "stdout": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "probe.py"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.231381+00:00",
+      "ended_at": "2026-10-28T07:51:34.283353+00:00",
+      "exit_code": 0,
+      "stdout": "fixture broad-suite probe: passed\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "-c",
+        "print('fixture build passed')"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.283394+00:00",
+      "ended_at": "2026-10-28T07:51:34.319068+00:00",
+      "exit_code": 0,
+      "stdout": "fixture build passed\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.319108+00:00",
+      "ended_at": "2026-10-28T07:51:34.351731+00:00",
+      "exit_code": 0,
+      "stdout": "?? invocations.jsonl\n?? trial-invocations.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "log",
+        "-1",
+        "--format=fuller"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.351768+00:00",
+      "ended_at": "2026-10-28T07:51:34.382396+00:00",
+      "exit_code": 0,
+      "stdout": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "show",
+        "--stat",
+        "--oneline",
+        "HEAD"
+      ],
+      "cwd": "/tmp/factory012-trials/s4-after/pending",
+      "started_at": "2026-10-28T07:51:34.382433+00:00",
+      "ended_at": "2026-10-28T07:51:34.416527+00:00",
+      "exit_code": 0,
+      "stdout": "5404551 fixture: passing unit and probe\n probe.py | 5 +++++\n tasks.md | 1 +\n work.txt | 1 +\n 3 files changed, 7 insertions(+)\n",
+      "stderr": ""
+    }
+  ],
+  "invocation_counts": {
+    "build": 1,
+    "test": 1,
+    "broad_probe_before": 0,
+    "broad_probe_after": 1,
+    "broad_probe_this_invocation": 1
+  },
+  "git_status_before": "?? trial-invocations.json\n",
+  "git_diff_before": "",
+  "git_head_before": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+  "git_status_after": "?? invocations.jsonl\n?? trial-invocations.json\n",
+  "git_head_after": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+  "git_commit_evidence": "5404551 fixture: passing unit and probe\n probe.py | 5 +++++\n tasks.md | 1 +\n work.txt | 1 +\n 3 files changed, 7 insertions(+)\n",
+  "commit_preserved": true,
+  "final_envelope": {
+    "status": "done",
+    "stage": "implement",
+    "summary": "Resumed pending mandatory full verification as the next unit; probe and build passed. Preserved the completed implementation commit.",
+    "files": [],
+    "questions": [],
+    "analyze": null,
+    "error": null,
+    "pending_checks": [],
+    "completed_checks": [
+      "Passing committed implementation unit (supplied fixture fact)",
+      "python3 probe.py (actually run, passed)",
+      "python3 -c \"print('fixture build passed')\" (actually run, passed)"
+    ],
+    "next_unit": null
+  }
+}

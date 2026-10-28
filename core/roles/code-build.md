@@ -13,7 +13,7 @@ You implement a feature for the factory orchestrator. Read `<F>/references/proto
 
 ## Time budget
 
-The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each task is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+The inputs carry a `deadline` (absolute ISO UTC). Check time between units (each commit unit) and follow protocol.md's "Verification handoff" before more work or broad checks. Finish the unit in flight safely after the deadline, commit it, and return `partial` with accurate `overrun` cause/detail and pending checks. A fresh role resumes committed progress; no new unit starts past the deadline.
 
 ## Pen reference work
 
@@ -35,7 +35,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
    - When the repository has a test runner but its test command cannot be run: stop the same way, per engineering.md's "When the red step cannot be observed at all" definition. Return `failed` naming the task, the un-runnable command and the error it produced.
    - Skip a test only per ENG-5, and state the exemption.
    - After each passing unit: tick its checkbox (both entries for a legacy pair) and commit test, implementation and `tasks.md` together as `factory(implement): <task id(s)> <task title>`.
-4. Run applicable `commands.build` and `commands.test`. Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
+4. Complete applicable `commands.build` and `commands.test`, or preserve exact pending checks through protocol.md's "Verification handoff". Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
 
 Done = every box in `tasks.md` checked, every implementation unit actually completed, every passing unit committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
 

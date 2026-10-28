@@ -1,0 +1,104 @@
+{
+  "cases": [
+    {
+      "id": "S4-pending",
+      "boundary_utc": "2026-10-28T07:57:46.799171+00:00",
+      "deadline_utc": "2026-10-28T07:58:31.799171+00:00",
+      "decision_utc": "2026-10-28T07:57:46.852320+00:00",
+      "remaining_seconds_at_decision": 44.946851,
+      "supplied_prior_broad_check_seconds": 300,
+      "decision": "handoff required verification without launching it",
+      "reason": "Required broad check cannot reasonably fit in remaining budget; pre-deadline partial at committed unit boundary per Verification handoff. Fresh role must start pending mandatory verification as next unit.",
+      "invocations": [
+        {
+          "command": [
+            "git",
+            "-C",
+            "/tmp/factory012-trials/s4-pending-v2",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "540455127993c492785a86482fd746c45a708e71\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "/tmp/factory012-trials/s4-pending-v2",
+            "status",
+            "--porcelain"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "/tmp/factory012-trials/s4-pending-v2",
+            "log",
+            "-1",
+            "--format=fuller"
+          ],
+          "exit_code": 0,
+          "stdout": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "/tmp/factory012-trials/s4-pending-v2",
+            "diff",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "/tmp/factory012-trials/s4-pending-v2",
+            "show",
+            "HEAD:tasks.md"
+          ],
+          "exit_code": 0,
+          "stdout": "- [x] T001 Complete tested behavior.\n",
+          "stderr": ""
+        }
+      ],
+      "verification_invocations": [],
+      "completed_checks": [],
+      "pending_checks": {
+        "build": "python3 -c \"print(\"fixture build passed\")\"",
+        "test": "python3 probe.py"
+      },
+      "pending_work": [
+        "Mandatory build and test verification; no additional behavior unit"
+      ],
+      "git_evidence": {
+        "head": "540455127993c492785a86482fd746c45a708e71",
+        "status_porcelain": "",
+        "diff_head": "",
+        "last_commit": "commit 540455127993c492785a86482fd746c45a708e71\nAuthor:     Fixture <fixture@example.invalid>\nAuthorDate: Wed Oct 28 07:47:14 2026 +0000\nCommit:     Fixture <fixture@example.invalid>\nCommitDate: Wed Oct 28 07:47:14 2026 +0000\n\n    fixture: passing unit and probe\n",
+        "committed_tasks": "- [x] T001 Complete tested behavior.\n"
+      },
+      "final_utc": "2026-10-28T07:57:46.852364+00:00",
+      "actual_overshoot_seconds": 0,
+      "final_envelope": {
+        "status": "partial",
+        "stage": "implement",
+        "summary": "All behavior tasks are checked and the passing unit is committed. With approximately 44.947 seconds remaining and a supplied prior broad-check duration of 300 seconds, mandatory verification cannot reasonably fit; next unit is pending verification: build python3 -c \"print(\"fixture build passed\")\"; test python3 probe.py.",
+        "files": [],
+        "questions": [],
+        "analyze": null,
+        "error": null
+      }
+    }
+  ]
+}

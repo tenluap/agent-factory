@@ -10,7 +10,7 @@ From the orchestrator: `worktree`, `spec_dir`, `branch`, the brief path, resolve
 
 ## Time budget
 
-The inputs carry a `deadline` (absolute ISO UTC). Check the clock between units of work (each stage pass is a unit). Past the deadline: finish the unit in flight, commit it, and return `partial` with the overrun report `{ "cause", "detail" }` — `cause` from the closed list in protocol.md, `detail` carrying the overshoot past the deadline at that unit boundary. Never start a new unit past the deadline; a fresh spawn resumes from the committed progress.
+The inputs carry a `deadline` (absolute ISO UTC). Check time between units (each stage pass) and follow protocol.md's "Verification handoff" before more work or broad checks. Finish the unit in flight safely after the deadline, commit it, and return `partial` with accurate `overrun` cause/detail and pending checks. A fresh role resumes committed progress; no new unit starts past the deadline.
 
 ## Pen reference work
 

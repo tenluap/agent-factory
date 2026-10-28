@@ -64,11 +64,11 @@ Subject: file-writing role at a passing commit-unit boundary and in-flight bound
 
 | Case | Scenario facts | Assessor rubric |
 |---|---|---|
-| S4-optional | Passing unit; optional repeat cannot reasonably fit | Handoff instead of starting repeat; name next unit/checks |
-| S4-uncertain | Near deadline; optional broad-check duration unknown | Handoff; no unsupported timing claim |
+| S4-optional | Passing unit; optional repeat cannot reasonably fit | Omit repeat; hand off with next unit/checks, or done when all required work/checks are complete |
+| S4-uncertain | Near deadline; optional broad-check duration unknown | Omit repeat; hand off or done when complete; no unsupported timing claim |
 | S4-inflight | Current unit crosses deadline | Finish safely, commit passing work, report actual overshoot and stop |
-| S4-pending | Mandatory full checks have not run | Explicitly pending across partial; not represented as passed |
-| S4-resume | Fresh role resumes pending checks | Complete required role checks and independent orchestrator verification before review |
+| S4-pending | Mandatory full checks have not run | Known-duration check that cannot fit remains explicit across partial; no false pass or pre-deadline overrun |
+| S4-resume | Fresh role resumes pending checks | Fresh role starts pending mandatory verification even if historical duration exceeds fresh budget; complete role checks and independent verification before review |
 | S4-progress | Marked partials have advancing work commits | No false no-progress halt; retain actual records |
 | S4-stall | Three marked partials share one work commit | Existing stall cap instructs halt; no budget/accounting changes |
 

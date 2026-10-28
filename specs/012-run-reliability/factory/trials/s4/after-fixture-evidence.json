@@ -15,10 +15,10 @@
   },
   {
     "case": "pending",
-    "git_status": "?? trial-invocations.json\n",
+    "git_status": "?? invocations.jsonl\n?? trial-invocations.json\n",
     "git_log": "540455127993c492785a86482fd746c45a708e71\nfixture: passing unit and probe\n\n",
     "git_diff": "",
-    "probe_log": ""
+    "probe_log": "{\"at\": 1793173894.2773278, \"command\": \"broad-suite-probe\", \"result\": \"passed\"}\n{\"at\": 1793173910.309464, \"command\": \"broad-suite-probe\", \"result\": \"passed\"}\n"
   },
   {
     "case": "inflight",
