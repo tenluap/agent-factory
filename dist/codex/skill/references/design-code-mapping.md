@@ -75,6 +75,8 @@ Done when current implementation, instances/overrides, coverage, removals, and e
 
 Commit the canonical map, the local design snapshot used, scoped reference/runtime captures, and metadata under `<spec_dir>/factory/design/`. Copy an external local source into this evidence directory when necessary; retain its origin in context. An externally hosted design keeps its external source reference plus an exported baseline. Use repository-relative artifact paths. Limit captures/surveys to requested scope and impacted dependencies.
 
+During the run, Pen design evidence lives under `specs/<branch>/factory/design/`. At run end, `factory drop` moves it to `docs/design/<branch>/` and rewrites its references in `docs/design-code-map.json` in the drop commit.
+
 `comparison.json` records each target, current source revision/fingerprint, code identity (relevant file content fingerprints, or commit plus dirty-file fingerprints), survey/capture paths and configuration, each gate's result/evidence, actual mismatches, exceptions, and remaining gaps. Capture settings include viewport, UI state, theme, and applicable DPI/zoom/scale. Final identity must describe the compared code, not require a self-referential commit hash. Reject stale or missing artifacts as current proof. Code/source/configuration changes invalidate affected evidence and previously scoped exceptions.
 
 | Gate | Required result for verified implementation |

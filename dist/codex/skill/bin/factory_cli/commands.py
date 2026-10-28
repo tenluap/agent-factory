@@ -5,8 +5,10 @@ their tasks land. Everything mechanical routes through `state` (and, from
 T015, `lock`); this module adds only discovery, digests and CLI errors.
 """
 
+import filecmp
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -396,6 +398,145 @@ def cmd_improvements_claim(repo, name):
 
 def now_iso():
     return state.iso(datetime.now(timezone.utc))
+
+
+def cmd_drop(repo, cwd):
+    branch = git(str(cwd), "branch", "--show-current").strip()
+    matches = [
+        run
+        for run in find_runs(repo)
+        if not isinstance(run, dict)
+        and run[2]["source"] == "worktree"
+        and os.path.realpath(run[2]["worktree"]) == os.path.realpath(cwd)
+        and is_authoritative(run)
+        and branch
+        and run[1].get("branch") == branch
+    ]
+    if not matches:
+        die(1, f"no run to drop from {cwd}")
+    if len(matches) > 1:
+        die(1, f"several runs claim {cwd}: {', '.join(str(run[0]) for run in matches)}")
+    path, loaded, identity, worktree = matches[0]
+    if loaded.get("status") != "pr-open":
+        die(1, f"run is {loaded.get('status')}; drop needs pr-open")
+    target = (
+        factory_home()
+        / "archive"
+        / improvements.backlog_name(repo, loaded["branch"])[:-5]
+    )
+    folder = f"{identity['spec_dir']}/factory"
+    design = (
+        f"docs/design/{loaded['branch']}" if (path.parent / "design").is_dir() else None
+    )
+    design_path = Path(worktree) / design if design else None
+    map_name = "docs/design-code-map.json"
+    map_path = Path(worktree) / map_name
+    checked_paths = [folder] + ([design, map_name] if design else [])
+    dirty = git(
+        worktree, "status", "--porcelain", "--untracked-files=no", "--", *checked_paths
+    )
+    if design and map_path.exists():
+        dirty += git(
+            worktree, "status", "--porcelain", "--untracked-files=all", "--", map_name
+        )
+    if dirty:
+        die(1, f"drop paths have uncommitted changes:\n{dirty.strip()}")
+    try:
+        lock.acquire(path, loaded.get("harness") or "unknown")
+    except lock.LockHeld as e:
+        die(1, str(e))
+    try:
+        if target.exists():
+            die(1, f"archive {target} already exists; refusing to overwrite")
+        if design_path and design_path.exists():
+            die(1, f"design target {design_path} already exists")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+        try:
+            shutil.copytree(
+                path.parent,
+                tmp,
+                ignore=lambda directory, names: {"lock.json"}
+                if Path(directory) == path.parent
+                else set(),
+            )
+            pending = [filecmp.dircmp(path.parent, tmp, ignore=["lock.json"])]
+            problems = []
+            while pending:
+                comparison = pending.pop()
+                problems.extend(
+                    str(Path(comparison.left) / name)
+                    for name in comparison.left_only
+                    + comparison.right_only
+                    + comparison.funny_files
+                )
+                for name in comparison.common_files:
+                    left, right = (
+                        Path(comparison.left) / name,
+                        Path(comparison.right) / name,
+                    )
+                    if not filecmp.cmp(left, right, shallow=False):
+                        problems.append(str(left))
+                pending.extend(
+                    filecmp.dircmp(
+                        Path(comparison.left) / name,
+                        Path(comparison.right) / name,
+                        ignore=[],
+                    )
+                    for name in comparison.common_dirs
+                )
+            if problems:
+                raise OSError(", ".join(problems))
+            os.rename(tmp, target)
+        except OSError as e:
+            shutil.rmtree(tmp, ignore_errors=True)
+            die(1, f"archive copy failed: {e}")
+    finally:
+        lock.release(path)
+    paths = [folder]
+    map_exists = bool(design and map_path.is_file())
+    map_bytes = None
+    try:
+        if design:
+            design_path.parent.mkdir(parents=True, exist_ok=True)
+            git(worktree, "mv", "--", f"{folder}/design", design)
+            paths.append(design)
+            if map_exists:
+                old = f'"{folder}/design/'.encode()
+                new = f'"{design}/'.encode()
+                map_bytes = map_path.read_bytes()
+                map_path.write_bytes(map_bytes.replace(old, new))
+                git(worktree, "add", "--", map_name)
+                paths.append(map_name)
+        git(worktree, "rm", "-r", "-q", "--", folder)
+        git(worktree, "commit", "-q", "-m", "factory: drop run artifacts", "--", *paths)
+    except (CLIError, OSError) as e:
+        restore_paths = (
+            [folder] + ([design] if design else []) + ([map_name] if map_exists else [])
+        )
+        git(worktree, "reset", "-q", "HEAD", "--", *restore_paths)
+        git(worktree, "checkout", "-q", "HEAD", "--", folder)
+        if map_exists and git(worktree, "ls-files", "--", map_name).strip():
+            git(worktree, "checkout", "-q", "HEAD", "--", map_name)
+        if map_bytes is not None:
+            map_path.write_bytes(map_bytes)
+        if design_path:
+            shutil.rmtree(design_path, ignore_errors=True)
+            shutil.copytree(
+                target / "design", path.parent / "design", dirs_exist_ok=True
+            )
+        shutil.rmtree(target, ignore_errors=True)
+        die(1, str(e))
+    shutil.rmtree(path.parent, ignore_errors=True)
+    return {
+        "dropped": folder,
+        "archive": str(target),
+        "design": design,
+        "commit": git(worktree, "rev-parse", "--short", "HEAD").strip(),
+        "pr_url": loaded.get("pr_url"),
+        "totals_sentence": totals.sentence(totals.compute(loaded)),
+        "dropped_at": now_iso(),
+    }
 
 
 def resolve_target(repo, cwd):
