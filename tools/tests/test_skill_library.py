@@ -97,3 +97,24 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse((self.root / "pr").is_symlink())
         self.assertIn(f"removed: {self.root / 'pr'}", result.stdout)
+
+    def test_user_layer_precedence_exclusions_and_stale_fallback(self):
+        first = self.run_install()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual((self.root / "tdd").readlink(), self.checkout / "skills/tdd")
+        for name in ("personal", "tdd", ".tdd.tmp.123", "factory"):
+            folder = self.factory_home / "skills" / name
+            folder.mkdir(parents=True)
+            (folder / "SKILL.md").write_text("test")
+        second = self.run_install()
+        self.assertEqual(second.returncode, 0, second.stderr)
+        for name in ("personal", "tdd"):
+            self.assertEqual((self.root / name).readlink(), self.factory_home / "skills" / name)
+        self.assertFalse((self.root / ".tdd.tmp.123").exists())
+        self.assertIn(f"skip: {self.factory_home}/skills/factory: name reserved for the factory skill", second.stdout)
+        self.assertEqual((self.root / "factory").readlink(), self.factory_home / "dist/opencode/skill")
+        shutil.rmtree(self.factory_home / "skills/tdd")
+        third = self.run_install()
+        self.assertEqual(third.returncode, 0, third.stderr)
+        self.assertIn(f"removed: {self.root / 'tdd'}", third.stdout)
+        self.assertEqual((self.root / "tdd").readlink(), self.checkout / "skills/tdd")
