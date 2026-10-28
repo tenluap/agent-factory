@@ -66,6 +66,14 @@
       "summary": "invalid deep model id",
       "answered_at": "2026-10-28T00:40:28.373287Z",
       "latency_ms": 53201
+    },
+    {
+      "at": "2026-10-28T00:42:16.420620Z",
+      "kind": "halt",
+      "stage": "specify",
+      "summary": "deep model not accessible",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
