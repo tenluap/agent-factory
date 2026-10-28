@@ -8,6 +8,13 @@
 
 **Input**: User description: "At the end of the whole factory flow, drop the factory folder the run adds under specs/<branch>/ so it is no longer committed in PRs."
 
+## Clarifications
+
+### Session 2026-10-28
+
+- Q: Where does step 9 get the run totals and PR URL once the drop has removed `state.json` from the worktree? → A: `factory drop` computes the totals sentence from the final state before removal and includes it, the PR URL and the archive path in its JSON output. Step 9 `NOTIFY`s from that output. The PR stage is done when the PR URL is recorded in the archived state and shown to the user.
+- Q: How is a failed final push (after the drop commit) recovered, given the run is no longer discoverable? → A: The orchestrator retries the push once in the same turn. If the second attempt fails, it `NOTIFY`s the user to run `git push` from the named worktree path. No resume is involved.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - PR diff carries no run artifacts (Priority: P1)
@@ -38,7 +45,7 @@ A maintainer who studies how runs went (issues, timeline, ledger, analyze report
 
 1. **Given** a `pr-open` run, **When** `factory drop` runs, **Then** the whole `specs/<branch>/factory/` folder is copied to `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/` before anything is removed from git.
 2. **Given** the copy completes, **When** verification compares the copy with the source, **Then** the removal proceeds only if every file matches; otherwise the command refuses, removes nothing from git, and reports which files differ or are missing.
-3. **Given** a successful drop, **When** the command exits, **Then** it prints JSON naming the archive path.
+3. **Given** a successful drop, **When** the command exits, **Then** it prints JSON naming the archive path, the PR URL and the run totals sentence computed from the final state.
 
 ---
 
@@ -63,7 +70,8 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 
 - Aborted runs: never dropped. Their folder and worktree stay as they are.
 - Copy fails midway (disk full, permission error): the copy goes to a temporary sibling under `${FACTORY_HOME:-~/.factory}/archive/` and is renamed into place only after verification. On failure the command removes the temporary copy, leaves the folder in git untouched, and refuses; no partial archive remains, so a retry is not blocked.
-- The PR exists but the second push fails: the drop commit stays local; resume of the `pr` stage repeats only the push (the folder is already gone and the archive exists).
+- The PR exists but the final push fails: the drop commit stays local and complete. The orchestrator retries the push once in the same turn; if that also fails, it `NOTIFY`s the user to run `git push` from the named worktree path. No resume is involved (the run is no longer discoverable).
+- Totals after the drop: `state.json` is gone from the worktree, so step 9 takes the totals sentence, PR URL and archive path from the `factory drop` JSON output instead of reading state.
 - Resume after the drop: discovery no longer finds the run on the branch, which matches today's behaviour for `pr-open` runs (they are already excluded from discovery).
 - Improvement backlog: `set-status pr-open` exports the backlog before the drop, so the export is unaffected. `factory improvements claim` treats a run with no discoverable state as ended, as it does for any non-discoverable run today.
 - Untracked or ignored files inside the folder: the archive copies the folder as it is on disk; the removal commit removes the tracked files. Any untracked leftovers are archived too.
@@ -79,16 +87,16 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 - **FR-004**: `factory drop` MUST refuse, overwrite nothing and commit nothing when the archive target already exists. The message names the existing path.
 - **FR-005**: `factory drop` MUST verify the copy (same file set, identical content) before removing anything from git. A failed verification refuses and leaves git untouched.
 - **FR-006**: After a verified copy, `factory drop` MUST remove the folder from git (`git rm -r specs/<branch>/factory`) and create exactly one commit with the message `factory: drop run artifacts`, touching no other path.
-- **FR-007**: On success `factory drop` MUST print JSON that includes the archive path.
+- **FR-007**: On success `factory drop` MUST print JSON that includes the archive path, the PR URL from the final state, and the run totals sentence computed from the final state before removal.
 - **FR-008**: `factory drop` MUST NOT push. Pushing stays with the orchestrator.
-- **FR-009**: SKILL.md step 9 MUST run, in order: push, `gh pr create`, `factory set-status pr-open --pr-url <url>`, `factory drop`, push. The final state and the improvement backlog export of `set-status pr-open` are unchanged.
+- **FR-009**: SKILL.md step 9 MUST run, in order: push, `gh pr create`, `factory set-status pr-open --pr-url <url>`, `factory drop`, push, then `NOTIFY` the totals sentence and PR URL taken from the `factory drop` JSON output. If the final push fails, the orchestrator retries it once in the same turn; a second failure `NOTIFY`s the user to run `git push` from the named worktree path. The stage's "Done when" becomes: the PR URL is recorded in the archived state and shown to the user. The final state and the improvement backlog export of `set-status pr-open` are unchanged.
 - **FR-010**: Run state MUST stay committed throughout the run. Checkpoints, resume, discovery and the existing write commands keep their current behaviour; no history rewrite and no gitignore change.
 - **FR-011**: The drop MUST apply to every run that reaches `pr-open`, with no opt-out flag or configuration setting.
 - **FR-012**: `aborted` runs MUST keep their folder and worktree.
 - **FR-013**: DESIGN.md MUST record the new end-of-run behaviour (PR step, state CLI surface, archive location) before or with the core change (constitution I).
 - **FR-014**: references/state.md MUST document the archive under "Location" and `factory drop` under "CLI"; README MUST describe the drop and the archive location.
 - **FR-015**: `dist/` MUST be re-rendered for every harness and committed with the source change (constitution III).
-- **FR-016**: Unit tests in `tools/tests/` MUST cover: success (archive equals source, folder gone, one commit with the expected message touching only the folder, JSON output), refusal for each non-`pr-open` status, refusal on archive collision, refusal under a live lock, and no git change on a failed verification.
+- **FR-016**: Unit tests in `tools/tests/` MUST cover: success (archive equals source, folder gone, one commit with the expected message touching only the folder, JSON output carrying archive path, PR URL and totals sentence), refusal for each non-`pr-open` status, refusal on archive collision, refusal under a live lock, and no git change on a failed verification.
 
 ### Key Entities
 
