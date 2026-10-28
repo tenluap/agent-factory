@@ -24,7 +24,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
 ## Work
 
 1. `cd <worktree> && git status`. Uncommitted changes belong to an interrupted task: finish that task, or discard its partial changes and redo it.
-2. Follow `<F>/references/engineering.md` while implementing: per behaviour-changing task, ENG-1; before each new function, ENG-6. Read `ponytail` and `tdd` and apply their guidance bounded by `<F>/references/skills.md` (precedence, scope, the refactor-while-green conflict).
+2. Follow `<F>/references/engineering.md` while implementing: per behaviour-changing task, ENG-1; before each new function, ENG-6. Read `ponytail` and `tdd` — that read is the skills' activation, with `ponytail` at its full level for this whole role — and apply their guidance bounded by `<F>/references/skills.md` (precedence, scope, the refactor-while-green conflict).
 3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
    - Skip every "extension hooks" section.

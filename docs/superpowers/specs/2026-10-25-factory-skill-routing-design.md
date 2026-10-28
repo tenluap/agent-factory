@@ -51,7 +51,7 @@ Brainstorming's default document location, commit instructions and planner hando
 
 ### Ponytail
 
-Apply ponytail's reuse-first, standard-library-first and minimum-sufficient-change guidance within the approved specification. Its output preferences do not replace the required role envelope. Its simplification advice does not remove requirements, security, accessibility, planned tests, repository tooling or engineering-rule evidence. Dependency choices and design judgements remain proportionate.
+Apply ponytail's reuse-first, standard-library-first and minimum-sufficient-change guidance within the approved specification. A role's read of the resolved file is the skill's activation, at its full level (its default) for the whole role session; `lite`'s deferral and `ultra`'s request pushback are interactive-turn choices. Its output preferences do not replace the required role envelope. Its simplification advice does not remove requirements, security, accessibility, planned tests, repository tooling or engineering-rule evidence. Dependency choices and design judgements remain proportionate.
 
 ### TDD
 

@@ -43,6 +43,8 @@ skill's own directory, never from the factory's directory or the consuming repos
 ## Bounded application
 
 Apply a skill's technique or persona proportionately, bounded by the approved spec: it changes how work is
-done, not what was agreed. A seam a skill's method needs that the plan does not list is a missing seam, not
-an invented one — stop and report it as a failure; never ask the user directly from a code-writing or
-fixing turn.
+done, not what was agreed. Reading the resolved `ponytail` file is its activation: a code-writing role
+applies it at its full level (its default) for the whole role session — `lite`'s deferral and `ultra`'s
+request pushback are interactive-turn choices, not autonomous-spawn behaviour. A seam a skill's method needs
+that the plan does not list is a missing seam, not an invented one — stop and report it as a failure; never
+ask the user directly from a code-writing or fixing turn.
