@@ -68,6 +68,14 @@
       "summary": "Protected test-seam confirmation and current model-policy choice",
       "answered_at": "2026-10-28T03:03:07.147899Z",
       "latency_ms": 116808
+    },
+    {
+      "at": "2026-10-28T08:22:02.798941Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve reviewed reliability improvements, request changes, or abort before PR publication",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
