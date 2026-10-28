@@ -456,6 +456,18 @@
       "duration_ms": 192324,
       "started_at": "2026-10-28T08:15:54.636591Z",
       "ended_at": "2026-10-28T08:19:06.960822+00:00"
+    },
+    {
+      "at": "2026-10-28T08:22:02.099185Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "codex",
+      "in_est": 11410,
+      "out_est": 14,
+      "reported": null,
+      "duration_ms": 73545,
+      "started_at": "2026-10-28T08:19:55.006299Z",
+      "ended_at": "2026-10-28T08:21:08.551626+00:00"
     }
   ],
   "issues": [
