@@ -66,6 +66,14 @@
       "summary": "Grilling round 3: add-skill edge cases, refresh, confirm brief",
       "answered_at": "2026-10-28T03:11:56.781657Z",
       "latency_ms": 190555
+    },
+    {
+      "at": "2026-10-28T03:16:41.444370Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Plan: confirm test seams",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
