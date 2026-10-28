@@ -9,7 +9,7 @@
   "branch": "012-run-reliability",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability",
   "spec_dir": "specs/012-run-reliability",
-  "status": "running",
+  "status": "waiting_user",
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
