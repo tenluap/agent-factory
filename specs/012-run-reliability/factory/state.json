@@ -444,6 +444,18 @@
       "duration_ms": 140385,
       "started_at": "2026-10-28T08:15:54.595988Z",
       "ended_at": "2026-10-28T08:18:14.981189+00:00"
+    },
+    {
+      "at": "2026-10-28T08:19:54.670883Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "codex",
+      "in_est": 11742,
+      "out_est": 70,
+      "reported": null,
+      "duration_ms": 192324,
+      "started_at": "2026-10-28T08:15:54.636591Z",
+      "ended_at": "2026-10-28T08:19:06.960822+00:00"
     }
   ],
   "issues": [
