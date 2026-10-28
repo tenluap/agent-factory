@@ -84,8 +84,47 @@ unlink_ours() {
   fi
 }
 
+library_link() {
+  [ -L "$1" ] || return 1
+  local target
+  target="$(readlink "$1")"
+  [[ "$target" == "$src"/skills/* || "$target" == "$factory_home"/skills/* ]]
+}
+
+link_skill() {
+  local from="$1" to="$2"
+  if { [ -e "$to" ] || [ -L "$to" ]; } && ! library_link "$to"; then
+    echo "skip: $to exists and is not a library link; to adopt it: ./install.sh --add-skill $to, remove the original, re-run"
+    return
+  fi
+  if ! [ -L "$to" ] || [ "$(readlink "$to")" != "$from" ]; then
+    ln -sfn "$from" "$to"
+  fi
+  echo "linked: $to"
+}
+
+install_skills() {
+  local root="$1" f name
+  mkdir -p "$root"
+  for f in "$root"/*; do
+    if library_link "$f" && [ ! -e "$f" ]; then
+      rm "$f"
+      echo "removed: $f"
+    fi
+  done
+  for f in "$src"/skills/*; do
+    [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
+    name="$(basename "$f")"
+    if [ "$name" = factory ]; then
+      echo "skip: $f: name reserved for the factory skill"
+      continue
+    fi
+    link_skill "$f" "$root/$name"
+  done
+}
+
 install_one() {
-  local dist skill_dir agent_dir
+  local dist skill_dir agent_dir skills_root
   echo "== $1"
   dist="$factory_home/dist/$1"
   python3 "$src/tools/render.py" "$1" --out "$dist"
@@ -104,6 +143,7 @@ install_one() {
     link "$f" "$agent_dir/$(basename "$f")"
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
+  install_skills "$skills_root"
   if [ "$1" = "opencode" ]; then
     echo "ready: OpenCode factory skill and role agents linked; start a fresh OpenCode session to load them."
   fi
