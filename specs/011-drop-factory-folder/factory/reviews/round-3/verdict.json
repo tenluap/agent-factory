@@ -1,0 +1,1 @@
+{"round":3,"verdict":"pass","summary":"Delta fixes resolve both round-2 confirmed_blocking findings (STD-1 orphan fixture now exercises is_authoritative; STD-2 untracked-map refusal tested). Round-2 advisories SEC-1/SEC-2 (assume-unchanged gaps) not addressed; do not carry forward under delta scope.","confirmed_blocking":[],"advisory":[],"rejected":[]}
