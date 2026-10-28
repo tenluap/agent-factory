@@ -163,6 +163,17 @@
       "duration_ms": 0,
       "commit": "f896ce9",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:42:15.926902Z",
+      "kind": "agent-failure",
+      "stage": "specify",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Model claude-code/opus-5.5: may not exist or no access",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
     }
   ],
   "ended_at": null,
