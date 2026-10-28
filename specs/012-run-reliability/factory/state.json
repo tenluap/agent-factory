@@ -498,6 +498,17 @@
       "duration_ms": 134833,
       "commit": "d00ff71",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-28T08:09:00.217665Z",
+      "kind": "retry",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "Pre-deadline partial at committed passing boundary after approved installer model-policy test fix. T012 full-suite rerun requires fresh verification unit; no overrun claimed.",
+      "duration_ms": 299196,
+      "commit": "d00ff71",
+      "partial_return": true
     }
   ],
   "review": {
