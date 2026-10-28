@@ -79,6 +79,8 @@ Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `core/skills/factory/SKILL.md`, 
 
 Overridden: none
 
+Confirmed: 2026-10-28 - Q1 accepted - seams: `factory drop`
+
 ## Project Structure
 
 ### Documentation (this feature)
