@@ -6,20 +6,24 @@
 
 **Status**: Draft
 
-**Input**: User description: "Add a new factory role `ui-designer` (agent `factory-ui-designer`, tier standard, access write). The orchestrator spawns it in the implement step on UI design runs. It detects the project's UI framework, maps the design source to the codebase, and updates the targeted file (plus its component dependencies) or, with no target, the whole UI surface (components and views) in dependency batches. Reviews, shared fix rounds and approver gate are unchanged." Behaviour source: the user's `pen-to-avalonia` agent and the `ui-agent` skill (see `factory/brief.md`).
+**Input**: Add factory role `ui-designer` (agent `factory-ui-designer`, tier standard, access write), spawned in implement on UI design runs: it detects the UI framework, maps the design source to the codebase, and updates the targeted file plus its component dependencies or, with no target, the whole UI surface in dependency batches. Reviews, shared fix rounds and approver gate are unchanged. Prior art: the user's `pen-to-avalonia` agent and `ui-agent` skill (`factory/brief.md`).
 
 ## Context
 
-Today every task runs through `code-build`; Pen design work rides on `code-build` and `fixer` via the design-code mapping contract, and `DESIGN.md` ("Pen design references") says no new role is introduced for it. Design-to-code work has a distinct state machine (discover, survey, plan components, implement dependency batches, validate fidelity) that the user runs outside the factory with `pen-to-avalonia` and `ui-agent`. This feature brings it in as one write role, generalised beyond Avalonia and Pen, with no second repair loop and no review or approval change.
+Today Pen design work rides on `code-build` and `fixer`, and `DESIGN.md` ("Pen design references") introduces no role for it. Design-to-code work has its own state machine (discover, survey, plan components, implement batches, validate fidelity). This feature adds it as one write role, generalised beyond Avalonia and Pen, with no second repair loop and no review or approval change.
 
 ## Clarifications
 
 ### Session 2026-10-28
 
-- Q: How does a mixed run route tasks between `code-build` and `ui-designer`? → A: The tasks stage writes an explicit `[UI]` marker on each UI design task; the orchestrator routes by that marker only.
-- Q: Who enumerates the whole UI surface and relays the scope question? → A: The plan stage lists the whole surface and relays the protected scope question; the tasks stage then writes batches for the accepted list only.
-- Q: When is the framework detected? → A: `spec-builder` detects it during plan and records it in the design context; an unsupported framework stops the run before tasks; `ui-designer` re-verifies before editing.
-- Q: How many `ui-agent` passes run inside the role? → A: A single pass (critique, audit, typeset, polish, re-verify) with no internal second iteration; leftovers go to the shared review/fix rounds.
+- Mixed-run routing → explicit `[UI]` task marker only (FR-006).
+- Whole-surface enumeration and protected scope question → plan stage; tasks batch the accepted list (FR-018, FR-019).
+- Framework detection → `spec-builder` at plan; `ui-designer` re-verifies (FR-009).
+- Text-only classification → plan, purely visual changes only; ambiguity gets one relay question (FR-005).
+- Text-only gates → build/runtime required; mapping and fidelity not applicable (FR-015).
+- `ui-agent` → one pass, in the spawn completing the last `[UI]` task (FR-024).
+- Evidence at drop → `docs/design/<branch>/` (FR-030).
+- `figma` capability → resolved at plan, re-resolved at implement (FR-008).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -65,9 +69,10 @@ A user supplies a Figma node, an image or screenshot, or only a text instruction
 
 **Acceptance Scenarios**:
 
-1. **Given** a Figma source and no resolvable `figma` skill or MCP capability, **When** the role starts, **Then** it stops that work as a disclosed blocker with setup guidance and installs nothing.
+1. **Given** a recorded Figma source and no resolvable `figma` skill or MCP capability, **When** the plan stage ends, **Then** the run is blocked before tasks with setup guidance and nothing is installed.
 2. **Given** an image source, **When** the role finishes, **Then** the map records the image as a visual reference with no node records, and fidelity is reported against the image.
-3. **Given** a text-only restyle, **When** the role finishes, **Then** no design-code map records are required, and the change is reported as a restyle of the existing baseline.
+3. **Given** a text-only restyle, **When** the role finishes, **Then** build/runtime evidence is reported, mapping and fidelity are recorded not applicable ("no design reference"), and a before/after capture is attached when capture is available.
+4. **Given** a brief that may or may not change behaviour, **When** the plan stage classifies it, **Then** one ordinary relay question decides; work that changes behaviour stays on `code-build`.
 
 ---
 
@@ -89,15 +94,15 @@ A user runs the role on a project whose UI framework has no shipped reference (f
 
 ### User Story 5 - Quality pass and shared repair budget (Priority: P3)
 
-After the role's batches pass their gates, it runs the `ui-agent` pipeline (critique, audit, typeset, polish, re-verify) as a single pass over the changed surface, with no internal second iteration. Remaining findings go to the normal review, judge and fixer flow, which shares the existing two fix rounds; no second repair loop is added.
+The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (critique, audit, typeset, polish, re-verify) once over the whole changed UI surface, with no internal second iteration. Remaining findings go to review, judge and fixer, sharing the existing two fix rounds.
 
 **Why this priority**: Keeps the user's quality habit without new loops.
 
-**Independent Test**: Inspect a run's ledger and state: `ui-agent` appears at most once per role spawn, and `review.fix_rounds` never exceeds 2 regardless of design findings.
+**Independent Test**: Inspect a run's ledger and state: `ui-agent` appears at most once per run, also across resumes, and `review.fix_rounds` never exceeds 2.
 
 **Acceptance Scenarios**:
 
-1. **Given** the role's gates pass, **When** it finishes, **Then** it has run `ui-agent` at most once and reported applied, skipped and deferred recommendations with reasons.
+1. **Given** the last `[UI]` task's gates pass, **When** the role finishes, **Then** it has run `ui-agent` once, recorded that in the design context, and reported applied, skipped and deferred recommendations with reasons.
 2. **Given** a `ui-agent` recommendation conflicts with a design-sourced value, **When** the role decides, **Then** the design value wins and the recommendation is recorded as skipped with its reason.
 3. **Given** design findings remain after review, **When** fixing, **Then** they share the existing two fix rounds with all other findings.
 
@@ -125,10 +130,10 @@ After the role's batches pass their gates, it runs the `ui-agent` pipeline (crit
 
 **Activation and inputs**
 
-- **FR-005**: A run MUST be a **UI design run** when its saved design context records a design source (Pen, Figma, image or text-only restyle) and UI targets or whole-surface scope; any other run MUST keep today's implement flow unchanged.
+- **FR-005**: A run MUST be a **UI design run** when its saved design context records a design source (Pen, Figma, image or text-only restyle) and UI targets or whole-surface scope; any other run MUST keep today's implement flow unchanged. `spec-builder` MUST classify a run as text-only at plan only when the brief asks for a purely visual change with no behaviour change, and record it in the design context; an ambiguous brief MUST get one ordinary relay question, and mixed work stays on `code-build`.
 - **FR-006**: On a UI design run the tasks stage MUST mark each UI design task with an explicit `[UI]` marker. In the implement step the orchestrator MUST route by that marker only: `ui-designer` for `[UI]` tasks, `code-build` for the rest, preserving `tasks.md` order. No new `/factory` route, stage name or harness verb is added.
 - **FR-007**: The orchestrator MUST pass the role the usual implement inputs (worktree, branch, spec_dir, `speckit-implement`, `ponytail`, `tdd`, commands, deadline) plus the design context reference, the source kind, the scope (named file or whole surface), and the resolved design-source capability path (`pen-design` or `figma`) when the source needs one.
-- **FR-008**: The orchestrator MUST resolve a `figma` skill or MCP capability through `RESOLVE` only when the source is Figma; when absent, the Figma work MUST stop as a disclosed blocker with setup guidance, and nothing MUST be installed automatically.
+- **FR-008**: The orchestrator MUST resolve a `figma` skill or MCP capability through `RESOLVE` at plan, only when a Figma source is recorded; when absent, the run MUST be blocked before tasks with setup guidance and nothing installed. Implement MUST re-resolve it before spawning the role.
 
 **Framework detection**
 
@@ -141,7 +146,7 @@ After the role's batches pass their gates, it runs the `ui-agent` pipeline (crit
 - **FR-012**: A Pen source MUST be authoritative and mapped under the existing design-code mapping contract.
 - **FR-013**: A Figma source MUST be mapped by node like Pen once the capability resolves.
 - **FR-014**: An image or screenshot source MUST be a visual reference only: no node mapping, fidelity judged against the image, and the reference recorded in the design context.
-- **FR-015**: A text-only restyle MUST treat the existing code as the baseline, use `impeccable` guidance, and require no map records.
+- **FR-015**: A text-only restyle MUST treat the existing code as the baseline, use `impeccable` guidance, require no map records, and require build/runtime evidence; mapping and fidelity MUST be recorded not applicable with reason "no design reference", and a before/after capture MUST be attached when capture is available.
 
 **Scope**
 
@@ -159,7 +164,7 @@ After the role's batches pass their gates, it runs the `ui-agent` pipeline (crit
 
 **Quality and repair**
 
-- **FR-024**: The role MUST run `ui-agent` as a single pass (one critique, audit, typeset, polish and re-verify, no internal second iteration) at most once per spawn, after its gates pass, over the changed surface only; when `ui-agent` is unavailable it MUST disclose the skip.
+- **FR-024**: Only the spawn that completes the last `[UI]` task MUST run `ui-agent`, as a single pass (no internal second iteration) after its gates pass, over the whole changed UI surface; it MUST record the pass in the design context so a resume does not repeat it, and MUST disclose the skip when `ui-agent` is unavailable.
 - **FR-025**: Design-sourced values MUST win over conflicting quality recommendations, which are recorded as skipped with a reason.
 - **FR-026**: Review, judge, fixer, the two shared fix rounds and the approver gate MUST stay unchanged; the feature MUST add no second repair loop.
 
@@ -171,14 +176,11 @@ After the role's batches pass their gates, it runs the `ui-agent` pipeline (crit
 **Verification**
 
 - **FR-029**: Automated tests MUST cover: the role renders for every harness with tier standard and write access; the rendered distribution matches its source; the role is listed among file-writing roles wherever that list exists; the core role file names no harness tool.
+- **FR-030**: At drop, Pen, Figma and image evidence and references MUST rehome to `docs/design/<branch>/`, and map references MUST be rewritten to the new paths.
 
 ### Key Entities
 
-- **UI design run**: A factory run whose design context records a design source and UI scope; its `[UI]`-marked tasks route to `ui-designer`.
-- **Design source**: One of Pen file, Figma node, image/screenshot, or text-only instruction, each with a defined authority (mapped, mapped, visual reference, baseline restyle).
-- **Framework reference**: The per-framework guidance file the role loads after detection (Avalonia, web).
-- **UI scope**: Either a named target file with its component dependencies, or the user-accepted whole-surface file list in dependency batches.
-- **Dependency batch**: One coherent layer of the UI (tokens/assets, shared components, or views) implemented and committed as one unit.
+UI design run, UI design task, design source, framework reference, UI scope and dependency batch are defined in `CONTEXT.md` ("UI design").
 
 ## Success Criteria *(mandatory)*
 
@@ -187,7 +189,7 @@ After the role's batches pass their gates, it runs the `ui-agent` pipeline (crit
 - **SC-001**: In a fixture UI design run with one named target, 100% of edited files are the target or its component dependencies.
 - **SC-002**: In a whole-surface run with fast mode on, the scope question is answered by the user in 100% of trials (0 auto-accepted).
 - **SC-003**: Every scoped Pen or Figma node in a completed run has a map record (0 unaccounted nodes).
-- **SC-004**: The quality pass runs at most once per role spawn, and fix rounds never exceed 2 in any run.
+- **SC-004**: The quality pass runs at most once per run, including resumes, and fix rounds never exceed 2 in any run.
 - **SC-005**: On an unsupported framework, the run stops at plan, edits 0 UI files and names the detected framework.
 - **SC-006**: All five harness renders include the new role and the committed distribution shows 0 drift after a fresh render.
 - **SC-007**: Non-design runs show no change in implement behaviour: the same roles are spawned in the same order as before the feature.
