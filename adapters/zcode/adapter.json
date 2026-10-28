@@ -2,6 +2,7 @@
   "name": "zcode",
   "home": { "env": "ZCODE_HOME", "default": "~/.zcode" },
   "skill_dir": "{home}/skills/factory",
+  "skills_root": "{home}/skills",
   "agent_dir": "{home}/agents",
   "agent_file": "factory-{role}.md",
   "agent_format": "markdown",

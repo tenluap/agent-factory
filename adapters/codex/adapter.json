@@ -2,6 +2,7 @@
   "name": "codex",
   "home": { "env": "CODEX_HOME", "default": "~/.codex" },
   "skill_dir": "~/.agents/skills/factory",
+  "skills_root": "~/.agents/skills",
   "agent_dir": "{home}/agents",
   "agent_file": "factory_{role_}.toml",
   "agent_format": "toml",
