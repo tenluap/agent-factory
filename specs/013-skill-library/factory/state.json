@@ -247,6 +247,14 @@
       "auto": false,
       "at": "2026-10-28T08:05:27.696802Z",
       "kind": "answer"
+    },
+    {
+      "stage": "implement",
+      "question": "H2",
+      "answer": "A: new pins are the policy; align tests and README",
+      "auto": false,
+      "at": "2026-10-28T08:33:38.556556Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
