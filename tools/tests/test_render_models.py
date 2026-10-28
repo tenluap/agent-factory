@@ -8,6 +8,7 @@ environment; the README statement matches `adapters/`.
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -314,6 +315,66 @@ class ReportTests(unittest.TestCase):
         out = render_to("opencode", flags=("--paths",), exported=False)
         for key in ("dist=", "skill_dir=", "agent_dir="):
             self.assertIn(key, out.stdout)
+
+    def test_paths_report_skills_roots_and_home_overrides(self):
+        with tempfile.TemporaryDirectory(prefix="factory paths ") as temp:
+            home = Path(temp) / "home"
+            home.mkdir()
+            override = Path(temp) / "override home"
+            defaults = {
+                "claude-code": ".claude/skills",
+                "opencode": ".config/opencode/skills",
+                "codex": ".agents/skills",
+                "copilot": ".agents/skills",
+                "zcode": ".zcode/skills",
+            }
+            overrides = {
+                "claude-code": ("CLAUDE_HOME", "skills"),
+                "opencode": ("XDG_CONFIG_HOME", "opencode/skills"),
+                "codex": ("CODEX_HOME", None),
+                "copilot": ("COPILOT_HOME", None),
+                "zcode": ("ZCODE_HOME", "skills"),
+            }
+            for harness, default in defaults.items():
+                for use_override in (False, True):
+                    with self.subTest(harness=harness, override=use_override):
+                        env = dict(
+                            os.environ,
+                            HOME=str(home),
+                            FACTORY_HOME=str(home / ".factory"),
+                        )
+                        for key, _ in overrides.values():
+                            env.pop(key, None)
+                        variable, suffix = overrides[harness]
+                        if use_override:
+                            env[variable] = str(override)
+                        target = Path(temp) / "never-written"
+                        result = subprocess.run(
+                            [
+                                sys.executable,
+                                str(REPO / "tools/render.py"),
+                                harness,
+                                "--paths",
+                                "--out",
+                                str(target),
+                            ],
+                            cwd=REPO,
+                            env=env,
+                            text=True,
+                            capture_output=True,
+                            check=True,
+                        )
+                        paths = dict(
+                            shlex.split(line)[0].split("=", 1)
+                            for line in result.stdout.splitlines()
+                        )
+                        expected = (
+                            override / suffix
+                            if use_override and suffix
+                            else home / default
+                        )
+                        self.assertEqual(paths.get("skills_root"), str(expected))
+                        self.assertFalse(target.exists())
 
 
 class ReadOnlyConformanceTests(unittest.TestCase):
