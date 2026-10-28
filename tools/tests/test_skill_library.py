@@ -118,3 +118,64 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         self.assertEqual(third.returncode, 0, third.stderr)
         self.assertIn(f"removed: {self.root / 'tdd'}", third.stdout)
         self.assertEqual((self.root / "tdd").readlink(), self.checkout / "skills/tdd")
+
+    def test_add_skill_copies_and_accepts_symlink_basename(self):
+        source = self.home.parent / "different"
+        source.mkdir()
+        (source / "SKILL.md").write_text("---\nname: adopted\n---\ncontent\n")
+        given = self.home.parent / "adopted"
+        given.symlink_to(source, target_is_directory=True)
+        result = self.run_install("--add-skill", str(given))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        dest = self.factory_home / "skills/adopted"
+        self.assertEqual((dest / "SKILL.md").read_text(), (source / "SKILL.md").read_text())
+        self.assertIn(f"added: {dest}", result.stdout)
+        self.assertEqual((self.root / "adopted").readlink(), dest)
+
+    def test_add_skill_refusals_write_nothing(self):
+        self.home.mkdir(parents=True)
+        base = self.home.parent / "inputs"
+        base.mkdir()
+        for name, content in (("empty", None), ("no-front", "name: no-front\n"),
+                              ("mismatch", "---\nname: other\n---\n"),
+                              ("factory", "---\nname: factory\n---\n"),
+                              ("exists", "---\nname: exists\n---\n")):
+            folder = base / name
+            folder.mkdir()
+            if content is not None:
+                (folder / "SKILL.md").write_text(content)
+        existing = self.home / "skills/exists"
+        existing.mkdir(parents=True)
+        cases = [(str(base / "missing"), "not a local directory"),
+                 ("https://example.com/skill", "not a local directory"),
+                 (str(base / "empty"), "no SKILL.md"),
+                 (str(base / "no-front"), "no frontmatter"),
+                 (str(base / "mismatch"), "name 'other' does not match folder 'mismatch'"),
+                 (str(base / "factory"), "reserved: factory"),
+                 (str(base / "exists"), f"exists: {existing}")]
+        before = sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*"))
+        for value, message in cases:
+            with self.subTest(value=value):
+                result = self.run_install("--add-skill", value)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(message, result.stdout + result.stderr)
+                self.assertEqual(before, sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*")))
+        for args in (("--add-skill",), ("--add-skill", str(base / "exists"), "--uninstall")):
+            result = self.run_install(*args)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertEqual(before, sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*")))
+
+    def test_add_skill_failed_copy_cleans_temporary_directory(self):
+        folder = self.home.parent / "sample"
+        folder.mkdir()
+        (folder / "SKILL.md").write_text("---\nname: sample\n---\n")
+        bindir = self.home.parent / "bin"
+        bindir.mkdir()
+        cp = bindir / "cp"
+        cp.write_text("#!/bin/sh\nexit 1\n")
+        cp.chmod(0o755)
+        with patch.dict(os.environ, {"PATH": f"{bindir}:{os.environ['PATH']}"}):
+            result = self.run_install("--add-skill", str(folder))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.factory_home / "skills/sample").exists())
+        self.assertEqual(list((self.factory_home / "skills").glob(".sample.tmp.*")), [])
