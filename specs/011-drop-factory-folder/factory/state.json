@@ -9,9 +9,9 @@
   "branch": "011-drop-factory-folder",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/011-drop-factory-folder",
   "spec_dir": "specs/011-drop-factory-folder",
-  "status": "running",
+  "status": "halted",
   "stage": "specify",
-  "halt_reason": null,
+  "halt_reason": "spec-builder model claude-code/Opus-5-5 unavailable",
   "stop_at": null,
   "mode": {
     "chain": "lite",
@@ -141,6 +141,17 @@
       "role": "spec-builder",
       "cause": null,
       "detail": "Model unavailable: claude-code/Opus-5-5 (installed agent model from uncommitted adapters/opencode/adapter.json)",
+      "duration_ms": 0,
+      "commit": "f896ce9",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-28T00:39:34.935948Z",
+      "kind": "halt",
+      "stage": "specify",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "spec-builder model claude-code/Opus-5-5 unavailable",
       "duration_ms": 0,
       "commit": "f896ce9",
       "partial_return": false
