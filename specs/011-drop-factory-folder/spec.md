@@ -40,7 +40,7 @@ A maintainer who studies how runs went (issues, timeline, ledger, analyze report
 
 **Why this priority**: Removing the folder without a copy destroys the evidence the improvement loop and benchmarks rely on. Equal to P1 because the drop must never happen without it.
 
-**Independent Test**: After `factory drop`, compare the archive folder with the folder as it stood in the commit before the drop. Every file is present with identical bytes.
+**Independent Test**: After `factory drop`, compare the archive folder with the folder as it stood in the commit before the drop. Every file except the transient `lock.json` is present with identical bytes.
 
 **Acceptance Scenarios**:
 
@@ -87,9 +87,9 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 
 - **FR-001**: The state CLI MUST provide a write command `factory drop` that follows the single-writer rule: it stamps its own time, refuses under a live lock, and is the only way the folder is removed.
 - **FR-002**: `factory drop` MUST refuse unless the run's status is `pr-open`. The refusal names the actual status and exits with the CLI's refused-write code.
-- **FR-003**: `factory drop` MUST copy the whole `specs/<branch>/factory/` folder to `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`, using the same `<repo-name>` derivation the improvement backlog export uses.
+- **FR-003**: `factory drop` MUST copy the whole `specs/<branch>/factory/` folder to `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`, using the same `<repo-name>` derivation the improvement backlog export uses. The run's transient `lock.json` is excluded from the copy.
 - **FR-004**: `factory drop` MUST refuse, overwrite nothing and commit nothing when the archive target already exists. The message names the existing path.
-- **FR-005**: `factory drop` MUST verify the copy (same file set, identical content) before removing anything from git. A failed verification refuses and leaves git untouched.
+- **FR-005**: `factory drop` MUST verify the copy (same file set, identical content, `lock.json` excluded) before removing anything from git. A failed verification refuses and leaves git untouched.
 - **FR-006**: After a verified copy, `factory drop` MUST remove the folder from git (`git rm -r specs/<branch>/factory`) and create exactly one commit with the message `factory: drop run artifacts`, touching no other path except the FR-017 design evidence move.
 - **FR-007**: On success `factory drop` MUST print JSON that includes the archive path, the PR URL from the final state, and the run totals sentence computed from the final state before removal.
 - **FR-008**: `factory drop` MUST NOT push. Pushing stays with the orchestrator.
@@ -106,7 +106,7 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 ### Key Entities
 
 - **Run folder**: `specs/<branch>/factory/` in the worktree. Holds `state.json`, `brief.md`, analyze reports, remediation logs, review findings and other run artifacts.
-- **Run archive**: `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`. A byte-identical copy of the run folder at drop time. Written once, never overwritten by the factory.
+- **Run archive**: `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/`. A byte-identical copy of the run folder at drop time, minus the transient `lock.json`. Written once, never overwritten by the factory.
 - **Drop commit**: the single commit `factory: drop run artifacts` that removes the run folder from the branch and, on Pen runs, moves design evidence to its permanent home.
 - **Permanent design evidence**: `docs/design/<branch>/`. Pen design evidence after the drop; the canonical map references it.
 
@@ -115,7 +115,7 @@ The orchestrator calls `factory drop` at the wrong time, or twice, or on a branc
 ### Measurable Outcomes
 
 - **SC-001**: For 100% of runs that reach `pr-open`, the PR's final file diff contains zero paths under `specs/<branch>/factory/`.
-- **SC-002**: For 100% of dropped runs, the archive contains every file of the run folder with identical content.
+- **SC-002**: For 100% of dropped runs, the archive contains every file of the run folder (except `lock.json`) with identical content.
 - **SC-003**: Every refusal condition (wrong status, archive collision, live lock, failed verification, already dropped) leaves git history, working tree and existing archives unchanged, as proven by the unit tests.
 - **SC-004**: The drop adds exactly one commit to the branch and runs in under 5 seconds for a typical run folder.
 - **SC-005**: The build gate passes: every harness renders and `dist/` shows no drift.

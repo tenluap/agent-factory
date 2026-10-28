@@ -23,6 +23,12 @@
 - Decision: `lock.acquire` for the check-and-copy; exclude `lock.json` from the copy; release before `git rm`.
 - Rationale: matches "refuses under a live lock" for writers; `lock.json` is transient and must not land in the archive or the commit.
 
+## R6. Design evidence move (FR-017)
+
+- Decision: `git mv` `factory/design/` to `docs/design/<branch>/` and replace the quoted prefix `"specs/<branch>/factory/design/` with `"docs/design/<branch>/` in the `docs/design-code-map.json` text, in the drop commit.
+- Rationale: grill-with-docs Q1; a textual replace keeps every other map byte (no JSON re-serialisation drift).
+- Alternatives: keep `factory/design/` on the branch (rejected by the user); JSON load/dump (reformats the map).
+
 ## R5. Git failure after the archive lands
 
 - Decision: restore the folder from HEAD, remove the archive, exit 1.
