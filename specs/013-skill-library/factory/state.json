@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/013-skill-library",
   "spec_dir": "specs/013-skill-library",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -41,25 +41,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-10-28T07:42:23.557623Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-10-28T02:59:51.127454Z",
@@ -190,6 +172,14 @@
       "auto": false,
       "at": "2026-10-28T03:11:56.897089Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-28T07:43:03.440508Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -257,6 +247,13 @@
     {
       "at": "2026-10-28T03:13:37.145222Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-28T07:43:03.440508Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
