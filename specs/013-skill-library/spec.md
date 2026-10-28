@@ -131,3 +131,4 @@ Terms follow the "Skill library" section of `CONTEXT.md`; the linking decision i
 - All four upstreams (mattpocock/skills, dietrichgebert/ponytail, backnotprop/pstack, obra/superpowers) are MIT and allow redistribution.
 - Symlinks are supported on all target platforms, as for the existing factory skill links.
 - No network access or git fetching is needed by the installer.
+- The `~/.claude`, `~/.zcode` and `~/.config` prefixes in each harness's `RESOLVE` search order denote that harness's home, so a `CLAUDE_HOME`, `ZCODE_HOME` or `XDG_CONFIG_HOME` override is honoured by the harness itself; SC-001 holds under an override without any `RESOLVE` edit (FR-012).

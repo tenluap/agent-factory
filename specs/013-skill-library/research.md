@@ -16,7 +16,7 @@
 ## R3. Which links are "ours"
 
 - **Decision**: A library link is a symlink whose `readlink` target starts with `$src/skills/` (repo layer) or `$factory_home/skills/` (per-user layer). Install replaces only such links; any other existing path (file, directory, or symlink elsewhere) is skipped with `skip: <target> exists and is not a library link; to adopt it: ./install.sh --add-skill <target>, remove the original, re-run`. Uninstall removes only such links.
-- **Rationale**: FR-007, FR-010 and the edge case "symlink pointing outside the library". The existing `link` helper replaces any symlink, so a separate `link_skill` helper is needed (ADR 0009). Ownership is checked on the `readlink` string, so a dangling link is classified without following it.
+- **Rationale**: FR-007, FR-010 and the edge case "symlink pointing outside the library". The existing `link` helper replaces any symlink, so a separate `link_skill` helper is needed (ADR 0009). Ownership is checked on the `readlink` string, so a dangling link is classified without following it. Limitation: the match is on the current `$src`, so a link made from another checkout or worktree, or before the checkout moved, is user-owned (install skips it, uninstall leaves it); documented in DESIGN.md and README with the fix "remove the old link and re-run".
 - **Name `factory`**: reserved (FR-005, FR-008). `install_skills` skips a `factory` folder in either layer with `skip: <layer>/factory: name reserved for the factory skill` before any link work, so the factory skill link is never touched.
 - **Dot-folders**: folders whose name starts with `.` in either layer are ignored silently (covers a leftover `--add-skill` temp folder).
 
