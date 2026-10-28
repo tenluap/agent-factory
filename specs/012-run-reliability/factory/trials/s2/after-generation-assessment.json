@@ -1,9 +1,0 @@
-{
-  "case": "S2-new-generation-atomic-unit",
-  "phase": "after",
-  "checkbox_count": 1,
-  "checkboxes": [
-    "- [X] T001 [US1] Handle blank names while preserving nonblank names in src/greet.py and test_greet.py. Seam: greet (public src.greet.greet). Ordered steps: (1) add GreetTests.test_blank_names_use_stranger and GreetTests.test_preserves_nonblank_names in test_greet.py; run python3 -m unittest test_greet.GreetTests.test_blank_names_use_stranger and observe expected assertion failure; (2) implement the smallest blank-name fallback in src/greet.py without stripping nonblank output; (3) run python3 -m unittest discover -s . and require all tests to pass. Required commit-body proof: Red: test_greet.GreetTests.test_blank_names_use_stranger failed as expected. Done when empty, spaces, tab/newline names greet stranger, nonblank names including surrounding whitespace are preserved, the suite passes, and test/code/task checkbox are committed together."
-  ],
-  "expected_one_atomic_behavior_unit": true
-}

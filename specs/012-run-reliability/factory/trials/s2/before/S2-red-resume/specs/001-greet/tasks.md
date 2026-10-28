@@ -1,1 +1,0 @@
-- [x] T001 Implement blank-name greeting; seam `greet`; write and observe `GreetTests.test_blank_names` failing, implement the requested behavior, verify passing tests; done when tests pass.

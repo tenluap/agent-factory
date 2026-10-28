@@ -1,6 +1,0 @@
-{
-  "reviewer": "security",
-  "round": 1,
-  "summary": "Reviewed all 396 changed files, including canonical parity for 106 generated outputs and synthetic trial artifacts; no demonstrated security defects found.",
-  "findings": []
-}

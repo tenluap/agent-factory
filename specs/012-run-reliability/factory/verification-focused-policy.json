@@ -1,7 +1,0 @@
-{
-  "command": "PYTHONPATH=tools python3 -m unittest tests.test_install.InstallFlowTests.test_install_without_config_reports_defaults",
-  "status": 0,
-  "tests": 1,
-  "reported_duration_s": 0.242,
-  "reason": "Approved alignment with exact shipped adapter selections; no production model or installer behavior change"
-}

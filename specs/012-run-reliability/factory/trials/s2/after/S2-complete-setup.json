@@ -1,7 +1,0 @@
-{
-  "initial_commit": "2d833e2987def412ec07b14009af5b7ea17f7dc0",
-  "observed_red_exit": 1,
-  "observed_red_output": "F.\n======================================================================\nFAIL: test_blank_names (test_greet.GreetTests.test_blank_names)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/tmp/factory012-trials/s2-after/S2-complete/test_greet.py\", line 6, in test_blank_names\n    self.assertEqual(greet(\"\"), \"Hello, stranger!\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello, !' != 'Hello, stranger!'\n- Hello, !\n+ Hello, stranger!\n\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nFAILED (failures=1)\n",
-  "green_output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
-  "completed_commit": "a08dab69034586667eeb8c140bcc4c09478bb6dc"
-}

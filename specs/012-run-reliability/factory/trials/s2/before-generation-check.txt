@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/012-run-reliability/specs/012-run-reliability/factory/trials/s2/assess-generated-unit.py", line 8, in <module>
-    assert len(checkboxes) == 1, f"S2-new-generation-atomic-unit: expected one checkbox, observed {len(checkboxes)}"
-           ^^^^^^^^^^^^^^^^^^^^
-AssertionError: S2-new-generation-atomic-unit: expected one checkbox, observed 2

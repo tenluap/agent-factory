@@ -1,3 +1,0 @@
-- [ ] T001 Add blank-name coverage; seam greet; tests may apply to either next task.
-- [ ] T002 Implement empty-name fallback; seam greet.
-- [ ] T003 Implement whitespace-name fallback; seam greet.

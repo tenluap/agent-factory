@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 1,
-  "summary": "FR-001\u2013FR-010, all 16 acceptance scenarios, six edge cases, SC-001\u2013SC-005 and workflow contracts are met within the documented native-trial scope; all 396 changed files, 12 checked tasks, commit red proofs, protected Q1/Q2 decisions, generated copies and independent verification evidence were checked, with no conformance defects found.",
-  "findings": []
-}
