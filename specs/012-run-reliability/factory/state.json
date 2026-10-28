@@ -111,6 +111,14 @@
       "summary": "Confirm concrete reliability scope, lite chain, and repository verification commands",
       "answered_at": "2026-10-28T02:54:03.374369Z",
       "latency_ms": 63924
+    },
+    {
+      "at": "2026-10-28T03:01:10.339638Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Protected test-seam confirmation and current model-policy choice",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
