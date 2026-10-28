@@ -1,0 +1,7 @@
+{
+  "modelProvider": "QwenCloud",
+  "modelName": "kimi-k2.6",
+  "maxIterations": 2,
+  "skillBaseDir": "~/.agents/skills/impeccable",
+  "buildCommand": ""
+}

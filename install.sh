@@ -152,8 +152,36 @@ link_skill() {
   echo "linked: $to"
 }
 
+skill_harnesses() {
+  python3 - "$src/skills/SOURCES.md" "$1" <<'PY'
+import re, sys
+try:
+    text = open(sys.argv[1]).read()
+except OSError:
+    raise SystemExit(0)
+row = re.search(r"(?m)^\|\s*%s\s*\|(?:[^|]*\|){4}\s*([^|]*)\|" % re.escape(sys.argv[2]), text)
+print(row.group(1).strip().lower() if row else "")
+PY
+}
+
+# Link name for a repo-layer skill: the SKILL.md frontmatter name, which may
+# differ from the folder name so per-harness variants (folder suffixes) all
+# install under one skill name.
+skill_name() {
+  python3 - "$1/SKILL.md" <<'PY'
+import re, sys
+try:
+    text = open(sys.argv[1]).read()
+except OSError:
+    raise SystemExit(0)
+match = re.match(r'\A---\s*\n(.*?)\n---', text, re.S)
+name = re.search(r'^name:\s*(.*?)\s*$', match.group(1), re.M) if match else None
+print(name.group(1).strip().strip("'\"") if name else "")
+PY
+}
+
 install_skills() {
-  local root="$1" f name
+  local root="$1" harness="$2" f name allowed linked=""
   mkdir -p "$root"
   for f in "$root"/*; do
     if library_link "$f" && [ ! -e "$f" ]; then
@@ -163,13 +191,41 @@ install_skills() {
   done
   for f in "$src"/skills/* "$factory_home"/skills/*; do
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
-    name="$(basename "$f")"
-    if [ "$name" = factory ]; then
+    if [ "$(basename "$f")" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
       continue
     fi
-    if [[ "$f" == "$src"/skills/* ]] && [ -f "$factory_home/skills/$name/SKILL.md" ]; then
-      continue
+    if [[ "$f" == "$src"/skills/* ]]; then
+      name="$(skill_name "$f")"
+      if [ -z "$name" ]; then
+        echo "skip: $f: no frontmatter name"
+        continue
+      fi
+      if [ -f "$factory_home/skills/$name/SKILL.md" ]; then
+        continue
+      fi
+      if [ "$name" = factory ]; then
+        echo "skip: $f: name reserved for the factory skill"
+        continue
+      fi
+      allowed="$(skill_harnesses "$(basename "$f")")"
+      if [ -n "$allowed" ] && [[ ",$allowed," != *,"$harness",* ]]; then
+        if [ -L "$root/$name" ] && [ "$(readlink "$root/$name")" = "$f" ]; then
+          rm "$root/$name"
+          echo "removed: $root/$name"
+        fi
+        echo "skip: $name: not linked for harness $harness (SOURCES.md harnesses: $allowed)"
+        continue
+      fi
+      case ",$linked," in
+        *",$name,"*)
+          echo "skip: $f: another variant is already linked as $name for harness $harness"
+          continue
+          ;;
+      esac
+      linked="$linked,$name"
+    else
+      name="$(basename "$f")"
     fi
     link_skill "$f" "$root/$name"
   done
@@ -206,7 +262,7 @@ install_one() {
     link "$f" "$agent_dir/$(basename "$f")"
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
-  install_skills "$skills_root"
+  install_skills "$skills_root" "$1"
   if [ "$1" = "opencode" ]; then
     echo "ready: OpenCode factory skill and role agents linked; start a fresh OpenCode session to load them."
   fi

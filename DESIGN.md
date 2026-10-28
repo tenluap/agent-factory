@@ -32,7 +32,7 @@ The library has a committed repo layer, `skills/`, and a per-user layer, `${FACT
 
 A library link is a symlink whose target starts with the current checkout's `$src/skills/` or `$factory_home/skills/`. Other paths are user-owned and skipped with an adoption hint. A link from another checkout or worktree, or from before the checkout moved, is user-owned: remove the old link and re-run to adopt it. Re-runs prune stale library links before linking the remaining skills. `--add-skill <path>` validates and copies a local skill into the per-user layer. Uninstall removes library links, retaining both layers. Codex and Copilot share `~/.agents/skills`, so uninstalling either removes the other's library links too.
 
-Library skills are linked, not rendered into `dist/` ([ADR 0009](docs/adr/0009-library-skills-are-linked-not-rendered.md)). Vendored skills are refreshed manually: maintainers re-copy each upstream skill and update `skills/SOURCES.md`; no sync tool is provided.
+Library skills are linked, not rendered into `dist/` ([ADR 0009](docs/adr/0009-library-skills-are-linked-not-rendered.md)). Vendored skills are refreshed manually: maintainers re-copy each upstream skill and update `skills/SOURCES.md`; no sync tool is provided. A `SOURCES.md` row's optional sixth `harnesses` column (comma-separated adapter names, empty = all) restricts which harness skill roots a vendored skill links into; exclusions remove existing links on the next install. Per-user skills are never filtered.
 
 ## OpenCode V2 adapter
 

@@ -36,6 +36,8 @@ Existing files, directories, and links outside the current library are preserved
 
 Uninstall removes library links but keeps both layers. Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared library links. Maintainers refresh vendored skills manually by copying the upstream skill and license and updating `skills/SOURCES.md` with the source commit; no sync tool is provided.
 
+A `skills/SOURCES.md` row may restrict a vendored skill to specific harnesses with the optional sixth `harnesses` column: a comma-separated list of adapter names (`claude-code`, `codex`, `copilot`, `opencode`, `zcode`). An empty cell — the default — links the skill into every harness. When a skill is excluded from the selected harness, the installer removes its existing library link and reports `skip:`. The column only governs the repo layer; per-user skills in `${FACTORY_HOME}/skills/` always link everywhere.
+
 ## Usage
 
 Start a run from the repo you want the feature built in. On Claude Code, OpenCode and Copilot the skill is `/factory`; on Codex it is `$factory`.
