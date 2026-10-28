@@ -108,3 +108,12 @@ The300s values are supplied historical fixture data for admission decisions, not
 `assess.py s4-before-output.json` fails admission as expected; `assess.py s4-effective-output.json` passes. The effective matrix explicitly combines unchanged original controls and the authoritative fresh v2 pending case. Native per-case clocks are separate from outer subject runtime budgets; no false fixture timing claim is made.
 
 Existing `python3 -m unittest discover -s tools -p test_budget.py`:16 tests OK before and after. All five distributions canonical-rendered; whitespace clean. Budgets, production state schema/CLI, issue provenance and stall limit unchanged. T012 repository checks are recorded in the final verification section; independent orchestrator verification remains a separate required gate.
+
+
+### Final repository verification — first attempt, 2026-10-28
+
+T011 reconciled the completed matrix and limitations. T012 canonical-rendered all five harnesses successfully. The first full configured test command ran **277 tests** in 134.833 seconds and failed only `tests.test_install.InstallFlowTests.test_install_without_config_reports_defaults`: its stale expectation still required an inherited OpenCode model. This is the same shipped-policy mismatch already accepted for repair, not a model substitution or installer runtime defect. Exact output/status is retained in `specs/012-run-reliability/factory/verification-attempt-1.json`.
+
+The installer expectation now checks both shipped deep/standard mappings from the adapter; existing override and clean-distribution assertions remain. `PYTHONPATH=tools python3 -m unittest tests.test_install.InstallFlowTests.test_install_without_config_reports_defaults` passed (1 test, 0.242 seconds); `git diff --check` passed. The full command stopped on the test failure, so its chained installer-syntax and clean-dist checks were not claimed as passed.
+
+**Pending:** rerun the exact full build/test commands, installer syntax, final clean-dist and whitespace checks in a fresh verification role, then independently in the orchestrator. T012 remains unchecked; no failed or unperformed check is a pass.
