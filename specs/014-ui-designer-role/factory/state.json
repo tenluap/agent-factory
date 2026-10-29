@@ -6,7 +6,7 @@
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
   "default_branch": "main",
   "base": "origin/main",
-  "status": "running",
+  "status": "waiting_user",
   "stage": "fix",
   "halt_reason": null,
   "stop_at": null,
