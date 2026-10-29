@@ -68,6 +68,14 @@
       "summary": "Confirm expanded drop test scope for STD-5 (requires_user)",
       "answered_at": "2026-10-29T00:52:18.088073Z",
       "latency_ms": 40876
+    },
+    {
+      "at": "2026-10-29T01:01:34.932045Z",
+      "kind": "questions",
+      "stage": "fix",
+      "summary": "Confirm complete test scope (Q3, requires_user)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
@@ -701,7 +709,7 @@
       "at": "2026-10-29T01:01:34.606505Z",
       "stage": "review",
       "event": "complete",
-      "commit": null,
+      "commit": "a12fb11",
       "harness": "opencode"
     }
   ],
