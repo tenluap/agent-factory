@@ -15,12 +15,8 @@
 //   whole-word match: ui, ux, .pen
 //   substring match:  pen.dev, figma
 //
-// Injection: appends a synthetic text part to the user message via the
-// chat.message hook, so the reminder lands in the same turn the trigger
-// fires. If a future OpenCode version stops honouring part mutation there,
-// the proven tool.execute.before echo-prefix pattern (see the graphify
-// plugin) is the documented fallback; keep the reminder string free of
-// backticks and $(...) if it ever moves into an echoed shell command.
+// Injection: appends the reminder to the V2 prompt draft before admission.
+// Appending preserves attachment and agent mention offsets in existing text.
 import { existsSync, readdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
@@ -50,44 +46,43 @@ function inFactoryRun(directory) {
   return false;
 }
 
-export const UiAgentTriggerPlugin = async ({ directory }) => {
-  const armed = new Set(); // sessionIDs already reminded
+export default {
+  id: "ui-agent-trigger",
+  async setup(ctx) {
+    // Remember the triggering message so admission retries keep the reminder.
+    const armed = new Map();
 
-  const firstMatch = (text) => {
-    if (!text) return null;
-    for (const trigger of TRIGGERS) {
-      if (trigger.re.test(text)) return trigger.label;
-    }
-    return null;
-  };
+    const firstMatch = (text) => {
+      if (!text) return null;
+      for (const trigger of TRIGGERS) {
+        if (trigger.re.test(text)) return trigger.label;
+      }
+      return null;
+    };
 
-  return {
-    "chat.message": async (input, output) => {
-      if (!input?.sessionID || armed.has(input.sessionID)) return;
-      if (inFactoryRun(directory)) return;
+    await ctx.session.hook("prompt", ({ sessionID, messageID, prompt }) => {
+      const previous = armed.get(sessionID);
+      if (!sessionID || (previous && previous.messageID !== messageID)) return;
+      if (inFactoryRun(ctx.location.directory)) return;
       let hit = null;
-      for (const part of output.parts) {
-        hit =
-          firstMatch(part.type === "text" ? part.text : `${part.filename || ""} ${part.url || ""}`);
+      for (const file of prompt.files || []) {
+        hit = firstMatch(`${file.name || ""} ${file.uri || ""}`);
         if (hit) break;
       }
-      if (!hit) hit = firstMatch(output.message?.text);
+      if (!hit) hit = firstMatch(prompt.text);
       if (!hit) return;
 
-      armed.add(input.sessionID);
       const source = hit === ".pen" ? `design attachment (${hit})` : `keyword "${hit}"`;
-      output.parts.push({
-        id: `uiagent-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-        sessionID: input.sessionID,
-        messageID: input.messageID ?? output.message?.id,
-        type: "text",
-        synthetic: true,
-        text:
-          `[ui-agent] UI trigger matched (${source}). Invoke the ui-agent skill now to arm UI QA. ` +
+      const reminder =
+        previous?.reminder ??
+        (`[ui-agent] UI trigger matched (${source}). Invoke the ui-agent skill now to arm UI QA. ` +
           "Pipeline runs only when UI files are actually edited. " +
           "For create/convert/build intent, defer to pen-design, pen-to-avalonia, or frontend-design. " +
-          "Inert during factory runs.",
-      });
-    },
-  };
+          "Inert during factory runs.");
+      if (!prompt.text?.endsWith(reminder)) {
+        prompt.text = prompt.text ? `${prompt.text}\n\n${reminder}` : reminder;
+      }
+      armed.set(sessionID, { messageID, reminder });
+    });
+  },
 };
