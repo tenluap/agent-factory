@@ -74,7 +74,7 @@ Overridden: none
 
 Not a seam: time-budget lookup is role-generic and defaults to 300 s; no change (Q1).
 
-Confirmed: 2026-10-29 - Q2=A explicitly accepted (requires_user, not auto) - seams: PARTIAL_RETURN_ROLES, render.py agent output, factory drop design rehome; failure paths: PARTIAL_RETURN_ROLES -> partial from non-file-writing role rejected; render.py -> none; factory drop -> missing evidence file, ../ traversal evidence reference, symlink inside factory/design/ pointing outside it; each reported, map unchanged, factory/ not moved
+Confirmed: 2026-10-29 - Q3 accepted - seams: `PARTIAL_RETURN_ROLES` / file-writing role check in `factory_cli.state`; `render.py <harness>` agent output; `factory drop` design rehome; failure paths: `PARTIAL_RETURN_ROLES` -> `partial` from a non-file-writing role still rejected; `render.py <harness>` -> none; `factory drop` -> missing evidence file, `../` traversal evidence reference, and symlink inside `factory/design/` pointing outside it; each reports the reference, leaves the map unchanged and does not move `factory/`.
 
 ## Complexity Tracking
 
