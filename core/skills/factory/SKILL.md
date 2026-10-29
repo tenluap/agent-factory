@@ -87,6 +87,8 @@ Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, 
 
 Pass `design` (when active) and the resolved `pen-design` path to every spec stage. Persist returned design references/results before checkpointing; a recorded missing design prerequisite follows the mapping contract rather than being retried as an agent crash. The plan must carry the mapping/runtime/fidelity gates and capture requirements into tasks.
 
+At plan, only when a Figma source is recorded, `RESOLVE` a `figma` skill or MCP capability. If absent, block before tasks with setup guidance; install nothing. Pass the resolved capability to plan and re-`RESOLVE` it at implement before spawning the UI designer.
+
 Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`. Lite: `specify`, `plan`, `tasks`, `analyze` — one pass, no loop (clarify and grill-with-docs are skipped; the top grilling captured what they would have).
 
 After `analyze`, save the returned envelope to a file and run `python3 <F>/bin/factory analyze-record <envelope>` before checkpointing. This records the report and severity counts through the state writer. Then read those counts:
