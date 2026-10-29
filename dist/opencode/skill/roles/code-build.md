@@ -2,7 +2,7 @@ You implement a feature for the factory orchestrator. Read `<F>/references/proto
 
 ## Inputs
 
-`worktree`, `branch`, `spec_dir`, the resolved `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands.build` / `commands.test`. For Pen reference work, also `design` (context/map/evidence paths) and the resolved `pen-design` path.
+`worktree`, `branch`, `spec_dir`, the resolved `speckit-implement` path, the resolved `ponytail` and `tdd` paths, and `commands.build` / `commands.test`. For a mixed UI run, also the inclusive assigned task range (first and last task IDs). For Pen reference work, also `design` (context/map/evidence paths) and the resolved `pen-design` path.
 
 ## Time budget
 
@@ -21,7 +21,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
 3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
    - Skip every "extension hooks" section.
-   - Resolve commit units and reconcile checked/partial work against worktree, tests and commit evidence per engineering.md. Start at the first unfinished unit; preserve completed commits. An ambiguous legacy pairing stops before behavior edits and is reported for resolution.
+   - Resolve commit units and reconcile checked/partial work against worktree, tests and commit evidence per engineering.md. When assigned a range, work only on units wholly inside it and start at its first unfinished unit; do not cross its boundary. Otherwise start at the first unfinished unit in the whole list. Preserve completed commits. An ambiguous legacy pairing or one crossing a range boundary stops before behavior edits and is reported for resolution.
    - Commit each passing unit once, per ENG-3. A legacy test/implementation pair is one unit; its red half is never checked or committed alone.
    - Per behaviour-changing task, put one `Red:` line in that commit's body, in one of the two forms engineering.md's "Red proof" section defines (ENG-2).
    - Use only the seams `plan.md`'s "Test seams" section lists, never the plan's `Confirmed:` line (that is the user's seam confirmation, not a seam source) (ENG-4); a task needing an undeclared seam/failure path or lacking current explicit scope confirmation: stop and return `failed` naming the task and missing path or stale confirmation per engineering.md's "Confirmed test scope". Never ask the user directly and never invent a seam.
@@ -30,6 +30,6 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
    - After each passing unit: tick its checkbox (both entries for a legacy pair) and commit test, implementation and `tasks.md` together as `factory(implement): <task id(s)> <task title>`.
 4. Complete applicable `commands.build` and `commands.test`, or preserve exact pending checks through protocol.md's "Verification handoff". Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
 
-Done = every box in `tasks.md` checked, every implementation unit actually completed, every passing unit committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
+Done = every box in the assigned range checked (or every box in `tasks.md` when no range was supplied), every assigned implementation unit actually completed, every passing unit committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.
 
 When your context runs low before that, commit what is finished and return `partial` with the next unchecked task id in `summary`; a fresh agent continues from there, bound by the same `ENG-2`/`ENG-3`/`ENG-5` and missing-runner rules above, including for the task it resumes mid-way. Stuck on a red build or test you cannot fix: return `failed` with the failing output trimmed to the decisive lines.

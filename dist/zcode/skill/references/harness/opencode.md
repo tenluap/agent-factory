@@ -21,6 +21,7 @@
 
 ## Notes
 
+- Figma capability discovery: search the session's available tool catalog for Figma MCP inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents live in `~/.config/opencode/agents/` with `mode: subagent` and ordered V2 `permissions` rules. Read-only roles deny `edit`; every role denies `subagent`, so only the orchestrator launches roles. Other permissions follow the user's OpenCode configuration.
 - Agent models come from the adapter defaults. Override `models.opencode.deep` / `.standard` (as `provider/model-id#variant`, with optional variant) in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness opencode`. An empty model inherits the session's model.
 - Never load the `speckit-*` skills or `grill-with-docs` with the `skill` tool: read the resolved file and follow it.

@@ -20,6 +20,7 @@
 
 ## Notes
 
+- Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are TOML files in `~/.codex/agents/` (`factory_<role>.toml`). Subagents inherit the session's sandbox and approval policy, so read-only roles are read-only by instruction. The session needs write access to the worktree and network for `git push` and `gh`.
 - Agent models come from the adapter defaults. To override them, set `models.codex.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness codex`.
 - If the review fan-out exceeds `agents.max_concurrent_threads_per_session`, spawn the rest as slots free up.

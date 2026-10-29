@@ -20,6 +20,7 @@
 
 ## Notes
 
+- Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are Markdown files in `~/.zcode/agents/` (`factory-<role>.md`).
 - Agent models are not set by default, so every agent inherits the session's model. To pin them, set `models.zcode.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness zcode`.
 - Never invoke the `speckit-*` skills or `grill-with-docs` with the Skill tool: read the resolved file and follow it.

@@ -20,6 +20,7 @@
 
 ## Notes
 
+- Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are `~/.copilot/agents/factory-<role>.agent.md`. Read-only roles get `tools: [read, search, execute]`.
 - Agent models are not set by default, so every agent uses the default model. To pin them, set `models.copilot.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness copilot`.
 - In VS Code, user-level agents and skills may need to be enabled or pointed at `~/.copilot/` in settings; the Copilot CLI reads them as installed.

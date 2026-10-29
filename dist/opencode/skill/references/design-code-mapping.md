@@ -93,7 +93,7 @@ For each gate record `passed`, `failed`, `unavailable`, or `stale`, and a concre
 
 Report design results in the existing envelope's optional `design` field (protocol.md). A well-formed failed/unavailable design gate is a product verification result, not an agent crash to retry blindly. Preserve task/role failures and unfinished task boxes; an exception never pretends an unfinished task was implemented.
 
-Done when each required gate has current passing evidence or an explicit failed/unavailable/stale result. Only all passing gates set implementation status `verified`.
+Done when each required gate has current passing evidence or an explicit failed/unavailable/stale result, and each legitimately not-applicable gate has its required reason. Set implementation status `verified` only when every applicable gate passes and every legitimately not-applicable gate carries its required reason; a text-only run needs no waiver for its mapping and fidelity gates.
 
 ## 5. Repair, exceptions, and handoff
 

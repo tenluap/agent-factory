@@ -20,6 +20,7 @@
 
 ## Notes
 
+- Figma capability discovery: use `ToolSearch` to discover available Figma MCP inspection tools; pass their exact identities and schemas to the role. If unavailable, report the gap.
 - `speckit-*` skills and `grill-with-docs` set `disable-model-invocation: true`: never call them with the Skill tool. `grilling`, `domain-modeling` and `pr` may be invoked with the Skill tool or read and followed.
 - `$ARGUMENTS` is substituted by Claude Code from the `/factory` arguments.
 - Ledger (reported usage): Agent-tool results expose no token usage — record `reported: null` and rely on the estimates.
