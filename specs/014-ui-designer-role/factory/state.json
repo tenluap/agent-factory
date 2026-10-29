@@ -51,7 +51,25 @@
       "at": "2026-10-29T00:18:47.288266Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "fix",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q3"
+          }
+        ],
+        "answers": {
+          "Q3": {
+            "answer": "A",
+            "at": "2026-10-29T07:16:09.591370Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-28T23:24:41.144245Z",
