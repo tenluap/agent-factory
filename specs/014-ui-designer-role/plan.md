@@ -51,6 +51,8 @@ tools/tests/test_render_models.py, test_state.py, test_drop.py
 - `factory-ui-designer` agent - abstraction - new role, reason recorded in `DESIGN.md` (FR-001).
 - `[UI]` task marker - abstraction - FR-006 routing key; no new route/verb.
 - Optional design-context fields (`source_kind`, `framework`, `scope` with nested `target` or `accepted_files`/`excluded`, `ui_agent_pass`) - abstraction - FR-005/009/018/024 persistence outside relay.
+- `active_assignment` (design context) - abstraction - persists the active implement role and its assigned task range so an interrupted run resumes on the right role, not `code-build` by default (round-2 STD-1).
+- `ui_quality_pending` (design context) - abstraction - marks the final UI range whose `ui-agent` pass is not yet reconciled, so resume respawns `ui-designer` even when every `[UI]` box is checked (round-2 SPEC-2).
 - Dependencies: none.
 
 ## Quality constraints
