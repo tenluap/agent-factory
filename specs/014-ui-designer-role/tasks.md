@@ -24,7 +24,7 @@ Seams (plan.md "Test seams", confirmed 2026-10-29 Q1):
 ## Phase 1: Setup (design first)
 
 - [X] T001 Update `DESIGN.md` before any `core/` or `adapters/` change (constitution I, FR-001): add `factory-ui-designer` (tier standard, access write) to the Agents table; add it to the Flow and the Implement decisions (route by `[UI]` task marker: `ui-designer` for `[UI]` tasks, `code-build` for the rest, `tasks.md` order kept); add a routing-contract row for UI design work; replace the sentence "No new agent role, harness verb, second map, or repair loop is introduced." in "Pen design references" (line ~116) with the deliberate decision (one new write role; still no new verb, second map or repair loop) and its reason (design-to-code has its own state machine: discover, survey, plan components, implement batches, validate); add `ui-designer` to "the file-writing roles (spec-builder, code-build, fixer)" in "Deadline stop" (line ~259) and change "all three file-writing roles" to "all file-writing roles". Exempt: DESIGN.md - documentation only
-- [ ] T002 Check `CONTEXT.md` "UI design" (line ~159) defines UI design run, UI design task, design source, framework reference, UI scope and dependency batch exactly as spec.md uses them; add any missing term in place. Exempt: CONTEXT.md - documentation only
+- [X] T002 Check `CONTEXT.md` "UI design" (line ~159) defines UI design run, UI design task, design source, framework reference, UI scope and dependency batch exactly as spec.md uses them; add any missing term in place. Exempt: CONTEXT.md - documentation only
 
 ---
 
