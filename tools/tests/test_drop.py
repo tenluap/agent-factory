@@ -427,6 +427,39 @@ class DropTests(unittest.TestCase):
         self.assertTrue(self.folder.is_dir())
         self.assertFalse((self.wt / "docs/design/011-drop").exists())
 
+    def test_drop_rejects_traversal_evidence(self):
+        _, map_path = self.prepare_design()
+        reference = "specs/011-drop/factory/design/../brief.md"
+        map_path.write_text(json.dumps({"evidence": reference}))
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "reference traversal evidence", cwd=self.wt)
+        original = map_path.read_bytes()
+
+        result = self.box.cli("drop", cwd=self.wt)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(reference, result.stderr)
+        self.assertEqual(map_path.read_bytes(), original)
+        self.assertTrue(self.folder.is_dir())
+        self.assertFalse((self.wt / "docs/design/011-drop").exists())
+
+    def test_drop_rejects_symlink_escaping_design(self):
+        design, map_path = self.prepare_design()
+        (design / "escape").symlink_to("../brief.md")
+        reference = "specs/011-drop/factory/design/escape"
+        map_path.write_text(json.dumps({"evidence": reference}))
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "reference symlink evidence", cwd=self.wt)
+        original = map_path.read_bytes()
+
+        result = self.box.cli("drop", cwd=self.wt)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(reference, result.stderr)
+        self.assertEqual(map_path.read_bytes(), original)
+        self.assertTrue(self.folder.is_dir())
+        self.assertFalse((self.wt / "docs/design/011-drop").exists())
+
     def test_dirty_map_refused_without_losing_changes(self):
         _, map_path = self.prepare_design()
         for staged in (False, True):
