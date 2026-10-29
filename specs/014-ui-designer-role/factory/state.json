@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -827,6 +827,14 @@
       "event": "complete",
       "commit": "0d85857",
       "harness": "opencode"
+    },
+    {
+      "at": "2026-10-29T07:43:10.759819Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "opencode",
+      "decision": "approve"
     }
   ],
   "branch": "014-ui-designer-role",
