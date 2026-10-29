@@ -66,8 +66,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Confirm test seams for ui-designer role (Q1, requires_user)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-29T00:14:09.625761Z",
+      "latency_ms": 2968481
     }
   ],
   "decisions": [
