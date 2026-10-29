@@ -10,7 +10,7 @@
 
 ## Context
 
-Today Pen design work rides on `code-build` and `fixer`, and `DESIGN.md` ("Pen design references") introduces no role for it. Design-to-code work has its own state machine (discover, survey, plan components, implement batches, validate fidelity). This feature adds it as one write role, generalised beyond Avalonia and Pen, with no second repair loop and no review or approval change.
+Today Pen design work rides on `code-build` and `fixer`; `DESIGN.md` ("Pen design references") adds no role. Design-to-code work has its own state machine (discover, survey, plan components, implement batches, validate fidelity). This feature adds it as one write role, generalised beyond Avalonia and Pen (FR-026 keeps repair and review unchanged).
 
 ## Clarifications
 
@@ -126,12 +126,12 @@ The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (crit
 - **FR-001**: `DESIGN.md` MUST be updated first, before any `core/` or `adapters/` change: add `factory-ui-designer` (tier standard, access write) to the Agents table, add it to the Flow and the Implement decisions, add a routing-contract row for UI design work, and replace the "No new agent role ... is introduced" sentence in "Pen design references" with the deliberate new decision and its reason.
 - **FR-002**: The role MUST be one new role prompt in `core/roles/` with the same metadata shape as existing roles, using only neutral verbs and naming no harness tool, path or command.
 - **FR-003**: Every harness adapter MUST render the new agent, and the committed rendered distribution for all five harnesses MUST match a fresh render (no drift).
-- **FR-004**: Wherever the factory enumerates file-writing roles (time budget, deadline stop, partial-return handling, read-only/write access checks, role counts in documentation), `ui-designer` MUST be included as a file-writing role.
+- **FR-004**: Wherever the factory enumerates file-writing roles (deadline stop, partial-return handling, write access checks, role counts in documentation), `ui-designer` MUST be included as a file-writing role.
 
 **Activation and inputs**
 
 - **FR-005**: A run MUST be a **UI design run** when its saved design context records a design source (Pen, Figma, image or text-only restyle) and UI targets or whole-surface scope; any other run MUST keep today's implement flow unchanged. `spec-builder` MUST classify a run as text-only at plan only when the brief asks for a purely visual change with no behaviour change, and record it in the design context; an ambiguous brief MUST get one ordinary relay question, and mixed work stays on `code-build`.
-- **FR-006**: On a UI design run the tasks stage MUST mark each UI design task with an explicit `[UI]` marker. In the implement step the orchestrator MUST route by that marker only: `ui-designer` for `[UI]` tasks, `code-build` for the rest, preserving `tasks.md` order. No new `/factory` route, stage name or harness verb is added.
+- **FR-006**: On a UI design run the tasks stage MUST mark each UI design task with an explicit `[UI]` marker. In the implement step the orchestrator MUST route by that marker only: `ui-designer` for `[UI]` tasks, `code-build` for the rest, preserving `tasks.md` order; one spawn covers each contiguous run of `[UI]` tasks. No new `/factory` route, stage name or harness verb is added.
 - **FR-007**: The orchestrator MUST pass the role the usual implement inputs (worktree, branch, spec_dir, `speckit-implement`, `ponytail`, `tdd`, commands, deadline) plus the design context reference, the source kind, the scope (named file or whole surface), and the resolved design-source capability path (`pen-design` or `figma`) when the source needs one.
 - **FR-008**: The orchestrator MUST resolve a `figma` skill or MCP capability through `RESOLVE` at plan, only when a Figma source is recorded; when absent, the run MUST be blocked before tasks with setup guidance and nothing installed. Implement MUST re-resolve it before spawning the role.
 
@@ -164,7 +164,7 @@ The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (crit
 
 **Quality and repair**
 
-- **FR-024**: Only the spawn that completes the last `[UI]` task MUST run `ui-agent`, as a single pass (no internal second iteration) after its gates pass, over the whole changed UI surface; it MUST record the pass in the design context so a resume does not repeat it, and MUST disclose the skip when `ui-agent` is unavailable.
+- **FR-024**: Only the spawn that completes the last `[UI]` task (no unchecked `[UI]` task remains in `tasks.md`) MUST run `ui-agent`, as a single pass (no internal second iteration) after its gates pass, over the whole changed UI surface; it MUST record the pass in the design context so a resume does not repeat it, and MUST disclose the skip when `ui-agent` is unavailable.
 - **FR-025**: Design-sourced values MUST win over conflicting quality recommendations, which are recorded as skipped with a reason.
 - **FR-026**: Review, judge, fixer, the two shared fix rounds and the approver gate MUST stay unchanged; the feature MUST add no second repair loop.
 
@@ -175,8 +175,8 @@ The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (crit
 
 **Verification**
 
-- **FR-029**: Automated tests MUST cover: the role renders for every harness with tier standard and write access; the rendered distribution matches its source; the role is listed among file-writing roles wherever that list exists; the core role file names no harness tool.
-- **FR-030**: At drop, Pen, Figma and image evidence and references MUST rehome to `docs/design/<branch>/`, and map references MUST be rewritten to the new paths.
+- **FR-029**: Automated tests MUST cover: the role renders for every harness with tier standard and write access; the rendered distribution matches its source; the CLI's file-writing role check accepts its `partial` return; the core role file names no harness tool.
+- **FR-030**: At drop, Pen, Figma and image evidence and references MUST rehome to `docs/design/<branch>/`, and map references MUST be rewritten to the new paths. A map reference to a missing evidence file MUST fail the drop before any move, naming the path, with the map and run folder unchanged.
 
 ### Key Entities
 
@@ -202,4 +202,4 @@ UI design run, UI design task, design source, framework reference, UI scope and 
 - Prior-art behaviour is adapted to factory rules (stateless spawns, relay questions, shared fix rounds); engineering rules win on conflict.
 - Design edits (writing back to the Pen or Figma source) stay out of scope unless explicitly requested, as today.
 - Frameworks beyond Avalonia and web are future work; they are reported unsupported.
-- The role gets its own time-budget entry, defaulting to the standard 300 seconds.
+- The role-generic 300-second time-budget default applies; no role-specific entry.

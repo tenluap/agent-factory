@@ -50,7 +50,7 @@ tools/tests/test_render_models.py, test_state.py, test_drop.py
 - `core/skills/factory/references/design-code-mapping-web.md` - file - FR-010 web framework reference; Avalonia one reused.
 - `factory-ui-designer` agent - abstraction - new role, reason recorded in `DESIGN.md` (FR-001).
 - `[UI]` task marker - abstraction - FR-006 routing key; no new route/verb.
-- Optional design-context fields (`source_kind`, `framework`, `scope`, `accepted_files`, `ui_agent_pass`) - abstraction - FR-005/009/018/024 persistence outside relay.
+- Optional design-context fields (`source_kind`, `framework`, `scope` with nested `target` or `accepted_files`/`excluded`, `ui_agent_pass`) - abstraction - FR-005/009/018/024 persistence outside relay.
 - Dependencies: none.
 
 ## Quality constraints
@@ -60,6 +60,7 @@ tools/tests/test_render_models.py, test_state.py, test_drop.py
 - Compatibility: pre-feature runs resume on `code-build` (FR-028); non-design runs unchanged (SC-007).
 - Resource limits: existing deadline/partial handling extended to the role (FR-027).
 - Verification: existing unittest suite plus render drift gate.
+- Fixture-run criteria (SC-001, SC-002, SC-003, SC-004, SC-005, SC-007) describe behaviour carried by exempt prompt text. They are verified by prompt review, not automated runs: T013 checks the US4 statements, and T016 checks that each criterion traces to a stated rule in `ui-designer.md`, `spec-builder.md`, `SKILL.md` or `design-code-mapping.md`. Live fixture trials are out of scope; SC-006 stays automated.
 
 ## Test seams
 
