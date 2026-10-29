@@ -98,7 +98,7 @@ Seams (plan.md "Test seams", confirmed 2026-10-29 Q1):
 
 ## Phase 8: Polish & cross-cutting
 
-- [ ] T015 [P] Update `README.md` role list and role count to include `ui-designer` (FR-004). Exempt: README.md - documentation only
+- [X] T015 [P] Update `README.md` role list and role count to include `ui-designer` (FR-004). Exempt: README.md - documentation only
 - [ ] T016 Final verification: run the build, then `test -z "$(git status --porcelain -- dist/)"` (SC-006), then `python3 -m unittest discover -s tools`; grep each `dist/<harness>/` for `factory-ui-designer` (quickstart step 4); trace SC-001..SC-005 and SC-007 to stated prompt rules (plan "Quality constraints"). Commit nothing new if all pass; a failure reopens the owning task. Exempt: dist/ - generated output; covered by the drift gate
 
 ---
