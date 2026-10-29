@@ -241,6 +241,88 @@ unlink_skills() {
   done
 }
 
+# OpenCode loads every .js in its plugins directory. The ui-agent trigger
+# plugin is linked straight from repo source (no render step) and removed on
+# uninstall only when the link still points here.
+plugin_target() { echo "$(dirname "$skills_root")/plugins/ui-agent-trigger.js"; }
+
+install_plugin() {
+  mkdir -p "$(dirname "$(plugin_target)")"
+  link "$src/plugins/ui-agent-trigger.js" "$(plugin_target)"
+}
+
+unlink_plugin() {
+  local to
+  to="$(plugin_target)"
+  if [ -L "$to" ] && [[ "$(readlink "$to")" == "$src"/plugins/* ]]; then
+    rm "$to"
+    echo "removed: $to"
+  fi
+}
+
+# claude-code and codex share one UserPromptSubmit hook script (same stdin
+# shape, same additionalContext output). The script is copied into
+# $factory_home/bin and wired by hand — install.sh never edits the user's
+# settings.json or hooks.json, so it prints the snippet to paste instead.
+hook_script_target() { echo "$factory_home/bin/ui-agent-hook.mjs"; }
+
+install_hook_script() {
+  local target
+  target="$(hook_script_target)"
+  mkdir -p "$(dirname "$target")"
+  if ! cp "$src/plugins/ui-agent-hook.mjs" "$target"; then
+    echo "error: hook script copy failed: $target" >&2
+    return 1
+  fi
+  chmod +x "$target"
+  echo "installed: $target"
+  cat <<EOF
+wire it manually (this installer never edits your harness config):
+
+  claude-code — add to "hooks" in ~/.claude/settings.json:
+
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$target\"",
+            "timeout": 5,
+            "statusMessage": "Checking UI intent..."
+          }
+        ]
+      }
+    ]
+
+  codex — add to "hooks" in ~/.codex/hooks.json:
+
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$target\"",
+            "timeout": 5,
+            "statusMessage": "Checking UI intent..."
+          }
+        ]
+      }
+    ]
+
+  codex also requires trusting the hook once: run /hooks in Codex and approve it.
+EOF
+}
+
+uninstall_hook_script() {
+  local target
+  target="$(hook_script_target)"
+  if [ -f "$target" ]; then
+    rm "$target"
+    echo "removed: $target"
+    echo "note: remove the matching UserPromptSubmit entry from ~/.claude/settings.json or ~/.codex/hooks.json if you wired it"
+  fi
+}
+
 install_one() {
   local dist skill_dir agent_dir skills_root
   echo "== $1"
@@ -250,6 +332,8 @@ install_one() {
   if [ -n "$uninstall" ]; then
     unlink_skills "$skills_root"
     unlink_ours "$skill_dir"
+    [ "$1" = "opencode" ] && unlink_plugin
+    case "$1" in claude-code|codex) uninstall_hook_script ;; esac
     for f in "$dist"/agents/*; do unlink_ours "$agent_dir/$(basename "$f")"; done
     rm -rf "$dist"
     echo "removed: $dist"
@@ -263,9 +347,15 @@ install_one() {
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
   install_skills "$skills_root" "$1"
-  if [ "$1" = "opencode" ]; then
-    echo "ready: OpenCode factory skill and role agents linked; start a fresh OpenCode session to load them."
-  fi
+  case "$1" in
+    opencode)
+      install_plugin
+      echo "ready: OpenCode factory skill, role agents and ui-agent trigger plugin linked; start a fresh OpenCode session to load them."
+      ;;
+    claude-code|codex)
+      install_hook_script
+      ;;
+  esac
   python3 "$src/tools/render.py" "$1" --models
 }
 

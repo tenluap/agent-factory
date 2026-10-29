@@ -1,6 +1,6 @@
 ---
 name: ui-agent
-description: Use when UI files are altered (.tsx, .jsx, .vue, .svelte, .razor, .cshtml, .html, .css, .scss, .less, .xaml, .axaml, .qml), design tokens or theme config change, or user-visible copy is modified — and the user wants a fixed critique→audit→typeset→polish→re-verify pipeline with a configurable model provider, capped at two iterations
+description: Use when UI files are altered (.tsx, .jsx, .vue, .svelte, .razor, .cshtml, .html, .css, .scss, .less, .xaml, .axaml, .qml), design tokens or theme config change, user-visible copy is modified, a .pen or Figma design node is attached, or the session works with pen.dev or Figma designs or UI/UX quality — arming a critique→audit→typeset→polish→re-verify pipeline (configurable provider, max two iterations). Pipeline executes only on actual UI edits; defer to pen-design, pen-to-avalonia, frontend-design for create/convert/build intent; inert during factory runs
 ---
 
 # UI Agent
@@ -21,6 +21,16 @@ Automated UI quality assurance through a fixed critique-and-fix pipeline. When a
 - Backend code, API logic, or non-UI files
 - One-shot UI reviews (use `/impeccable critique` directly)
 - New feature design work (use `/impeccable shape` or `/design-critique-pipeline`)
+- Factory runs — there the `ui-designer` role alone invokes this skill (factory FR-024)
+
+## Auto-Trigger (OpenCode, claude-code, codex)
+
+The `ui-agent-trigger` OpenCode plugin (linked into `~/.config/opencode/plugins/` by `install.sh --harness opencode`) arms this skill the first time an OpenCode session shows UI intent. The `ui-agent-hook.mjs` script (`${FACTORY_HOME:-~/.factory}/bin/`, installed by `install.sh --harness claude-code` / `--harness codex`, wired manually into the harness's `UserPromptSubmit` hook) does the same for claude-code and codex. Triggers, identical in both:
+
+- A `.pen` or Figma design file/node is attached to the session (OpenCode), or its path appears in the prompt (claude-code, codex)
+- The message matches one trigger of: `pen.dev`, `.pen`, `figma`, `ux`, `ui` — case-insensitive; `ui`, `ux`, `.pen` match whole words only, `pen.dev` and `figma` match as substrings; bare `pen` is deliberately not a trigger
+
+The trigger **arms** the skill — it never starts the pipeline. The critique loop still runs only when UI files are actually edited (see The UI Change Critique Loop). The injected reminder defers create/convert/build intent to `pen-design`, `pen-to-avalonia`, or `frontend-design`. Both layers are inert during factory runs: they detect run state (`specs/*/factory/state.json`, `~/.factory/pending/*.json`) and stay silent there. Other harnesses (copilot, zcode) rely on this document's description alone — no deterministic layer exists for them. Triggers are hardcoded by design; the config file below externalizes pipeline behavior, not trigger detection.
 
 ## Configuration
 
@@ -160,6 +170,7 @@ After the loop exits, report:
 - **Don't add scope.** Fix the requested design surface; do not invent new features or workflows.
 - **Treat copy as UI.** Labels, helper text, errors, and empty states are in scope for critique.
 - **Keep the config visible** during the whole workflow. If the model provider or iteration cap changes between runs, the behavior should reflect it.
+- **Auto-trigger arms, never runs.** A keyword or design attachment only loads this skill; the pipeline still waits for real UI edits.
 - **This skill complements `/design-critique-pipeline`**, it does not replace it. Use the pipeline for design-time refinement; use this skill for post-edit quality assurance with the full audit→typeset→polish→re-verify sequence.
 
 ## Integration Hooks
