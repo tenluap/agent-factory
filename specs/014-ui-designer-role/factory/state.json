@@ -256,6 +256,14 @@
       "auto": false,
       "at": "2026-10-29T00:58:29.149532Z",
       "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "Q3",
+      "answer": "A: accepted COMPLETE scope — seams: (1) PARTIAL_RETURN_ROLES accepts ui-designer partial+overrun; fail: partial from non-file-writing role rejected. (2) render.py all 5 harnesses render factory-ui-designer standard tier write access, core names no harness tool; fail: none. (3) factory drop rehomes Figma/image evidence in factory/design/ to docs/design/<branch>/ with map refs rewritten; fail: missing evidence file, ../ traversal ref, symlink escaping factory/design/ — each reports ref, map unchanged, factory/ not moved. Exempt: docs/prompts/dist.",
+      "auto": false,
+      "at": "2026-10-29T07:16:11.283215Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
