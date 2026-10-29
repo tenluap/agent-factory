@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "review",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -806,7 +806,7 @@
       ]
     },
     {
-      "at": "2026-10-29T07:25:52.671309Z",
+      "at": "2026-10-29T07:27:00.876461Z",
       "stage": "review",
       "event": "complete",
       "commit": null,
