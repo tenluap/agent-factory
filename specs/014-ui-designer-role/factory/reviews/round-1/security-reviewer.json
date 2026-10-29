@@ -1,0 +1,1 @@
+{"reviewer":"security","round":1,"summary":"No demonstrated security, resource-limit, or data-integrity defects found in the scoped changes; dist was checked only for drift.","findings":[]}
