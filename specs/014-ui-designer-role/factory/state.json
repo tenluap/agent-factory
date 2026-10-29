@@ -6,7 +6,7 @@
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
   "default_branch": "main",
   "base": "origin/main",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -697,8 +697,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-10-29T07:43:25.465811Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/10",
   "history": [
     {
       "at": "2026-10-28T23:14:16.748608Z",
@@ -835,6 +835,13 @@
       "commit": null,
       "harness": "opencode",
       "decision": "approve"
+    },
+    {
+      "at": "2026-10-29T07:43:25.465811Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "branch": "014-ui-designer-role",
