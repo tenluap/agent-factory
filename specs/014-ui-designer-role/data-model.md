@@ -11,3 +11,5 @@ Design context (existing file, optional fields added; no schema version):
 Task: `[UI]` marker on UI design tasks; batch order tokens/assets, shared components, views.
 
 State transitions (role): discover → survey → plan components/map → implement batches → validate → report.
+
+Evidence files (Pen/Figma/image) live under `<spec_dir>/factory/design/`; `factory drop` moves the folder to `docs/design/<branch>/` and rewrites map references (existing behaviour, FR-030).

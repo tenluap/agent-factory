@@ -4,3 +4,4 @@
 2. Drift gate: `test -z "$(git status --porcelain -- dist/)"`
 3. Test: `python3 -m unittest discover -s tools`
 4. Check each harness dist contains `factory-ui-designer` with tier standard and write access.
+5. Drop regression: `python3 -m unittest discover -s tools -p test_drop.py` covers Figma/image rehome and missing-evidence failure.

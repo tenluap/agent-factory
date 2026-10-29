@@ -4,7 +4,7 @@
 
 ## Summary
 
-Add write role `factory-ui-designer` (tier standard). `DESIGN.md` changes first. Then: one role prompt in `core/roles/`, one web framework reference, orchestrator routing by `[UI]` task marker, spec-builder plan/tasks duties (framework detection, text-only classification, whole-surface scope question, Figma `RESOLVE`), file-writing role lists in the CLI, a time-budget default, drop rehoming of design evidence, render of all five harnesses, tests.
+Add write role `factory-ui-designer` (tier standard). `DESIGN.md` changes first. Then: one role prompt in `core/roles/`, one web framework reference, orchestrator routing by `[UI]` task marker, spec-builder plan/tasks duties (framework detection, text-only classification, whole-surface scope question, Figma `RESOLVE`), file-writing role list in the CLI, a drop regression test for design evidence (code only if a gap shows), render of all five harnesses, tests.
 
 ## Technical Context
 
@@ -14,7 +14,7 @@ Add write role `factory-ui-designer` (tier standard). `DESIGN.md` changes first.
 **Testing**: `python3 -m unittest discover -s tools` (existing)
 **Target Platform**: claude-code, opencode, codex, copilot, zcode adapters
 **Project Type**: CLI + agent prompt distribution
-**Performance Goals**: none beyond existing budgets; role budget default 300 s
+**Performance Goals**: none beyond existing budgets; role-generic budget default 300 s applies unchanged
 **Constraints**: harness-neutral core (verbs only); committed `dist/` equals fresh render; old `state.json` resumes unchanged (optional fields only, no schema version)
 **Scale/Scope**: 1 new role, 1 new reference, edits to ~8 existing core files
 
@@ -34,14 +34,14 @@ Post-design re-check: Pass, no violations.
 DESIGN.md, CONTEXT.md, README.md
 core/roles/ui-designer.md                       (new)
 core/roles/spec-builder.md                      (plan/tasks duties)
-core/skills/factory/SKILL.md                    (implement routing, Figma RESOLVE, drop rehome)
+core/skills/factory/SKILL.md                    (implement routing, Figma RESOLVE)
 core/skills/factory/references/design-code-mapping.md        (source kinds, text-only gates)
 core/skills/factory/references/design-code-mapping-web.md    (new)
 core/skills/factory/references/state.md, protocol.md         (role lists, optional fields)
-core/skills/factory/bin/factory_cli/state.py, commands.py    (file-writing roles, budget, drop)
-adapters/*/  (agent entry per harness if adapters enumerate roles)
+core/skills/factory/bin/factory_cli/state.py    (file-writing roles); commands.py only if drop gap
+(adapters do not list roles; render discovers core/roles/)
 dist/        (rendered)
-tools/tests/test_render_models.py, test_budget.py, test_state.py, test_drop.py
+tools/tests/test_render_models.py, test_state.py, test_drop.py
 ```
 
 ## New items
@@ -64,14 +64,16 @@ tools/tests/test_render_models.py, test_budget.py, test_state.py, test_drop.py
 ## Test seams
 
 - `PARTIAL_RETURN_ROLES` / file-writing role check in `factory_cli.state` — `ui-designer` accepted as file-writing role returning `partial` with `overrun`; failure path: `partial` from a non-file-writing role still rejected (`tools/tests/test_state.py`).
-- Time-budget defaults in `factory_cli` budget lookup — `ui-designer` defaults to 300 s; failure path: none (`tools/tests/test_budget.py`).
 - `render.py <harness>` agent output — every harness renders `factory-ui-designer` with tier standard and write access; core role file names no harness tool; failure path: none (`tools/tests/test_render_models.py`).
-- `factory drop` design rehome — Pen/Figma/image evidence moved to `docs/design/<branch>/` and map references rewritten; failure path: missing evidence file reported, map left unchanged (`tools/tests/test_drop.py`).
+- `factory drop` design rehome — drop already moves the whole `factory/design/` folder (`commands.py` drop); regression test that Figma/image evidence files there move to `docs/design/<branch>/` with map references rewritten; failure path: map reference to a missing evidence file reported, map left unchanged (`tools/tests/test_drop.py`). Code change only if that failure-path test is red (no missing-file check exists today).
 
 Exempt: DESIGN.md, CONTEXT.md, README.md, core/roles/*.md, core/skills/factory/SKILL.md, core/skills/factory/references/*.md - documentation/prompt text only; rendered presence covered by the render seam
-Exempt: adapters/*/ role entries - configuration; covered by the render seam
 Exempt: dist/ - generated output; covered by the drift gate
 Overridden: none
+
+Not a seam: time-budget lookup is role-generic and defaults to 300 s; no change (Q1).
+
+Confirmed: 2026-10-29 - Q1 accepted - seams: PARTIAL_RETURN_ROLES, render.py agent output, factory drop design rehome; failure paths: PARTIAL_RETURN_ROLES -> partial from non-file-writing role rejected; render.py -> none; factory drop -> missing evidence file reported, map unchanged
 
 ## Complexity Tracking
 
