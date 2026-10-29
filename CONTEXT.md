@@ -13,7 +13,7 @@ The agent session running the `/factory` skill: it owns the run's state, spawns 
 _Avoid_: driver, coordinator, main agent
 
 **Role**:
-A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, fixer, reviewers, judge).
+A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, ui-designer, fixer, reviewers, judge).
 _Avoid_: agent type, persona, worker
 
 **Stage**:
@@ -155,6 +155,40 @@ _Avoid_: test approval, sign-off
 **UI change signal**:
 A diff's classification as touching a user-visible surface: view markup and styles, design tokens and themes, UI assets, locale and string files, or user-visible copy inside UI code.
 _Avoid_: UI flag, frontend change
+
+## UI design
+
+**UI design run**:
+A factory run whose saved design context records a design source and a UI scope; its UI design tasks are implemented by the `ui-designer` role instead of `code-build`.
+_Avoid_: design mode, Pen run, UI run
+
+**UI design task**:
+A task the tasks stage marks `[UI]`, routed to `ui-designer` by that marker alone.
+_Avoid_: design task, UI ticket
+
+**Design source**:
+What a UI design run implements from, one of four kinds with fixed authority: Pen file and Figma node (mapped), image or screenshot (visual reference only), text-only restyle (existing code is the baseline).
+_Avoid_: design input, mockup, reference
+
+**Text-only restyle**:
+A design source classified at plan for a brief asking a purely visual change with no behaviour change; it has no design reference, so mapping and fidelity are not applicable and build/runtime evidence is still required.
+_Avoid_: restyle mode, visual tweak
+
+**Quality pass**:
+The single `ui-agent` pass (critique, audit, typeset, polish, re-verify) run once per UI design run by the spawn completing the last UI design task, over the whole changed UI surface.
+_Avoid_: polish loop, UI review
+
+**Framework reference**:
+The per-framework guidance document `ui-designer` loads for the UI framework detected at plan; a framework without one is unsupported and stops the run.
+_Avoid_: framework adapter, framework plugin
+
+**UI scope**:
+The files a UI design run may change: a named target file with its component dependencies, or the user-accepted whole-surface file list.
+_Avoid_: blast radius, target set
+
+**Dependency batch**:
+One layer of a UI scope (tokens and assets, then shared components, then views) implemented and committed as one unit of work.
+_Avoid_: wave, tier, chunk
 
 **Shared integration reference**:
 The one compact document (`core/skills/factory/references/skills.md`) holding skill precedence and loading rules for the orchestrator and both code-writing roles, linked rather than restated.

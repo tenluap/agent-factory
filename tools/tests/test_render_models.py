@@ -8,6 +8,7 @@ environment; the README statement matches `adapters/`.
 
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -89,9 +90,15 @@ class ModelPolicyTests(unittest.TestCase):
 
     def test_shipped_model_policy_preserves_explicit_tiers(self):
         expected = {
-            "claude-code": {"deep": "anthropic/claude-opus-5-5", "standard": "anthropic/claude-haiku-5-5"},
+            "claude-code": {
+                "deep": "anthropic/claude-opus-5-5",
+                "standard": "anthropic/claude-haiku-5-5",
+            },
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
-            "opencode": {"deep": "claude-code/claude-opus-5-5[1m]", "standard": "openai/gpt-6.1-terra"},
+            "opencode": {
+                "deep": "claude-code/claude-opus-5-5[1m]",
+                "standard": "openai/gpt-6.1-terra",
+            },
         }
         shipped = []
         for name in HARNESSES:
@@ -115,7 +122,9 @@ class ModelPolicyTests(unittest.TestCase):
 
     def test_readme_statement_matches_adapters(self):
         readme = (REPO / "README.md").read_text()
-        self.assertIn("Claude Code, Codex and OpenCode pin agent models by default", readme)
+        self.assertIn(
+            "Claude Code, Codex and OpenCode pin agent models by default", readme
+        )
         self.assertIn("Copilot and Zcode inherit the session model", readme)
         for name in ("copilot", "zcode"):
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
@@ -471,6 +480,59 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 )
                 self.assertIn("Edit", tools_line, meta["name"])
                 self.assertIn("Write", tools_line, meta["name"])
+
+    def test_ui_designer_renders_for_every_harness(self):
+        import render as render_mod
+
+        role = REPO / "core/roles/ui-designer.md"
+        self.assertTrue(role.exists(), "ui-designer role missing")
+        meta, _ = render_mod.frontmatter(role.read_text())
+        self.assertEqual(
+            (meta["name"], meta["tier"], meta["access"]),
+            ("ui-designer", "standard", "write"),
+        )
+        for harness in HARNESSES:
+            with self.subTest(harness=harness):
+                render(harness)
+                adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
+                path = self.agent_path(harness, meta)
+                self.assertTrue(path.exists(), path)
+                text = path.read_text()
+                model = adapter["models"].get("standard")
+                if model:
+                    self.assertIn(model, text)
+                if harness in ("claude-code", "zcode"):
+                    tools_line = next(
+                        line for line in text.splitlines() if line.startswith("tools:")
+                    )
+                    self.assertIn("Edit", tools_line)
+                    self.assertIn("Write", tools_line)
+                if harness == "copilot":
+                    self.assertIn(
+                        "edit",
+                        next(
+                            line
+                            for line in text.splitlines()
+                            if line.startswith("tools:")
+                        ),
+                    )
+                if harness == "opencode":
+                    self.assertNotIn('"action": "edit"', text)
+
+    def test_ui_designer_core_role_names_no_harness_tool(self):
+        text = (REPO / "core/roles/ui-designer.md").read_text()
+        self.assertNotIn("adapters/", text)
+        self.assertNotIn("dist/", text)
+        for path in ADAPTERS.glob("*/adapter.json"):
+            adapter = json.loads(path.read_text())
+            for access in adapter["access"].values():
+                names = access.get("tools", [])
+                if isinstance(names, str):
+                    names = names.split(", ")
+                for name in names:
+                    # Labels such as Read and edit also occur as ordinary prose.
+                    pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
+                    self.assertNotRegex(text, pattern, (path, name))
 
 
 if __name__ == "__main__":

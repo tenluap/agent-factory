@@ -1,5 +1,7 @@
 <!--
 Sync Impact Report
+- Version change 1.0.0 → 2.0.0: principle III redefined; dist/ is git-ignored and never committed;
+  the workflow gate checks the build succeeds and dist/ is untracked.
 - Version change: template → 1.0.0
 - Principles added: I. Design First; II. Harness-Neutral Core; III. Generated Dist;
   IV. Stateless Agents; V. Simplicity and Reuse
@@ -24,9 +26,9 @@ neutral verbs in `core/skills/factory/references/verbs.md` (`SPAWN`, `SPAWN_PARA
 `adapters/<harness>/`. Rationale: one core must run unchanged on every harness.
 
 ### III. Generated Dist (NON-NEGOTIABLE)
-`dist/` is build output of `tools/render.py`. Nobody edits `dist/` by hand. Every change to
-`core/` or `adapters/` MUST be followed by a render of every harness, and the rendered
-`dist/` MUST be committed with the source change so `dist/` never drifts from its source.
+`dist/` is build output of `tools/render.py`. Nobody edits `dist/` by hand. `dist/` is
+git-ignored and MUST NOT be committed. Every change to `core/` or `adapters/` MUST still
+render cleanly for every harness, so `dist/` is always reproducible from its source.
 
 ### IV. Stateless Agents
 Every agent turn is a fresh spawn. An agent MUST NOT rely on memory of an earlier turn.
@@ -49,9 +51,8 @@ envelope or report shape defined in `references/protocol.md` or `references/find
 
 - Build: render every harness with `tools/render.py` (`python3 tools/render.py --list`
   names them).
-- Test: after the build, `test -z "$(git status --porcelain -- dist/)"` MUST pass, proving
-  the committed `dist/` matches its source; a bare `git diff --exit-code -- dist/` cannot
-  see untracked additions and is not the gate.
+- Test: the build MUST succeed for every harness, and `test -z "$(git ls-files -- dist/)"`
+  MUST pass, proving no build output is tracked.
 - A change to the flow is validated end to end per the "Validation plan" in `DESIGN.md`
   before it is relied on.
 
@@ -63,4 +64,4 @@ MINOR: principle or section added or materially expanded; PATCH: wording), and c
 together with any `DESIGN.md` change they imply. Every review checks a change against these
 principles; a violation needs a written justification in the plan.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-21 | **Last Amended**: 2026-10-22
+**Version**: 2.0.0 | **Ratified**: 2026-10-21 | **Last Amended**: 2026-10-29

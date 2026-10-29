@@ -441,6 +441,26 @@ def cmd_drop(repo, cwd):
         )
     if dirty:
         die(1, f"drop paths have uncommitted changes:\n{dirty.strip()}")
+    if map_path.is_file():
+        try:
+            pending_references = [json.loads(map_path.read_bytes())]
+        except (OSError, ValueError) as e:
+            die(1, f"cannot read design map {map_name}: {e}")
+        prefix = f"{folder}/design/"
+        design_root = (Path(worktree) / prefix).resolve()
+        while pending_references:
+            value = pending_references.pop()
+            if isinstance(value, dict):
+                pending_references.extend(value.values())
+            elif isinstance(value, list):
+                pending_references.extend(value)
+            elif isinstance(value, str) and value.startswith(prefix):
+                referenced = (Path(worktree) / value).resolve()
+                if (
+                    not referenced.is_relative_to(design_root)
+                    or not referenced.is_file()
+                ):
+                    die(1, f"missing design evidence: {value}")
     try:
         lock.acquire(path, loaded.get("harness") or "unknown")
     except lock.LockHeld as e:
@@ -909,7 +929,7 @@ def cmd_issue_add(
         die(
             1,
             "the partial_return mark is accepted only for overrun/retry of "
-            "the file-writing roles (spec-builder, code-build, fixer)",
+            "the file-writing roles (spec-builder, code-build, ui-designer, fixer)",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
     record = {
@@ -1003,7 +1023,7 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         die(
             1,
             "the partial_return mark is accepted only for overrun/retry of "
-            "the file-writing roles (spec-builder, code-build, fixer)",
+            "the file-writing roles (spec-builder, code-build, ui-designer, fixer)",
         )
     cause = detail = None
     if overrun is not None:

@@ -131,7 +131,7 @@ Pause with `--stop-at <stage>` and continue with `/factory resume <branch>` (Cod
 | Idea intake | Exploratory requests can brainstorm alternatives before feature grilling; concrete requests go directly to grilling. The user confirms requirements before repository changes begin. |
 | Planning | Lite chain is `specify → plan → tasks → analyze`; full adds `clarify` and `grill-with-docs`, with bounded analysis/remediation loops. Serious findings in lite automatically escalate to full. |
 | Isolated delivery | Each feature gets its own branch and worktree. Stage checkpoints commit only the spec directory and role-declared files; unrelated dirty files are reported, not included. |
-| Specialist roles | Spec builder, implementation agent, security/code-standards/spec-conformance reviewers, conditional UI/UX reviewers, independent review judge, and fixer. Reviews run in parallel where supported. |
+| Specialist roles | Spec builder, implementation agent, UI designer, security/code-standards/spec-conformance reviewers, conditional UI/UX reviewers, independent review judge, and fixer. Reviews run in parallel where supported. |
 | Verification and repair | Orchestrator independently runs repository build and test commands. Verdict-driven automatic fixes are capped at two rounds; failed checks, exhausted loops, and repeated agent failures halt for user direction. |
 | Resumable audit trail | Versioned state persists stage, answers and decisions, waits, role ledger, verification, findings, checkpoints, and PR URL. Resume can use another installed harness on the same machine when worktree paths remain valid. |
 | Pen design references | Scoped design-to-code mapping and rendered fidelity evidence apply when a Pen design is used as implementation reference; see [Pen design references](#pen-design-references). |
@@ -147,6 +147,6 @@ After pulling updates, rerun the same install command; it re-renders the selecte
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
 - `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`) list unfinished runs, build resume digests and report violations without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`) stamp, validate, write atomically and commit — state is never hand-edited. `envelope check`, `lock take` and `prune` complete the surface.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
-- `core/roles/`: spec-builder, code-build, five reviewers, review-judge, fixer, with neutral `tier` and `access`.
+- `core/roles/`: ten roles — spec-builder, code-build, ui-designer, five reviewers, review-judge, fixer — with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
 - `tools/render.py`: builds `dist/<harness>/` from core and an adapter.

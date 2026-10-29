@@ -60,7 +60,7 @@ OVERRUN_CAUSES = (
 )
 # the mark is accepted only on these kinds of these file-writing roles
 PARTIAL_RETURN_KINDS = ("overrun", "retry")
-PARTIAL_RETURN_ROLES = ("spec-builder", "code-build", "fixer")
+PARTIAL_RETURN_ROLES = ("spec-builder", "code-build", "ui-designer", "fixer")
 COMMAND_STAGES = STAGES[
     STAGES.index("implement") :
 ]  # a run here and later carries commands
@@ -349,7 +349,7 @@ def _check_issues(state, bad):
             bad(
                 f"issues[{i}].partial_return",
                 "the mark is accepted only for overrun/retry of the "
-                "file-writing roles (spec-builder, code-build, fixer)",
+                "file-writing roles (spec-builder, code-build, ui-designer, fixer)",
             )
         duration = entry.get("duration_ms")
         if duration is not None and (

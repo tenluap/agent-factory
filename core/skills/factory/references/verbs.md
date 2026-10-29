@@ -11,6 +11,8 @@ The core never names a harness tool. It uses these verbs; `references/harness/<n
 | `RESOLVE(name)` | Absolute path of a skill's `SKILL.md`, or of a SpecKit command file, by logical name (`speckit-plan`, `grilling`, ...). The search order is in `harness.md`; first match wins. |
 | `SHELL(cmd)` | Run a shell command. In a worktree: `cd <worktree> && <cmd>`. |
 
+For Figma only, if `RESOLVE(figma)` finds no skill, inspect the active session's available capability inventory using `harness.md`. An available MCP inspection capability is an alternative, not a skill path: pass its usable identity and invocation guidance to the role, and rediscover after a harness change. The role must verify it can access the capability in its own context; otherwise report the blocker. A configured but unavailable server is not proof of a capability. Do not install anything or guess a tool API; if inventory or inspection is unavailable, report the blocker.
+
 ## Capability tiers
 
 `harness.md` names the tier its harness runs at.
