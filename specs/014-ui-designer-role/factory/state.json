@@ -232,6 +232,14 @@
       "auto": false,
       "at": "2026-10-29T00:15:35.203808Z",
       "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "Q2",
+      "answer": "A: add traversal and symlink-escape failure paths to drop seam (user accepted)",
+      "auto": false,
+      "at": "2026-10-29T00:52:18.691782Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
