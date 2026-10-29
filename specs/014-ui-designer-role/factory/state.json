@@ -792,6 +792,13 @@
           "status": "pass"
         }
       ]
+    },
+    {
+      "at": "2026-10-29T07:25:52.671309Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "branch": "014-ui-designer-role",
