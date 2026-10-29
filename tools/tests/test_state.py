@@ -236,6 +236,25 @@ class IssueValidationTests(unittest.TestCase):
         )
         self.assertIn("issues[0].partial_return", found)
 
+    def test_partial_return_accepted_for_ui_designer(self):
+        found = self.locations(
+            lambda s: s["issues"][0].update(
+                kind="overrun", role="ui-designer", cause="other", partial_return=True
+            )
+        )
+        self.assertNotIn("issues[0].partial_return", found)
+
+    def test_partial_return_still_refused_for_non_file_writing_role(self):
+        found = self.locations(
+            lambda s: s["issues"][0].update(
+                kind="overrun",
+                role="code-standards",
+                cause="other",
+                partial_return=True,
+            )
+        )
+        self.assertIn("issues[0].partial_return", found)
+
     def test_non_boolean_partial_return_refused(self):
         found = self.locations(
             lambda s: s["issues"][0].__setitem__("partial_return", "yes")

@@ -909,7 +909,7 @@ def cmd_issue_add(
         die(
             1,
             "the partial_return mark is accepted only for overrun/retry of "
-            "the file-writing roles (spec-builder, code-build, fixer)",
+            "the file-writing roles (spec-builder, code-build, ui-designer, fixer)",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
     record = {
@@ -1003,7 +1003,7 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         die(
             1,
             "the partial_return mark is accepted only for overrun/retry of "
-            "the file-writing roles (spec-builder, code-build, fixer)",
+            "the file-writing roles (spec-builder, code-build, ui-designer, fixer)",
         )
     cause = detail = None
     if overrun is not None:
