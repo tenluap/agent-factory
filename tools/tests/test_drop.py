@@ -391,6 +391,42 @@ class DropTests(unittest.TestCase):
         )
         self.assertFalse(self.folder.exists())
 
+    def test_figma_and_image_evidence_move_and_map_rewritten(self):
+        design, map_path = self.prepare_design()
+        (design / "figma.json").write_text('{"node": "frame"}\n')
+        (design / "reference.png").write_bytes(b"image evidence")
+        paths = ["figma.json", "reference.png"]
+        original = {"sources": [f"specs/011-drop/factory/design/{p}" for p in paths]}
+        map_path.write_text(json.dumps(original))
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "add source evidence", cwd=self.wt)
+
+        result = self.box.cli("drop", cwd=self.wt)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(map_path.read_text()),
+            {"sources": [f"docs/design/011-drop/{p}" for p in paths]},
+        )
+        for name in paths:
+            self.assertTrue((self.wt / "docs/design/011-drop" / name).is_file())
+
+    def test_drop_reports_missing_evidence_and_leaves_map_unchanged(self):
+        _, map_path = self.prepare_design()
+        missing = "specs/011-drop/factory/design/missing.json"
+        map_path.write_text(json.dumps({"evidence": missing}))
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-qm", "reference missing evidence", cwd=self.wt)
+        original = map_path.read_bytes()
+
+        result = self.box.cli("drop", cwd=self.wt)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(missing, result.stderr)
+        self.assertEqual(map_path.read_bytes(), original)
+        self.assertTrue(self.folder.is_dir())
+        self.assertFalse((self.wt / "docs/design/011-drop").exists())
+
     def test_dirty_map_refused_without_losing_changes(self):
         _, map_path = self.prepare_design()
         for staged in (False, True):

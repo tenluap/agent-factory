@@ -441,6 +441,26 @@ def cmd_drop(repo, cwd):
         )
     if dirty:
         die(1, f"drop paths have uncommitted changes:\n{dirty.strip()}")
+    if map_path.is_file():
+        try:
+            pending_references = [json.loads(map_path.read_bytes())]
+        except (OSError, ValueError) as e:
+            die(1, f"cannot read design map {map_name}: {e}")
+        prefix = f"{folder}/design/"
+        design_root = (Path(worktree) / prefix).resolve()
+        while pending_references:
+            value = pending_references.pop()
+            if isinstance(value, dict):
+                pending_references.extend(value.values())
+            elif isinstance(value, list):
+                pending_references.extend(value)
+            elif isinstance(value, str) and value.startswith(prefix):
+                referenced = (Path(worktree) / value).resolve()
+                if (
+                    not referenced.is_relative_to(design_root)
+                    or not referenced.is_file()
+                ):
+                    die(1, f"missing design evidence: {value}")
     try:
         lock.acquire(path, loaded.get("harness") or "unknown")
     except lock.LockHeld as e:
