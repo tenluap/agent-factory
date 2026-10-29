@@ -82,8 +82,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve / request changes / abort",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-29T07:43:09.120598Z",
+      "latency_ms": 967924
     }
   ],
   "decisions": [
