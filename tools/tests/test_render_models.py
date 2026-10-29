@@ -534,6 +534,21 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                     pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
                     self.assertNotRegex(text, pattern, (path, name))
 
+    def test_ui_designer_pen_source_is_cli_exclusive(self):
+        # FR-031: Pen source access goes through the pen CLI only; a harness
+        # Pen MCP backend is never a fallback, and a missing CLI is an
+        # honestly recorded unavailable gate, not an install trigger.
+        role = (REPO / "core/roles/ui-designer.md").read_text()
+        self.assertIn("pen CLI", role)
+        self.assertIn("pen interactive", role)
+        self.assertIn("Never use a Pen MCP backend", role)
+        self.assertIn("do not fall back to an MCP backend", role)
+        contract = (
+            REPO / "core/skills/factory/references/design-code-mapping.md"
+        ).read_text()
+        self.assertIn("only through the pen CLI", contract)
+        self.assertIn("no MCP fallback", contract)
+
 
 if __name__ == "__main__":
     unittest.main()

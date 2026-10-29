@@ -21,7 +21,7 @@ which pen || npx pen version
 If `pen` is not found, install it:
 
 ```bash
-npm install -g @pen.dev/cli
+npm install -g @pen.dev/cli --force
 ```
 
 If global install fails due to permissions, install locally instead:
@@ -66,7 +66,7 @@ This skill stays in sync with the **pen.dev CLI npm package** (`@pen.dev/cli`). 
 **Upgrade the CLI**, then refresh your copied skill file (agents do not auto-update skill files you placed in config folders):
 
 ```bash
-npm install -g @pen.dev/cli
+npm install -g @pen.dev/cli --force
 ```
 
 **Where to copy the skill from after installing**

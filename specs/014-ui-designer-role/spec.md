@@ -25,6 +25,10 @@ Today Pen design work rides on `code-build` and `fixer`; `DESIGN.md` ("Pen desig
 - Evidence at drop → `docs/design/<branch>/` (FR-030).
 - `figma` capability → resolved at plan, re-resolved at implement (FR-008).
 
+### Session 2026-10-29
+
+- Pen backend for `ui-designer` → pen CLI exclusive, never a Pen MCP backend; a missing or unauthenticated CLI records affected gates unavailable with setup guidance (FR-031).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Implement one screen from a Pen design (Priority: P1)
@@ -40,6 +44,7 @@ A factory user runs a feature whose brief names a Pen design frame and one targe
 1. **Given** a run whose saved design context names a Pen source, a target frame and one target file, **When** the implement step starts, **Then** the orchestrator spawns `factory-ui-designer` with the design context, the resolved `pen-design` path, the detected framework reference and the target file.
 2. **Given** the target view uses a shared component that other views also use, **When** the role plans its changes, **Then** it inspects the other callers first and, when the change would alter them, returns a protected (`requires_user: true`) scope question instead of editing them.
 3. **Given** the role finished its batches, **When** it returns, **Then** every scoped design node has a map record (mapped or explicitly accounted for) and the envelope reports build/runtime, mapping and fidelity gate results without claiming any gate it did not observe.
+4. **Given** the session offers a Pen MCP backend, **When** the role surveys, captures or otherwise reaches the Pen source, **Then** it uses only the pen CLI (`pen` commands, headless `pen interactive`, direct reads of the local `.pen` snapshot), and with the CLI missing or unauthenticated the affected gates are recorded `unavailable`/blocked with setup guidance instead of an MCP fallback.
 
 ---
 
@@ -147,6 +152,7 @@ The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (crit
 - **FR-013**: A Figma source MUST be mapped by node like Pen once the capability resolves.
 - **FR-014**: An image or screenshot source MUST be a visual reference only: no node mapping, fidelity judged against the image, and the reference recorded in the design context.
 - **FR-015**: A text-only restyle MUST treat the existing code as the baseline, use `impeccable` guidance, require no map records, and require build/runtime evidence; mapping and fidelity MUST be recorded not applicable with reason "no design reference", and a before/after capture MUST be attached when capture is available.
+- **FR-031**: The `ui-designer` role MUST reach a Pen source only through the pen CLI — `pen` commands, headless `pen interactive`, and direct reads of the local `.pen` snapshot — and MUST NOT use a Pen MCP backend offered by the harness; with the CLI missing or unauthenticated, affected gates MUST be recorded `unavailable`/blocked with setup guidance, with no MCP fallback and no automatic installation.
 
 **Scope**
 
@@ -175,7 +181,7 @@ The spawn that completes the last `[UI]` task runs the `ui-agent` pipeline (crit
 
 **Verification**
 
-- **FR-029**: Automated tests MUST cover: the role renders for every harness with tier standard and write access; the rendered distribution matches its source; the CLI's file-writing role check accepts its `partial` return; the core role file names no harness tool.
+- **FR-029**: Automated tests MUST cover: the role renders for every harness with tier standard and write access; the rendered distribution matches its source; the CLI's file-writing role check accepts its `partial` return; the core role file names no harness tool; the Pen CLI precedence rule (FR-031) is asserted in the core role and the mapping contract.
 - **FR-030**: At drop, Pen, Figma and image evidence and references MUST rehome to `docs/design/<branch>/`, and map references MUST be rewritten to the new paths. A map reference to a missing evidence file MUST fail the drop before any move, naming the path, with the map and run folder unchanged.
 
 ### Key Entities
