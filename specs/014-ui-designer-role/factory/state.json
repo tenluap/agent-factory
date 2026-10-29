@@ -436,6 +436,18 @@
       "duration_ms": 150000,
       "started_at": "2026-10-29T00:45:55Z",
       "ended_at": "2026-10-29T00:48:25Z"
+    },
+    {
+      "at": "2026-10-29T00:51:36.902963Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 22000,
+      "out_est": 7000,
+      "reported": null,
+      "duration_ms": 280000,
+      "started_at": "2026-10-29T00:46:56Z",
+      "ended_at": "2026-10-29T00:51:36Z"
     }
   ],
   "issues": [
@@ -581,7 +593,7 @@
       "at": "2026-10-29T00:48:25.894262Z",
       "stage": "review",
       "event": "complete",
-      "commit": null,
+      "commit": "734cb5c",
       "harness": "opencode"
     }
   ],
