@@ -262,6 +262,14 @@
       "auto": false,
       "at": "2026-10-29T07:24:22.322720Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve",
+      "auto": false,
+      "at": "2026-10-29T07:43:10.453563Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
