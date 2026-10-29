@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -51,25 +51,7 @@
       "at": "2026-10-29T00:18:47.288266Z"
     }
   },
-  "relay": {
-    "stage": "fix",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q2"
-          }
-        ],
-        "answers": {
-          "Q2": {
-            "answer": "A",
-            "at": "2026-10-29T00:52:17.795042Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-10-28T23:24:41.144245Z",
@@ -239,6 +221,14 @@
       "answer": "A: add traversal and symlink-escape failure paths to drop seam (user accepted)",
       "auto": false,
       "at": "2026-10-29T00:52:18.691782Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-29T00:58:29.149532Z",
       "kind": "answer"
     }
   ],
@@ -643,7 +633,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-10-29T00:58:28.855097Z",
+      "at": "2026-10-29T00:58:29.149532Z",
       "stage": "fix",
       "event": "verify-pass",
       "commit": null,
