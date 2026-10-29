@@ -41,7 +41,25 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "B",
+            "at": "2026-10-29T00:14:08.589309Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-28T23:24:41.144245Z",
