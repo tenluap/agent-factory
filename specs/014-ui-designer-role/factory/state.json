@@ -7,7 +7,7 @@
   "default_branch": "main",
   "base": "origin/main",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -51,25 +51,7 @@
       "at": "2026-10-29T00:18:47.288266Z"
     }
   },
-  "relay": {
-    "stage": "fix",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q3"
-          }
-        ],
-        "answers": {
-          "Q3": {
-            "answer": "A",
-            "at": "2026-10-29T07:16:09.591370Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-10-28T23:24:41.144245Z",
@@ -263,6 +245,14 @@
       "answer": "A: accepted COMPLETE scope — seams: (1) PARTIAL_RETURN_ROLES accepts ui-designer partial+overrun; fail: partial from non-file-writing role rejected. (2) render.py all 5 harnesses render factory-ui-designer standard tier write access, core names no harness tool; fail: none. (3) factory drop rehomes Figma/image evidence in factory/design/ to docs/design/<branch>/ with map refs rewritten; fail: missing evidence file, ../ traversal ref, symlink escaping factory/design/ — each reports ref, map unchanged, factory/ not moved. Exempt: docs/prompts/dist.",
       "auto": false,
       "at": "2026-10-29T07:16:11.283215Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "Q3",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-29T07:24:22.322720Z",
       "kind": "answer"
     }
   ],
@@ -751,7 +741,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-10-29T07:24:22.001099Z",
+      "at": "2026-10-29T07:24:22.322720Z",
       "stage": "fix",
       "event": "verify-pass",
       "commit": null,
