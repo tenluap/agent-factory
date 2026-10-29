@@ -14,11 +14,10 @@ jobs:
           python-version: "3.x"
       - name: Full suite
         run: python3 -m unittest discover -s tools
-      - name: Render all five harnesses and fail on dist drift (Constitution III)
+      - name: Render all five harnesses and fail if dist is tracked (Constitution III)
         run: |
           export FACTORY_HOME="$(mktemp -d)"
           for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done
-          git diff --exit-code -- dist/
-          test -z "$(git status --porcelain -- dist/)"
+          test -z "$(git ls-files -- dist/)"
       - name: Installer syntax (FR-018)
         run: bash -n install.sh
