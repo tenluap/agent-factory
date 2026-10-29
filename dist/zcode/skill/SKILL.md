@@ -85,6 +85,8 @@ Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, 
 - `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>] --files <declared path>...` (state.md, "Checkpoint"; declare every file the stage's outputs changed, or `--envelope <role output>` to take the envelope's `files` list — the checkpoint commits the spec directory plus exactly the declared files and reports the rest), then spawn the next stage.
 - `failed`: failure policy (below).
 
+For a plan failure due to an unsupported UI framework, stop before tasks and UI edits; report the detected framework and supported list rather than proceeding to implementation.
+
 Pass `design` (when active) and the resolved `pen-design` path to every spec stage. Persist returned design references/results before checkpointing; a recorded missing design prerequisite follows the mapping contract rather than being retried as an agent crash. The plan must carry the mapping/runtime/fidelity gates and capture requirements into tasks.
 
 At plan, only when a Figma source is recorded, `RESOLVE` a `figma` skill or MCP capability. If absent, block before tasks with setup guidance; install nothing. Pass the resolved capability to plan and re-`RESOLVE` it at implement before spawning the UI designer.

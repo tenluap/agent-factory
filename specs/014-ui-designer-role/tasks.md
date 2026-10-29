@@ -82,7 +82,7 @@ Seams (plan.md "Test seams", confirmed 2026-10-29 Q1):
 
 **Independent Test**: fixture with only Qt: plan reports it unsupported, run stops before tasks, 0 UI files edited.
 
-- [ ] T013 [US4] Verify `core/roles/spec-builder.md` (T007) and `core/roles/ui-designer.md` (T005) state all three US4 scenarios (unsupported → `failed` before tasks; ambiguous → protected question; implement mismatch → `failed`, no edit) and that `core/skills/factory/SKILL.md` stops the run before tasks on a plan `failed` for unsupported framework; fill gaps in place; render rule. Exempt: core/roles/*.md, core/skills/factory/SKILL.md - documentation/prompt text only; rendered presence covered by the render seam
+- [X] T013 [US4] Verify `core/roles/spec-builder.md` (T007) and `core/roles/ui-designer.md` (T005) state all three US4 scenarios (unsupported → `failed` before tasks; ambiguous → protected question; implement mismatch → `failed`, no edit) and that `core/skills/factory/SKILL.md` stops the run before tasks on a plan `failed` for unsupported framework; fill gaps in place; render rule. Exempt: core/roles/*.md, core/skills/factory/SKILL.md - documentation/prompt text only; rendered presence covered by the render seam
 
 ---
 
