@@ -52,6 +52,9 @@
           },
           {
             "id": "Q3"
+          },
+          {
+            "id": "Q4"
           }
         ],
         "answers": {
@@ -63,6 +66,11 @@
           "Q3": {
             "answer": "A — retro entries carry kind retro, signal_key, evidence, suggested_feature; listing prefers stored suggested_feature when present; run exports unchanged",
             "at": "2026-10-30T22:40:09.867559Z",
+            "auto": true
+          },
+          "Q4": {
+            "answer": "A — ledger entry with stage retro marks spawned; fixed entry names make writes idempotent; no new history event",
+            "at": "2026-10-30T22:40:10.170203Z",
             "auto": true
           }
         }
