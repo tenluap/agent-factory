@@ -55,6 +55,9 @@
           },
           {
             "id": "Q4"
+          },
+          {
+            "id": "Q5"
           }
         ],
         "answers": {
@@ -71,6 +74,11 @@
           "Q4": {
             "answer": "A — ledger entry with stage retro marks spawned; fixed entry names make writes idempotent; no new history event",
             "at": "2026-10-30T22:40:10.170203Z",
+            "auto": true
+          },
+          "Q5": {
+            "answer": "A — Improvement backlog becomes umbrella term with two kinds: Run export and Retro entry; add Retro, Improvement signal, Signal key, Improvement candidate terms",
+            "at": "2026-10-30T22:40:10.480747Z",
             "auto": true
           }
         }
