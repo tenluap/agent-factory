@@ -17,9 +17,12 @@
 | `NOTIFY(text)` | `PushNotification`. Load it once in preflight with `ToolSearch` (`select:PushNotification`). Unavailable: `NOTIFY` is a no-op for the run. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.claude/skills/`, `~/.claude/skills/`, then `~/.claude/plugins/**/skills/`. |
 | `SHELL(cmd)` | The Bash tool. |
+| `WEB_SEARCH(query)` | The WebSearch tool. |
+| `WEB_FETCH(url)` | The WebFetch tool. |
 
 ## Notes
 
+- Main agent (`mode: primary`): start with `claude --agent factory-<role>`, or set the `agent` setting.
 - Figma capability discovery: use `ToolSearch` to discover available Figma MCP inspection tools; pass their exact identities and schemas to the role. If unavailable, report the gap.
 - `speckit-*` skills and `grill-with-docs` set `disable-model-invocation: true`: never call them with the Skill tool. `grilling`, `domain-modeling` and `pr` may be invoked with the Skill tool or read and followed.
 - `$ARGUMENTS` is substituted by Claude Code from the `/factory` arguments.

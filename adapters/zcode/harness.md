@@ -17,9 +17,12 @@
 | `NOTIFY` | no-op (no notification tool) |
 | `RESOLVE` | first `<name>/SKILL.md` in `<repo>/.zcode/skills/`, `<repo>/.agents/skills/`, `~/.zcode/skills/`, `~/.agents/skills/` |
 | `SHELL` | the Bash tool |
+| `WEB_SEARCH` | the WebSearch tool |
+| `WEB_FETCH` | the WebFetch tool |
 
 ## Notes
 
+- Main agent (`mode: primary`): unverified. Try `zcode --agent factory-<role>`; otherwise ask your session to spawn `factory-<role>`.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are Markdown files in `~/.zcode/agents/` (`factory-<role>.md`).
 - Agent models are not set by default, so every agent inherits the session's model. To pin them, set `models.zcode.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness zcode`.

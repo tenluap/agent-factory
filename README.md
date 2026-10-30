@@ -147,6 +147,6 @@ After pulling updates, rerun the same install command; it re-renders the selecte
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
 - `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`) list unfinished runs, build resume digests and report violations without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`) stamp, validate, write atomically and commit — state is never hand-edited. `envelope check`, `lock take` and `prune` complete the surface.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
-- `core/roles/`: ten roles — spec-builder, code-build, ui-designer, five reviewers, review-judge, fixer — with neutral `tier` and `access`.
+- `core/roles/`: eleven roles — spec-builder, code-build, ui-designer, five reviewers, review-judge, fixer, and facets-advisor (a main agent you start directly, outside the run) — with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
 - `tools/render.py`: builds `dist/<harness>/` from core and an adapter.

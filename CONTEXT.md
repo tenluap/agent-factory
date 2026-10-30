@@ -13,7 +13,7 @@ The agent session running the `/factory` skill: it owns the run's state, spawns 
 _Avoid_: driver, coordinator, main agent
 
 **Role**:
-A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, ui-designer, fixer, reviewers, judge).
+A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, ui-designer, fixer, reviewers, judge). `facets-advisor` is the one role the user starts directly as a main agent instead.
 _Avoid_: agent type, persona, worker
 
 **Stage**:
@@ -283,3 +283,21 @@ _Avoid_: perf run, regression suite, test run
 **Benchmark score**:
 One run's measured outcome — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
 _Avoid_: metrics dump, report, summary
+
+## FACETS
+
+**FACETS checklist**:
+Six yes/no questions (Face, Advantage, Capital, Expertise, Time, Scale) that score a project or income option out of 6; text in `references/facets.md`.
+_Avoid_: facets score card, framework quiz
+
+**FACETS profile**:
+The user's constraints (`hours_per_week`, `capital_at_risk`, `skills`, `face_comfort`, `income_goal`, `current_assets`) in `${FACTORY_HOME}/facets-profile.md`, against which Capital, Expertise and Time are judged.
+_Avoid_: user settings, preferences
+
+**Research access**:
+The `research` access level: `read` plus web search and fetch, no file writes; only `facets-advisor` uses it.
+_Avoid_: web access, online mode
+
+**Main agent**:
+A role with `mode: primary` that the user starts as their session's agent instead of the orchestrator spawning it; today only `facets-advisor`.
+_Avoid_: primary role, top-level agent

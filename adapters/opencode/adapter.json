@@ -18,8 +18,17 @@
   "extra": {
     "mode": "subagent"
   },
+  "modes": {
+    "primary": { "mode": "all" }
+  },
   "access": {
     "read": {
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "subagent", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "research": {
       "permissions": [
         { "action": "edit", "resource": "*", "effect": "deny" },
         { "action": "subagent", "resource": "*", "effect": "deny" }

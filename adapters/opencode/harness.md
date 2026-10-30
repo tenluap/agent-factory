@@ -18,9 +18,12 @@
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.opencode/skills/`, `<repo>/.claude/skills/`, `<repo>/.agents/skills/`, `~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/`. For a `speckit-<stage>` name with no skill, take the command file `speckit.<stage>.md` under `<repo>/.opencode/`. |
 | `SHELL(cmd)` | The `shell` tool. |
+| `WEB_SEARCH(query)` | The `websearch` tool. |
+| `WEB_FETCH(url)` | The `webfetch` tool. |
 
 ## Notes
 
+- Main agent (`mode: primary`): rendered `mode: all`; select it with Tab or the agent picker. Other agents can still call it.
 - Figma capability discovery: search the session's available tool catalog for Figma MCP inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents live in `~/.config/opencode/agents/` with `mode: subagent` and ordered V2 `permissions` rules. Read-only roles deny `edit`; every role denies `subagent`, so only the orchestrator launches roles. Other permissions follow the user's OpenCode configuration.
 - Agent models come from the adapter defaults. Override `models.opencode.deep` / `.standard` (as `provider/model-id#variant`, with optional variant) in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness opencode`. An empty model inherits the session's model.

@@ -9,6 +9,7 @@
   "fields": [["name", "factory-{role}"], ["description", "{description}"]],
   "access": {
     "read": { "tools": ["read", "search", "execute"] },
+    "research": { "tools": ["read", "search", "execute", "web"] },
     "write": { "tools": ["read", "edit", "search", "execute"] }
   },
   "models": {}

@@ -6,6 +6,8 @@ Agreed in a grilling session on 2026-10-21. Harness model and stateless agents a
 
 Pen design-code mapping agreed on 2026-10-25 ([approved contract](docs/superpowers/specs/2026-10-25-pen-design-code-mapping-design.md)).
 
+FACETS advisor (main agent) agreed in a grilling session on 2026-10-30 ([ADR 0011](docs/adr/0011-facets-advisor-is-a-main-agent-with-research-access.md)).
+
 ## What it is
 
 `/factory` is one user-invoked skill. Whichever agent session runs it becomes the **orchestrator**: it runs the loop below, spawns every agent, owns the run's state, and is the only thing that talks to the user. Agents never talk to the user directly.
@@ -16,13 +18,13 @@ The skill is global (installed into the harness's skill directory) and works in 
 
 The factory runs on any agent harness (Claude Code, OpenCode, Codex, GitHub Copilot, ZCode, ...). It is split into a portable core and thin per-harness adapters.
 
-- **Core** (`core/`): the orchestrator `SKILL.md`, its references, and the role prompts in `core/roles/`. Core files never name a harness tool. They use the neutral **verbs** defined in `core/skills/factory/references/verbs.md`: `SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`.
+- **Core** (`core/`): the orchestrator `SKILL.md`, its references, and the role prompts in `core/roles/`. Core files never name a harness tool. They use the neutral **verbs** defined in `core/skills/factory/references/verbs.md`: `SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`, and the role-only research verbs `WEB_SEARCH`, `WEB_FETCH`.
 - **Adapter** (`adapters/<harness>/`): `harness.md`, which tells the orchestrator how to recognise the harness, how to perform each verb there, where skills and SpecKit commands live, and the harness's setup values; and `adapter.json`, which tells the renderer where to install and how to write native agent files (Markdown or TOML, fields, access, models).
 - **One skill for every harness.** The installed skill is byte-identical on every harness and carries every adapter's `harness.md` under `references/harness/`. In preflight the orchestrator picks its own (`$FACTORY_HARNESS`, else the file whose "Recognise it by" line fits). This matters because harnesses read each other's skill directories (OpenCode reads `~/.claude/skills`, Copilot and Codex read `~/.agents/skills`): whichever copy a harness finds, it is the same skill. Only the agent files are generated per harness, by `tools/render.py`.
 - **Adapters today**: `claude-code`, `opencode`, `codex`, `copilot` (CLI and VS Code agent mode; the github.com cloud agent is out of scope since it cannot relay questions), `zcode` (Z.ai's coding agent, desktop app or CLI). Every adapter supplies `deep` and `standard` model defaults in `adapter.json`. `${FACTORY_HOME}/config.json` overrides those defaults; an empty model value inherits the session's model.
-- **Roles** carry neutral metadata (`tier`: `deep` | `standard`; `access`: `read` | `write`). The adapter maps tiers to models and access to tool lists. Users override models in `${FACTORY_HOME}/config.json`.
+- **Roles** carry neutral metadata (`tier`: `deep` | `standard`; `access`: `read` | `write` | `research`; optional `mode`: `primary`). The adapter maps tiers to models and access to tool lists. `research` is `read` plus web search and fetch, and no file writes. `mode: primary` marks a main agent the user starts directly; an adapter's `modes` map replaces same-named fields (OpenCode: `mode: all`). Users override models in `${FACTORY_HOME}/config.json`.
 - **Capability tiers.** An adapter declares the tier its harness runs at: 1 native subagents, 2 headless CLI subprocesses, 3 inline (the orchestrator plays each role itself). The approver screen states the tier when it is not 1, since tier 3 weakens reviewer independence.
-- **Factory home.** Harness-neutral files live in `${FACTORY_HOME:-~/.factory}`: `pending/`, `improvements/`, `archive/<repo-name>-<branch>/` and user config. Every harness shares it, so discovery finds runs started anywhere.
+- **Factory home.** Harness-neutral files live in `${FACTORY_HOME:-~/.factory}`: `pending/`, `improvements/`, `archive/<repo-name>-<branch>/`, user config and the optional `facets-profile.md`. Every harness shares it, so discovery finds runs started anywhere.
 - **Agents are stateless.** Every agent turn is a fresh `SPAWN`; nothing relies on continuing a live agent. Whatever a later turn needs is in `state.json` or on disk. This is what lets every harness, and a resume on a different harness, run the same flow.
 - **State CLI.** The skill carries `bin/factory`, the factory's single state writer (stdlib Python, thin entry over `bin/factory_cli/`). Read commands (`runs`, `show`, `validate`) do the mechanical discovery and digest work outside the orchestrator's context so routing cost stays flat; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`, `drop`) stamp, validate, write atomically and commit — the orchestrator never hand-edits `state.json`, and a missing Python 3 halts the run instead of falling back to manual writes. `envelope check`, `lock take` and `prune` complete the command surface (gates and hardening below).
 
@@ -122,6 +124,18 @@ Mixed UI runs persist the active writer and its explicit contiguous task range i
 
 Gate verification accepts legitimately not-applicable gates with their required reasons; text-only mapping and fidelity need no waiver. Before or in the commit completing the last UI task, persist a pending quality-pass marker and its final UI range in design context. While pending, resume that range even when all UI boxes are checked, until the pass outcome and invalidated checks are reconciled. The pass itself is reserved durably before invocation, never started twice on resume, and its applied edits and outcome form a tested commit unit. Affected evidence is invalidated and applicable gates and checks rerun after those edits; clear the pending marker only after those checks are complete.
 
+## FACETS advisor
+
+`factory-facets-advisor` is a **main agent**: the user starts it and talks to it directly. It scores projects and income options against the FACETS checklist (Face, Advantage, Capital, Expertise, Time, Scale), ranks them and discusses follow-ups. The checklist, guidance, calibration examples and source caveats live in `core/skills/factory/references/facets.md`.
+
+- **Not part of the run.** The orchestrator never spawns it. No stage, route, state field, envelope field or CLI change. Principle IV's "agents never talk to the user" covers run agents; this agent talks to the user because it is the session.
+- **Starting it.** Role frontmatter `mode: primary`. Claude Code: `claude --agent factory-facets-advisor`. Copilot: `copilot --agent factory-facets-advisor` or `/agent`. OpenCode: rendered `mode: all`, so Tab selects it and other agents can still call it. Codex has no main-agent custom agents and ZCode's support is unverified: there it stays a subagent and `harness.md` says so.
+- **Profile.** `${FACTORY_HOME:-~/.factory}/facets-profile.md` (`hours_per_week`, `capital_at_risk`, `skills`, `face_comfort`, `income_goal`, `current_assets`; template `references/facets-profile.template.md`). Missing fields are asked in chat before any research or scoring; the agent saves the profile with `SHELL` only after the user confirms. It is the only file the agent writes.
+- **Scoring.** Each of the six verbatim checklist questions scores 1 (yes) or 0 (no), judged against the profile. Advantage keeps its verbatim audience question; a borrowed edge (specialised tool, existing asset, distribution) counts as evidence for yes.
+- **Research.** Read-only web research with `WEB_SEARCH` and `WEB_FETCH`, at most 3 searches and 5 fetches per option, stopping early once all six facets have cited evidence. A facet still unknown scores 0 and is marked unverified.
+- **Verdict.** 6 = pursue; 4-5 = investigate, naming each "no" and the cost of fixing it; 3 or less = drop. A Capital 0 whose likely loss exceeds `capital_at_risk` caps the verdict at investigate. Ranking sorts by total, then breaks ties by Capital, Time, then Scale; options still tied stay tied with a reason.
+- **Output.** Markdown in chat: a checklist table per option (answer yes, no or no (unverified), why, sources with vendor sources marked), a ranking table with each option's search and fetch counts, and the source caveats, which always note the framework's origin in a sales funnel. Follow-ups rescore only what changed. Results are not saved.
+
 ## Agents
 
 | Agent                       | Tier     | Access | Role                                                                           |
@@ -136,6 +150,7 @@ Gate verification accepts legitimately not-applicable gates with their required 
 | `factory-ux-reviewer`       | standard | read   | UX flows, states, copy (UI diffs only)                                         |
 | `factory-review-judge`      | deep     | read   | Merges, dedupes, verifies findings; one verdict                                |
 | `factory-fixer`             | standard | write  | Fixes confirmed findings or the user's requested changes                       |
+| `factory-facets-advisor`    | deep     | research | Main agent: scores and ranks projects or income options on FACETS; never spawned by the orchestrator |
 
 On Claude Code, `deep` is opus and `standard` is sonnet.
 
@@ -312,6 +327,10 @@ Agent-driven manual checks (role behaviour, not machine-checkable): three intake
 ### UI designer validation
 
 Agent-driven manual checks for the `ui-designer` role (not machine-checkable; not yet run, see PR #10 advisory): a UI design run from a Pen file and one from a non-Pen source (Figma or image) routing `[UI]` tasks to `ui-designer` and the rest to `code-build`; a mixed run honouring each assigned task range; a text-only restyle completing without a waiver; a whole-surface run showing the protected scope question and never auto-accepting it in fast mode; a Figma source with no `figma` capability blocking before tasks with setup guidance; and an implement interrupted mid-range, then after the last `[UI]` task but before the `ui-agent` pass, each resuming on `ui-designer` with the pass run exactly once.
+
+### FACETS advisor validation
+
+Machine checks: every harness renders `factory-facets-advisor` with tier `deep`, its `research` tools and no edit access; OpenCode renders it `mode: all` while other roles stay `subagent`; the core role names no harness tool. Agent-driven manual checks (run 2026-10-30 on Claude Code only, with a fictional test profile; other harnesses not yet run): starting it with no profile asks for the six fields and saves only after confirmation; scoring the source's four worked methods reproduces the calibration reasoning or explains each difference with cited evidence; three options rank by the tie-break order; a changed constraint rescores only affected facets.
 
 ### Pen mapping validation
 

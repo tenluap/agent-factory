@@ -119,11 +119,12 @@ class RenderAgentTests(unittest.TestCase):
                 )
                 values = dict(fields)
                 expected = [{"action": "subagent", "resource": "*", "effect": "deny"}]
-                if meta["access"] == "read":
+                if meta["access"] in ("read", "research"):
                     expected.insert(
                         0, {"action": "edit", "resource": "*", "effect": "deny"}
                     )
-                self.assertEqual(values["mode"], "subagent")
+                expected_mode = "all" if meta.get("mode") == "primary" else "subagent"
+                self.assertEqual(values["mode"], expected_mode)
                 self.assertEqual(values.get("permissions"), expected)
                 self.assertNotIn("permission", values)
                 model = adapter["models"].get(meta["tier"], "")
@@ -151,7 +152,8 @@ class RenderAgentTests(unittest.TestCase):
             for role_file in role_files:
                 meta, _ = render.frontmatter(role_file.read_text())
                 text = (out / "agents" / f"factory-{meta['name']}.md").read_text()
-                self.assertIn("\nmode: subagent\npermissions:\n", text)
+                mode = "all" if meta.get("mode") == "primary" else "subagent"
+                self.assertIn(f"\nmode: {mode}\npermissions:\n", text)
                 rules = [
                     json.loads(line[4:])
                     for line in text.split("\n---\n", 1)[0].splitlines()
@@ -159,7 +161,9 @@ class RenderAgentTests(unittest.TestCase):
                 ]
                 actions = [rule["action"] for rule in rules]
                 expected = (
-                    ["edit", "subagent"] if meta["access"] == "read" else ["subagent"]
+                    ["edit", "subagent"]
+                    if meta["access"] in ("read", "research")
+                    else ["subagent"]
                 )
                 self.assertEqual(actions, expected)
             for name in render.known():

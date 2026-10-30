@@ -17,9 +17,12 @@
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.agents/skills/`, `<repo>/.codex/skills/`, `~/.agents/skills/`, `~/.codex/skills/`, `/etc/codex/skills/`. For a `speckit-<stage>` name with no skill, take the prompt file `speckit.<stage>.md` under `<repo>/.codex/`. |
 | `SHELL(cmd)` | Your shell tool. |
+| `WEB_SEARCH(query)` | Your web search tool, when the session enables it. Without it, report the gap; do not fall back to `SHELL`. |
+| `WEB_FETCH(url)` | Your web search tool's page open, when enabled. Without it, report the gap. |
 
 ## Notes
 
+- Main agent (`mode: primary`): unsupported; Codex custom agents are subagents only. Ask your session to spawn `factory_<role_>` instead.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are TOML files in `~/.codex/agents/` (`factory_<role>.toml`). Subagents inherit the session's sandbox and approval policy, so read-only roles are read-only by instruction. The session needs write access to the worktree and network for `git push` and `gh`.
 - Agent models come from the adapter defaults. To override them, set `models.codex.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness codex`.
