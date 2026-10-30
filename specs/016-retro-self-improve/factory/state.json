@@ -1,0 +1,117 @@
+{
+  "version": 5,
+  "started_at": "2026-10-30T22:40:00Z",
+  "harness": "opencode",
+  "feature": "Add a post-run retro step: after drop, a read-only standard-tier role mines the ended run's ledger, issues and verdicts for improvement signals (analyze escalation rate, recurring fixer finding classes, per-reviewer judge rejection rate, in-est outliers, halts) and returns up to 3 deduplicated improvement candidates that the orchestrator persists into the factory home's improvements/ backlog.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "016-retro-self-improve",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/016-retro-self-improve",
+  "spec_dir": "specs/016-retro-self-improve",
+  "status": "running",
+  "stage": "specify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.config/opencode/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.config/opencode/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.config/opencode/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.config/opencode/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.config/opencode/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "python3 -m compileall -q tools core/skills/factory/bin",
+    "test": "python3 -m unittest discover -s tools -p 'test_*.py'"
+  },
+  "preflight_notes": "Model inspection partial: opencode models inventory covered only zai-coding-plan provider; installed roles select openai/gpt-6.1-terra (standard) and claude-code/claude-opus-5-5[1m] (deep). Recorded unverified; bounded runtime retry/halt policy applies on rejection. No CLAUDE.md/AGENTS.md at repo root; build/test detected from tools/ and pending user confirmation (Q6). Source backlog: claude-factory-015-retro-self-improve (claimed 2026-10-30T22:26:48Z).",
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-10-30T22:40:00Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grill round 1: retro step architecture, signals, cap/dedupe, trigger scope, chain, commands",
+      "answered_at": "2026-10-30T22:52:00Z",
+      "latency_ms": 720000
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-10-30T22:33:58.224031Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "history": [
+    {
+      "at": "2026-10-30T22:33:58.224031Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ]
+}
