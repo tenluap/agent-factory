@@ -91,8 +91,8 @@ class ModelPolicyTests(unittest.TestCase):
     def test_shipped_model_policy_preserves_explicit_tiers(self):
         expected = {
             "claude-code": {
-                "deep": "anthropic/claude-opus-5-5",
-                "standard": "anthropic/claude-haiku-5-5",
+                "deep": "claude-opus-5-5",
+                "standard": "claude-haiku-5-5",
             },
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
             "opencode": {

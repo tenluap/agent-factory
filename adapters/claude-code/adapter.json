@@ -11,5 +11,5 @@
     "read": { "tools": "Read, Grep, Glob, Bash" },
     "write": { "tools": "Read, Edit, Write, Bash, Grep, Glob" }
   },
-  "models": { "deep": "anthropic/claude-opus-5-5", "standard": "anthropic/claude-haiku-5-5" }
+  "models": { "deep": "claude-opus-5-5", "standard": "claude-haiku-5-5" }
 }
