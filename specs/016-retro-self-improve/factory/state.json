@@ -93,6 +93,14 @@
       "summary": "Grill round 1: retro step architecture, signals, cap/dedupe, trigger scope, chain, commands",
       "answered_at": "2026-10-30T22:52:00Z",
       "latency_ms": 720000
+    },
+    {
+      "at": "2026-10-30T22:40:10.789111Z",
+      "kind": "questions",
+      "stage": "grill-with-docs",
+      "summary": "Q2: deterministic improvements add writer vs hand-written backlog files (reopens settled no-new-CLI decision)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
