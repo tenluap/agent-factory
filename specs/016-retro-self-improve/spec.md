@@ -8,6 +8,12 @@
 
 **Input**: User description: "Add a post-run retro step: after a run reaches `pr-open` and before `drop`, a read-only standard-tier `retro` role mines the ended run's ledger, issues and verdicts for improvement signals (analyze escalation rate, recurring fixer finding classes, per-reviewer judge rejection rate, in-est outliers, halts) and returns up to 3 deduplicated improvement candidates that the orchestrator persists into the factory home's `improvements/` backlog."
 
+## Clarifications
+
+### Session 2026-10-30
+
+- Q: How does the read-only retro role know which signals open `ready` backlog entries already cover? → A: The orchestrator passes the signal keys of open `ready` retro entries in the retro inputs; retro reads nothing outside its inputs.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Every finished run leaves improvement candidates (Priority: P1)
@@ -72,11 +78,11 @@ The PR is already open when retro runs. If the retro role fails, the maintainer 
 
 - **FR-001**: The factory MUST define a dedicated `retro` role that is read-only and runs at the standard model tier.
 - **FR-002**: The orchestrator MUST spawn the `retro` role only for runs that reach `pr-open`, after recording `pr-open` and before archiving the run.
-- **FR-003**: The orchestrator MUST give the retro role the ended run's digest: the run summary output and the paths of every review round verdict.
+- **FR-003**: The orchestrator MUST give the retro role the ended run's digest (the run summary output and the paths of every review round verdict) and the signal keys of every open `ready` retro backlog entry. The retro role MUST read nothing outside these inputs.
 - **FR-004**: The retro role MUST mine these five signals: analyze escalation rate; recurring finding classes the fixer repaired; judge rejection rate per reviewer; time-estimate (`in-est`) outliers per role; and halt and issue clusters.
 - **FR-005**: The retro role MUST return its candidates in its protocol envelope; each candidate MUST name its signal, a stable signal key, the supporting evidence from the digest, and a suggested feature text ready for `/factory <feature>`.
 - **FR-006**: The retro role MUST return at most three candidates per run.
-- **FR-007**: The retro role MUST skip any signal that an open `ready` backlog entry already covers, and the orchestrator MUST re-check this before writing.
+- **FR-007**: The retro role MUST skip any signal whose key is in the covered signal keys it received, and the orchestrator MUST re-check against the backlog before writing.
 - **FR-008**: The orchestrator MUST persist each accepted candidate in the factory home's `improvements/` backlog as a `ready` entry that the existing `/factory improve` listing and claim flow handle without change to their user-visible behaviour.
 - **FR-009**: The retro role MUST NOT write files, edit state, or ask the user questions.
 - **FR-010**: The retro spawn MUST be recorded in the run ledger like every other spawn, before the run is archived.
@@ -87,7 +93,7 @@ The PR is already open when retro runs. If the retro role fails, the maintainer 
 
 ### Key Entities
 
-- **Run digest**: The ended run's summary output (ledger, issues, totals, history) plus the review round verdict paths. Input only.
+- **Run digest**: The ended run's summary output (ledger, issues, totals, history) plus the review round verdict paths. Input only, passed with the covered signal keys.
 - **Improvement signal**: One of the five signal kinds, identified by a stable key (signal kind plus subject, for example a reviewer or role name).
 - **Improvement candidate**: A proposed improvement: signal key, evidence, impact rank and suggested feature text. Returned by retro, at most three per run.
 - **Backlog entry**: A `ready` item in the factory home `improvements/` folder, listed and claimed by the existing improve flow; a retro entry links back to its source run.
