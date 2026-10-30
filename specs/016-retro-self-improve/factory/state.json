@@ -42,7 +42,25 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "grill-with-docs",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A — retro inputs add the run state.json path; retro reads it read-only for ledger/history; FR-003 and Run digest entity updated",
+            "at": "2026-10-30T22:40:09.567375Z",
+            "auto": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-30T22:40:00Z",
