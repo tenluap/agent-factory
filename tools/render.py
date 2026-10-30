@@ -87,7 +87,10 @@ def agent_fields(adapter, meta, values, models=None):
     if models is None:
         models = adapter["models"]
     fields = [(key, template.format(**values)) for key, template in adapter["fields"]]
-    fields += list(adapter.get("extra", {}).items())
+    # A role's `mode` (e.g. primary) maps to adapter fields that replace same-named extras.
+    mode = adapter.get("modes", {}).get(meta.get("mode", ""), {})
+    fields += [(k, v) for k, v in adapter.get("extra", {}).items() if k not in mode]
+    fields += list(mode.items())
     fields += list(adapter["access"][meta["access"]].items())
     model = models.get(meta["tier"], "")
     if model:  # empty: the agent inherits the session's model

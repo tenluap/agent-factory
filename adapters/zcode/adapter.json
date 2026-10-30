@@ -9,6 +9,7 @@
   "fields": [["name", "factory-{role}"], ["description", "{description}"]],
   "access": {
     "read": { "tools": "Read, Grep, Glob, Bash" },
+    "research": { "tools": "Read, Grep, Glob, Bash, WebSearch, WebFetch" },
     "write": { "tools": "Read, Edit, Write, Bash, Grep, Glob" }
   },
   "models": {}

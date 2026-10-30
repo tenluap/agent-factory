@@ -17,9 +17,12 @@
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.github/skills/`, `<repo>/.claude/skills/`, `<repo>/.agents/skills/`, `~/.copilot/skills/`, `~/.agents/skills/`. For a `speckit-<stage>` name with no skill, take `speckit.<stage>.agent.md` under `<repo>/.github/agents/` or `speckit.<stage>.prompt.md` under `<repo>/.github/prompts/`. |
 | `SHELL(cmd)` | Your shell/terminal tool. |
+| `WEB_SEARCH(query)` | Your `web` tool's search. |
+| `WEB_FETCH(url)` | Your `web` tool's fetch. |
 
 ## Notes
 
+- Main agent (`mode: primary`): start with `copilot --agent factory-<role>`, or pick it with `/agent`.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are `~/.copilot/agents/factory-<role>.agent.md`. Read-only roles get `tools: [read, search, execute]`.
 - Agent models are not set by default, so every agent uses the default model. To pin them, set `models.copilot.deep` / `.standard` in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness copilot`.

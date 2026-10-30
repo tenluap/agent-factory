@@ -91,8 +91,8 @@ class ModelPolicyTests(unittest.TestCase):
     def test_shipped_model_policy_preserves_explicit_tiers(self):
         expected = {
             "claude-code": {
-                "deep": "anthropic/claude-opus-5-5",
-                "standard": "anthropic/claude-haiku-5-5",
+                "deep": "claude-opus-5-5",
+                "standard": "claude-haiku-5-5",
             },
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
             "opencode": {
@@ -530,6 +530,9 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 if isinstance(names, str):
                     names = names.split(", ")
                 for name in names:
+                    if name == "web":
+                        # Copilot's research label; `web` is also a framework value here.
+                        continue
                     # Labels such as Read and edit also occur as ordinary prose.
                     pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
                     self.assertNotRegex(text, pattern, (path, name))
@@ -548,6 +551,88 @@ class ReadOnlyConformanceTests(unittest.TestCase):
         ).read_text()
         self.assertIn("only through the pen CLI", contract)
         self.assertIn("no MCP fallback", contract)
+
+    def test_facets_advisor_renders_research_access_for_every_harness(self):
+        import render as render_mod
+
+        role = REPO / "core/roles/facets-advisor.md"
+        self.assertTrue(role.exists(), "facets-advisor role missing")
+        meta, _ = render_mod.frontmatter(role.read_text())
+        self.assertEqual(
+            (meta["name"], meta["tier"], meta["access"]),
+            ("facets-advisor", "deep", "research"),
+        )
+        self.assertEqual(meta.get("mode"), "primary")
+        for harness in HARNESSES:
+            with self.subTest(harness=harness):
+                render(harness)
+                adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
+                self.assertIn("research", adapter["access"])
+                path = self.agent_path(harness, meta)
+                self.assertTrue(path.exists(), path)
+                text = path.read_text()
+                model = adapter["models"].get("deep")
+                if model:
+                    self.assertIn(model, text)
+                if harness in ("claude-code", "zcode"):
+                    tools_line = next(
+                        line for line in text.splitlines() if line.startswith("tools:")
+                    )
+                    self.assertIn("WebSearch", tools_line)
+                    self.assertIn("WebFetch", tools_line)
+                    self.assertNotIn("Edit", tools_line)
+                    self.assertNotIn("Write", tools_line)
+                if harness == "copilot":
+                    tools_line = next(
+                        line for line in text.splitlines() if line.startswith("tools:")
+                    )
+                    self.assertIn("web", tools_line)
+                    self.assertNotIn("edit", tools_line)
+                if harness == "opencode":
+                    self.assertIn('"action": "edit"', text)
+                    self.assertIn('"effect": "deny"', text)
+                    self.assertIn("\nmode: all\n", text)
+
+    def test_facets_advisor_core_role_names_no_harness_tool(self):
+        text = (REPO / "core/roles/facets-advisor.md").read_text()
+        self.assertNotIn("adapters/", text)
+        self.assertNotIn("dist/", text)
+        self.assertIn("WEB_SEARCH", text)
+        self.assertIn("WEB_FETCH", text)
+        for path in ADAPTERS.glob("*/adapter.json"):
+            adapter = json.loads(path.read_text())
+            for access in adapter["access"].values():
+                names = access.get("tools", [])
+                if isinstance(names, str):
+                    names = names.split(", ")
+                for name in names:
+                    pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
+                    self.assertNotRegex(text, pattern, (path, name))
+
+    def test_only_primary_roles_leave_opencode_subagent_mode(self):
+        import render as render_mod
+
+        render("opencode")
+        for role_file in sorted((render_mod.ROOT / "core" / "roles").glob("*.md")):
+            meta, _ = render_mod.frontmatter(role_file.read_text())
+            text = self.agent_path("opencode", meta).read_text()
+            expected = "all" if meta.get("mode") == "primary" else "subagent"
+            with self.subTest(role=meta["name"]):
+                self.assertIn(f"\nmode: {expected}\n", text)
+                self.assertEqual(text.count("\nmode: "), 1)
+
+    def test_every_harness_documents_main_agent_mode(self):
+        for harness in HARNESSES:
+            text = (ADAPTERS / harness / "harness.md").read_text()
+            with self.subTest(harness=harness):
+                self.assertIn("Main agent (`mode: primary`)", text)
+
+    def test_every_harness_maps_the_research_verbs(self):
+        for harness in HARNESSES:
+            text = (ADAPTERS / harness / "harness.md").read_text()
+            with self.subTest(harness=harness):
+                self.assertIn("WEB_SEARCH", text)
+                self.assertIn("WEB_FETCH", text)
 
 
 if __name__ == "__main__":
