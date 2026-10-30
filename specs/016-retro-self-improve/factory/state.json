@@ -49,12 +49,20 @@
         "questions": [
           {
             "id": "Q1"
+          },
+          {
+            "id": "Q3"
           }
         ],
         "answers": {
           "Q1": {
             "answer": "A — retro inputs add the run state.json path; retro reads it read-only for ledger/history; FR-003 and Run digest entity updated",
             "at": "2026-10-30T22:40:09.567375Z",
+            "auto": true
+          },
+          "Q3": {
+            "answer": "A — retro entries carry kind retro, signal_key, evidence, suggested_feature; listing prefers stored suggested_feature when present; run exports unchanged",
+            "at": "2026-10-30T22:40:09.867559Z",
             "auto": true
           }
         }
