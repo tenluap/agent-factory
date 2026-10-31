@@ -156,9 +156,14 @@ Active design work publishes only after `design-code-mapping.md`'s publication r
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include the handoff facts `design-code-mapping.md` §6 accounts.
 3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
 4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`.
-5. `SHELL: python3 <F>/bin/factory drop`; retain its JSON output.
-6. Push. If the final push fails, retry once in the same turn. If the retry fails, `NOTIFY` the user to run `git push` from the named worktree path; do not resume the run.
-7. `NOTIFY` the `totals_sentence` and `pr_url` from the drop JSON, never from `state.json`, and offer (do not do) any after-PR extras `harness.md` lists.
+5. **Retro** (entry marker checked only here, not during an in-turn retry):
+   1. `SHELL: python3 <F>/bin/factory show <branch>`. If its ledger already has an entry with stage `retro`, skip to item 4.
+   2. `SHELL: python3 <F>/bin/factory improvements`. Collect the `signal_key` of each `ready` entry with `kind: retro` as `covered_keys`. `SHELL: python3 <F>/bin/factory budget retro`; `SPAWN retro` with `F`, `worktree`, `spec_dir`, `branch`, the printed `deadline`, show JSON, the read-only `state.json` path, every `analyze.reports` path from that state resolved against `spec_dir`, every round's `verdict.json` path, and `covered_keys`.
+   3. Save its output to `<spec_dir>/factory/retro-envelope.md`, then `SHELL: python3 <F>/bin/factory ledger-add retro retro ...` with the spawn's timing and usage (Cost ledger).
+   4. When the saved envelope holds candidates, `SHELL: python3 <F>/bin/factory improvements add --from <spec_dir>/factory/retro-envelope.md --run <branch>`.
+6. `SHELL: python3 <F>/bin/factory drop`; retain its JSON output.
+7. Push. If the final push fails, retry once in the same turn. If the retry fails, `NOTIFY` the user to run `git push` from the named worktree path; do not resume the run.
+8. `NOTIFY` the `totals_sentence` and `pr_url` from the drop JSON, never from `state.json`, and offer (do not do) any after-PR extras `harness.md` lists.
 
 Done when the PR URL is recorded in the archived state and shown to the user.
 
