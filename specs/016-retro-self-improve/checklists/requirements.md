@@ -33,3 +33,4 @@
 
 - The audience is factory maintainers, so factory terms (`pr-open`, `drop`, envelope, ledger) are domain vocabulary, not implementation detail.
 - Backlog entry file shape is deferred to the plan by design (Assumptions).
+- The `factory improvements add --from <file> --run <branch>` writer and the Retro entry field names in the spec are a settled grill-with-docs decision (Clarifications), recorded as the factory's user-facing CLI contract, not an implementation leak.

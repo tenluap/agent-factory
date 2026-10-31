@@ -37,14 +37,14 @@ After `set-status pr-open` and before `drop`, the orchestrator spawns a new read
 
 ### Signal key grammar
 
-`<kind>:<subject>`. `kind` is one of `analyze-escalation`, `fixer-recurring`, `judge-rejection`, `in-est-outlier`, `halt-cluster`. `subject` matches `[a-z0-9][a-z0-9-]{0,63}`. Subjects: `analyze` (analyze-escalation), lower-cased finding class such as `eng-17` (fixer-recurring), reviewer role (judge-rejection), role (in-est-outlier), stage (halt-cluster). The file name replaces `:` with `.`.
+`<kind>:<subject>`. `kind` is one of `analyze-escalation`, `fixer-recurring`, `judge-rejection`, `in-est-outlier`, `halt-cluster`. `subject` matches `[a-z0-9][a-z0-9-]{0,63}`. Subjects: `analyze` (analyze-escalation), finding class (fixer-recurring: the first `ENG-n` id cited in a confirmed blocking finding's `evidence`, lower-cased, e.g. `eng-17`; a finding citing no `ENG-n` has no class and is not counted), reviewer role (judge-rejection), role (in-est-outlier), stage (halt-cluster). The file name replaces `:` with `.`.
 
 ### Retro role (`core/roles/retro.md`)
 
-Frontmatter: `name: retro`, `tier: standard`, `access: read`, description "Spawned by the /factory orchestrator only". Inputs: `F`, `worktree`, `spec_dir`, `branch`, `deadline`, the `factory show` JSON, the `state.json` path (read-only), every round's `verdict.json` path, `covered_keys`. Work: mine the five signals with these defaults, skip covered keys and missing sources, rank by impact, return at most 3.
+Frontmatter: `name: retro`, `tier: standard`, `access: read`, description "Spawned by the /factory orchestrator only". Inputs: `F`, `worktree`, `spec_dir`, `branch`, `deadline`, the `factory show` JSON, the `state.json` path (read-only), every `analyze.reports` path (resolved against `spec_dir`), every round's `verdict.json` path, `covered_keys`. Work: mine the five signals with these defaults, skip covered keys and missing sources, rank by impact, return at most 3.
 
-- analyze-escalation: any recorded analyze pass with CRITICAL or HIGH > 0.
-- fixer-recurring: one finding class confirmed blocking in 2+ rounds, or 2+ times in one round.
+- analyze-escalation: any input analyze report whose severity counts show CRITICAL or HIGH > 0.
+- fixer-recurring: one finding class (see grammar) confirmed blocking in 2+ rounds, or 2+ times in one round.
 - judge-rejection: a reviewer with 2+ findings and at least half `rejected`.
 - in-est-outlier: a role whose largest `in_est` is at least 2x the run-wide median (4+ ledger entries).
 - halt-cluster: 2+ `halt`, `agent-failure`, `retry` or `overrun` issues sharing one stage.
@@ -83,13 +83,13 @@ Entry body: `name`, `kind: "retro"`, `run: {repo, branch, spec_dir}`, `signal_ke
 
 Between sub-step 4 (`set-status pr-open`) and the old sub-step 5 (`drop`), insert "Retro":
 
-1. `factory show <branch>`; a ledger entry with stage `retro` exists: skip to 4 (resume marker, FR-010).
-2. `factory improvements`; collect `signal_key` of `ready` Retro entries as `covered_keys`. `factory budget retro`. `SPAWN retro` with the inputs above.
-3. Save its output to `<spec_dir>/factory/retro-envelope.md`, then `ledger-add retro retro ...`. Failure (crash, no parseable envelope, `failed`): `issue-add retry retro retro`, one fresh retry; second failure: `issue-add agent-failure retro retro`, no halt, note the skip.
+1. `factory show <branch>`; a ledger entry with stage `retro` exists: skip to 4 (re-entry marker, FR-010). This check runs only here, on entry, so the retry in 3 is unaffected.
+2. `factory improvements`; collect `signal_key` of `ready` Retro entries as `covered_keys`. `factory budget retro`. `SPAWN retro` with the inputs above (`analyze.reports` read from the `state.json` path).
+3. Save its output to `<spec_dir>/factory/retro-envelope.md`, then `ledger-add retro retro ...`. Every spawn is ledgered, failed attempts included, so their cost is kept. Failure (crash, no parseable envelope, `failed`): `issue-add retry retro retro`, one fresh retry (ledgered too); second failure: `issue-add agent-failure retro retro`, no halt, note the skip.
 4. When `retro-envelope.md` holds candidates: `factory improvements add --from <file> --run <branch>`. Non-zero exit: note the skipped write and reason.
 5. Continue with `drop`. The final `NOTIFY` names any skipped retro or skipped write (FR-012).
 
-`resume` still refuses ended runs, so the marker guards re-entry of step 9 within the orchestrator's turn; widening resume is out of scope. The Policies failure-policy line names the retro exception.
+`resume` still refuses ended runs, so the marker guards re-entry of step 9 within the orchestrator's turn; widening resume is out of scope. An interruption between `set-status pr-open` and the final push leaves a `pr-open` run unarchived; recovery is manual: `python3 <F>/bin/factory drop` from the worktree, then `git push`. DESIGN.md (T001) and SKILL.md (T012) name it. The Policies failure-policy line names the retro exception.
 
 ## Project Structure
 
@@ -104,7 +104,7 @@ core/skills/factory/bin/factory_cli/improvements.py  # add, listing kind, _write
 core/skills/factory/bin/factory_cli/commands.py      # cmd_improvements_add, allow_pr_open
 core/skills/factory/bin/factory_cli/cli.py           # improvements add usage/args
 core/skills/factory/bin/factory_cli/state.py         # STAGES += retro
-tools/tests/test_improvements.py, test_state.py, test_render_models.py
+tools/tests/test_improvements.py, test_commands.py, test_render_models.py
 ```
 
 New items:
