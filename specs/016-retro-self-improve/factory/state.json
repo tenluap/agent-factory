@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/016-retro-self-improve",
   "spec_dir": "specs/016-retro-self-improve",
   "status": "running",
-  "stage": "review",
+  "stage": "fix",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -590,6 +590,13 @@
           "status": "pass"
         }
       ]
+    },
+    {
+      "at": "2026-10-31T02:57:43.742481Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
     }
   ]
 }
