@@ -376,6 +376,28 @@ def cmd_improvements():
     return improvements.list_backlogs(factory_home())
 
 
+def cmd_improvements_add(repo, from_path, run):
+    _, loaded, _ = one_run(repo, run)
+    if loaded.get("status") != "pr-open":
+        die(1, f"run '{run}' is not pr-open")
+    try:
+        text = Path(from_path).read_text()
+    except OSError as e:
+        die(1, f"cannot read {from_path}: {e}")
+    block, error = checks.extract_block(text)
+    if error:
+        die(1, error)
+    retro = block.get("retro") if isinstance(block, dict) else None
+    candidates = retro.get("candidates") if isinstance(retro, dict) else None
+    if not isinstance(candidates, list):
+        die(1, "retro.candidates must be a list")
+    try:
+        return improvements.add(factory_home(), loaded, candidates)
+    except improvements.AddError as e:
+        print(json.dumps(e.result, indent=2, ensure_ascii=False))
+        die(1, f"cannot write improvements in {factory_home() / 'improvements'}: {e}")
+
+
 def cmd_improvements_claim(repo, name):
     """Claim one backlog (FR-012), refusing a source run that has not ended."""
     runs = [

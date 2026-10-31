@@ -8,6 +8,7 @@ only later transition is `claim` stamping `claimed`.
 
 import json
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,12 @@ FACTORY_DIR = Path(__file__).resolve().parents[2]
 
 class ClaimError(Exception):
     """A refused claim, with the reason (exit 1, never a traceback)."""
+
+
+class AddError(Exception):
+    def __init__(self, error, result):
+        super().__init__(str(error))
+        self.result = result
 
 
 def backlog_name(repo, branch):
@@ -38,6 +45,56 @@ def factory_sha(factory_dir=FACTORY_DIR):
     except OSError:
         return None
     return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
+
+
+def _write_atomic(path, body):
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n")
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def add(home, run_state, candidates, now=None):
+    """Write retro candidates and preserve completed writes on I/O failure."""
+    directory = Path(home) / "improvements"
+    result = {"written": [], "skipped": [], "dropped": []}
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        for candidate in candidates:
+            key = candidate.get("signal_key", "") if isinstance(candidate, dict) else ""
+            # Never derive a path from an unsafe key, even before full validation.
+            if not isinstance(key, str) or not re.fullmatch(
+                r"[a-z0-9-]+:[a-z0-9][a-z0-9-]{0,63}", key
+            ):
+                result["dropped"].append({"signal_key": key, "reason": "invalid key"})
+                continue
+            name = (
+                backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
+                + ".retro."
+                + key.replace(":", ".")
+            )
+            body = {
+                "name": name,
+                "kind": "retro",
+                "run": {k: run_state.get(k) for k in ("repo", "branch", "spec_dir")},
+                "signal_key": key,
+                "evidence": candidate.get("evidence"),
+                "suggested_feature": candidate.get("suggested_feature"),
+                "rank": candidate.get("rank"),
+                "factory_sha": factory_sha(),
+                "status": "ready",
+                "exported_at": now or state.iso(datetime.now(timezone.utc)),
+                "claimed_at": None,
+            }
+            path = directory / f"{name}.json"
+            _write_atomic(path, body)
+            result["written"].append(name)
+    except OSError as e:
+        raise AddError(e, result) from e
+    return result
 
 
 def export(home, run_state, now=None):
@@ -64,13 +121,7 @@ def export(home, run_state, now=None):
         "claimed_at": None,
     }
     path = directory / name
-    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
-    try:
-        tmp.write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n")
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
+    _write_atomic(path, body)
     return path
 
 
@@ -146,12 +197,9 @@ def claim(home, name, source_runs=()):
     now = state.iso(datetime.now(timezone.utc))
     body["status"] = "claimed"
     body["claimed_at"] = now
-    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     try:
-        tmp.write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n")
-        os.replace(tmp, path)
+        _write_atomic(path, body)
     except OSError as e:
-        tmp.unlink(missing_ok=True)
         raise ClaimError(f"cannot claim '{name}': {e}") from e
     return {
         "claimed": body.get("name") or path.stem,

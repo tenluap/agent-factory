@@ -168,5 +168,101 @@ class SurfaceTests(unittest.TestCase):
         self.assertIn("052-running", out.stderr, "the refusal names the run")
 
 
+class RetroAddTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "053-retro"
+        self.wt = self.box.worktree_run(self.branch, fixture("state-v5.json"))
+        self.candidate = {
+            "signal_key": "halt-cluster:implement",
+            "rank": 1,
+            "evidence": "two halts",
+            "suggested_feature": "Improve recovery",
+        }
+        self.source = self.box.write_temp(
+            "retro.md",
+            "earlier\n```json\n{}\n```\n```json\n"
+            + json.dumps({"retro": {"candidates": [self.candidate]}})
+            + "\n```\n",
+        )
+        self.directory = self.box.home / "improvements"
+        self.name = f"{self.box.repo.name}-{self.branch}.retro.halt-cluster.implement"
+
+    def invoke(self):
+        return self.box.cli(
+            "improvements",
+            "add",
+            "--from",
+            self.source,
+            "--run",
+            self.branch,
+            cwd=self.wt,
+        )
+
+    def test_add_writes_and_replaces_retro_entry(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        out = self.invoke()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        result = json.loads(out.stdout)
+        self.assertEqual(len(result["written"]), 1)
+        self.assertEqual(result["skipped"], [])
+        self.assertEqual(result["dropped"], [])
+        path = self.directory / (self.name + ".json")
+        body = json.loads(path.read_text())
+        self.assertEqual(body["name"], self.name)
+        self.assertEqual(body["kind"], "retro")
+        self.assertEqual(
+            body["run"],
+            {
+                "repo": str(self.box.repo),
+                "branch": self.branch,
+                "spec_dir": f"specs/{self.branch}",
+            },
+        )
+        for key, value in self.candidate.items():
+            self.assertEqual(body[key], value)
+        self.assertEqual(body["status"], "ready")
+        self.assertIsNone(body["claimed_at"])
+        self.assertIn("factory_sha", body)
+        self.assertRegex(body["exported_at"], r"^\d{4}-\d{2}-\d{2}T")
+        again = self.invoke()
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 1)
+
+    def test_add_refuses_non_ended_run(self):
+        out = self.invoke()
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertFalse(self.directory.exists())
+
+    def test_add_refuses_bad_envelopes(self):
+        out = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        for text in ("no block", "```json\n{bad}\n```", '```json\n{"retro": {}}\n```'):
+            Path(self.source).write_text(text)
+            result = self.invoke()
+            self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(list(self.directory.glob("*.retro.*.json")), [])
+
+    def test_add_unwritable_directory_reports_path_without_temp(self):
+        out = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        for path in self.directory.iterdir():
+            path.unlink()
+        self.directory.rmdir()
+        self.directory.write_text("not a directory")
+        result = self.invoke()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(str(self.directory), result.stderr)
+        self.assertEqual(list(self.box.home.glob("*.tmp")), [])
+
+
 if __name__ == "__main__":
     unittest.main()

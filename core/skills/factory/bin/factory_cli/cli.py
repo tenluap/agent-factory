@@ -32,6 +32,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   issue-add <kind> <stage> <role> --detail <text> --duration-ms <n>
             [--cause <cause>] [--commit <sha>] [--partial-return]
   improvements claim <name>         claim a ready backlog, never start a run
+  improvements add --from <file> --run <branch>  write retro candidates
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
   wait-close <wait-id>                              close it
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
@@ -252,12 +253,21 @@ def main(argv):
                 die_usage("budget needs exactly one <role>")
             result = commands.cmd_budget(positional[0])
         elif command == "improvements":
-            positional, flags = parse_flags(rest, command, value_flags=("--repo",))
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--from", "--run")
+            )
             if positional[:1] == ["claim"]:
                 if len(positional) != 2:
                     die_usage("improvements claim needs exactly one <name>")
                 repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
                 result = commands.cmd_improvements_claim(repo, positional[1])
+            elif positional == ["add"]:
+                if not flags.get("--from") or not flags.get("--run"):
+                    die_usage("improvements add needs --from <file> --run <branch>")
+                repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+                result = commands.cmd_improvements_add(
+                    repo, flags["--from"], flags["--run"]
+                )
             elif not positional:
                 result = commands.cmd_improvements()
             else:
