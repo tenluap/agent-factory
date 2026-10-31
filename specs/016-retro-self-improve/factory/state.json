@@ -83,8 +83,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Protected seam-scope confirmation: S1-S4 test seams for improvements add, pr-open retro writes, render",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-31T01:58:06.761079Z",
+      "latency_ms": 2561772
     }
   ],
   "decisions": [
