@@ -109,7 +109,7 @@ No setup. The repository already has the `unittest` runner and `tools/tests.Sand
 
 ## Phase 6: Polish
 
-- [ ] T013 Run `python3 tools/render.py` for every harness, the build command and the full test command; confirm `git status` shows no `dist/` files and no `CONTEXT.md` change is needed. Depends on T001-T012. Exempt: verification only, no code change. Done when all three commands pass.
+- [x] T013 Run `python3 tools/render.py` for every harness, the build command and the full test command; confirm `git status` shows no `dist/` files and no `CONTEXT.md` change is needed. Depends on T001-T012. Exempt: verification only, no code change. Done when all three commands pass.
 
 ---
 
