@@ -58,6 +58,9 @@
           },
           {
             "id": "Q5"
+          },
+          {
+            "id": "Q2"
           }
         ],
         "answers": {
@@ -80,6 +83,11 @@
             "answer": "A — Improvement backlog becomes umbrella term with two kinds: Run export and Retro entry; add Retro, Improvement signal, Signal key, Improvement candidate terms",
             "at": "2026-10-30T22:40:10.480747Z",
             "auto": true
+          },
+          "Q2": {
+            "answer": "A — add factory improvements add --from <file> --run <branch>: validates, dedupes against open ready entries, caps at 3, writes atomically, returns written/skipped/dropped JSON; mining stays in the retro role; settled decision narrows to no CLI that mines signals",
+            "at": "2026-10-31T01:09:55.141775Z",
+            "auto": false
           }
         }
       }
