@@ -14,7 +14,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, improvements, lock, state, totals
+from factory_cli import budget, checks, detect, improvements, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -420,6 +420,104 @@ def cmd_improvements_claim(repo, name):
 
 def now_iso():
     return state.iso(datetime.now(timezone.utc))
+
+
+# --------------------------------------------------------------------------
+# stack profile (spec 017)
+# --------------------------------------------------------------------------
+
+
+def cmd_detect(repo):
+    """Detect the repo's stack profile; read-only, prints JSON."""
+    return detect.detect(repo)
+
+
+def cmd_profile_record(repo, cwd, worktree=None, spec_dir=None):
+    """Detect and record the profile into the one writable run (spec 017).
+
+    Stores the `profile` block in state, writes profile.md beside the pending
+    brief (pending runs) or into the spec_dir's factory folder (worktree runs,
+    committed). A changed profile on re-record is disclosed in the result.
+    """
+    profile = detect.detect(repo)
+    problems = detect.validate_profile(profile)
+    if problems:
+        die(1, f"detector produced an invalid profile: {problems}")
+
+    path, loaded, source, run_worktree = resolve_target(repo, cwd)
+    previous = loaded.get("profile")
+
+    def mutate(s):
+        s["profile"] = profile
+        return s
+
+    write_run(path, loaded, mutate)
+
+    profile_md = detect.render_markdown(profile)
+    if source == "pending":
+        profile_path = path.with_name(path.name.replace(".json", ".profile.md"))
+        profile_path.write_text(profile_md)
+        committed = None
+    else:
+        folder = (
+            Path(run_worktree)
+            / (spec_dir or loaded.get("spec_dir") or "specs/run")
+            / "factory"
+        )
+        folder.mkdir(parents=True, exist_ok=True)
+        profile_path = folder / "profile.md"
+        profile_path.write_text(profile_md)
+        committed = commit_worktree(
+            run_worktree, "factory: profile recorded", loaded.get("spec_dir")
+        )
+
+    changed = None
+    if previous is not None:
+        changed = _profile_changes(previous, profile)
+    return {
+        "profile": profile,
+        "profile_md": str(profile_path),
+        "committed": committed,
+        "changed": changed,
+    }
+
+
+def _profile_changes(previous, current):
+    """One-line human deltas between two profiles; empty means unchanged."""
+    changes = []
+
+    def names(entries):
+        return sorted(entry.get("name", "") for entry in entries or [])
+
+    old, new = names(previous.get("languages")), names(current.get("languages"))
+    if old != new:
+        changes.append(
+            f"languages: {', '.join(old) or 'none'} -> {', '.join(new) or 'none'}"
+        )
+    old, new = names(previous.get("frameworks")), names(current.get("frameworks"))
+    if old != new:
+        changes.append(
+            f"frameworks: {', '.join(old) or 'none'} -> {', '.join(new) or 'none'}"
+        )
+    old, new = (
+        names(previous.get("package_managers")),
+        names(current.get("package_managers")),
+    )
+    if old != new:
+        changes.append(
+            f"package managers: {', '.join(old) or 'none'} -> {', '.join(new) or 'none'}"
+        )
+    if bool(previous.get("ui")) != bool(current.get("ui")):
+        changes.append(f"ui: {previous.get('ui')} -> {current.get('ui')}")
+    if bool(previous.get("monorepo")) != bool(current.get("monorepo")):
+        changes.append(
+            f"monorepo: {previous.get('monorepo')} -> {current.get('monorepo')}"
+        )
+    old_cmds = previous.get("commands") or {}
+    new_cmds = current.get("commands") or {}
+    if old_cmds != new_cmds:
+        changes.append("commands changed")
+    return changes
 
 
 def cmd_drop(repo, cwd):

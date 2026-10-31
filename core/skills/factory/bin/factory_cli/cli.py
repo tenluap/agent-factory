@@ -21,11 +21,14 @@ read:
   resume <run>                      record the resumed entry, print the resume digest
   budget <role>                     the role's resolved seconds and deadline, JSON
   improvements                      backlogs, kind counts and suggested features, JSON
+  detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
 
 write (the single writer; each stamps its time, validates, writes atomically):
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
+  profile-record                    detect the repo and record the profile into
+                                    the one writable run; discloses a changed stack
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
             [--in-est N] [--out-est N] [--reported '<json>']
             [--overrun '<json>'] [--partial-return]
@@ -166,6 +169,14 @@ def main(argv):
                 files=flags.get("--files"),
                 envelope=flags.get("--envelope"),
             )
+        elif command == "detect":
+            _, flags = parse_flags(rest, command)
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_detect(repo)
+        elif command == "profile-record":
+            _, flags = parse_flags(rest, command)
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_profile_record(repo, Path.cwd())
         elif command == "analyze-record":
             positional, flags = parse_flags(rest, command)
             if len(positional) != 1:
