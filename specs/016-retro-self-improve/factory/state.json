@@ -305,6 +305,18 @@
       "duration_ms": 260000,
       "started_at": "2026-10-31T02:12:40Z",
       "ended_at": "2026-10-31T02:17:00Z"
+    },
+    {
+      "at": "2026-10-31T02:23:03.449241Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 30000,
+      "out_est": 12000,
+      "reported": null,
+      "duration_ms": 1195000,
+      "started_at": "2026-10-31T02:02:50Z",
+      "ended_at": "2026-10-31T02:22:45Z"
     }
   ],
   "issues": [
@@ -351,6 +363,17 @@
       "duration_ms": 0,
       "commit": "1156eed",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-31T02:23:03.449380Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "At T004 completion, approximately 9 minutes 56 seconds past deadline; full-suite timeout and red-test repair required reruns before committing.",
+      "duration_ms": 1195000,
+      "commit": "e5169ba",
+      "partial_return": true
     }
   ],
   "history": [
