@@ -341,6 +341,18 @@
       "duration_ms": 313000,
       "started_at": "2026-10-31T02:32:00Z",
       "ended_at": "2026-10-31T02:37:13Z"
+    },
+    {
+      "at": "2026-10-31T02:40:48.803947Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 18000,
+      "out_est": 3500,
+      "reported": null,
+      "duration_ms": 270000,
+      "started_at": "2026-10-31T02:37:30Z",
+      "ended_at": "2026-10-31T02:42:00Z"
     }
   ],
   "issues": [
@@ -419,6 +431,17 @@
       "detail": "T010 focused test and commit finished at 02:37:13 UTC, approximately 18 seconds past the deadline; no new unit started.",
       "duration_ms": 313000,
       "commit": "3513cd7",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-31T02:40:48.804082Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "T011/T012 committed; full suite deferred to T013 as sole remaining unit because 219s suite exceeded remaining time",
+      "duration_ms": 270000,
+      "commit": "c90bd28",
       "partial_return": true
     }
   ],
