@@ -5,8 +5,11 @@
 never exists before its run ends, and a zero-issue run exports too.
 """
 
+import hashlib
 import json
+import os
 import re
+import subprocess
 import sys
 import time
 import unittest
@@ -15,7 +18,7 @@ from pathlib import Path
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import totals  # noqa: E402
+from factory_cli import lock, totals  # noqa: E402
 
 from tests import Sandbox, fixture  # noqa: E402
 
@@ -188,7 +191,8 @@ class RetroAddTests(unittest.TestCase):
             + "\n```\n",
         )
         self.directory = self.box.home / "improvements"
-        self.name = f"{self.box.repo.name}-{self.branch}.retro.halt-cluster.implement"
+        repo_hash = hashlib.sha256(str(self.box.repo).encode()).hexdigest()[:12]
+        self.name = f"{self.box.repo.name}-{self.branch}.{repo_hash}.retro.halt-cluster.implement"
 
     def invoke(self):
         return self.box.cli(
@@ -200,6 +204,111 @@ class RetroAddTests(unittest.TestCase):
             self.branch,
             cwd=self.wt,
         )
+
+    def test_claim_serializes_with_add_under_home_lock(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        self.assertEqual(self.invoke().returncode, 0)
+        lock.acquire(self.directory, harness="test-add")
+        self.addCleanup(lock.release, self.directory)
+        env = dict(os.environ, FACTORY_HOME=str(self.box.home))
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                str(CORE_BIN / "factory"),
+                "improvements",
+                "claim",
+                self.name,
+            ],
+            cwd=self.wt,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        self.addCleanup(lambda: proc.kill() if proc.poll() is None else None)
+        time.sleep(0.3)
+        self.assertIsNone(proc.poll(), "claim must wait for add's lock")
+        lock.release(self.directory)
+        stdout, stderr = proc.communicate(timeout=3)
+        self.assertEqual(proc.returncode, 0, stderr)
+        out = self.invoke()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout)["skipped"][0]["reason"], "claimed")
+        self.assertEqual(
+            json.loads((self.directory / (self.name + ".json")).read_text())["status"],
+            "claimed",
+        )
+
+    def test_same_repo_basename_cannot_replace_other_claimed_entry(self):
+        other = Sandbox()
+        self.addCleanup(other.close)
+        other.home = self.box.home
+        other_wt = other.worktree_run(self.branch, fixture("state-v5.json"))
+        for box, wt in ((self.box, self.wt), (other, other_wt)):
+            out = box.cli("set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=wt)
+            self.assertEqual(out.returncode, 0, out.stderr)
+        first = self.invoke()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        first_name = json.loads(first.stdout)["written"][0]
+        claimed = self.box.cli("improvements", "claim", first_name, cwd=self.wt)
+        self.assertEqual(claimed.returncode, 0, claimed.stderr)
+        first_path = self.directory / (first_name + ".json")
+        original = first_path.read_bytes()
+        second = other.cli(
+            "improvements",
+            "add",
+            "--from",
+            self.source,
+            "--run",
+            self.branch,
+            cwd=other_wt,
+        )
+        self.assertEqual(second.returncode, 0, second.stderr)
+        second_name = json.loads(second.stdout)["written"][0]
+        self.assertNotEqual(first_name, second_name)
+        self.assertEqual(first_path.read_bytes(), original)
+
+    def test_existing_foreign_destination_is_never_replaced(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        path = self.directory / (self.name + ".json")
+        original = json.dumps(
+            {
+                "kind": "retro",
+                "name": self.name,
+                "status": "claimed",
+                "run": {"repo": "/another/repo", "branch": self.branch},
+                "signal_key": self.candidate["signal_key"],
+            }
+        )
+        path.write_text(original)
+        result = self.invoke()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(str(path), result.stderr)
+        self.assertEqual(path.read_text(), original)
+
+    def test_legacy_own_ready_entry_is_rewritten_in_place(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        self.assertEqual(self.invoke().returncode, 0)
+        current = self.directory / (self.name + ".json")
+        legacy_name = f"{self.box.repo.name}-{self.branch}.retro.halt-cluster.implement"
+        legacy = self.directory / (legacy_name + ".json")
+        body = json.loads(current.read_text())
+        body["name"] = legacy_name
+        legacy.write_text(json.dumps(body))
+        current.unlink()
+        result = self.invoke()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["written"], [legacy_name])
+        self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 1)
 
     def test_add_writes_and_replaces_retro_entry(self):
         ended = self.box.cli(
@@ -413,14 +522,56 @@ class RetroAddTests(unittest.TestCase):
             "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
         )
         self.assertEqual(out.returncode, 0, out.stderr)
-        for path in self.directory.iterdir():
-            path.unlink()
-        self.directory.rmdir()
-        self.directory.write_text("not a directory")
-        result = self.invoke()
+        self.assertEqual(self.invoke().returncode, 0)
+        existing = self.directory / (self.name + ".json")
+        original = existing.read_bytes()
+        candidates = [
+            dict(self.candidate, signal_key="halt-cluster:plan", rank=1),
+            dict(self.candidate, suggested_feature="Changed", rank=2),
+        ]
+        Path(self.source).write_text(
+            "```json\n" + json.dumps({"retro": {"candidates": candidates}}) + "\n```\n"
+        )
+        script = """
+import os, runpy, sys
+from pathlib import Path
+original = os.replace
+def fail_selected(src, dst):
+    if str(dst) == os.environ['FAIL_DEST']:
+        assert Path(src).is_file(), 'temp file must exist before replace'
+        raise PermissionError(f'injected replace failure: {dst}')
+    return original(src, dst)
+os.replace = fail_selected
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name='__main__')
+"""
+        env = dict(os.environ, FACTORY_HOME=str(self.box.home), FAIL_DEST=str(existing))
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                script,
+                str(CORE_BIN / "factory"),
+                "improvements",
+                "add",
+                "--from",
+                self.source,
+                "--run",
+                self.branch,
+            ],
+            cwd=self.wt,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertIn(str(self.directory), result.stderr)
-        self.assertEqual(list(self.box.home.glob("*.tmp")), [])
+        self.assertIn(str(existing), result.stderr)
+        written = json.loads(result.stdout)["written"]
+        self.assertEqual(len(written), 1)
+        self.assertTrue(written[0].endswith(".halt-cluster.plan"))
+        self.assertTrue((self.directory / (written[0] + ".json")).is_file())
+        self.assertEqual(existing.read_bytes(), original)
+        self.assertEqual(list(self.directory.glob("*.tmp")), [])
 
 
 if __name__ == "__main__":

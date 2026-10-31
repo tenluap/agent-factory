@@ -6,6 +6,7 @@ run's end (`pr-open`/`aborted`), and nothing creates it any other way. The
 only later transition is `claim` stamping `claimed`.
 """
 
+import hashlib
 import json
 import os
 import re
@@ -58,25 +59,30 @@ def _write_atomic(path, body):
         raise
 
 
+def _acquire_backlog_lock(directory):
+    deadline = time.monotonic() + 5
+    while True:
+        try:
+            lock.acquire(directory, harness="improvements")
+            return
+        except lock.LockHeld:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise
+            time.sleep(min(0.1, remaining))
+
+
 def add(home, run_state, candidates, now=None):
     """Write retro candidates and preserve completed writes on I/O failure."""
     directory = Path(home) / "improvements"
     result = {"written": [], "skipped": [], "dropped": []}
     acquired = False
     try:
-        deadline = time.monotonic() + 5
-        while True:
-            try:
-                lock.acquire(directory, harness="improvements")
-                acquired = True
-                break
-            except lock.LockHeld:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise
-                time.sleep(min(0.1, remaining))
+        _acquire_backlog_lock(directory)
+        acquired = True
         directory.mkdir(parents=True, exist_ok=True)
         own = {}
+        own_paths = {}
         covered = {}
         for path in sorted(directory.glob("*.json")):
             try:
@@ -93,6 +99,7 @@ def add(home, run_state, candidates, now=None):
                 continue
             if all(run.get(k) == run_state.get(k) for k in ("repo", "branch")):
                 own[key] = entry
+                own_paths[key] = path
             elif entry.get("status") == "ready":
                 covered.setdefault(key, entry.get("name") or path.stem)
         seen = set()
@@ -148,9 +155,17 @@ def add(home, run_state, candidates, now=None):
                 continue
             name = (
                 backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
+                + "."
+                + hashlib.sha256(str(run_state.get("repo")).encode()).hexdigest()[:12]
                 + ".retro."
                 + key.replace(":", ".")
             )
+            path = own_paths.get(key, directory / f"{name}.json")
+            name = path.stem
+            if key not in own and path.exists():
+                raise OSError(
+                    f"refusing to replace a backlog owned by another run: {path}"
+                )
             body = {
                 "name": name,
                 "kind": "retro",
@@ -164,7 +179,6 @@ def add(home, run_state, candidates, now=None):
                 "exported_at": now or state.iso(datetime.now(timezone.utc)),
                 "claimed_at": None,
             }
-            path = directory / f"{name}.json"
             _write_atomic(path, body)
             own[key] = body
             result["written"].append(name)
@@ -260,31 +274,37 @@ def claim(home, name, source_runs=()):
     path = directory / filename
     if Path(filename).name != filename or path.resolve().parent != directory:
         raise ClaimError(f"invalid improvement backlog name '{name}'")
-    if not path.is_file():
-        raise ClaimError(f"no improvement backlog named '{name}'")
+    acquired = False
     try:
-        body = json.loads(path.read_text())
-    except (OSError, ValueError) as e:
-        raise ClaimError(f"cannot read {path}: {e}") from e
-    status = body.get("status") if isinstance(body, dict) else None
-    if status != "ready":
-        raise ClaimError(f"'{name}' is {status!r}, not ready; it cannot be claimed")
-    branch = (body.get("run") or {}).get("branch")
-    for run_name, run_status in source_runs:
-        if run_name == branch and run_status not in ("pr-open", "aborted"):
-            raise ClaimError(
-                f"the source run '{branch}' has not ended ({run_status}); "
-                "its backlog cannot be claimed yet"
-            )
-    now = state.iso(datetime.now(timezone.utc))
-    body["status"] = "claimed"
-    body["claimed_at"] = now
-    try:
+        _acquire_backlog_lock(directory)
+        acquired = True
+        if not path.is_file():
+            raise ClaimError(f"no improvement backlog named '{name}'")
+        try:
+            body = json.loads(path.read_text())
+        except (OSError, ValueError) as e:
+            raise ClaimError(f"cannot read {path}: {e}") from e
+        status = body.get("status") if isinstance(body, dict) else None
+        if status != "ready":
+            raise ClaimError(f"'{name}' is {status!r}, not ready; it cannot be claimed")
+        branch = (body.get("run") or {}).get("branch")
+        for run_name, run_status in source_runs:
+            if run_name == branch and run_status not in ("pr-open", "aborted"):
+                raise ClaimError(
+                    f"the source run '{branch}' has not ended ({run_status}); "
+                    "its backlog cannot be claimed yet"
+                )
+        now = state.iso(datetime.now(timezone.utc))
+        body["status"] = "claimed"
+        body["claimed_at"] = now
         _write_atomic(path, body)
-    except OSError as e:
+        return {
+            "claimed": body.get("name") or path.stem,
+            "status": "claimed",
+            "claimed_at": now,
+        }
+    except (OSError, lock.LockHeld) as e:
         raise ClaimError(f"cannot claim '{name}': {e}") from e
-    return {
-        "claimed": body.get("name") or path.stem,
-        "status": "claimed",
-        "claimed_at": now,
-    }
+    finally:
+        if acquired:
+            lock.release(directory)

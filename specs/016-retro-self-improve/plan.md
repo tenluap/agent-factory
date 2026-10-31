@@ -29,7 +29,7 @@ After `set-status pr-open` and before `drop`, the orchestrator spawns a new read
 
 ## Settled deferred items
 
-1. **Retro entry file name**: `<repo-name>-<branch>.retro.<kind>.<subject>.json`, derived only from source run and signal key (FR-016). The Run export stays `<repo-name>-<branch>.json`. The grammar below keeps names unique and injective.
+1. **Retro entry file name**: `<repo-name>-<branch>.<repo-hash>.retro.<kind>.<subject>.json`, derived only from source run and signal key (FR-016), with `repo-hash` the first 12 SHA-256 hex digits of the full repository path. Existing own-run entries retain their names; destination collisions are refused rather than overwritten. The Run export stays `<repo-name>-<branch>.json`.
 2. **Candidates file**: the orchestrator saves the retro role's raw output to `<spec_dir>/factory/retro-envelope.md`. `ledger-add retro` commits it with the spec directory, and `drop` archives it as evidence. `improvements add --from` reads its final fenced `json` block exactly as `envelope check` does (`checks.extract_block`).
 3. **Re-runs and the cap**: yes, they count. The cap is per source run across invocations: a run never holds more than 3 Retro entries. Rewriting a candidate whose own-run entry is still `ready` replaces that same file and adds nothing; an own-run entry already `claimed` is skipped (`reason: "claimed"`), never overwritten.
 
@@ -83,7 +83,7 @@ Entry body: `name`, `kind: "retro"`, `run: {repo, branch, spec_dir}`, `signal_ke
 
 Between sub-step 4 (`set-status pr-open`) and the old sub-step 5 (`drop`), insert "Retro":
 
-1. `factory show <branch>`; a ledger entry with stage `retro` exists: skip to 4 (re-entry marker, FR-010). This check runs only here, on entry, so the retry in 3 is unaffected.
+1. `factory show <branch>`; read its `state_path` and check the state ledger. If an entry with stage `retro` exists: skip to 4 (re-entry marker, FR-010). This check runs only here, on entry, so the retry in 3 is unaffected.
 2. `factory improvements`; collect `signal_key` of `ready` Retro entries as `covered_keys`. `factory budget retro`. `SPAWN retro` with the inputs above (`analyze.reports` read from the `state.json` path).
 3. Save its output to `<spec_dir>/factory/retro-envelope.md`, then `ledger-add retro retro ...`. Every spawn is ledgered, failed attempts included, so their cost is kept. Failure (crash, no parseable envelope, `failed`): `issue-add retry retro retro`, one fresh retry (ledgered too); second failure: `issue-add agent-failure retro retro`, no halt, note the skip.
 4. When `retro-envelope.md` holds candidates: `factory improvements add --from <file> --run <branch>`. Non-zero exit: note the skipped write and reason.
