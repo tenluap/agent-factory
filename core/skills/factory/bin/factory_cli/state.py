@@ -33,6 +33,7 @@ STAGES = (
     "fix",
     "approver",
     "pr",
+    "retro",
 )
 TIMELINE_KINDS = ("questions", "notice", "approver", "halt")
 # Closed vocabulary (FR-003); every event has exactly one writer command.

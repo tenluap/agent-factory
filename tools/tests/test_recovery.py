@@ -17,7 +17,7 @@ from factory_cli import state as state_mod  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 # the linear chain the suite drives; the flow's real successors (state.STAGES)
-CHAIN = [s for s in state_mod.STAGES if s not in ("brainstorm", "pr")]
+CHAIN = [s for s in state_mod.STAGES if s not in ("brainstorm", "pr", "retro")]
 
 
 def started_state():
@@ -68,12 +68,24 @@ class KillAndResumeTests(unittest.TestCase):
     def prepare(self, box, wt, stage):
         """The records the real flow produces before completing `stage`."""
         if stage == "verify":  # the verify pair precedes the ->review gate
-            out = box.cli("verify", "--pass", "--commands",
-                          '[{"command": "make test", "status": 0}]', cwd=wt)
+            out = box.cli(
+                "verify",
+                "--pass",
+                "--commands",
+                '[{"command": "make test", "status": 0}]',
+                cwd=wt,
+            )
             self.assertEqual(out.returncode, 0, out.stderr)
         if stage == "approver":  # the approval precedes the ->pr gate
-            out = box.cli("decisions-add", "approver", "Q1", "Approve", "--kind", "approved",
-                          cwd=wt)
+            out = box.cli(
+                "decisions-add",
+                "approver",
+                "Q1",
+                "Approve",
+                "--kind",
+                "approved",
+                cwd=wt,
+            )
             self.assertEqual(out.returncode, 0, out.stderr)
 
     def test_killed_run_resumes_at_every_stage(self):
@@ -119,7 +131,11 @@ class KillAndResumeTests(unittest.TestCase):
                 self.assertEqual(
                     after["stage"], before["stage"], "resume does not advance the stage"
                 )
-                migrated = [d for d in after["decisions"] if d["question"] == "Q1" and d["kind"] == "answer"]
+                migrated = [
+                    d
+                    for d in after["decisions"]
+                    if d["question"] == "Q1" and d["kind"] == "answer"
+                ]
                 self.assertEqual(
                     len(migrated), 1, "the answered question is asked never again"
                 )

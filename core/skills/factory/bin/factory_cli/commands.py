@@ -559,16 +559,18 @@ def cmd_drop(repo, cwd):
     }
 
 
-def resolve_target(repo, cwd):
+def resolve_target(repo, cwd, allow_pr_open=False):
     """The one run this session writes: the worktree run whose home is `cwd`,
-    else the repo's single pending run. Ended runs are never writable."""
+    else the repo's single pending run. Ended runs require an explicit exception."""
     cwd_real = os.path.realpath(str(cwd))
     worktree_matches = []
     for run in deduped(find_runs(repo)):
         if isinstance(run, dict):
             continue
         path, loaded, identity, _ = run
-        if loaded.get("status") in ("pr-open", "aborted"):
+        if loaded.get("status") == "aborted" or (
+            loaded.get("status") == "pr-open" and not allow_pr_open
+        ):
             continue
         if (
             identity["source"] == "worktree"
@@ -590,7 +592,9 @@ def resolve_target(repo, cwd):
         die(3, f"several pending runs of {repo}; name one")
     if not pending:
         die(1, f"no run to write from {cwd} in {repo}")
-    if pending[0][1].get("status") in ("pr-open", "aborted"):
+    if pending[0][1].get("status") == "aborted" or (
+        pending[0][1].get("status") == "pr-open" and not allow_pr_open
+    ):
         # FR-009: the ended-status skip applies to pending selection too —
         # an ended pending run is as unwritable as an ended worktree run
         die(
@@ -931,7 +935,9 @@ def cmd_issue_add(
             "the partial_return mark is accepted only for overrun/retry of "
             "the file-writing roles (spec-builder, code-build, ui-designer, fixer)",
         )
-    path, loaded, source, worktree = resolve_target(repo, cwd)
+    path, loaded, source, worktree = resolve_target(
+        repo, cwd, allow_pr_open=stage == "retro"
+    )
     record = {
         "at": now_iso(),
         "kind": kind,
@@ -973,7 +979,9 @@ def cmd_ledger_add(
     overrun=None,
     partial_return=False,
 ):
-    path, loaded, source, worktree = resolve_target(repo, cwd)
+    path, loaded, source, worktree = resolve_target(
+        repo, cwd, allow_pr_open=stage == "retro"
+    )
     now = now_iso()
     start, end = started_at or now, ended_at or started_at or now
     duration = max(

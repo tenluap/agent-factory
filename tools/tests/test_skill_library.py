@@ -61,7 +61,7 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         super().setUp()
         self.checkout = self.home.parent / "checkout"
         self.checkout.mkdir()
-        for folder in ("core", "adapters", "skills"):
+        for folder in ("core", "adapters", "skills", "plugins"):
             shutil.copytree(REPO / folder, self.checkout / folder)
         (self.checkout / "tools").mkdir()
         shutil.copy2(REPO / "tools/render.py", self.checkout / "tools/render.py")

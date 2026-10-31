@@ -325,6 +325,73 @@ class EndedPendingRunTests(unittest.TestCase):
         self.assertIn("aborted", out.stderr + out.stdout)
 
 
+class RetroEndedRunTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.wt = self.box.worktree_run(
+            "052-retro",
+            v4_state(
+                status="pr-open",
+                pr_url="https://x/pr/9",
+                ended_at="2026-10-23T12:00:00Z",
+            ),
+        )
+        self.path = self.wt / "specs/052-retro/factory/state.json"
+
+    def test_retro_ledger_on_pr_open(self):
+        out = self.box.cli("ledger-add", "retro", "retro", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(
+            json.loads(self.path.read_text())["ledger"][-1]["stage"], "retro"
+        )
+
+    def test_retro_issue_on_pr_open(self):
+        out = self.box.cli(
+            "issue-add",
+            "retry",
+            "retro",
+            "retro",
+            "--detail",
+            "failed",
+            "--duration-ms",
+            "1",
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        issue = json.loads(self.path.read_text())["issues"][-1]
+        self.assertEqual((issue["kind"], issue["stage"]), ("retry", "retro"))
+
+    def test_other_stage_on_pr_open_is_refused_unchanged(self):
+        before = self.path.read_bytes()
+        out = self.box.cli("ledger-add", "plan", "spec-builder", cwd=self.wt)
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(self.path.read_bytes(), before)
+
+    def test_retro_writes_on_aborted_are_refused_unchanged(self):
+        data = json.loads(self.path.read_text())
+        data["status"] = "aborted"
+        self.path.write_text(json.dumps(data))
+        before = self.path.read_bytes()
+        for args in (
+            ("ledger-add", "retro", "retro"),
+            (
+                "issue-add",
+                "retry",
+                "retro",
+                "retro",
+                "--detail",
+                "failed",
+                "--duration-ms",
+                "1",
+            ),
+        ):
+            with self.subTest(args=args):
+                out = self.box.cli(*args, cwd=self.wt)
+                self.assertEqual(out.returncode, 1, out.stderr)
+                self.assertEqual(self.path.read_bytes(), before)
+
+
 class LedgerTimestampTests(unittest.TestCase):
     """FR-007: a malformed --started-at/--ended-at is a usage refusal (exit 5)
     naming the offending value, never a traceback; the value never reaches the
