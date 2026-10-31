@@ -1,0 +1,57 @@
+{
+  "reviewer": "security",
+  "round": 1,
+  "summary": "Found five security and data-integrity defects in retro persistence and failure handling.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 149,
+      "summary": "Unvalidated run branch can escape the improvements directory.",
+      "evidence": "ENG-25 and ENG-26: backlog_name incorporates run_state.branch directly into the output path. cmd_improvements_add loads that value from a discovered worktree state and checks only status; state validation does not constrain branch paths. A crafted branch such as x/../../target makes the write traverse outside improvements when the intermediate directory exists, allowing replacement of a file with the generated retro suffix.",
+      "fix": "Validate or safely encode repo and branch components, reject separators and traversal, and verify the resolved destination remains directly inside the improvements directory before writing."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 162,
+      "summary": "Retro failure handling interpolates untrusted error text into a shell command.",
+      "evidence": "ENG-25: the workflow inserts a failed agent's error into --detail \"<error>\" in a SHELL command. Shell double quotes still evaluate command substitutions, so an error containing $(command) can execute that command when the orchestrator follows the instruction.",
+      "fix": "Pass error text as a literal process argument without shell interpolation, or use a file/stdin interface with explicit safe argument handling."
+    },
+    {
+      "id": "SEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 138,
+      "summary": "Claim and retro replacement do not share the backlog lock.",
+      "evidence": "ENG-23 and ENG-26: add scans a ready entry under the home lock and later replaces it with status ready, but claim reads and replaces the same file without acquiring that lock. If claim succeeds after add's scan but before its replace, add silently reverts the claimed entry to ready and erases claimed_at.",
+      "fix": "Serialize claim's read-check-write transaction with the same home-level lock used by add; test the interleaving."
+    },
+    {
+      "id": "SEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 149,
+      "summary": "Retro filenames collide across distinct repositories with the same basename.",
+      "evidence": "ENG-26: own-run detection compares full repo and branch, but the destination uses only Path(repo).name, branch, and signal key. Two repositories at different paths with the same basename and branch therefore produce the same filename. If the first entry is claimed, it is not covered by the ready-entry check, so adding the same signal for the second repository replaces the first repository's claimed record.",
+      "fix": "Use a collision-resistant encoding of the full repository identity in retro filenames, and refuse to replace any existing destination belonging to a different run."
+    },
+    {
+      "id": "SEC-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 384,
+      "summary": "Candidate input is read and processed without size or count limits.",
+      "evidence": "ENG-24: Path(from_path).read_text() loads the entire untrusted file before parsing; improvements.add then retains and sorts every valid candidate and accumulates a result for every rejected candidate. The three-entry output cap does not bound input memory or processing, so a large or special-file input can exhaust resources or stall the command.",
+      "fix": "Accept only bounded regular-file input, enforce a byte limit before parsing, and cap the candidate count before validation and sorting."
+    }
+  ]
+}
