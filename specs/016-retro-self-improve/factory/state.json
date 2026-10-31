@@ -42,7 +42,25 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A — accept seams as declared: S1 improvements add (malformed dropped, covered-by-other-run skipped, over-cap dropped counting own-run, claimed not overwritten, non-pr-open refused, unparseable --from refused, lock-wait refused, unwritable dir exit 1 no debris); S2 listing none; S3 pr-open writes (non-retro stage refused, retro on aborted refused); S4 render none; prose docs exempt; unittest runner",
+            "at": "2026-10-31T01:58:05.813171Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-10-30T22:40:00Z",
