@@ -77,7 +77,7 @@ export default {
         previous?.reminder ??
         (`[ui-agent] UI trigger matched (${source}). Invoke the ui-agent skill now to arm UI QA. ` +
           "Pipeline runs only when UI files are actually edited. " +
-          "For create/convert/build intent, defer to pen-design, pen-to-avalonia, or frontend-design. " +
+          "For design-to-code conversion, use design-to-code; to create designs, pen-design; for new visual direction, frontend-design. " +
           "Inert during factory runs.");
       if (!prompt.text?.endsWith(reminder)) {
         prompt.text = prompt.text ? `${prompt.text}\n\n${reminder}` : reminder;
