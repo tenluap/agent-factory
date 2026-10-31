@@ -87,7 +87,7 @@ No setup. The repository already has the `unittest` runner and `tools/tests.Sand
   2. Implement validation before any write.
   3. Run the test command; pass.
   Red proof: `Red: <malformed candidate test name> failed as expected`. Done when malformed and batch-duplicate tests pass.
-- [ ] T011 [US2] Dedupe and cap in `add` (seam S1, covered/cap/claimed paths). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T010.
+- [x] T011 [US2] Dedupe and cap in `add` (seam S1, covered/cap/claimed paths). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T010.
   1. Failing tests. Failure paths: a key covered by another run's `ready` Retro entry is `skipped` with `covered_by`; with 2 existing own-run Retro entries and 3 new valid keys, only 1 is written and 2 are `dropped` with reason `cap` (ordered by rank); an own-run entry that is `claimed` is `skipped` with reason `claimed` and its file is unchanged; rewriting an own-run `ready` entry replaces it and does not count twice. Observe red.
   2. Implement under the lock: scan entries once; skip covered keys; order by rank; write while the run total stays at most 3; drop the rest with `cap`.
   3. Run the test command; pass.

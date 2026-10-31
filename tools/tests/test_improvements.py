@@ -317,6 +317,81 @@ class RetroAddTests(unittest.TestCase):
         self.assertEqual(len(result["skipped"]), 1)
         self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 1)
 
+    def test_add_caps_counting_own_run_and_rewrites_ready(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        initial = [self.candidate, dict(self.candidate, signal_key="halt-cluster:plan")]
+        Path(self.source).write_text(
+            "```json\n" + json.dumps({"retro": {"candidates": initial}}) + "\n```\n"
+        )
+        self.assertEqual(self.invoke().returncode, 0)
+        candidates = [
+            dict(self.candidate, signal_key="halt-cluster:review", rank=3),
+            dict(self.candidate, signal_key="halt-cluster:pr", rank=1),
+            dict(self.candidate, signal_key="halt-cluster:specify", rank=2),
+            dict(self.candidate, suggested_feature="Updated recovery", rank=4),
+        ]
+        Path(self.source).write_text(
+            "```json\n" + json.dumps({"retro": {"candidates": candidates}}) + "\n```\n"
+        )
+        out = self.invoke()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        result = json.loads(out.stdout)
+        self.assertEqual(len(result["written"]), 2)
+        self.assertTrue(
+            any(name.endswith(".halt-cluster.pr") for name in result["written"])
+        )
+        self.assertEqual(
+            {x["signal_key"] for x in result["dropped"]},
+            {"halt-cluster:review", "halt-cluster:specify"},
+        )
+        self.assertTrue(all(x["reason"] == "cap" for x in result["dropped"]))
+        self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 3)
+        self.assertEqual(
+            json.loads((self.directory / (self.name + ".json")).read_text())[
+                "suggested_feature"
+            ],
+            "Updated recovery",
+        )
+
+    def test_add_skips_other_ready_and_own_claimed(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        self.assertEqual(self.invoke().returncode, 0)
+        claimed = self.box.cli("improvements", "claim", self.name, cwd=self.wt)
+        self.assertEqual(claimed.returncode, 0, claimed.stderr)
+        own_path = self.directory / (self.name + ".json")
+        original = own_path.read_bytes()
+        other_key = "judge-rejection:reviewer"
+        other_name = "other-run.retro.judge-rejection.reviewer"
+        (self.directory / (other_name + ".json")).write_text(
+            json.dumps(
+                {
+                    "name": other_name,
+                    "kind": "retro",
+                    "run": {"repo": str(self.box.repo), "branch": "other"},
+                    "signal_key": other_key,
+                    "status": "ready",
+                }
+            )
+        )
+        candidates = [self.candidate, dict(self.candidate, signal_key=other_key)]
+        Path(self.source).write_text(
+            "```json\n" + json.dumps({"retro": {"candidates": candidates}}) + "\n```\n"
+        )
+        out = self.invoke()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        result = json.loads(out.stdout)
+        skipped = {x["signal_key"]: x for x in result["skipped"]}
+        self.assertEqual(skipped[self.candidate["signal_key"]]["reason"], "claimed")
+        self.assertEqual(skipped[other_key]["covered_by"], other_name)
+        self.assertEqual(result["written"], [])
+        self.assertEqual(own_path.read_bytes(), original)
+
     def test_add_refuses_non_ended_run(self):
         out = self.invoke()
         self.assertEqual(out.returncode, 1, out.stderr)

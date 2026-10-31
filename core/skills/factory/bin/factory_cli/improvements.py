@@ -76,7 +76,27 @@ def add(home, run_state, candidates, now=None):
                     raise
                 time.sleep(min(0.1, remaining))
         directory.mkdir(parents=True, exist_ok=True)
+        own = {}
+        covered = {}
+        for path in sorted(directory.glob("*.json")):
+            try:
+                entry = json.loads(path.read_text())
+            except (OSError, ValueError):
+                continue
+            if not isinstance(entry, dict) or entry.get("kind") != "retro":
+                continue
+            run = entry.get("run")
+            if not isinstance(run, dict):
+                continue
+            key = entry.get("signal_key")
+            if not isinstance(key, str):
+                continue
+            if all(run.get(k) == run_state.get(k) for k in ("repo", "branch")):
+                own[key] = entry
+            elif entry.get("status") == "ready":
+                covered.setdefault(key, entry.get("name") or path.stem)
         seen = set()
+        valid = []
         for candidate in candidates:
             key = candidate.get("signal_key", "") if isinstance(candidate, dict) else ""
             if not isinstance(key, str) or not re.fullmatch(
@@ -112,6 +132,20 @@ def add(home, run_state, candidates, now=None):
                 result["skipped"].append({"signal_key": key, "reason": "duplicate"})
                 continue
             seen.add(key)
+            valid.append(candidate)
+        for candidate in sorted(valid, key=lambda item: item["rank"]):
+            key = candidate["signal_key"]
+            if key in own and own[key].get("status") == "claimed":
+                result["skipped"].append({"signal_key": key, "reason": "claimed"})
+                continue
+            if key in covered:
+                result["skipped"].append(
+                    {"signal_key": key, "covered_by": covered[key]}
+                )
+                continue
+            if key not in own and len(own) >= 3:
+                result["dropped"].append({"signal_key": key, "reason": "cap"})
+                continue
             name = (
                 backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
                 + ".retro."
@@ -132,6 +166,7 @@ def add(home, run_state, candidates, now=None):
             }
             path = directory / f"{name}.json"
             _write_atomic(path, body)
+            own[key] = body
             result["written"].append(name)
     except (OSError, lock.LockHeld) as e:
         raise AddError(e, result) from e
