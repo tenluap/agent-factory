@@ -9,7 +9,7 @@
   "branch": "016-retro-self-improve",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/016-retro-self-improve",
   "spec_dir": "specs/016-retro-self-improve",
-  "status": "running",
+  "status": "pr-open",
   "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
@@ -689,6 +689,15 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-10-31T12:49:27.538588Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
     }
-  ]
+  ],
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/13",
+  "ended_at": "2026-10-31T12:49:27.538588Z"
 }
