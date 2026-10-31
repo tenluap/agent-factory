@@ -174,8 +174,11 @@ def list_backlogs(home):
                 "name": body.get("name") or path.stem,
                 "run": run,
                 "status": body.get("status"),
+                "kind": body.get("kind", "run-export"),
+                "signal_key": body.get("signal_key"),
                 "issues_by_kind": counts,
-                "suggested_feature": (
+                "suggested_feature": body.get("suggested_feature")
+                or (
                     f"Improve the factory from the recorded issues of run "
                     f"{run}: {summary}."
                 ),

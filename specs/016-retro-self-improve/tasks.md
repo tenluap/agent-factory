@@ -60,7 +60,7 @@ No setup. The repository already has the `unittest` runner and `tools/tests.Sand
   2. Implement: wrap the scan and writes of `add` in `lock.acquire(<home>/improvements, ...)` with a bounded 5 s wait; release in `finally`.
   3. Run the test command; pass.
   Red proof: `Red: <lock-wait test name> failed as expected`. Done when the lock-wait test passes and the run time stays bounded.
-- [ ] T007 [P] [US1] Show Retro entries in the listing (seam S2). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T005.
+- [x] T007 [P] [US1] Show Retro entries in the listing (seam S2). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T005.
   1. Failing tests: `factory improvements` lists a Retro entry with `kind: "retro"`, its `signal_key` and its stored `suggested_feature`; a Run export shows `kind: "run-export"`, `signal_key: null` and its generated suggested feature; `claim` works on a Retro entry. Failure path: none beyond the existing unreadable-file skip (plan S2). Observe red.
   2. Implement in `list_backlogs`: add `kind` (default `run-export`) and `signal_key` (null for exports); prefer a stored `suggested_feature`.
   3. Run the test command; pass, including existing listing tests.

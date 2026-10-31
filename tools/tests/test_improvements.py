@@ -263,6 +263,30 @@ class RetroAddTests(unittest.TestCase):
         self.assertEqual(listed.returncode, 0, listed.stderr)
         self.assertNotIn("improvements.lock", listed.stdout)
 
+    def test_lists_retro_and_run_export_and_claims_retro(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        added = self.invoke()
+        self.assertEqual(added.returncode, 0, added.stderr)
+        listed = self.box.cli("improvements")
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        entries = {e["name"]: e for e in json.loads(listed.stdout)["improvements"]}
+        retro = entries[self.name]
+        self.assertEqual(retro["kind"], "retro")
+        self.assertEqual(retro["signal_key"], self.candidate["signal_key"])
+        self.assertEqual(
+            retro["suggested_feature"], self.candidate["suggested_feature"]
+        )
+        export = entries[f"{self.box.repo.name}-{self.branch}"]
+        self.assertEqual(export["kind"], "run-export")
+        self.assertIsNone(export["signal_key"])
+        self.assertIn(self.branch, export["suggested_feature"])
+        claimed = self.box.cli("improvements", "claim", self.name, cwd=self.wt)
+        self.assertEqual(claimed.returncode, 0, claimed.stderr)
+        self.assertEqual(json.loads(claimed.stdout)["status"], "claimed")
+
     def test_add_refuses_non_ended_run(self):
         out = self.invoke()
         self.assertEqual(out.returncode, 1, out.stderr)
