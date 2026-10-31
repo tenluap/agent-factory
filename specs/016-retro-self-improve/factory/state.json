@@ -9,9 +9,9 @@
   "branch": "016-retro-self-improve",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/016-retro-self-improve",
   "spec_dir": "specs/016-retro-self-improve",
-  "status": "running",
+  "status": "halted",
   "stage": "plan",
-  "halt_reason": null,
+  "halt_reason": "deep-tier model claude-code/claude-opus-5-5[1m] unavailable on two consecutive spec-builder spawns (stage plan, seam-confirmation respawn)",
   "stop_at": null,
   "mode": {
     "chain": "lite",
@@ -289,6 +289,17 @@
       "role": "spec-builder",
       "cause": null,
       "detail": "Second consecutive failure, same agent and stage: Model unavailable: claude-code/claude-opus-5-5[1m] (exact selection preserved; source: installed agent file ~/.config/opencode/agents/factory-spec-builder.md, inherited adapter deep default; no config override). Original diagnostics on both spawns identical. Halting per failure policy; no model substitution.",
+      "duration_ms": 0,
+      "commit": "1156eed",
+      "partial_return": false
+    },
+    {
+      "at": "2026-10-31T01:58:41.705439Z",
+      "kind": "halt",
+      "stage": "plan",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "deep-tier model claude-code/claude-opus-5-5[1m] unavailable on two consecutive spec-builder spawns (stage plan, seam-confirmation respawn)",
       "duration_ms": 0,
       "commit": "1156eed",
       "partial_return": false
