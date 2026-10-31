@@ -400,6 +400,41 @@ class ReadOnlyConformanceTests(unittest.TestCase):
 
     ENFORCING = ("claude-code", "copilot", "opencode", "zcode")
 
+    def test_retro_role_renders_read_only_for_every_harness(self):
+        import render as render_mod
+
+        role = REPO / "core/roles/retro.md"
+        self.assertTrue(role.exists(), "retro role missing")
+        source = role.read_text()
+        meta, _ = render_mod.frontmatter(source)
+        self.assertEqual(
+            (meta["name"], meta["tier"], meta["access"]), ("retro", "standard", "read")
+        )
+        for harness in HARNESSES:
+            with self.subTest(harness=harness):
+                render(harness)
+                adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
+                text = self.agent_path(harness, meta).read_text()
+                model = adapter["models"].get("standard")
+                if model:
+                    self.assertIn(model, text)
+                if harness in ("claude-code", "zcode", "copilot"):
+                    tools = next(
+                        line for line in text.splitlines() if line.startswith("tools:")
+                    )
+                    self.assertNotIn("edit", tools.lower())
+                    self.assertNotIn("write", tools.lower())
+                if harness == "opencode":
+                    self.assertIn('"action": "edit"', text)
+                    self.assertIn('"effect": "deny"', text)
+                for access in adapter["access"].values():
+                    names = access.get("tools", [])
+                    if isinstance(names, str):
+                        names = names.split(", ")
+                    for name in names:
+                        pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
+                        self.assertNotRegex(source, pattern)
+
     def read_roles(self):
         import render as render_mod
 
