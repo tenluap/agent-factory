@@ -1,6 +1,6 @@
 ---
 name: design-to-code
-version: 1.2.1
+version: 1.3.0
 description: "Turns pen.dev (.pen) designs into UI code and quality-checks UI edits for Avalonia, MAUI, Blazor, React, Next.js, and plain HTML/JS/CSS. Use when implementing, reviewing, or updating a .pen frame or component in code or its design-code map; or after any UI file edit (.tsx .jsx .vue .svelte .razor .cshtml .html .css .scss .less .xaml .axaml .qml), token or theme change, or user-visible copy change, to run the critique-audit-typeset-polish loop. Not for creating designs (pen-design) or new visual direction (frontend-design)."
 ---
 

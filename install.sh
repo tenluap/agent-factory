@@ -137,7 +137,7 @@ library_link() {
   [ -L "$1" ] || return 1
   local target
   target="$(readlink "$1")"
-  [[ "$target" == "$src"/skills/* || "$target" == "$factory_home"/skills/* ]]
+  [[ "$target" == "$src"/skills/* || "$target" == "$src"/core/skills/* || "$target" == "$factory_home"/skills/* ]]
 }
 
 link_skill() {
@@ -189,13 +189,23 @@ install_skills() {
       echo "removed: $f"
     fi
   done
-  for f in "$src"/skills/* "$factory_home"/skills/*; do
+  # core/skills/ carries the factory's first-party skills, linked from source
+  # like the library (ADR 0009); core/skills/factory itself ships via dist/.
+  for f in "$src"/skills/* "$src"/core/skills/* "$factory_home"/skills/*; do
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
+    if [[ "$f" == "$src"/core/skills/factory ]]; then continue; fi
     if [ "$(basename "$f")" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
       continue
     fi
-    if [[ "$f" == "$src"/skills/* ]]; then
+    if [[ "$f" == "$src"/core/skills/* ]]; then
+      # First-party core skill: linked from source like the library (ADR 0009).
+      name="$(skill_name "$f")"
+      if [ -z "$name" ]; then
+        echo "skip: $f: no frontmatter name"
+        continue
+      fi
+    elif [[ "$f" == "$src"/skills/* ]]; then
       name="$(skill_name "$f")"
       if [ -z "$name" ]; then
         echo "skip: $f: no frontmatter name"
@@ -226,6 +236,9 @@ install_skills() {
       linked="$linked,$name"
     else
       name="$(basename "$f")"
+    fi
+    if [[ "$f" != "$factory_home"/skills/* ]] && [ -f "$factory_home/skills/$name/SKILL.md" ]; then
+      continue
     fi
     link_skill "$f" "$root/$name"
   done

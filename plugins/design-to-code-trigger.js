@@ -7,7 +7,7 @@
 // and never injects while a run's state files are present.
 //
 // The trigger arms the skill, it does not run it: the QA pipeline in
-// skills/design-to-code/SKILL.md still executes only when UI files are actually
+// core/skills/design-to-code/SKILL.md still executes only when UI files are actually
 // edited. Triggers are hardcoded by design (five rarely-changing strings);
 // see the SKILL.md "Auto-Trigger" section.
 //
