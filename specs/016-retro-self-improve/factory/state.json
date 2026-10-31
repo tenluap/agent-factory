@@ -329,6 +329,18 @@
       "duration_ms": 512000,
       "started_at": "2026-10-31T02:23:00Z",
       "ended_at": "2026-10-31T02:31:32Z"
+    },
+    {
+      "at": "2026-10-31T02:37:26.743600Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 22000,
+      "out_est": 9000,
+      "reported": null,
+      "duration_ms": 313000,
+      "started_at": "2026-10-31T02:32:00Z",
+      "ended_at": "2026-10-31T02:37:13Z"
     }
   ],
   "issues": [
@@ -396,6 +408,17 @@
       "detail": "T005 full suite took 219.655 seconds; commit completed at 02:31:32 UTC, approximately 3 minutes 28 seconds past the deadline.",
       "duration_ms": 512000,
       "commit": "dc8d0f6",
+      "partial_return": true
+    },
+    {
+      "at": "2026-10-31T02:37:26.743778Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "test-loop",
+      "detail": "T010 focused test and commit finished at 02:37:13 UTC, approximately 18 seconds past the deadline; no new unit started.",
+      "duration_ms": 313000,
+      "commit": "3513cd7",
       "partial_return": true
     }
   ],
