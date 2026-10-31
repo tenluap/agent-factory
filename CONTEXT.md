@@ -111,8 +111,32 @@ One append-only record of a single thing that went wrong in a factory run: an ov
 _Avoid_: finding, bug, incident
 
 **Improvement backlog**:
-The run-end export of one factory run's issues, totals and factory version; its appearance is what gates improvement work on that run.
-_Avoid_: issue list, export, pending improvements
+The factory home's set of `ready` or claimed improvement entries, of two kinds: Run exports and Retro entries.
+_Avoid_: issue list, pending improvements
+
+**Run export**:
+The run-end improvement backlog entry of one factory run's issues, totals and factory version; its appearance is what gates improvement work on that run.
+_Avoid_: backlog file, issue export
+
+**Retro**:
+The read-only review of an ended run, between `pr-open` and the drop, that mines the run for improvement signals and proposes at most three improvement candidates.
+_Avoid_: retrospective, post-mortem, run review
+
+**Improvement signal**:
+One measured pattern in an ended run that suggests a factory improvement, such as a reviewer the judge keeps rejecting or a stage that keeps halting.
+_Avoid_: metric, finding, issue
+
+**Signal key**:
+The stable identity of an improvement signal: its kind plus its subject, such as a reviewer or role name; two entries with one signal key cover the same signal.
+_Avoid_: signal id, fingerprint
+
+**Improvement candidate**:
+A proposed improvement the retro returns: signal key, evidence, impact rank and suggested feature text; not yet in the backlog.
+_Avoid_: suggestion, recommendation
+
+**Retro entry**:
+An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence, suggested feature and source run.
+_Avoid_: retro export, retro backlog
 
 **Run folder**:
 The `specs/<branch>/factory/` directory of run artifacts (state, brief, reports, findings and design evidence), committed on the feature branch while the run is in progress.

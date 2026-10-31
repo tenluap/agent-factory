@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/016-retro-self-improve",
   "spec_dir": "specs/016-retro-self-improve",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -42,57 +42,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "grill-with-docs",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          },
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          },
-          {
-            "id": "Q5"
-          },
-          {
-            "id": "Q2"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A — retro inputs add the run state.json path; retro reads it read-only for ledger/history; FR-003 and Run digest entity updated",
-            "at": "2026-10-30T22:40:09.567375Z",
-            "auto": true
-          },
-          "Q3": {
-            "answer": "A — retro entries carry kind retro, signal_key, evidence, suggested_feature; listing prefers stored suggested_feature when present; run exports unchanged",
-            "at": "2026-10-30T22:40:09.867559Z",
-            "auto": true
-          },
-          "Q4": {
-            "answer": "A — ledger entry with stage retro marks spawned; fixed entry names make writes idempotent; no new history event",
-            "at": "2026-10-30T22:40:10.170203Z",
-            "auto": true
-          },
-          "Q5": {
-            "answer": "A — Improvement backlog becomes umbrella term with two kinds: Run export and Retro entry; add Retro, Improvement signal, Signal key, Improvement candidate terms",
-            "at": "2026-10-30T22:40:10.480747Z",
-            "auto": true
-          },
-          "Q2": {
-            "answer": "A — add factory improvements add --from <file> --run <branch>: validates, dedupes against open ready entries, caps at 3, writes atomically, returns written/skipped/dropped JSON; mining stays in the retro role; settled decision narrows to no CLI that mines signals",
-            "at": "2026-10-31T01:09:55.141775Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-10-30T22:40:00Z",
@@ -166,6 +116,46 @@
       "answer": "A — orchestrator passes the signal keys of open ready retro entries in the retro inputs; retro reads nothing outside its inputs",
       "auto": true,
       "at": "2026-10-30T22:37:58.859796Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q1",
+      "answer": "A — retro inputs add the run state.json path; retro reads it read-only for ledger/history; FR-003 and Run digest entity updated",
+      "auto": true,
+      "at": "2026-10-31T01:11:37.638852Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q3",
+      "answer": "A — retro entries carry kind retro, signal_key, evidence, suggested_feature; listing prefers stored suggested_feature when present; run exports unchanged",
+      "auto": true,
+      "at": "2026-10-31T01:11:37.638852Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q4",
+      "answer": "A — ledger entry with stage retro marks spawned; fixed entry names make writes idempotent; no new history event",
+      "auto": true,
+      "at": "2026-10-31T01:11:37.638852Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q5",
+      "answer": "A — Improvement backlog becomes umbrella term with two kinds: Run export and Retro entry; add Retro, Improvement signal, Signal key, Improvement candidate terms",
+      "auto": true,
+      "at": "2026-10-31T01:11:37.638852Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q2",
+      "answer": "A — add factory improvements add --from <file> --run <branch>: validates, dedupes against open ready entries, caps at 3, writes atomically, returns written/skipped/dropped JSON; mining stays in the retro role; settled decision narrows to no CLI that mines signals",
+      "auto": false,
+      "at": "2026-10-31T01:11:37.638852Z",
       "kind": "answer"
     }
   ],
@@ -262,6 +252,13 @@
     {
       "at": "2026-10-30T22:37:58.859796Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-10-31T01:11:37.638852Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
