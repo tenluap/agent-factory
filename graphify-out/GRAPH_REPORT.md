@@ -1,17 +1,17 @@
-# Graph Report - claude-factory  (2026-10-30)
+# Graph Report - claude-factory  (2026-10-31)
 
 ## Corpus Check
-- 739 files · ~952,790 words
+- 778 files · ~985,981 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 37 file(s) not represented in the graph (top: (none) 25, .toml 4, .cmd 3)
+- Unclassified: 39 file(s) not represented in the graph (top: (none) 23, .toml 4, .cmd 3)
 
 ## Summary
-- 9708 nodes · 17557 edges · 601 communities (492 shown, 109 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 772 edges (avg confidence: 0.89)
+- 10121 nodes · 18215 edges · 643 communities (530 shown, 113 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 825 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `afccc596`
+- Built from commit: `34c6564b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -58,7 +58,7 @@
 - 4) Rules (generation + audit)
 - impeccable-agents/reference/new-work.md
 - orch.ts
-- fixture
+- Sandbox
 - showToast
 - showToast
 - showToast
@@ -67,13 +67,13 @@
 - 4) Rules (generation + audit)
 - verify
 - 4) Rules (generation + audit)
-- impeccable-opencode/reference/new-work.md
+- impeccable-opencode/SKILL.md
 - impeccable/reference/new-work.md
 - common.sh
 - Implementation Plan: Factory Run Reliability
 - Avalonia Skill Refactoring - Detailed Summary
 - Platform-Specific Implementation Guide
-- nudge-root.ts
+- What You Must Do When Invoked
 - SlackAdapter
 - 4) Rules (generation + audit)
 - Implementation Plan: Stabilise and optimise the factory
@@ -84,16 +84,16 @@
 - initGlobalBar
 - initGlobalBar
 - 4) Rules (generation + audit)
-- Research: agent time budget, session issue backlog, benchmark
+- score
 - 4) Rules (generation + audit)
 - impeccable-agents/reference/live.md
 - impeccable-opencode/reference/live.md
 - impeccable/reference/live.md
 - prompts.ts
-- Sandbox
+- test_commands.py
 - Implementation Plan: UI Designer Role
 - compute
-- cli.test.ts
+- watch-pr/cli.ts
 - factory_sha
 - MVVM Architecture and Data Binding
 - Avalonia Styling Guide
@@ -102,13 +102,13 @@
 - 4) Rules (generation + audit)
 - Entities
 - Implementation Plan: Restore installer CI coverage
-- Troubleshooting
+- message
 - cmd_drop
 - Design red flags
 - Avalonia UI Framework - Orchestration Hub
-- EnvelopeCliTests
+- test_envelope.py
 - Avalonia Skill Refactoring Summary
-- comments.ts
+- redact-body.ts
 - teach/SKILL.md
 - run
 - server.cjs
@@ -123,31 +123,31 @@
 - .claude/skills/speckit-analyze/SKILL.md
 - SlackApiAdapter
 - Custom Controls and Advanced Techniques
-- impeccable-opencode/reference/adapt.md
+- Responsive Design
 - impeccable/reference/adapt.md
 - create-new-feature-branch.sh
-- cmd_import
+- _validate_import_url
 - _load_instincts_from_dir
 - applyEditing
 - applyEditing
 - applyEditing
-- UI Agent
+- main
 - User Scenarios & Testing *(mandatory)*
 - Continuous Learning v2.1 - Instinct
-- impeccable-agents/reference/adapt.md
+- Responsive Design
 - impeccable-agents/reference/document.md
 - impeccable-opencode/reference/document.md
 - impeccable/reference/document.md
-- .add
+- IssueAddTests
 - LifecycleTests
 - comment-retry-queue.ts
 - checks.py
 - check-plan.mjs
 - impeccable-agents/SKILL.md
 - impeccable-agents/reference/onboard.md
-- impeccable-opencode/SKILL.md
+- impeccable-opencode/reference/bolder.md
 - impeccable-opencode/reference/onboard.md
-- impeccable/SKILL.md
+- Operate mode depth (and Read notes)
 - impeccable/reference/onboard.md
 - greet
 - loop.ts
@@ -160,7 +160,7 @@
 - The Toolkit
 - The Toolkit
 - InstallHomePolicyTests
-- spec-builder.md
+- plan
 - Software Factory: Design
 - mountSvelteComponentVariant
 - createLiveBrowserDomHelpers
@@ -193,7 +193,7 @@
 - Execution Steps
 - Execution Steps
 - Decisions
-- impeccable-agents/reference/animate.md
+- impeccable-agents/reference/delight.md
 - Handle `generate`
 - impeccable-opencode/reference/animate.md
 - Handle `generate`
@@ -207,7 +207,7 @@
 - Generate Report
 - Generate Report
 - Output Format
-- Agent Factory — product brief and stability plan
+- detect.py
 - poteto-mode/scripts/package.json
 - Output Format
 - Tasks: Restore installer CI coverage
@@ -225,7 +225,7 @@
 - New visual work
 - impeccable/reference/optimize.md
 - compilerOptions
-- pen.dev Design
+- Feature Specification: Post-Run Retro for Self-Improvement
 - Playwright CLI Skill
 - Epistemics
 - Research: Factory Skill Library
@@ -233,11 +233,11 @@
 - SkillLibraryInstallTests
 - ValidationTests
 - fixture
-- Specification Analysis Report — pass 2
+- HelperTests
 - OpenCode V2 adapter implementation plan
 - Factory skill routing
 - Pen design-code mapping in the factory
-- ui-agent-hook.mjs
+- design-to-code-hook.mjs
 - agent-factory
 - Memory & String Patterns
 - startServer
@@ -249,15 +249,15 @@
 - writing-for-agents/SKILL.md
 - Feature Specification: [FEATURE NAME]
 - InstallSandbox
-- Implementation Plan: Agent time budget, session issue backlog, benchmark
+- 010-agent-time-budget/plan.md
 - CanonicalRenderTests
 - AnalyzeRecordTests
 - OverrunDetectionTests
 - Harness-agnostic factory: design and plan
 - Collections & LINQ Patterns
 - Input Controls
-- Visual Companion Guide
-- _promote_auto
+- cli.py
+- handoff.ts
 - Explainer Prompt Template
 - impeccable-agents/reference/critique.md
 - Simplify the Design
@@ -308,7 +308,7 @@
 - Run reliability (012)
 - Software Factory
 - I/O, Serialization & General Patterns
-- Responsive Design
+- Eval: qa-html
 - Init flow
 - Generate Combined Critique Report
 - Init flow
@@ -324,12 +324,12 @@
 - Specification Analysis Report — pass 2
 - Implementation Plan: Install model pipeline and round-3 advisory fixes
 - RebindTests
-- Responsive Design
+- load_all_instincts
 - Implementation Plan: Factory Skill Library
 - Tasks: UI Designer Role
 - maybeOpenBrowser
 - Async & Concurrency Patterns
-- CSS Classes Available
+- listPullRequests
 - graphify reference: extra exports and benchmark
 - HIPAA Compliance
 - Common Cognitive Load Violations
@@ -342,7 +342,7 @@
 - Shape
 - Common Cognitive Load Violations
 - iOS platform
-- Operate mode depth (and Read notes)
+- failure-handoff.ts
 - Shape
 - Filtering Principles
 - items
@@ -364,7 +364,7 @@
 - Harness² assessment for the software factory
 - Regex Patterns
 - Process
-- _confidence_bar
+- cmd_status
 - Docs Canvas
 - Figure it out
 - Android platform
@@ -374,10 +374,10 @@
 - impeccable-agents/reference/doctor.md
 - Persona-Based Design Testing
 - Extract Flow
-- impeccable/reference/doctor.md
+- impeccable/SKILL.md
 - Planner
 - Persona-Based Design Testing
-- Extract Flow
+- Framework: Avalonia
 - Reviewer Prompt Template
 - Review Rubric
 - worker.md
@@ -387,7 +387,7 @@
 - slackRendered
 - Prompt Optimisation
 - writing-shape/SKILL.md
-- impeccable-agents/reference/bolder.md
+- Framework: .NET MAUI
 - Research: Drop the factory folder at run end
 - Research: Factory Run Reliability
 - facets-advisor.md
@@ -407,7 +407,7 @@
 - Create a verification skill
 - Define Goal
 - How
-- Operate
+- Framework: <Name>
 - Cognitive Load Assessment
 - Impeccable Finish Reviewer
 - Impeccable Manual Edit Applier
@@ -419,7 +419,7 @@
 - Impeccable Manual Edit Applier
 - resolveLiveInjectionAnchor
 - impeccable-opencode/scripts/live-browser-ignores.js
-- Generate Report
+- pen.dev Design
 - Cognitive Load Assessment
 - Impeccable Finish Reviewer
 - Impeccable Manual Edit Applier
@@ -430,21 +430,21 @@
 - subplanner.md
 - verifier.md
 - Swarm
-- Auto-Commit Changes
+- nudge-root.ts
 - initialize_repo.py
 - Specification Quality Checklist: Factory Skill Library
 - RenderAgentTests
 - ResolutionTests
 - AcceptingSideCliTests
-- Harness: Claude Code
-- Read
+- .invoke
+- Research: agent time budget, session issue backlog, benchmark
 - .agents/skills/speckit-constitution/SKILL.md
 - .claude/skills/speckit-constitution/SKILL.md
 - Initialize Git Repository
 - Detect Git Remote URL
 - Validate Feature Branch
 - FACETS checklist
-- DESIGN.md
+- DetectionTests
 - Advanced Controls
 - Menu and Navigation
 - Display Controls
@@ -453,7 +453,7 @@
 - Create Project AGENTS.md
 - graphify reference: query, path, explain
 - Diagnostic Scan
-- Visualize: Direction Comps & Asset Production
+- Troubleshooting
 - Diagnostic Scan
 - Visualize: Direction Comps & Asset Production
 - RenderHomeTests
@@ -469,17 +469,22 @@
 - BudgetCommandTests
 - StallRuleWorktreeCommitTests
 - ForceTakeoverTests
-- Harness: Codex
-- Harness: GitHub Copilot
-- Harness: ZCode
+- pixel-diff.py
+- Framework: Blazor
+- Framework: React
+- Implementation Plan: Agent time budget, session issue backlog, benchmark
 - code-build.md
-- claim
+- improvements.py
+- Framework: Next.js
 - patch_globals
 - CONTEXT.md Format
-- Region map
+- /graphify
+- .image
+- Tasks: Post-Run Retro for Self-Improvement
 - Impeccable Documenter
 - Region map
-- Impeccable Documenter
+- Framework: HTML/JS/CSS
+- Mode: implement
 - Region map
 - loop-me/SKILL.md
 - acceptanceCriteria
@@ -489,7 +494,7 @@
 - [CHECKLIST TYPE] Checklist: [FEATURE NAME]
 - Research
 - Brief: agent time budget, session issue backlog, benchmark
-- ReferenceExamplesPass
+- Operate mode depth (and Read notes)
 - ModelPolicyTests
 - Fixture repository for the factory's golden run
 - Golden run: claude-code
@@ -498,7 +503,7 @@
 - Golden run: opencode
 - Golden run: zcode
 - fixer.md
-- ui-designer.md
+- GitHubReader
 - start-observer.sh
 - Remove AI code slop
 - graphify reference: add a URL and watch a folder
@@ -526,7 +531,7 @@
 - writing-fragments/SKILL.md
 - git-common.ps1
 - check_feature_branch
-- ExtractFinalBlock
+- Entities
 - ReadAcceptanceTests
 - spec-conformance.md
 - No manual write fallback for run state
@@ -572,7 +577,7 @@
 - autonomous-run.md
 - autopilot-full.md
 - autopilot-stack.md
-- babysit.md
+- qa-html/check.py
 - bug-fix.md
 - feature.md
 - hillclimb.md
@@ -599,35 +604,72 @@
 - 014-ui-designer-role/data-model.md
 - 014-ui-designer-role/quickstart.md
 - 014-ui-designer-role/research.md
+- Specification Analysis Report — pass 2
+- Tasks: Agent time budget, session issue backlog, benchmark
+- .add
+- Android platform
+- ExportTests
+- Changelog
+- Mode: qa
+- Capture contract
+- bounds-diff.py
+- map-coverage.py
+- map-revision.py
+- Design to Code
+- Skill integration and precedence
+- Generate Report
+- Quickstart: validation scenarios
+- Design-code map (version 3)
+- Source: pen.dev
+- Diagnostic Scan
+- /impeccable hooks
+- Diagnostic Scan
+- Design to Code
+- map-migrate.py
+- pen-read.py
+- discover_projects
+- Adaptation Strategies
+- Impeccable Documenter
+- Adaptation Strategies
+- visual/package.json
+- _pyproject_names
+- Persuade and Experience
+- Read
+- Operate
+- Persuade and Experience
+- Read
+- Operate
+- retro.md
+- render_markdown
 
 ## God Nodes (most connected - your core abstractions)
-1. `AgentManager` - 59 edges
-2. `Sandbox` - 56 edges
-3. `TaskState` - 37 edges
-4. `openStore()` - 36 edges
-5. `main()` - 35 edges
-6. `connectSSE()` - 34 edges
+1. `Sandbox` - 61 edges
+2. `AgentManager` - 59 edges
+3. `fixture()` - 43 edges
+4. `main()` - 38 edges
+5. `TaskState` - 37 edges
+6. `openStore()` - 36 edges
 7. `connectSSE()` - 34 edges
 8. `connectSSE()` - 34 edges
-9. `fixture()` - 34 edges
+9. `connectSSE()` - 34 edges
 10. `setLiveState()` - 33 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `R1. Which run does `factory drop` act on?` --references--> `resolve_target()`  [INFERRED]
   specs/011-drop-factory-folder/research.md → core/skills/factory/bin/factory_cli/commands.py
+- `State writer` --references--> `resolve_target()`  [INFERRED]
+  specs/016-retro-self-improve/plan.md → core/skills/factory/bin/factory_cli/commands.py
 - `Coverage Summary` --references--> `write_run()`  [INFERRED]
   specs/008-install-models-advisories/factory/analyze-1.md → core/skills/factory/bin/factory_cli/commands.py
 - `Coverage Summary` --references--> `write_run()`  [INFERRED]
   specs/008-install-models-advisories/factory/analyze-2.md → core/skills/factory/bin/factory_cli/commands.py
 - `Quality constraints and verification` --references--> `write_run()`  [INFERRED]
   specs/008-install-models-advisories/plan.md → core/skills/factory/bin/factory_cli/commands.py
-- `Summary` --references--> `write_run()`  [INFERRED]
-  specs/008-install-models-advisories/plan.md → core/skills/factory/bin/factory_cli/commands.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (601 total, 109 thin omitted)
+## Communities (643 total, 113 thin omitted)
 
 ### Community 0 - "impeccable-agents/scripts/live-browser.js"
 Cohesion: 0.03
@@ -654,16 +696,16 @@ Cohesion: 0.05
 Nodes (90): abortSvelteComponentInjection(), applyParamDefaults(), applyParamValue(), applySavedParamValues(), applySavedSessionMeta(), buildParamsPanel(), checkpointPayload(), clampVariantIndex() (+82 more)
 
 ### Community 6 - "commands.py"
-Cohesion: 0.06
-Nodes (56): main(), cmd_analyze_record(), cmd_answer(), mutate(), cmd_checkpoint(), mutate(), cmd_decisions_add(), cmd_improvements() (+48 more)
+Cohesion: 0.07
+Nodes (28): mutate(), cmd_detect(), cmd_improvements(), cmd_improvements_add(), cmd_improvements_claim(), cmd_prune(), cmd_runs(), cmd_show() (+20 more)
 
 ### Community 7 - "ref_bun_test"
 Cohesion: 0.06
-Nodes (22): atomicWrite(), ClassifyFailureArgs, computeDurationMs(), failureModeSuggestions(), formatLastActivityLine(), hasStructuredHandoff(), truncate(), writeFailureHandoff() (+14 more)
+Nodes (14): args, launch(), playwright, EXIT_ON_ERROR_EXIT_CODE, PLANNED_CHECKPOINT_EXIT_CODE, SCRIPTS_DIR, baselinePlan, FixtureRepo (+6 more)
 
 ### Community 8 - "util.ts"
-Cohesion: 0.08
-Nodes (49): @cursor/sdk, registerInspectCommands(), ACTIVE_ROOT_RUN_STATUSES, ActiveRootPlanner, AgentListApi, field(), findActiveRootPlanner(), inferKickoffRootSlug() (+41 more)
+Cohesion: 0.05
+Nodes (85): @cursor/sdk, createSlackAdapter(), defaultSender(), registerAndonCommands(), assertFileInsideWorkspace(), assertThreadAllowed(), CommentCommandOptions, loadKickoffRefOrBail() (+77 more)
 
 ### Community 9 - "createLiveBrowserSessionState"
 Cohesion: 0.06
@@ -683,23 +725,23 @@ Nodes (69): beginNewLiveConfiguration(), buildInsertPlaceholderSnapshotFromDom()
 
 ### Community 13 - "pathlib"
 Cohesion: 0.08
-Nodes (8): list_backlogs(), load_bench(), main(), run(), example(), fenced_blocks(), ImpeccableLayoutTests, SkillLibraryLayoutTests
+Nodes (5): load_bench(), main(), run(), ImpeccableLayoutTests, SkillLibraryLayoutTests
 
 ### Community 14 - "watch-pr/types.ts"
 Cohesion: 0.05
-Nodes (57): FakeReaderOptions, pendingCheck(), BlockerVerdict, Check, CheckDetails, CheckRead, ChecksFastPath, CiBase (+49 more)
+Nodes (57): failedCheck(), FakeReaderOptions, BlockerVerdict, Check, CheckDetails, CheckRead, ChecksFastPath, CiBase (+49 more)
 
 ### Community 15 - "agent-manager.ts"
-Cohesion: 0.06
-Nodes (48): agentForWaitResult(), appendSlackView(), defaultStartingRefForTask(), failureModeText(), formatAgentFooter(), formatDurationMinutes(), formatGitShortstat(), formatKickoffText() (+40 more)
+Cohesion: 0.08
+Nodes (35): @slack/web-api, createSlackWebClient(), agentForWaitResult(), appendSlackView(), defaultStartingRefForTask(), failureModeText(), formatAgentFooter(), formatDurationMinutes() (+27 more)
 
 ### Community 16 - "factory/SKILL.md"
-Cohesion: 0.06
-Nodes (27): Avalonia translation and capture, Discover and survey, Translate by dependency, Validate the running target, Discover and survey, Translate by dependency, Validate the running target, Web translation and capture (+19 more)
+Cohesion: 0.05
+Nodes (31): Avalonia translation and capture, Discover and survey, Translate by dependency, Validate the running target, Discover and survey, Translate by dependency, Validate the running target, Web translation and capture (+23 more)
 
 ### Community 17 - "AgentManager"
 Cohesion: 0.10
-Nodes (19): Andon, Failure recovery, AgentManager, ensureSlackKickoff(), errorMessage(), parseIdleWarningMs(), planIsRootPlanner(), planTasks() (+11 more)
+Nodes (16): Andon, Failure recovery, AgentManager, ensureSlackKickoff(), errorMessage(), parseIdleWarningMs(), planIsRootPlanner(), planTasks() (+8 more)
 
 ### Community 18 - "schemas.ts"
 Cohesion: 0.05
@@ -719,7 +761,7 @@ Nodes (55): ae(), be(), bt(), Ce(), s(), Ct(), de(), dt() (+47 more)
 
 ### Community 22 - "github.ts"
 Cohesion: 0.10
-Nodes (45): at(), buildReviewThreads(), checkDetails(), ChecksUnavailable, CommandResult, discoverStack(), enumValue(), firstLine() (+37 more)
+Nodes (44): at(), buildReviewThreads(), checkDetails(), ChecksUnavailable, CommandResult, discoverStack(), enumValue(), firstLine() (+36 more)
 
 ### Community 23 - "el"
 Cohesion: 0.08
@@ -735,11 +777,11 @@ Nodes (54): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTool
 
 ### Community 26 - "instinct-cli.py"
 Cohesion: 0.06
-Nodes (23): _append_observations(), _assign_unique_slugs(), _cluster_by_keyword_overlap(), cmd_evolve(), _collect_pending_dirs(), _collect_pending_instincts(), _evolved_agent_name(), _evolved_command_name() (+15 more)
+Nodes (24): _append_observations(), _assign_unique_slugs(), _cluster_by_keyword_overlap(), cmd_evolve(), _collect_pending_dirs(), _collect_pending_instincts(), _evolved_agent_name(), _evolved_command_name() (+16 more)
 
 ### Community 27 - "state.py"
 Cohesion: 0.07
-Nodes (33): export(), _check_decisions(), _check_history(), _check_issues(), _check_ledger(), _check_relay(), _check_round(), _check_timeline() (+25 more)
+Nodes (34): _check_decisions(), _check_history(), _check_issues(), _check_ledger(), _check_relay(), _check_round(), _check_timeline(), _open_round() (+26 more)
 
 ### Community 28 - "initPageChat"
 Cohesion: 0.08
@@ -754,16 +796,16 @@ Cohesion: 0.08
 Nodes (53): armPageChatForTyping(), attachSteerFocusDebug(), attachSteerFocusGuard(), buildSteerProcessingDots(), buildSteerQueueHint(), clearSteerAwaitTimer(), clearSteerFocusRecoverTimer(), collapsePageChat() (+45 more)
 
 ### Community 31 - "lock.py"
-Cohesion: 0.05
-Nodes (38): Compatibility, Harness: OpenCode V2, Model inspection and recovery, Notes, Verbs, cmd_lock_take(), acquire(), _alive() (+30 more)
+Cohesion: 0.06
+Nodes (32): cmd_lock_take(), acquire(), _alive(), _create(), _identity(), _live(), lock_path_for(), LockHeld (+24 more)
 
 ### Community 32 - "store.ts"
 Cohesion: 0.07
-Nodes (49): AddStandingParams, AddUnitParams, atomicWrite(), branchPullRequest(), branchSha(), CheckLedgerParams, countLine(), countRecord() (+41 more)
+Nodes (38): acquireLock(), AddStandingParams, AddUnitParams, atomicWrite(), CheckLedgerParams, countLine(), countValues(), errorCode() (+30 more)
 
 ### Community 33 - "policy.ts"
-Cohesion: 0.09
-Nodes (47): CliOptions, CliRuntime, main(), nonNegativeNumber(), parseArgs(), positiveInteger(), positiveNumber(), prNumber() (+39 more)
+Cohesion: 0.10
+Nodes (41): CliRuntime, main(), activeRows(), applyQueueSnapshot(), assessGitHubMerge(), AUTOMATION_TOKENS, blockerVerdict(), ciBlocker() (+33 more)
 
 ### Community 34 - "4) Rules (generation + audit)"
 Cohesion: 0.04
@@ -790,16 +832,16 @@ Cohesion: 0.05
 Nodes (43): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+35 more)
 
 ### Community 40 - "impeccable-agents/reference/new-work.md"
-Cohesion: 0.06
-Nodes (32): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings, Recommended Actions (+24 more)
+Cohesion: 0.05
+Nodes (33): Assess Adaptation Challenge, Implement & Verify, Accessibility and control, Choose material by meaning, Find the job, Implement to the runtime, Set the motion thesis, Timing and easing (+25 more)
 
 ### Community 41 - "orch.ts"
 Cohesion: 0.08
 Nodes (40): Command, compactRows(), countLine(), createProgram(), emit(), frontierLine(), frontierRepo(), FrontierSetOptions (+32 more)
 
-### Community 42 - "fixture"
-Cohesion: 0.10
-Nodes (6): Phase 2: drive the workspace, fixture(), PruneTests, ExportTests, SurfaceTests, started_state()
+### Community 42 - "Sandbox"
+Cohesion: 0.06
+Nodes (8): fixture(), Sandbox, bench(), ScoreTests, PruneTests, SurfaceTests, ProfileRecordTests, started_state()
 
 ### Community 43 - "showToast"
 Cohesion: 0.10
@@ -818,28 +860,28 @@ Cohesion: 0.05
 Nodes (41): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+33 more)
 
 ### Community 47 - "base"
-Cohesion: 0.09
-Nodes (16): Inputs, Work, Findings, Judge verdict, Reviewer report, Reviewing, graphify reference: transcribe video and audio, Step 2.5 - Transcribe video / audio files (only if video files detected) (+8 more)
+Cohesion: 0.07
+Nodes (24): Inputs, Work, Findings, Judge verdict, Reviewer report, Reviewing, Constitution Alignment Issues, Coverage Summary (+16 more)
 
 ### Community 48 - "4) Rules (generation + audit)"
 Cohesion: 0.05
 Nodes (40): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+32 more)
 
 ### Community 49 - "verify"
-Cohesion: 0.06
-Nodes (39): Loop passes, Schema, 0. Route, 5. Spec, Consequences, The factory owns its engineering rules; `tdd` and `ponytail` contribute technique under its orchestration, 8. Interaction and mode requirements, Minimum durable state (+31 more)
+Cohesion: 0.07
+Nodes (28): 1. Product in brief, 2. Definition of "stable", 3. Evidence: what the last two runs show, 4. Stability gaps, 5. Recommended sequence, 6. Out of scope, Agent Factory — product brief and stability plan, P0 — required before calling the factory stable (+20 more)
 
 ### Community 50 - "4) Rules (generation + audit)"
 Cohesion: 0.05
-Nodes (38): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+30 more)
+Nodes (39): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+31 more)
 
-### Community 51 - "impeccable-opencode/reference/new-work.md"
+### Community 51 - "impeccable-opencode/SKILL.md"
 Cohesion: 0.06
-Nodes (31): Recommended Actions, Craft (deprecated alias), Monorepo notes, Opting out of the boot check, Step 1: Run the pass, Step 2: Act by severity, Step 3: Deprecated fields are binding, Step 4: Do not overclaim on truth drift (+23 more)
+Nodes (32): Assess Adaptation Challenge, Implement & Verify, Recommended Actions, Recommended Actions, Craft (deprecated alias), Craft floor, Refuse, Verify (+24 more)
 
 ### Community 52 - "impeccable/reference/new-work.md"
-Cohesion: 0.05
-Nodes (35): Android platform, Color & theming, Components & motion, Layout & structure, The Android slop test, Touch targets, Typography, Verifying the build (+27 more)
+Cohesion: 0.06
+Nodes (32): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings, Recommended Actions (+24 more)
 
 ### Community 53 - "common.sh"
 Cohesion: 0.11
@@ -857,9 +899,9 @@ Nodes (37): 1. Accessibility, 1. MVVM Data Binding (622 lines), 2. Controls Refe
 Cohesion: 0.05
 Nodes (37): Android Implementation, Android-Specific, Best Practices, Conditional XAML, Cross-Platform Paths, Design-Time Detection, Desktop File Dialogs, Desktop Implementation (+29 more)
 
-### Community 57 - "nudge-root.ts"
-Cohesion: 0.07
-Nodes (36): For /graphify add and --watch, For /graphify query, For the commit hook and native AGENTS.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+28 more)
+### Community 57 - "What You Must Do When Invoked"
+Cohesion: 0.14
+Nodes (14): Part A - Structural extraction for code files, Part C - Merge AST + semantic into final extraction, Step 0 - GitHub repos and multi-path merge (only if a URL or several paths), Step 1 - Ensure graphify is installed, Step 2.5 - Video and audio (only if video files detected), Step 2 - Detect files, Step 3 - Extract entities and relationships, Step 4.5 - Graph health check (read-only integrity gate) (+6 more)
 
 ### Community 58 - "SlackAdapter"
 Cohesion: 0.07
@@ -878,12 +920,12 @@ Cohesion: 0.12
 Nodes (26): Args, branch_token(), _byte_length(), check_existing_branches(), clean_branch_name(), _err(), extract_feature_num_from_branch(), _extract_highest_number() (+18 more)
 
 ### Community 62 - "_cmd_projects_merge"
-Cohesion: 0.07
-Nodes (31): cmd_projects(), _cmd_projects_delete(), _cmd_projects_gc(), _cmd_projects_merge(), load_registry(), _project_counts(), _registry_lock(), _remove_project_storage() (+23 more)
+Cohesion: 0.08
+Nodes (30): cmd_projects(), _cmd_projects_delete(), _cmd_projects_gc(), _cmd_projects_merge(), load_registry(), _project_counts(), _remove_project_storage(), _validate_project_id() (+22 more)
 
 ### Community 63 - "_make_project"
-Cohesion: 0.07
-Nodes (19): cmd_status(), load_all_instincts(), _promote_specific(), _warn_legacy_data(), _make_project(), test_cmd_projects_with_registry(), test_cmd_status_no_instincts(), test_cmd_status_returns_int() (+11 more)
+Cohesion: 0.09
+Nodes (16): _promote_auto(), _promote_specific(), _validate_instinct_id(), _make_project(), test_cmd_projects_with_registry(), test_projects_merge_dry_run_no_changes(), test_promote_auto_dry_run(), test_promote_auto_no_candidates() (+8 more)
 
 ### Community 64 - "initGlobalBar"
 Cohesion: 0.09
@@ -901,9 +943,9 @@ Nodes (35): agentHasWorkInFlight(), agentStatusText(), barPaletteForTheme(), bra
 Cohesion: 0.05
 Nodes (36): 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW), 1.1 Generation mode (default), 1.2 Passive review mode (always on while editing), 1.3 Active audit mode (explicit scan request), 1) Operating modes, 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise), 2.2 State-changing request, 2.3 Required audit finding format (+28 more)
 
-### Community 68 - "Research: agent time budget, session issue backlog, benchmark"
-Cohesion: 0.05
-Nodes (42): Time budget, issues, improvement backlog, benchmark, Benchmark factory versions, Headless replay (manual, token-costing), Manual fallback (any supported factory harness), Offline score and comparison, Command guidance, No-argument routing: the context-aware menu, Workflow questions (+34 more)
+### Community 68 - "score"
+Cohesion: 0.08
+Nodes (22): Post-run retro, Time budget, issues, improvement backlog, benchmark, Benchmark factory versions, Headless replay (manual, token-costing), Manual fallback (any supported factory harness), Offline score and comparison, Command guidance, No-argument routing: the context-aware menu (+14 more)
 
 ### Community 69 - "4) Rules (generation + audit)"
 Cohesion: 0.06
@@ -915,35 +957,35 @@ Nodes (32): Apply at system scale, Audit before choosing, Choose a strategy, Con
 
 ### Community 71 - "impeccable-opencode/reference/live.md"
 Cohesion: 0.06
-Nodes (31): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Step 1: Parse the request (+23 more)
+Nodes (32): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Step 1: Parse the request (+24 more)
 
 ### Community 72 - "impeccable/reference/live.md"
 Cohesion: 0.06
-Nodes (32): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Step 1: Parse the request (+24 more)
+Nodes (31): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Step 1: Parse the request (+23 more)
 
 ### Community 73 - "prompts.ts"
-Cohesion: 0.15
-Nodes (24): mergeWorkerSlice(), mergeWorkerSourceBranches(), mergeWorkerTargetBranch(), plannedBranchForTask(), buildInlineBriefBlock(), buildPromptScopedGoal(), buildSlackBlock(), buildSubplannerPrompt() (+16 more)
+Cohesion: 0.14
+Nodes (27): mergeWorkerSlice(), mergeWorkerSourceBranches(), mergeWorkerTargetBranch(), plannedBranchForTask(), buildInlineBriefBlock(), buildPromptScopedGoal(), buildSlackBlock(), buildSubplannerPrompt() (+19 more)
 
-### Community 74 - "Sandbox"
-Cohesion: 0.05
-Nodes (11): Sandbox, bench(), ScoreTests, DiscoveryTests, EndedPendingRunTests, ReplayTests, ShowTests, UsageTests (+3 more)
+### Community 74 - "test_commands.py"
+Cohesion: 0.06
+Nodes (9): DiscoveryTests, EndedPendingRunTests, ReplayTests, RetroEndedRunTests, ShowTests, UsageTests, v4_state(), ValidateTests (+1 more)
 
 ### Community 75 - "Implementation Plan: UI Designer Role"
 Cohesion: 0.06
 Nodes (32): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: UI Designer Role, Complexity Tracking, Constitution Check, Implementation Plan: UI Designer Role (+24 more)
 
 ### Community 76 - "compute"
-Cohesion: 0.07
-Nodes (26): compute(), fmt_dur(), fmt_tokens(), _intervals_from(), now_utc(), sentence(), _union_ms(), usage_totals() (+18 more)
+Cohesion: 0.10
+Nodes (18): digest(), veto_list(), compute(), fmt_dur(), fmt_tokens(), _intervals_from(), now_utc(), sentence() (+10 more)
 
-### Community 77 - "cli.test.ts"
-Cohesion: 0.11
-Nodes (13): silentIo, passingCheck(), ciCell(), mergeCell(), renderBlocker(), renderJson(), renderPretty(), renderStatusTable() (+5 more)
+### Community 77 - "watch-pr/cli.ts"
+Cohesion: 0.14
+Nodes (21): CliOptions, nonNegativeNumber(), parseArgs(), positiveInteger(), positiveNumber(), prNumber(), RawOptions, realRuntime() (+13 more)
 
 ### Community 78 - "factory_sha"
-Cohesion: 0.04
-Nodes (47): factory_sha(), Constitution Alignment Issues, Coverage Summary Table, Findings, Metrics, Next Actions, Seams and test precedence (factory override), Specification Analysis Report — pass 1 (+39 more)
+Cohesion: 0.07
+Nodes (29): factory_sha(), Constitution Alignment Issues, Coverage Summary Table, Findings, Metrics, Next Actions, Seams and test precedence (factory override), Specification Analysis Report — pass 1 (+21 more)
 
 ### Community 79 - "MVVM Architecture and Data Binding"
 Cohesion: 0.06
@@ -973,13 +1015,13 @@ Nodes (23): bounded(), `bin/factory` rows, Contract delta: CLI and installer aft
 Cohesion: 0.06
 Nodes (26): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Restore installer CI coverage, Existing installer outcomes, Fixture data model, Complexity Tracking (+18 more)
 
-### Community 86 - "Troubleshooting"
-Cohesion: 0.07
-Nodes (29): Auto-Commit Changes, Behavior, Commit Message Styles, Configuration, Execution, Graceful Degradation, Handle `steer`, Handle `steer` (+21 more)
+### Community 86 - "message"
+Cohesion: 0.08
+Nodes (23): Auto-Commit Changes, Behavior, Commit Message Styles, Configuration, Execution, Graceful Degradation, Handle `steer`, Handle `steer` (+15 more)
 
 ### Community 87 - "cmd_drop"
-Cohesion: 0.06
-Nodes (32): die_usage(), emit(), int_or_usage(), iso_or_usage(), json_or_usage(), parse_flags(), CLIError, cmd_drop() (+24 more)
+Cohesion: 0.09
+Nodes (26): cmd_drop(), backlog_name(), Data model: Drop the factory folder at run end, Complexity Tracking, Design, Documentation (this feature), Implementation Plan: Drop the factory folder at run end, New files, abstractions, dependencies (+18 more)
 
 ### Community 88 - "Design red flags"
 Cohesion: 0.06
@@ -989,13 +1031,17 @@ Nodes (27): Design red flags, Hand-synced list, Importable internals, Informatio
 Cohesion: 0.06
 Nodes (30): Add Real-Time Search, Avalonia UI Framework - Orchestration Hub, Best Practices Summary, Build a Cross-Platform Mobile+Desktop App, Build a Desktop App (Windows/macOS/Linux), Build Complex Data-Driven UI, Common Workflows, `controls-reference.md` (Primary) (+22 more)
 
+### Community 90 - "test_envelope.py"
+Cohesion: 0.12
+Nodes (5): EnvelopeCliTests, example(), ExtractFinalBlock, fenced_blocks(), ReferenceExamplesPass
+
 ### Community 91 - "Avalonia Skill Refactoring Summary"
 Cohesion: 0.07
 Nodes (28): 1. **Clarity & Navigation**, 2. **Modularity**, 3. **Content Expansion**, 4. **Accessibility**, 5. **Consistency**, After Refactoring (Modular Orchestration), Architecture Changes, Avalonia Skill Refactoring Summary (+20 more)
 
-### Community 92 - "comments.ts"
-Cohesion: 0.09
-Nodes (41): defaultSender(), registerAndonCommands(), assertFileInsideWorkspace(), assertThreadAllowed(), CommentCommandOptions, loadKickoffRefOrBail(), loadKickoffThreadTsOrBail(), loadPlanSlackChannelOrBail() (+33 more)
+### Community 92 - "redact-body.ts"
+Cohesion: 0.43
+Nodes (6): logPrefixLines(), PATH_PATTERNS, redactBody(), redactPaths(), redactSensitiveAssignments(), redactShasOutsideBackticks()
 
 ### Community 93 - "teach/SKILL.md"
 Cohesion: 0.07
@@ -1010,8 +1056,8 @@ Cohesion: 0.08
 Nodes (24): RFC-6455, brandMarkup(), clients, CONTENT_DIR, crypto, debounceTimers, escapeHtmlText(), frameTemplate (+16 more)
 
 ### Community 96 - "render.py"
-Cohesion: 0.13
-Nodes (19): Test seams and exemptions, R9. Model configuration (S10), Implementation notes, Phase 2: Foundational (skills root per harness), agent_fields(), config_models(), default_home(), effective_models() (+11 more)
+Cohesion: 0.14
+Nodes (18): R9. Model configuration (S10), Implementation notes, Phase 2: Foundational (skills root per harness), agent_fields(), config_models(), default_home(), effective_models(), frontmatter() (+10 more)
 
 ### Community 97 - "orchestrate/scripts/package.json"
 Cohesion: 0.07
@@ -1026,8 +1072,8 @@ Cohesion: 0.07
 Nodes (26): Animations, Async Reactive Commands, Auto-Complete, Basic Animations, Best Practices, Buffering and Grouping, Combining Observables, Common Reactive Patterns (+18 more)
 
 ### Community 101 - "openStore"
-Cohesion: 0.14
-Nodes (27): acquireLock(), changed(), cleanCell(), countValues(), errorCode(), explicitBaseBranch(), holderIsDead(), openStore() (+19 more)
+Cohesion: 0.16
+Nodes (23): changed(), cleanCell(), explicitBaseBranch(), NotFoundError, openStore(), parseForge(), parseVerdict(), pointerCells() (+15 more)
 
 ### Community 102 - "Tasks: [FEATURE NAME]"
 Cohesion: 0.07
@@ -1042,16 +1088,16 @@ Cohesion: 0.08
 Nodes (25): 1. Initialize Analysis Context, 2. Load Artifacts (Progressive Disclosure), 3. Build Semantic Models, 4. Detection Passes (Token-Efficient Analysis), 5. Severity Assignment, 6. Produce Compact Analysis Report, 7. Provide Next Actions, 8. Offer Remediation (+17 more)
 
 ### Community 105 - "SlackApiAdapter"
-Cohesion: 0.14
-Nodes (12): @slack/web-api, createSlackAdapter(), createSlackWebClient(), FilesUploadV2Response, iconOverride(), messageRefFromResponse(), SlackApiAdapter, slackErrorCode() (+4 more)
+Cohesion: 0.17
+Nodes (7): FilesUploadV2Response, iconOverride(), messageRefFromResponse(), SlackApiAdapter, slackErrorCode(), SlackWebClient, SlackMessageRef
 
 ### Community 106 - "Custom Controls and Advanced Techniques"
 Cohesion: 0.08
 Nodes (25): Adaptive Layout, Advanced Layouts, Best Practices, Compiled Bindings, Complex Selectors, Conditional Styling, Control Template, Creating a Custom Control (+17 more)
 
-### Community 107 - "impeccable-opencode/reference/adapt.md"
+### Community 107 - "Responsive Design"
 Cohesion: 0.08
-Nodes (22): Assess Adaptation Challenge, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Techniques, Mobile Adaptation (Desktop → Mobile), Adaptation Strategies (+14 more)
+Nodes (25): Assess Adaptation Challenge, Breakpoints: Content-Driven, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Detect Input Method, Not Just Screen Size, Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Patterns (+17 more)
 
 ### Community 108 - "impeccable/reference/adapt.md"
 Cohesion: 0.08
@@ -1061,9 +1107,9 @@ Nodes (22): Assess Adaptation Challenge, Content Adaptation, Desktop Adaptation 
 Cohesion: 0.16
 Nodes (24): branch_scope_prefix(), branch_token(), build_branch_name(), _byte_length(), check_existing_branches(), clean_branch_name(), extract_feature_num_from_branch(), _extract_highest_number() (+16 more)
 
-### Community 110 - "cmd_import"
-Cohesion: 0.09
-Nodes (14): cmd_export(), cmd_import(), cmd_promote(), _ensure_global_dirs(), _fetch_import_url(), load_project_only_instincts(), main(), _validate_import_url() (+6 more)
+### Community 110 - "_validate_import_url"
+Cohesion: 0.29
+Nodes (4): _validate_import_url(), test_validate_import_url_allows_public_https(), test_validate_import_url_rejects_http(), test_validate_import_url_rejects_private_hosts()
 
 ### Community 111 - "_load_instincts_from_dir"
 Cohesion: 0.08
@@ -1081,9 +1127,9 @@ Nodes (25): applyEditing(), buildLocatorForLeaf(), collectEditableTextRows(), vi
 Cohesion: 0.12
 Nodes (25): applyEditing(), buildLocatorForLeaf(), collectEditableTextRows(), visit(), copyEditContainerContext(), copyEditLeafContext(), documentRefForElement(), own() (+17 more)
 
-### Community 115 - "UI Agent"
-Cohesion: 0.08
-Nodes (24): 1. Detect Changed UI Files, 2. Load Configuration, 3. Resolve Model Provider, 4. Initialize Impeccable Context, 5. Execute the Critique Loop, 6. Report Results, Auto-Trigger (OpenCode, claude-code, codex), CI Pipeline (GitHub Actions) (+16 more)
+### Community 115 - "main"
+Cohesion: 0.11
+Nodes (32): main(), cmd_analyze_record(), cmd_answer(), cmd_checkpoint(), mutate(), cmd_decisions_add(), cmd_issue_add(), cmd_ledger_add() (+24 more)
 
 ### Community 116 - "User Scenarios & Testing *(mandatory)*"
 Cohesion: 0.08
@@ -1093,25 +1139,21 @@ Nodes (22): Content Quality, Feature Readiness, Notes, Requirement Completeness,
 Cohesion: 0.08
 Nodes (23): 1. Enable Observation Hooks, 2. Initialize Directory Structure, 3. Use the Instinct Commands, Backward Compatibility, Commands, Confidence Scoring, Configuration, Continuous Learning v2.1 - Instinct (+15 more)
 
-### Community 118 - "impeccable-agents/reference/adapt.md"
+### Community 118 - "Responsive Design"
 Cohesion: 0.08
-Nodes (22): Assess Adaptation Challenge, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Techniques, Mobile Adaptation (Desktop → Mobile), Adaptation Strategies (+14 more)
+Nodes (25): Assess Adaptation Challenge, Breakpoints: Content-Driven, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Detect Input Method, Not Just Screen Size, Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Patterns (+17 more)
 
 ### Community 119 - "impeccable-agents/reference/document.md"
-Cohesion: 0.08
-Nodes (23): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+15 more)
+Cohesion: 0.09
+Nodes (22): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+14 more)
 
 ### Community 120 - "impeccable-opencode/reference/document.md"
-Cohesion: 0.08
-Nodes (23): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+15 more)
+Cohesion: 0.09
+Nodes (22): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+14 more)
 
 ### Community 121 - "impeccable/reference/document.md"
-Cohesion: 0.08
-Nodes (23): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+15 more)
-
-### Community 122 - ".add"
-Cohesion: 0.14
-Nodes (3): EventPathTests, IssueAddTests, StallRuleTests
+Cohesion: 0.09
+Nodes (22): Component translation rules, Narrative mapping, Pitfalls, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Seed mode, Step 1: Find the design assets, Step 1: Route through new-work's workshop (+14 more)
 
 ### Community 123 - "LifecycleTests"
 Cohesion: 0.09
@@ -1122,32 +1164,32 @@ Cohesion: 0.11
 Nodes (29): CommentCriticality, assertSlackDestinationAllowed(), COMMENT_RETRY_BACKOFF_MS, CommentRetryEntry, commentRetryQueuePath(), drainCommentRetryQueue(), enqueueComment(), errorMessage() (+21 more)
 
 ### Community 125 - "checks.py"
-Cohesion: 0.13
-Nodes (14): _advisory(), block_problems(), bad(), _confirmed(), _decisions(), detect_shape(), extract_block(), _finding_like() (+6 more)
+Cohesion: 0.09
+Nodes (23): _advisory(), block_problems(), bad(), _confirmed(), _decisions(), detect_shape(), extract_block(), _finding_like() (+15 more)
 
 ### Community 126 - "check-plan.mjs"
-Cohesion: 0.09
-Nodes (17): close, closeIndex, find(), h1, HOW_TO_READ_MARKERS, howToRead, lines, PERF_ITEMS (+9 more)
+Cohesion: 0.04
+Nodes (37): Browser Events Format, Cards (visual designs), Cleaning Up, CSS Classes Available, Design Tips, File Naming, How It Works, Mock elements (wireframe building blocks) (+29 more)
 
 ### Community 127 - "impeccable-agents/SKILL.md"
-Cohesion: 0.08
-Nodes (22): Craft floor, Refuse, Verify, Constraints, Failure modes, Flow, $impeccable hooks, Routing (+14 more)
+Cohesion: 0.09
+Nodes (18): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat, Craft floor, Refuse, Verify (+10 more)
 
 ### Community 128 - "impeccable-agents/reference/onboard.md"
 Cohesion: 0.09
 Nodes (22): Assess Onboarding Needs, Context Over Ceremony, Contextual Help, Design Onboarding Experiences, Documentation & Help, Empty State Design, Feature Discovery & Adoption, Guided Tours & Walkthroughs (+14 more)
 
-### Community 129 - "impeccable-opencode/SKILL.md"
-Cohesion: 0.09
-Nodes (18): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat, Craft floor, Refuse, Verify (+10 more)
+### Community 129 - "impeccable-opencode/reference/bolder.md"
+Cohesion: 0.33
+Nodes (5): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat
 
 ### Community 130 - "impeccable-opencode/reference/onboard.md"
 Cohesion: 0.09
 Nodes (22): Assess Onboarding Needs, Context Over Ceremony, Contextual Help, Design Onboarding Experiences, Documentation & Help, Empty State Design, Feature Discovery & Adoption, Guided Tours & Walkthroughs (+14 more)
 
-### Community 131 - "impeccable/SKILL.md"
-Cohesion: 0.09
-Nodes (18): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat, Craft floor, Refuse, Verify (+10 more)
+### Community 131 - "Operate mode depth (and Read notes)"
+Cohesion: 0.10
+Nodes (18): Craft floor, Refuse, Verify, Constraints, Failure modes, Flow, /impeccable hooks, Routing (+10 more)
 
 ### Community 132 - "impeccable/reference/onboard.md"
 Cohesion: 0.09
@@ -1158,8 +1200,8 @@ Cohesion: 0.12
 Nodes (12): Benchmark: uppercase greetings, Settled decisions, Greeting fixture constitution, AcceptanceTests, greet(), GreetTests, Factory reliability native trials, Procedure (+4 more)
 
 ### Community 134 - "loop.ts"
-Cohesion: 0.16
-Nodes (17): isAndonActive(), canMakeProgress(), computeLoopExitCode(), DEFAULT_MAX_RUNTIME_SEC, EXIT_ON_ERROR_EXIT_CODE, exitOnErrorReturn(), flagUnreachablePending(), hasNewTerminalError() (+9 more)
+Cohesion: 0.19
+Nodes (16): isAndonActive(), canMakeProgress(), computeLoopExitCode(), DEFAULT_MAX_RUNTIME_SEC, exitOnErrorReturn(), flagUnreachablePending(), hasNewTerminalError(), isFailedTerminalStatus() (+8 more)
 
 ### Community 135 - "During the session"
 Cohesion: 0.09
@@ -1193,9 +1235,9 @@ Nodes (20): Animate complex properties, Assess What "Extraordinary" Means Here, 
 Cohesion: 0.17
 Nodes (3): ConfigParseGuardTests, InstallFlowTests, InstallHomePolicyTests
 
-### Community 144 - "spec-builder.md"
-Cohesion: 0.29
-Nodes (6): Design reference work, Earlier rounds, Inputs, Running a skill, Stages, Time budget
+### Community 144 - "plan"
+Cohesion: 0.14
+Nodes (17): Design reference work, Earlier rounds, Inputs, Loop passes, Running a skill, Stages, Time budget, Schema (+9 more)
 
 ### Community 145 - "Software Factory: Design"
 Cohesion: 0.10
@@ -1238,16 +1280,16 @@ Cohesion: 0.10
 Nodes (19): source, assist, actions, files, includes, formatter, arrowParentheses, enabled (+11 more)
 
 ### Community 155 - "orch.test.ts"
-Cohesion: 0.12
-Nodes (17): directories, FixturePr, FixtureState, FORGE_FIXTURES, forgeRows(), git(), handles, initializedStore() (+9 more)
+Cohesion: 0.14
+Nodes (16): directories, FixturePr, FixtureState, FORGE_FIXTURES, forgeRows(), git(), handles, initializedStore() (+8 more)
 
 ### Community 156 - "create-new-feature-branch.ps1"
 Cohesion: 0.16
 Nodes (15): ConvertTo-BranchToken(), ConvertTo-CleanBranchName(), Expand-BranchTemplate(), Get-AppToken(), Get-BranchName(), Get-BranchScopePrefix(), Get-GitAuthorToken(), Get-HighestNumberFromBranches() (+7 more)
 
 ### Community 157 - "append_issue"
-Cohesion: 0.11
-Nodes (17): append_issue(), mutate(), mutate(), mutate(), mutate(), Constitution Alignment Issues, Coverage Summary Table, Findings (+9 more)
+Cohesion: 0.12
+Nodes (16): append_issue(), mutate(), mutate(), mutate(), mutate(), Constitution Alignment Issues, Coverage Summary Table, Findings (+8 more)
 
 ### Community 158 - "install.sh"
 Cohesion: 0.23
@@ -1282,8 +1324,8 @@ Cohesion: 0.11
 Nodes (17): 1. User Corrections, 2. Error Resolutions, 3. Repeated Workflows, 4. Tool Preferences, Confidence Calculation, Example Analysis Session, Global Instinct (universal patterns), Important Guidelines (+9 more)
 
 ### Community 167 - "detect_project"
-Cohesion: 0.13
-Nodes (9): detect_project(), _git_repo_root(), _main_worktree_root(), _strip_remote_credentials(), test_detect_project_creates_directories(), test_detect_project_from_env(), test_detect_project_git_timeout(), test_detect_project_global_fallback() (+1 more)
+Cohesion: 0.08
+Nodes (16): cmd_export(), cmd_import(), cmd_promote(), detect_project(), _ensure_global_dirs(), _fetch_import_url(), _git_repo_root(), main() (+8 more)
 
 ### Community 168 - "actOnAgentTarget"
 Cohesion: 0.26
@@ -1302,8 +1344,8 @@ Cohesion: 0.11
 Nodes (17): Competing Hypotheses, Confidence Summary, Epistemics Framework, Instructions, Investigator Findings, Output Format, Quality Check Before Returning, Sources Consulted (+9 more)
 
 ### Community 172 - ".history"
-Cohesion: 0.10
-Nodes (19): Checkpoint, CLI, Discovery, Location, Pen design context (additive), Resume, Run state, Totals (+11 more)
+Cohesion: 0.11
+Nodes (16): validate_profile(), Checkpoint, CLI, Discovery, Location, Pen design context (additive), Resume, Run state (+8 more)
 
 ### Community 173 - "Recurring skip candidates"
 Cohesion: 0.12
@@ -1321,9 +1363,9 @@ Nodes (15): 1. Initialize Convergence Context, 2. Load Artifacts (Progressive Di
 Cohesion: 0.12
 Nodes (17): Analyze loop, Approver, Cost ledger, Decisions, Enforced gates (M2), Hardening and context trim (P2), Implement, Interactive steps (relay) (+9 more)
 
-### Community 177 - "impeccable-agents/reference/animate.md"
-Cohesion: 0.12
-Nodes (14): Accessibility and control, Choose material by meaning, Find the job, Implement to the runtime, Set the motion thesis, Timing and easing, Verify, Visitor mode (+6 more)
+### Community 177 - "impeccable-agents/reference/delight.md"
+Cohesion: 0.29
+Nodes (6): Build for the emotional moment, Define one delight thesis, Find the opportunity, Protect the experience, Verify, Visitor mode
 
 ### Community 178 - "Handle `generate`"
 Cohesion: 0.12
@@ -1350,8 +1392,8 @@ Cohesion: 0.12
 Nodes (15): Boundary validation, Branded types, Constructive modeling, Discriminated unions, Exhaustiveness, Narrowing hierarchy, No `as` casts, Object args (+7 more)
 
 ### Community 184 - "policy.test.ts"
-Cohesion: 0.15
-Nodes (14): failedCheck(), fakeReader(), assessGitHubMerge(), mergeAssessment(), readSnapshot(), checksFastPath(), context(), openSnapshot() (+6 more)
+Cohesion: 0.18
+Nodes (11): fakeReader(), pendingCheck(), checksFastPath(), context(), openSnapshot(), options, pullRequest(), parsePrNumber() (+3 more)
 
 ### Community 185 - "Workflow"
 Cohesion: 0.13
@@ -1362,12 +1404,12 @@ Cohesion: 0.13
 Nodes (14): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Audit Health Score, Detailed Findings by Severity, Diagnostic Scan (+6 more)
 
 ### Community 187 - "Entities"
-Cohesion: 0.17
-Nodes (11): Adapter configuration, Conformance fixture and golden-run result, Data model: run state, records and locks, Decision record (`decisions[]`, v4), Entities, Run lock (`lock.json`), Spawn interval (`ledger[]`), State transitions (+3 more)
+Cohesion: 0.13
+Nodes (14): Step 2: Reuse the page, then start, Adapter configuration, Conformance fixture and golden-run result, Data model: run state, records and locks, Decision record (`decisions[]`, v4), Entities, Run lock (`lock.json`), Spawn interval (`ledger[]`) (+6 more)
 
 ### Community 188 - "Generate Report"
-Cohesion: 0.13
-Nodes (14): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Audit Health Score, Detailed Findings by Severity, Diagnostic Scan (+6 more)
+Cohesion: 0.29
+Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Implementation Integrity Verdict, Patterns & Systemic Issues, Positive Findings
 
 ### Community 189 - "Generate Report"
 Cohesion: 0.13
@@ -1377,9 +1419,9 @@ Nodes (14): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive D
 Cohesion: 0.13
 Nodes (14): Act On, Agreement Map, Consider, Dismissed, Intent, Interrogate, Noted, Output Format (+6 more)
 
-### Community 191 - "Agent Factory — product brief and stability plan"
-Cohesion: 0.17
-Nodes (11): 1. Product in brief, 2. Definition of "stable", 3. Evidence: what the last two runs show, 4. Stability gaps, 5. Recommended sequence, 6. Out of scope, Agent Factory — product brief and stability plan, P0 — required before calling the factory stable (+3 more)
+### Community 191 - "detect.py"
+Cohesion: 0.08
+Nodes (16): detect(), _detect_commands(), evidence_dir(), _first_of(), _go_directive(), _mixed_root_managers(), _notes(), _pick_primary() (+8 more)
 
 ### Community 192 - "poteto-mode/scripts/package.json"
 Cohesion: 0.13
@@ -1396,10 +1438,6 @@ Nodes (9): Dependencies and execution order, Implementation strategy, Parallel e
 ### Community 195 - "Changed write commands"
 Cohesion: 0.13
 Nodes (15): Benchmark (`tools/bench.py`), Changed write commands, Contracts: CLI, envelope, benchmark, Envelope change (`references/protocol.md`), `factory budget <role>`, `factory improvements`, `factory improvements claim <name>`, `factory issue-add <kind> <stage> <role> --detail <text> --duration-ms <n> [--cause <cause>] [--commit <sha>] [--partial-return]` (+7 more)
-
-### Community 197 - "ReadOnlyConformanceTests"
-Cohesion: 0.18
-Nodes (3): Phase 3: User Story 1 - Implement one screen from a Pen design (P1) MVP, ReadOnlyConformanceTests, render()
 
 ### Community 198 - "replay.py"
 Cohesion: 0.15
@@ -1445,9 +1483,9 @@ Nodes (13): Animation Performance, Assess Performance Issues, Core Web Vitals Op
 Cohesion: 0.14
 Nodes (13): compilerOptions, allowImportingTsExtensions, esModuleInterop, isolatedModules, module, moduleResolution, noEmit, skipLibCheck (+5 more)
 
-### Community 209 - "pen.dev Design"
-Cohesion: 0.14
-Nodes (13): Authentication, Check installation, Claude Code agent, Creating a Design, Iterating on a Design, Passing the Prompt, pen.dev Design, pen.dev user (+5 more)
+### Community 209 - "Feature Specification: Post-Run Retro for Self-Improvement"
+Cohesion: 0.09
+Nodes (20): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Post-Run Retro for Self-Improvement, Assumptions, Clarifications, Edge Cases (+12 more)
 
 ### Community 210 - "Playwright CLI Skill"
 Cohesion: 0.14
@@ -1466,26 +1504,22 @@ Cohesion: 0.14
 Nodes (14): Assumptions, Clarifications, Edge Cases, Feature Specification: Factory Skill Library, Functional Requirements, Key Entities, Measurable Outcomes, Requirements *(mandatory)* (+6 more)
 
 ### Community 215 - "ValidationTests"
-Cohesion: 0.23
+Cohesion: 0.33
 Nodes (3): answered_round(), open_round(), ValidationTests
 
-### Community 217 - "Specification Analysis Report — pass 2"
-Cohesion: 0.17
-Nodes (11): Constitution Alignment Issues, Coverage Summary, ENG-10 simplicity check (factory override), Findings, Metrics, Next Actions, Pass 1 remediation check, Specification Analysis Report — pass 2 (+3 more)
-
 ### Community 218 - "OpenCode V2 adapter implementation plan"
-Cohesion: 0.15
-Nodes (11): New files, abstractions, and dependencies, OpenCode V2 adapter implementation plan, Tasks, Validation record, Verification commands, Compatibility and failure handling, Context, Design (+3 more)
+Cohesion: 0.14
+Nodes (12): New files, abstractions, and dependencies, OpenCode V2 adapter implementation plan, Tasks, Test seams and exemptions, Validation record, Verification commands, Compatibility and failure handling, Context (+4 more)
 
 ### Community 219 - "Factory skill routing"
 Cohesion: 0.15
 Nodes (12): Acceptance scenarios, Approaches considered, Brainstorming and grilling, Factory skill routing, Files to align after design approval, Impeccable UI evaluation, Integrating skills with factory contracts, Ponytail (+4 more)
 
 ### Community 220 - "Pen design-code mapping in the factory"
-Cohesion: 0.15
-Nodes (13): Acceptance scenarios, Activation, scope, and authority, Approaches considered, Canonical map, Evidence and completion, Factory integration, Implementation sequence and rationale, Pen design-code mapping in the factory (+5 more)
+Cohesion: 0.10
+Nodes (19): New files, abstractions, and dependencies, Pen design-code mapping implementation plan, Tasks, Test seams and exemptions, Validation record — 25 October 2026, Verification commands, Acceptance scenarios, Activation, scope, and authority (+11 more)
 
-### Community 221 - "ui-agent-hook.mjs"
+### Community 221 - "design-to-code-hook.mjs"
 Cohesion: 0.23
 Nodes (8): armed(), inFactoryRun(), latch(), main(), TRIGGERS, inFactoryRun(), setup(), TRIGGERS
 
@@ -1502,16 +1536,16 @@ Cohesion: 0.18
 Nodes (11): broadcast(), computeAcceptKey(), decodeFrame(), encodeFrame(), handleMessage(), handleUpgrade(), isAllowedWebSocketOrigin(), preferredPort() (+3 more)
 
 ### Community 225 - "Impeccable Asset Producer"
-Cohesion: 0.22
-Nodes (7): Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract, Output Contract, Review handoff, The job
+Cohesion: 0.15
+Nodes (11): Act on the receipt, Assemble and review, Plan and asset review, Plan, capture, serve, Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract (+3 more)
 
 ### Community 226 - "Impeccable Asset Producer"
 Cohesion: 0.15
 Nodes (11): Act on the receipt, Assemble and review, Plan and asset review, Plan, capture, serve, Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract (+3 more)
 
 ### Community 227 - "Impeccable Asset Producer"
-Cohesion: 0.22
-Nodes (7): Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract, Output Contract, Review handoff, The job
+Cohesion: 0.15
+Nodes (11): Act on the receipt, Assemble and review, Plan and asset review, Plan, capture, serve, Core Rule, Decision Comps, Impeccable Asset Producer, Input Contract (+3 more)
 
 ### Community 228 - "andon"
 Cohesion: 0.15
@@ -1533,9 +1567,9 @@ Nodes (12): Assumptions, Edge Cases, Feature Specification: [FEATURE NAME], Func
 Cohesion: 0.15
 Nodes (6): Evidence, Merge Danger, Summary, New files, abstractions and dependencies, InstallSandbox, UninstallTests
 
-### Community 233 - "Implementation Plan: Agent time budget, session issue backlog, benchmark"
-Cohesion: 0.12
-Nodes (15): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Agent time budget, session issue backlog, benchmark, Documentation (this feature), Implementation Plan: Agent time budget, session issue backlog, benchmark, New files, abstractions, dependencies (ENG-10) (+7 more)
+### Community 233 - "010-agent-time-budget/plan.md"
+Cohesion: 0.26
+Nodes (5): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Agent time budget, session issue backlog, benchmark
 
 ### Community 237 - "Harness-agnostic factory: design and plan"
 Cohesion: 0.17
@@ -1549,13 +1583,13 @@ Nodes (11): Add Overloads to Avoid params Array Allocation, Collections & LINQ P
 Cohesion: 0.17
 Nodes (12): Button, CalendarDatePicker, CheckBox, ComboBox, DatePicker, Input Controls, NumericUpDown, RadioButton (+4 more)
 
-### Community 240 - "Visual Companion Guide"
-Cohesion: 0.17
-Nodes (11): Browser Events Format, Cleaning Up, Design Tips, File Naming, How It Works, Reference, Starting a Session, The Loop (+3 more)
+### Community 240 - "cli.py"
+Cohesion: 0.13
+Nodes (14): die_usage(), emit(), int_or_usage(), iso_or_usage(), json_or_usage(), parse_flags(), CLIError, R10 — Verification approach (+6 more)
 
-### Community 241 - "_promote_auto"
-Cohesion: 0.17
-Nodes (7): _promote_auto(), _validate_instinct_id(), test_promote_auto_dry_run(), test_promote_auto_no_candidates(), test_promote_auto_skips_invalid_id(), test_promote_auto_writes_file(), test_validate_instinct_id()
+### Community 241 - "handoff.ts"
+Cohesion: 0.19
+Nodes (17): emptyErrorHandoffBody(), isFailureMode(), isVerification(), mapLegacyVerdict(), normalizeEnumValue(), parseHandoffBranch(), parseHandoffFailureMode(), parseHandoffPrNumber() (+9 more)
 
 ### Community 242 - "Explainer Prompt Template"
 Cohesion: 0.17
@@ -1598,8 +1632,8 @@ Cohesion: 0.17
 Nodes (11): Accessibility Resilience, Assess Hardening Needs, Edge Cases & Boundary Conditions, Error Handling, Hardening Dimensions, Input Validation & Sanitization, Internationalization (i18n), Performance Resilience (+3 more)
 
 ### Community 252 - "Handoffs"
-Cohesion: 0.17
-Nodes (11): Continuous motion, Finished-without-handoff sidecar, Handoffs, Measurements (worker handoff), Merges are tasks, Producing your own handoff (subplanner), Reading handoffs, Synthetic failure handoffs (+3 more)
+Cohesion: 0.18
+Nodes (10): Continuous motion, Finished-without-handoff sidecar, Handoffs, Measurements (worker handoff), Merges are tasks, Producing your own handoff (subplanner), Reading handoffs, Synthetic failure handoffs (+2 more)
 
 ### Community 253 - "slackKickoffRef"
 Cohesion: 0.17
@@ -1757,9 +1791,9 @@ Nodes (9): Benchmark, Engineering discipline, FACETS, Language, Run state, Skill
 Cohesion: 0.20
 Nodes (9): Avoid Explicit Static Constructors — Use Field Initializers, Detection, I/O, Serialization & General Patterns, Patterns Requiring Manual Review, Use Async FileStream Operations, Use HttpCompletionOption.ResponseHeadersRead for Streaming, Use Memory\<byte\> Overloads for Stream.ReadAsync/WriteAsync, Use Span-Based TryFormat for Number Formatting (+1 more)
 
-### Community 292 - "Responsive Design"
-Cohesion: 0.20
-Nodes (10): Breakpoints: Content-Driven, Detect Input Method, Not Just Screen Size, Layout Adaptation Patterns, Mobile-First: Write It Right, Picture Element for Art Direction, Responsive Design, Responsive Images: Get It Right, Safe Areas: Handle the Notch (+2 more)
+### Community 292 - "Eval: qa-html"
+Cohesion: 0.12
+Nodes (12): Eval: implement-html, Results, Run, Eval: qa-html, Pass, Results, Run, Eval: qa-locked (+4 more)
 
 ### Community 293 - "Init flow"
 Cohesion: 0.20
@@ -1817,17 +1851,21 @@ Nodes (9): Constitution Alignment Issues, Coverage Summary, Factory gate checks 
 Cohesion: 0.20
 Nodes (10): Complexity Tracking, Constitution Check, Documentation (this feature), Implementation Plan: Install model pipeline and round-3 advisory fixes, New files, abstractions, dependencies, Project Structure, Quality constraints and verification, Source Code (repository root) (+2 more)
 
-### Community 311 - "Responsive Design"
-Cohesion: 0.20
-Nodes (10): Breakpoints: Content-Driven, Detect Input Method, Not Just Screen Size, Layout Adaptation Patterns, Mobile-First: Write It Right, Picture Element for Art Direction, Responsive Design, Responsive Images: Get It Right, Safe Areas: Handle the Notch (+2 more)
+### Community 310 - "RebindTests"
+Cohesion: 0.13
+Nodes (9): 9. PR, Design, Envelope (protocol.md), Retro role (`core/roles/retro.md`), Signal key grammar, SKILL.md step 9 placement, State writer, Writer (`factory_cli/improvements.py` `add`, CLI `improvements add`) (+1 more)
+
+### Community 311 - "load_all_instincts"
+Cohesion: 0.12
+Nodes (8): load_all_instincts(), load_project_only_instincts(), test_load_all_empty(), test_load_all_global_only(), test_load_all_project_and_global(), test_load_all_project_overrides_global(), test_load_project_only_excludes_global(), test_load_project_only_global_fallback_loads_global()
 
 ### Community 312 - "Implementation Plan: Factory Skill Library"
 Cohesion: 0.20
 Nodes (10): Complexity Tracking, Constitution Check, Documentation (this feature), Implementation Plan: Factory Skill Library, Project Structure, Quality constraints, Source Code (repository root), Summary (+2 more)
 
 ### Community 313 - "Tasks: UI Designer Role"
-Cohesion: 0.20
-Nodes (9): Dependencies, Format: `[ID] [P?] [Story] Description`, Implementation strategy, Phase 1: Setup (design first), Phase 4: User Story 2 - Restyle the whole UI surface (P2), Phase 6: User Story 4 - Unsupported framework (P3), Phase 7: User Story 5 - Quality pass and shared repair budget (P3), Phase 8: Polish & cross-cutting (+1 more)
+Cohesion: 0.18
+Nodes (10): Dependencies, Format: `[ID] [P?] [Story] Description`, Implementation strategy, Phase 1: Setup (design first), Phase 3: User Story 1 - Implement one screen from a Pen design (P1) MVP, Phase 4: User Story 2 - Restyle the whole UI surface (P2), Phase 6: User Story 4 - Unsupported framework (P3), Phase 7: User Story 5 - Quality pass and shared repair budget (P3) (+2 more)
 
 ### Community 314 - "maybeOpenBrowser"
 Cohesion: 0.22
@@ -1837,9 +1875,9 @@ Nodes (8): browserLauncherForPlatform(), chmodOwnerOnly(), companionUrl(), gener
 Cohesion: 0.22
 Nodes (8): Async & Concurrency Patterns, Avoid False Sharing with Thread-Local State, Detection, Don't Expose Async Wrappers for Sync Methods, Don't Expose Sync Wrappers for Async Methods, Patterns Requiring Manual Review, Use Channels for Producer/Consumer, Use ValueTask for Hot Paths with Frequent Sync Completion
 
-### Community 316 - "CSS Classes Available"
-Cohesion: 0.22
-Nodes (9): Cards (visual designs), CSS Classes Available, Mock elements (wireframe building blocks), Mockup container, Options (A/B/C choices), Pros/Cons, Split view (side-by-side), Typography and sections (+1 more)
+### Community 316 - "listPullRequests"
+Cohesion: 0.17
+Nodes (16): branchPullRequest(), branchSha(), countRecord(), currentBranch(), errorMessage(), frontierPrStateOrNull(), isRecord(), isUnknownArray() (+8 more)
 
 ### Community 317 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -1878,7 +1916,7 @@ Cohesion: 0.22
 Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
 
 ### Community 326 - "Shape"
-Cohesion: 0.22
+Cohesion: 0.25
 Nodes (8): Cadence, Confirm and stop, Phase 1: Discovery interview, Phase 2: Resolve the design direction, Phase 3: Write the brief, Round 1: purpose, people, and outcome, Round 2: material, behavior, and boundaries, Shape
 
 ### Community 327 - "Common Cognitive Load Violations"
@@ -1889,9 +1927,9 @@ Nodes (9): 1. The Wall of Options, 2. The Memory Bridge, 3. The Hidden Navigatio
 Cohesion: 0.22
 Nodes (9): Color & materials, Components & controls, iOS platform, Layout & structure, Motion, The iOS slop test, Touch targets, Typography (+1 more)
 
-### Community 329 - "Operate mode depth (and Read notes)"
-Cohesion: 0.22
-Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
+### Community 329 - "failure-handoff.ts"
+Cohesion: 0.24
+Nodes (12): atomicWrite(), ClassifyFailureArgs, computeDurationMs(), failureModeSuggestions(), formatLastActivityLine(), hasStructuredHandoff(), truncate(), writeFailureHandoff() (+4 more)
 
 ### Community 330 - "Shape"
 Cohesion: 0.22
@@ -1969,9 +2007,9 @@ Nodes (7): Choose the Right Regex Engine Mode, Detection, Patterns Requiring Man
 Cohesion: 0.25
 Nodes (7): 1. Pin the fixed point, 2. Identify the spec source, 3. Identify the standards sources, 4. Spawn both sub-agents in parallel, 5. Aggregate, Process, Why two axes
 
-### Community 351 - "_confidence_bar"
-Cohesion: 0.25
-Nodes (5): _confidence_bar(), _print_instincts_by_domain(), _stream_can_encode(), test_confidence_bar_uses_ascii_when_stream_rejects_block_glyphs(), test_confidence_bar_uses_unicode_when_supported()
+### Community 351 - "cmd_status"
+Cohesion: 0.11
+Nodes (10): cmd_status(), _confidence_bar(), _print_instincts_by_domain(), _stream_can_encode(), _warn_legacy_data(), test_cmd_status_no_instincts(), test_cmd_status_returns_int(), test_cmd_status_with_instincts() (+2 more)
 
 ### Community 352 - "Docs Canvas"
 Cohesion: 0.25
@@ -2009,21 +2047,21 @@ Nodes (8): 1. Impatient Power User: "Alex", 2. Confused First-Timer: "Jordan", 3
 Cohesion: 0.25
 Nodes (7): Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich, Step 5: Migrate, Step 6: Document
 
-### Community 361 - "impeccable/reference/doctor.md"
-Cohesion: 0.25
-Nodes (7): Monorepo notes, Opting out of the boot check, Step 1: Run the pass, Step 2: Act by severity, Step 3: Deprecated fields are binding, Step 4: Do not overclaim on truth drift, What this owns, and what it does not
+### Community 361 - "impeccable/SKILL.md"
+Cohesion: 0.07
+Nodes (23): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat, Monorepo notes, Opting out of the boot check, Step 1: Run the pass (+15 more)
 
 ### Community 362 - "Planner"
-Cohesion: 0.29
-Nodes (6): Comments, Finding agents, Phase 1: publish tasks, Planner, Prerequisites, Source of truth
+Cohesion: 0.25
+Nodes (7): Comments, Finding agents, Phase 1: publish tasks, Phase 2: drive the workspace, Planner, Prerequisites, Source of truth
 
 ### Community 363 - "Persona-Based Design Testing"
 Cohesion: 0.25
 Nodes (8): 1. Impatient Power User: "Alex", 2. Confused First-Timer: "Jordan", 3. Accessibility-Dependent User: "Sam", 4. Deliberate Stress Tester: "Riley", 5. Distracted Mobile User: "Casey", Persona-Based Design Testing, Project-Specific Personas, Selecting Personas
 
-### Community 364 - "Extract Flow"
-Cohesion: 0.25
-Nodes (7): Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich, Step 5: Migrate, Step 6: Document
+### Community 364 - "Framework: Avalonia"
+Cohesion: 0.14
+Nodes (13): Anchors, Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Effects (+5 more)
 
 ### Community 365 - "Reviewer Prompt Template"
 Cohesion: 0.25
@@ -2061,9 +2099,9 @@ Nodes (7): Both Modes, Default Mode, Emission Rules, Full Mode, Mode Selection, 
 Cohesion: 0.25
 Nodes (7): Conversational feel, Format arguments to actually have, Grounding, Out of scope, Pulling from the pile, The loop, Writing rhythm
 
-### Community 374 - "impeccable-agents/reference/bolder.md"
-Cohesion: 0.33
-Nodes (5): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat
+### Community 374 - "Framework: .NET MAUI"
+Cohesion: 0.14
+Nodes (13): Anchors, Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Effects (+5 more)
 
 ### Community 375 - "Research: Drop the factory folder at run end"
 Cohesion: 0.25
@@ -2098,7 +2136,7 @@ Cohesion: 0.29
 Nodes (6): Approaches considered, Behavior, Decisions, OpenCode factory startup reliability, Problem, Validation
 
 ### Community 384 - "bootstrap.ts"
-Cohesion: 0.33
+Cohesion: 0.40
 Nodes (5): commanderPackagePath, currentInstallKey(), ensureDependenciesInstalled(), installKeyPath, nodeModulesDirectory
 
 ### Community 385 - "Avalonia Controls Reference"
@@ -2137,9 +2175,9 @@ Nodes (6): Clarifying Questions, Define Goal, Goal Quality Bar, Overview, Quanti
 Cohesion: 0.29
 Nodes (6): 1. Assess complexity, 2. Explore (complex only), 3. Synthesize (complex only), 4. Present, How, Output format
 
-### Community 394 - "Operate"
-Cohesion: 0.50
-Nodes (3): Comps, Directions, Operate
+### Community 394 - "Framework: <Name>"
+Cohesion: 0.14
+Nodes (13): Anchors, Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Effects (+5 more)
 
 ### Community 395 - "Cognitive Load Assessment"
 Cohesion: 0.29
@@ -2185,9 +2223,9 @@ Nodes (7): elementMatchesOriginalMarkup(), findLiveElementForOriginalMarkup(), f
 Cohesion: 0.52
 Nodes (6): globToRegex(), matchesScope(), normalizeIgnoreRule(), normalizeIgnoreValue(), pageCandidates(), resolveDetectIgnores()
 
-### Community 406 - "Generate Report"
-Cohesion: 0.29
-Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings
+### Community 406 - "pen.dev Design"
+Cohesion: 0.14
+Nodes (13): Authentication, Check installation, Claude Code agent, Creating a Design, Iterating on a Design, Passing the Prompt, pen.dev Design, pen.dev user (+5 more)
 
 ### Community 407 - "Cognitive Load Assessment"
 Cohesion: 0.29
@@ -2229,9 +2267,9 @@ Nodes (6): Branch, Execution, Findings, Notes & suggestions, Target, Verificatio
 Cohesion: 0.29
 Nodes (6): Phase A: Frame, Phase B: Fan out, Phase C: Aggregate, Phase D: Report, Start, Swarm
 
-### Community 417 - "Auto-Commit Changes"
-Cohesion: 0.29
-Nodes (6): Auto-Commit Changes, Behavior, Commit Message Styles, Configuration, Execution, Graceful Degradation
+### Community 417 - "nudge-root.ts"
+Cohesion: 0.25
+Nodes (13): Part B - Semantic extraction (parallel subagents), Args, isBusy(), log(), MessageSource, now(), parseArgs(), readMessageSource() (+5 more)
 
 ### Community 418 - "initialize_repo.py"
 Cohesion: 0.43
@@ -2241,13 +2279,13 @@ Nodes (3): _find_project_root(), main(), _read_commit_message()
 Cohesion: 0.29
 Nodes (5): Content Quality, Feature Readiness, Notes, Requirement Completeness, Specification Quality Checklist: Factory Skill Library
 
-### Community 423 - "Harness: Claude Code"
-Cohesion: 0.33
-Nodes (5): After-PR extras, Harness: Claude Code, Model inspection and recovery, Notes, Verbs
+### Community 423 - ".invoke"
+Cohesion: 0.06
+Nodes (23): After-PR extras, Harness: Claude Code, Model inspection and recovery, Notes, Verbs, Harness: Codex, Model inspection and recovery, Notes (+15 more)
 
-### Community 424 - "Read"
-Cohesion: 0.50
-Nodes (3): Comps, Directions, Read
+### Community 424 - "Research: agent time budget, session issue backlog, benchmark"
+Cohesion: 0.15
+Nodes (13): 10. `/factory improve` route (FR-013), 11. Benchmark fixture and driver (FR-014/FR-015), 15. Quality constraints (spec, "Quality and Verification Constraints"), 1. Enforcement model, 2. Budget resolution, 3. Deadline passing, 4. Overrun recording and dedupe, 5. Stall cap bookkeeping (FR-004, G1, grill-with-docs Q1) (+5 more)
 
 ### Community 425 - ".agents/skills/speckit-constitution/SKILL.md"
 Cohesion: 0.33
@@ -2272,10 +2310,6 @@ Nodes (5): Execution, Graceful Degradation, Prerequisites, Validate Feature Bran
 ### Community 430 - "FACETS checklist"
 Cohesion: 0.33
 Nodes (5): Calibration, Caveats, Checklist, FACETS checklist, Guidance
-
-### Community 431 - "DESIGN.md"
-Cohesion: 0.10
-Nodes (15): Consequences, Red proof lives in the task's commit body, verified by spec-conformance, Consequences, Test seams are settled at plan time; implementation never invents one, Consequences, Judgement-call engineering rules advise; they never block, Consequences, Considered options (+7 more)
 
 ### Community 432 - "Advanced Controls"
 Cohesion: 0.33
@@ -2309,9 +2343,9 @@ Nodes (5): For /graphify explain, For /graphify path, graphify reference: query,
 Cohesion: 0.33
 Nodes (6): 1. Accessibility (VoiceOver / TalkBack), 2. Performance, 3. Appearance & Theming, 4. Platform Conformance (CRITICAL), 5. Adaptivity, Diagnostic Scan
 
-### Community 440 - "Visualize: Direction Comps & Asset Production"
-Cohesion: 0.33
-Nodes (5): After approval: the comp becomes a spec, Generate three compositional options, One approval point, Plates and provenance, Visualize: Direction Comps & Asset Production
+### Community 440 - "Troubleshooting"
+Cohesion: 0.17
+Nodes (12): "MCP is not enabled", "New customer connections are not currently accepted.", "Not authorized to call tool", Not connected, or authorization error on a call, Passkey step fails, "Something went wrong. Refresh this page to try again." or "Something went wrong. Try again.", "The connection code is invalid, expired, or already used.", "This code has expired. Start again from Grok Bot." (+4 more)
 
 ### Community 441 - "Diagnostic Scan"
 Cohesion: 0.33
@@ -2357,29 +2391,49 @@ Nodes (5): Detect Git Remote URL, Execution, Graceful Degradation, Output, Prere
 Cohesion: 0.33
 Nodes (5): Execution, Graceful Degradation, Prerequisites, Validate Feature Branch, Validation Rules
 
-### Community 456 - "Harness: Codex"
-Cohesion: 0.40
-Nodes (4): Harness: Codex, Model inspection and recovery, Notes, Verbs
+### Community 456 - "pixel-diff.py"
+Cohesion: 0.27
+Nodes (6): find_regions(), load(), main(), region_pairs(), write_crops(), write_montage()
 
-### Community 457 - "Harness: GitHub Copilot"
-Cohesion: 0.40
-Nodes (4): Harness: GitHub Copilot, Model inspection and recovery, Notes, Verbs
+### Community 457 - "Framework: Blazor"
+Cohesion: 0.18
+Nodes (10): Anchors, Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Framework: Blazor (+2 more)
 
-### Community 458 - "Harness: ZCode"
-Cohesion: 0.40
-Nodes (4): Harness: ZCode, Model inspection and recovery, Notes, Verbs
+### Community 458 - "Framework: React"
+Cohesion: 0.18
+Nodes (10): Anchors, Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Framework: React (+2 more)
+
+### Community 459 - "Implementation Plan: Agent time budget, session issue backlog, benchmark"
+Cohesion: 0.18
+Nodes (11): Constitution Check, Documentation (this feature), Implementation Plan: Agent time budget, session issue backlog, benchmark, New files, abstractions, dependencies (ENG-10), Phases, Project Structure, Quality constraints and verification, Source Code (repository root) (+3 more)
 
 ### Community 460 - "code-build.md"
 Cohesion: 0.40
 Nodes (4): Inputs, Pen reference work, Time budget, Work
 
+### Community 461 - "improvements.py"
+Cohesion: 0.17
+Nodes (11): _acquire_backlog_lock(), add(), AddError, claim(), ClaimError, export(), list_backlogs(), _write_atomic() (+3 more)
+
+### Community 462 - "Framework: Next.js"
+Cohesion: 0.20
+Nodes (9): Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Framework: Next.js, Tokens (+1 more)
+
 ### Community 464 - "CONTEXT.md Format"
 Cohesion: 0.40
 Nodes (4): CONTEXT.md Format, Rules, Single vs multi-context repos, Structure
 
-### Community 466 - "Region map"
-Cohesion: 0.40
+### Community 465 - "/graphify"
+Cohesion: 0.20
+Nodes (9): For /graphify add and --watch, For /graphify query, For the commit hook and native AGENTS.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Usage (+1 more)
+
+### Community 466 - ".image"
+Cohesion: 0.20
 Nodes (4): Containment, Painted material, Region map, What varies independently
+
+### Community 467 - "Tasks: Post-Run Retro for Self-Improvement"
+Cohesion: 0.20
+Nodes (9): Dependencies, Format: `[ID] [P?] [Story] Description`, Implementation strategy, Parallel example, Phase 1: Setup, Phase 4: User Story 2 - Candidates stay few and non-duplicated (P2), Phase 5: User Story 3 - Retro never blocks a finished run (P2), Phase 6: Polish (+1 more)
 
 ### Community 468 - "Impeccable Documenter"
 Cohesion: 0.40
@@ -2389,9 +2443,13 @@ Nodes (4): Impeccable Documenter, Input Contract, Output Contract, Workflow
 Cohesion: 0.40
 Nodes (4): Containment, Painted material, Region map, What varies independently
 
-### Community 471 - "Impeccable Documenter"
-Cohesion: 0.40
-Nodes (4): Impeccable Documenter, Input Contract, Output Contract, Workflow
+### Community 470 - "Framework: HTML/JS/CSS"
+Cohesion: 0.22
+Nodes (8): Assets, Audit, Build and smoke, Capture, Companion, Conventions and defaults, Framework: HTML/JS/CSS, Tokens
+
+### Community 471 - "Mode: implement"
+Cohesion: 0.22
+Nodes (8): 1. Discover, 2. Survey once, 3. Plan and map, 4. Implement batches, 5. Validate, Branches, Mode: implement, Report
 
 ### Community 472 - "Region map"
 Cohesion: 0.40
@@ -2429,6 +2487,10 @@ Nodes (4): Existing home policy, Meaningful expected roles in a clean checkout, 
 Cohesion: 0.40
 Nodes (4): Alternatives considered, Brief: agent time budget, session issue backlog, benchmark, Chosen direction, Grill decisions
 
+### Community 481 - "Operate mode depth (and Read notes)"
+Cohesion: 0.22
+Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
+
 ### Community 483 - "Fixture repository for the factory's golden run"
 Cohesion: 0.50
 Nodes (3): Contents, Fixture repository for the factory's golden run, Init (per golden run — always start from a fresh clone of this folder)
@@ -2456,10 +2518,6 @@ Nodes (3): Capability notes for this harness, Checklist, Golden run: zcode
 ### Community 489 - "fixer.md"
 Cohesion: 0.50
 Nodes (3): Inputs, Time budget, Work
-
-### Community 490 - "ui-designer.md"
-Cohesion: 0.50
-Nodes (3): Inputs, Time budget and resume, Work
 
 ### Community 491 - "start-observer.sh"
 Cohesion: 0.83
@@ -2561,6 +2619,10 @@ Nodes (3): GLOSSARY.md Format, Rules, Structure
 Cohesion: 0.50
 Nodes (3): File format, What is a fragment, Writing rhythm
 
+### Community 518 - "Entities"
+Cohesion: 0.22
+Nodes (9): Benchmark score, Data model: agent time budget, session issue backlog, benchmark, Entities, Improvement backlog, Overrun report, Partial return, Session issue, State schema change (v5) (+1 more)
+
 ### Community 536 - "andonStateRef"
 Cohesion: 0.67
 Nodes (3): description, type, andonStateRef
@@ -2597,25 +2659,157 @@ Nodes (3): default, type, note
 Cohesion: 0.67
 Nodes (3): type, enum, type
 
+### Community 564 - "qa-html/check.py"
+Cohesion: 0.07
+Nodes (27): Anchors, Assets, Audit, Base, Effects, Harness, Layout, Playwright (+19 more)
+
+### Community 606 - "Specification Analysis Report — pass 2"
+Cohesion: 0.22
+Nodes (8): Constitution Alignment Issues, Coverage Summary Table, Metrics, Next Actions, Seams and test precedence (factory override), Specification Analysis Report — pass 2, Unmapped Tasks, Word budgets (factory override)
+
+### Community 607 - "Tasks: Agent time budget, session issue backlog, benchmark"
+Cohesion: 0.22
+Nodes (9): Dependencies & Execution Order, Implementation Strategy, Parallel Opportunities, Phase 1: Setup, Phase 2: Foundational (Blocking Prerequisites), Phase 3: User Story 1 - Every spawned agent works inside a time budget (Priority: P1) 🎯 MVP, Phase 5: User Story 3 - The improvement backlog exists only after its run is over (Priority: P2), Phase 7: Polish & Cross-Cutting Concerns (+1 more)
+
+### Community 609 - "Android platform"
+Cohesion: 0.25
+Nodes (8): Android platform, Color & theming, Components & motion, Layout & structure, The Android slop test, Touch targets, Typography, Verifying the build
+
+### Community 611 - "Changelog"
+Cohesion: 0.29
+Nodes (6): 1.0.0 — 2026-10-31, 1.1.0 — 2026-10-31, 1.2.0 — 2026-10-31, 1.2.1 — 2026-10-31, 1.3.0 — 2026-10-31, Changelog
+
+### Community 612 - "Mode: qa"
+Cohesion: 0.29
+Nodes (6): Iteration, Mode: qa, Report, Scope, Setup (once per session), Thresholds (WCAG 2.2)
+
+### Community 613 - "Capture contract"
+Cohesion: 0.29
+Nodes (6): Backends, Capture contract, Command, Determinism, Outputs, Pass rule
+
+### Community 614 - "bounds-diff.py"
+Cohesion: 0.52
+Nodes (5): anchor_path(), fail(), load(), main(), root_relative()
+
+### Community 615 - "map-coverage.py"
+Cohesion: 0.38
+Nodes (3): code_anchor(), current_anchor(), main()
+
+### Community 616 - "map-revision.py"
+Cohesion: 0.43
+Nodes (4): anchor_file(), app_files(), main(), mapped_files()
+
+### Community 617 - "Design to Code"
+Cohesion: 0.29
+Nodes (6): 1. Pick the mode, 2. Pick the framework, 3. Shared rules, Design to Code, Helpers, Report
+
+### Community 618 - "Skill integration and precedence"
+Cohesion: 0.29
+Nodes (6): Bounded application, Companion references, Lookup, Precedence, Required vs conditional, Skill integration and precedence
+
+### Community 619 - "Generate Report"
+Cohesion: 0.29
+Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings
+
+### Community 620 - "Quickstart: validation scenarios"
+Cohesion: 0.29
+Nodes (7): 1. Automated suite (the gate), 2. Build gate (constitution III), 3. Budget and issue recording by hand, 4. Backlog gate by hand, Prerequisites, Quickstart: validation scenarios, Reference
+
+### Community 621 - "Design-code map (version 3)"
+Cohesion: 0.33
+Nodes (5): Design-code map (version 3), Migration, Records, Resume, Validation record
+
+### Community 622 - "Source: pen.dev"
+Cohesion: 0.33
+Nodes (5): Access, API excerpt, Design edits, Source: pen.dev, Survey (once per manifest)
+
+### Community 623 - "Diagnostic Scan"
+Cohesion: 0.33
+Nodes (6): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Diagnostic Scan
+
+### Community 624 - "/impeccable hooks"
+Cohesion: 0.33
+Nodes (6): Constraints, Failure modes, Flow, /impeccable hooks, Routing, Triage findings
+
+### Community 625 - "Diagnostic Scan"
+Cohesion: 0.33
+Nodes (6): 1. Accessibility (VoiceOver / TalkBack), 2. Performance, 3. Appearance & Theming, 4. Platform Conformance (CRITICAL), 5. Adaptivity, Diagnostic Scan
+
+### Community 626 - "Design to Code"
+Cohesion: 0.40
+Nodes (4): Design to Code, Inputs (factory run), Time budget and resume, Work (factory run)
+
+### Community 627 - "map-migrate.py"
+Cohesion: 0.60
+Nodes (3): main(), migrate(), rename_anchor()
+
+### Community 628 - "pen-read.py"
+Cohesion: 0.60
+Nodes (3): expand(), main(), parse()
+
+### Community 629 - "discover_projects"
+Cohesion: 0.40
+Nodes (3): discover_projects(), collect(), marker_kind()
+
+### Community 630 - "Adaptation Strategies"
+Cohesion: 0.40
+Nodes (5): Adaptation Strategies, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app)
+
+### Community 631 - "Impeccable Documenter"
+Cohesion: 0.40
+Nodes (4): Impeccable Documenter, Input Contract, Output Contract, Workflow
+
+### Community 632 - "Adaptation Strategies"
+Cohesion: 0.40
+Nodes (5): Adaptation Strategies, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app)
+
+### Community 633 - "visual/package.json"
+Cohesion: 0.50
+Nodes (3): description, name, private
+
+### Community 635 - "Persuade and Experience"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Persuade and Experience
+
+### Community 636 - "Read"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Read
+
+### Community 637 - "Operate"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Operate
+
+### Community 638 - "Persuade and Experience"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Persuade and Experience
+
+### Community 639 - "Read"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Read
+
+### Community 640 - "Operate"
+Cohesion: 0.50
+Nodes (3): Comps, Directions, Operate
+
 ## Knowledge Gaps
-- **3899 isolated node(s):** `git-common.sh script`, `common.sh script`, `TRIGGERS`, `TRIGGERS`, `crypto` (+3894 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4696 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **109 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **4026 isolated node(s):** `git-common.sh script`, `common.sh script`, `args`, `playwright`, `name` (+4021 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4901 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **113 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `event()` connect `verify` to `impeccable/reference/live.md`, `impeccable-agents/reference/live.md`, `ref_bun_test`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
-- **Why does `verify()` connect `verify` to `Software Factory`, `Impeccable Asset Producer`, `Tasks: Factory Run Reliability`, `greet`, `Planner`, `.history`, `Spawning tasks`, `Specification Analysis Report — pass 1`, `base`, `pathlib`, `Software Factory: Design`, `Implementation Plan: Factory Run Reliability`, `Specification Analysis Report — pass 2`, `state.py`, `Quickstart: validating the stabilised factory`, `agent-factory`, `Agent Factory — product brief and stability plan`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Why does `Schema` connect `verify` to `run`, `.history`, `github.ts`, `base`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Why does `event()` connect `Entities` to `plan`, `ref_bun_test`, `impeccable-agents/reference/live.md`, `impeccable-opencode/reference/live.md`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
+- **Why does `verify()` connect `verify` to `greet`, `pathlib`, `plan`, `Software Factory: Design`, `state.py`, `Quickstart: validating the stabilised factory`, `Software Factory`, `.history`, `Spawning tasks`, `base`, `Implementation Plan: Factory Run Reliability`, `Entities`, `Specification Analysis Report — pass 1`, `agent-factory`, `Impeccable Asset Producer`, `Impeccable Asset Producer`, `Impeccable Asset Producer`, `Planner`, `Tasks: Factory Run Reliability`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `Sandbox` (e.g. with `Technical Context` and `Phase 1: Setup`) actually correct?**
   _`Sandbox` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `State CLI (v4)` and `R1. Where the state writer lives`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `git-common.sh script`, `common.sh script`, `TRIGGERS` to the rest of the system?**
-  _3899 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `git-common.sh script`, `common.sh script`, `args` to the rest of the system?**
+  _4026 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `impeccable-agents/scripts/live-browser.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.025943396226415096 - nodes in this community are weakly interconnected._
+- **Should `impeccable-opencode/scripts/live-browser.js` be split into smaller, more focused modules?**
   _Cohesion score 0.025943396226415096 - nodes in this community are weakly interconnected._
