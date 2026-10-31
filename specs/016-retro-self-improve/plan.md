@@ -134,7 +134,7 @@ Exempt: `core/roles/retro.md` prose (signal mining instructions) - role prompt d
 
 Test runner: existing `unittest` suite; no new runner.
 
-Seam confirmation: pending (Q1).
+Confirmed: 2026-10-31 - plan-Q1 accepted - seams: S1 improvements add (failure paths: malformed candidate dropped; covered-by-other-run skipped; over-cap dropped counting own-run entries; claimed own-run not overwritten; non-pr-open refused; unparseable --from refused; lock-wait refused; unwritable dir exit 1 no debris); S2 none; S3 ledger-add/issue-add pr-open (non-retro refused; retro on aborted refused); S4 render none
 
 ## Complexity Tracking
 
