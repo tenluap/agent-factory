@@ -10,10 +10,11 @@ import json
 import os
 import re
 import subprocess
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import state, totals
+from factory_cli import lock, state, totals
 
 FACTORY_DIR = Path(__file__).resolve().parents[2]
 
@@ -61,7 +62,19 @@ def add(home, run_state, candidates, now=None):
     """Write retro candidates and preserve completed writes on I/O failure."""
     directory = Path(home) / "improvements"
     result = {"written": [], "skipped": [], "dropped": []}
+    acquired = False
     try:
+        deadline = time.monotonic() + 5
+        while True:
+            try:
+                lock.acquire(directory, harness="improvements")
+                acquired = True
+                break
+            except lock.LockHeld:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise
+                time.sleep(min(0.1, remaining))
         directory.mkdir(parents=True, exist_ok=True)
         for candidate in candidates:
             key = candidate.get("signal_key", "") if isinstance(candidate, dict) else ""
@@ -92,8 +105,11 @@ def add(home, run_state, candidates, now=None):
             path = directory / f"{name}.json"
             _write_atomic(path, body)
             result["written"].append(name)
-    except OSError as e:
+    except (OSError, lock.LockHeld) as e:
         raise AddError(e, result) from e
+    finally:
+        if acquired:
+            lock.release(directory)
     return result
 
 

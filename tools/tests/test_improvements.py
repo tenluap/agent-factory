@@ -8,6 +8,7 @@ never exists before its run ends, and a zero-issue run exports too.
 import json
 import re
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -232,6 +233,35 @@ class RetroAddTests(unittest.TestCase):
         again = self.invoke()
         self.assertEqual(again.returncode, 0, again.stderr)
         self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 1)
+
+    def test_add_waits_for_home_lock_then_reports_holder(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        lock_path = self.box.home / "improvements.lock.json"
+        lock_path.write_text(
+            json.dumps(
+                {
+                    "owner_pid": 12345,
+                    "host": "other-host",
+                    "harness": "holder",
+                    "at": "now",
+                }
+            )
+        )
+        before = set(self.directory.iterdir())
+        started = time.monotonic()
+        out = self.invoke()
+        elapsed = time.monotonic() - started
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("holder", out.stderr)
+        self.assertGreaterEqual(elapsed, 4.5)
+        self.assertLess(elapsed, 7)
+        self.assertEqual(set(self.directory.iterdir()), before)
+        listed = self.box.cli("improvements")
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        self.assertNotIn("improvements.lock", listed.stdout)
 
     def test_add_refuses_non_ended_run(self):
         out = self.invoke()

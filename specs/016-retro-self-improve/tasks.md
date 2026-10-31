@@ -55,7 +55,7 @@ No setup. The repository already has the `unittest` runner and `tools/tests.Sand
   2. Implement: extract `_write_atomic(path, body)` (temp file plus `os.replace`, temp removed on failure) in `improvements.py`; make `export` and `claim` use it. Add `add(home, run_state, candidates, now=None)` and `cmd_improvements_add(repo, from_path, run)`: resolve the run by `--run`, refuse unless `pr-open`, read the block with `checks.extract_block`, write entries, report `OSError` with exit 1 while reporting entries already written. Wire `improvements add --from <file> --run <branch>` usage and arguments in `cli.py`.
   3. Run the test command and the build command; existing `export`/`claim` tests still pass.
   Red proof: `Red: <new S1 test name> failed as expected`. Done when the S1 base tests pass and Run export files are byte-shape unchanged.
-- [ ] T006 [US1] Serialise writers with the home-level lock (seam S1, lock path). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T005.
+- [x] T006 [US1] Serialise writers with the home-level lock (seam S1, lock path). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T005.
   1. Failing test: hold `<home>/improvements.lock.json` with another holder; `improvements add` retries for at most 5 s, then exits 1 naming the holder and writes nothing. Assert the lock file is not listed by `factory improvements`. Observe red.
   2. Implement: wrap the scan and writes of `add` in `lock.acquire(<home>/improvements, ...)` with a bounded 5 s wait; release in `finally`.
   3. Run the test command; pass.
