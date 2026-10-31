@@ -76,14 +76,42 @@ def add(home, run_state, candidates, now=None):
                     raise
                 time.sleep(min(0.1, remaining))
         directory.mkdir(parents=True, exist_ok=True)
+        seen = set()
         for candidate in candidates:
             key = candidate.get("signal_key", "") if isinstance(candidate, dict) else ""
-            # Never derive a path from an unsafe key, even before full validation.
             if not isinstance(key, str) or not re.fullmatch(
-                r"[a-z0-9-]+:[a-z0-9][a-z0-9-]{0,63}", key
+                r"(?:analyze-escalation|fixer-recurring|judge-rejection|in-est-outlier|halt-cluster):[a-z0-9][a-z0-9-]{0,63}",
+                key,
             ):
                 result["dropped"].append({"signal_key": key, "reason": "invalid key"})
                 continue
+            evidence = candidate.get("evidence")
+            feature = candidate.get("suggested_feature")
+            rank = candidate.get("rank")
+            if (
+                not isinstance(evidence, str)
+                or not evidence.strip()
+                or len(evidence) > 2000
+            ):
+                reason = "invalid evidence"
+            elif (
+                not isinstance(feature, str)
+                or not feature.strip()
+                or len(feature) > 500
+                or feature.splitlines() != [feature]
+            ):
+                reason = "invalid suggested_feature"
+            elif not isinstance(rank, int) or isinstance(rank, bool) or rank <= 0:
+                reason = "invalid rank"
+            else:
+                reason = None
+            if reason:
+                result["dropped"].append({"signal_key": key, "reason": reason})
+                continue
+            if key in seen:
+                result["skipped"].append({"signal_key": key, "reason": "duplicate"})
+                continue
+            seen.add(key)
             name = (
                 backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
                 + ".retro."

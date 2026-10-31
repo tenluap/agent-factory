@@ -287,6 +287,36 @@ class RetroAddTests(unittest.TestCase):
         self.assertEqual(claimed.returncode, 0, claimed.stderr)
         self.assertEqual(json.loads(claimed.stdout)["status"], "claimed")
 
+    def test_add_drops_malformed_candidates_and_skips_batch_duplicates(self):
+        ended = self.box.cli(
+            "set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=self.wt
+        )
+        self.assertEqual(ended.returncode, 0, ended.stderr)
+        invalid = [
+            {"signal_key": "unknown:thing"},
+            {"signal_key": "halt-cluster:../bad"},
+            {"evidence": ""},
+            {"evidence": "x" * 2001},
+            {"suggested_feature": ""},
+            {"suggested_feature": "two\nlines"},
+            {"suggested_feature": "x" * 501},
+            {"rank": 0},
+            {"rank": True},
+        ]
+        candidates = [dict(self.candidate, **change) for change in invalid]
+        candidates += [self.candidate, self.candidate]
+        Path(self.source).write_text(
+            "```json\n" + json.dumps({"retro": {"candidates": candidates}}) + "\n```\n"
+        )
+        out = self.invoke()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        result = json.loads(out.stdout)
+        self.assertEqual(len(result["dropped"]), len(invalid))
+        self.assertTrue(all(item.get("reason") for item in result["dropped"]))
+        self.assertEqual(len(result["written"]), 1)
+        self.assertEqual(len(result["skipped"]), 1)
+        self.assertEqual(len(list(self.directory.glob("*.retro.*.json"))), 1)
+
     def test_add_refuses_non_ended_run(self):
         out = self.invoke()
         self.assertEqual(out.returncode, 1, out.stderr)

@@ -82,7 +82,7 @@ No setup. The repository already has the `unittest` runner and `tools/tests.Sand
 
 **Independent test**: Seed a `ready` Retro entry for key X from another run; add candidates X, Y, Z, W; confirm X is `skipped` and at most 3 entries exist for the run.
 
-- [ ] T010 [US2] Validate candidates in `add` (seam S1, malformed path). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T006.
+- [x] T010 [US2] Validate candidates in `add` (seam S1, malformed path). Files: `core/skills/factory/bin/factory_cli/improvements.py`, `tools/tests/test_improvements.py`. Depends on T006.
   1. Failing tests. Failure paths: a candidate is `dropped` with a reason when its key breaks the grammar (kind outside the five, subject not `[a-z0-9][a-z0-9-]{0,63}`), its `evidence` is empty or over 2000 chars, its `suggested_feature` is empty, multi-line or over 500 chars, or its `rank` is not a positive int; valid candidates in the same batch are still written. A second candidate with the same key in one batch is `skipped`. No file name comes from unvalidated input. Observe red.
   2. Implement validation before any write.
   3. Run the test command; pass.
