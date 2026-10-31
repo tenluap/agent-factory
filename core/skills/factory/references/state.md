@@ -109,6 +109,31 @@ The pending file uses this same schema from the moment the run is created: `star
 - Paths inside `analyze` are relative to `spec_dir`. Timestamps are ISO-8601 UTC and never decrease within a record (FR-004).
 - `analyze.result`: latest recorded report, non-negative `critical`/`high`/`medium`/`low` counts and writer-stamped `at`. `analyze-record <envelope>` accepts completed analyze envelopes (bare JSON or final fenced JSON), verifies the report exists inside this run's spec directory, normalizes its path, appends it once to `reports`, and preserves pending clarification questions. Record the outcome before checkpointing into implementation; CRITICAL/HIGH counts still block that transition unless explicitly overridden.
 
+## Stack profile (additive, spec 017)
+
+Preflight records `profile` (detection never halts: an unknown or mixed stack is disclosed in `notes`/`unknown_markers`, and an empty profile means no known stack was found):
+
+```json
+"profile": {
+  "languages":   [{ "name": "csharp", "version": "net9.0", "evidence": ["src/App/App.csproj"] }],
+  "frameworks":  [{ "name": "avalonia", "version": "11.2.0", "evidence": ["src/App/App.csproj"] }],
+  "package_managers": [
+    { "name": "dotnet", "primary": true,  "evidence": ["src/App"], "lockfiles": [] },
+    { "name": "npm",    "primary": false, "evidence": ["web"],    "lockfiles": ["web/package-lock.json"] }
+  ],
+  "ui": true,
+  "monorepo": false,
+  "projects": ["src/App/App.csproj"],
+  "commands": { "build": { "value": "dotnet build", "source": "detected", "manager": "dotnet" } },
+  "unknown_markers": [],
+  "notes": [],
+  "detected_at": "2026-10-31T12:00:00Z",
+  "detected_by": "factory detect 017"
+}
+```
+
+Each language/framework entry carries its evidence path(s) and best-effort version from marker files (no subprocess, no network). `package_managers` holds every distinct manager in a mixed repo; exactly one is `primary` (root-level evidence wins, ties break toward most evidence, a mixed root is disclosed in `notes`). Detected commands carry the `manager` they belong to. This field is optional like `design`: older states without it remain valid and behave as before. The CLI light-validates presence/types (`detect.validate_profile`); unknown extra fields pass through. The human-readable rendering lives in `profile.md` (pending runs: beside the pending file; worktree runs: `<spec_dir>/factory/profile.md`, committed). On resume, preflight re-records; a changed stack is disclosed in the record result — the approved spec/plan still govern the work.
+
 ## Pen design context (additive)
 
 When a run creates, references, or updates a Pen implementation reference, add `design` as defined in [design-code-mapping.md](design-code-mapping.md). It holds only `mode`, context/map/evidence paths, and status; source/node inventory belongs in the canonical map, and detailed checks/decisions in the referenced artifacts. `commands` may add discovered launch/capture commands; the context records their target/configuration. Design-only runs record reasons for any non-applicable application commands/gates rather than inventing an application prerequisite.
@@ -147,7 +172,7 @@ The commit that carries a `history` entry is the entry's commit: `git log --grep
 - `python3 <F>/bin/factory improvements add --from <file> --run <branch>`: validate and persist retro candidates for a `pr-open` run.
 - `python3 <F>/bin/factory drop [--repo <path>]`: from the run worktree, archive a `pr-open` run and commit removal of its folder; never pushes. Success JSON contains `dropped`, absolute `archive`, `design` (permanent `docs/design/<branch>` path or null), short `commit`, `pr_url`, `totals_sentence` (null without a start time), and `dropped_at`. Design evidence moves to the permanent path and canonical map references are rewritten in the same commit. Refuses with exit 1 and a reason on stderr for no matching run, other status, live lock, existing archive or design target, copy or verification failure, or git failure; git failure restores touched paths and removes the archive. Usage errors exit 5.
 
-Write commands (each stamps its own time, validates before writing, writes atomically, refuses under a live lock, and commits on worktree runs): `checkpoint <stage> [--next <stage>]` ("Checkpoint"), `ledger-add <stage> <role> [--started-at <iso>] [--ended-at <iso>] [--in-est N] [--out-est N] [--reported '<json>'] [--overrun '<json>'] [--partial-return]` (the overrun self-report `{ "cause", "detail" }` wins over detection; a duration over the role's budget yields cause `unreported`; an overrun both self-reported and detected is recorded exactly once; `--partial-return` marks a `partial` return's stop), `issue-add <kind> <stage> <role> --detail <text> --duration-ms <n> [--cause <cause>] [--commit <sha>] [--partial-return]` (appends one `issues[]` record; `--cause` required for `overrun`; the mark accepted only for `overrun`/`retry` of the file-writing roles `spec-builder`, `code-build`, `ui-designer`, `fixer`; a marked record's result carries the stall rule `stalls` with `halt: true` at three), `wait-open <kind> <stage> <summary>` (prints `wait-id`), `wait-close <wait-id>`, `answer <qid> '<answer>' [--auto] [--stage <stage>]`, `set-status <status> [--halt-reason <text>] [--pr-url <url>]` (`halted` records a `halt` issue with the reason as detail), `decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]`, `verify --pass|--fail --commands '<json>'` (writes the verify pair the review gate reads; `--fail` records a `verify-fail` issue with the failing commands as detail), `rebind <run> --worktree <path>` (rewrites a moved run's stored paths, FR-012), and `resume <branch-or-name>` (records the `resumed` entry, then prints the digest). Also on the surface: `envelope check <file>` (FR-007), `lock take <run> [--force]` (FR-005), and `prune [--dry-run|--delete]` (FR-019).
+Write commands (each stamps its own time, validates before writing, writes atomically, refuses under a live lock, and commits on worktree runs): `checkpoint <stage> [--next <stage>]` ("Checkpoint"), `profile-record` ("Stack profile": detects the repo and records `profile` into the one writable run, writes `profile.md`, discloses a changed stack on re-record), `ledger-add <stage> <role> [--started-at <iso>] [--ended-at <iso>] [--in-est N] [--out-est N] [--reported '<json>'] [--overrun '<json>'] [--partial-return]` (the overrun self-report `{ "cause", "detail" }` wins over detection; a duration over the role's budget yields cause `unreported`; an overrun both self-reported and detected is recorded exactly once; `--partial-return` marks a `partial` return's stop), `issue-add <kind> <stage> <role> --detail <text> --duration-ms <n> [--cause <cause>] [--commit <sha>] [--partial-return]` (appends one `issues[]` record; `--cause` required for `overrun`; the mark accepted only for `overrun`/`retry` of the file-writing roles `spec-builder`, `code-build`, `ui-designer`, `fixer`; a marked record's result carries the stall rule `stalls` with `halt: true` at three), `wait-open <kind> <stage> <summary>` (prints `wait-id`), `wait-close <wait-id>`, `answer <qid> '<answer>' [--auto] [--stage <stage>]`, `set-status <status> [--halt-reason <text>] [--pr-url <url>]` (`halted` records a `halt` issue with the reason as detail), `decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]`, `verify --pass|--fail --commands '<json>'` (writes the verify pair the review gate reads; `--fail` records a `verify-fail` issue with the failing commands as detail), `rebind <run> --worktree <path>` (rewrites a moved run's stored paths, FR-012), and `resume <branch-or-name>` (records the `resumed` entry, then prints the digest). Also on the surface: `detect [--repo <path>]` (read-only profile JSON, "Stack profile"), `envelope check <file>` (FR-007), `lock take <run> [--force]` (FR-005), and `prune [--dry-run|--delete]` (FR-019).
 
 On a `pr-open` run only `ledger-add` and `issue-add` with stage `retro` may write; every other write to an ended run and every write to an `aborted` run is refused.
 
