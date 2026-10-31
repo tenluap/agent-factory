@@ -107,8 +107,8 @@
       "kind": "questions",
       "stage": "grill-with-docs",
       "summary": "Q2: deterministic improvements add writer vs hand-written backlog files (reopens settled no-new-CLI decision)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-10-31T01:09:56.056531Z",
+      "latency_ms": 8985267
     }
   ],
   "decisions": [
