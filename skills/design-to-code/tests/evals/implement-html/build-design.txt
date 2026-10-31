@@ -1,0 +1,5 @@
+execute({ input: 'SetVariables({primary:{type:"color",value:"#1A56DB"},surface:{type:"color",value:"#F3F4F6"}})' })
+execute({ input: 'card=Insert(document,{type:"frame",name:"Card",reusable:true,x:480,y:0,width:312,height:80,layout:"horizontal",padding:16,gap:12,alignItems:"center",fill:"#FFFFFF",cornerRadius:12,effect:{type:"shadow",shadowType:"outer",offset:{x:0,y:4},blur:12,color:"#0000001F"}});Insert(card,{type:"rectangle",name:"Swatch",width:48,height:48,fill:"$primary",cornerRadius:8});Insert(card,{type:"rectangle",name:"Bar",width:"fill_container",height:12,fill:"#D1D5DB",cornerRadius:6});Print(card)' })
+execute({ input: 'screen=Insert(document,{type:"frame",name:"Screen",x:0,y:0,width:360,height:224,layout:"vertical",padding:24,gap:16,fill:"$surface"});Insert(screen,{type:"ref",ref:card,name:"Card 1"});c2=Insert(screen,{type:"ref",ref:card,name:"Card 2"});bar=Get(card,n=>n.name==="Bar"?n.id:undefined)[0];Update(c2+"/"+bar,{fill:"#9CA3AF"});Print("SCREEN",screen)' })
+save()
+exit()

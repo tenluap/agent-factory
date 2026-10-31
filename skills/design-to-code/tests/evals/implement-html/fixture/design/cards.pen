@@ -1,0 +1,93 @@
+{
+  "version": "2.21",
+  "children": [
+    {
+      "type": "frame",
+      "id": "wYD2U",
+      "x": 480,
+      "y": 0,
+      "name": "Card",
+      "reusable": true,
+      "width": 312,
+      "height": 80,
+      "fill": "#FFFFFF",
+      "cornerRadius": 12,
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#0000001F",
+        "offset": {
+          "x": 0,
+          "y": 4
+        },
+        "blur": 12
+      },
+      "gap": 12,
+      "padding": 16,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "yPV1R",
+          "name": "Swatch",
+          "fill": "$primary",
+          "width": 48,
+          "height": 48
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 6,
+          "id": "USQ2q",
+          "name": "Bar",
+          "fill": "#D1D5DB",
+          "width": "fill_container",
+          "height": 12
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dqvK9",
+      "x": 0,
+      "y": 0,
+      "name": "Screen",
+      "width": 360,
+      "height": 224,
+      "fill": "$surface",
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "id": "lFtWf",
+          "type": "ref",
+          "ref": "wYD2U",
+          "name": "Card 1"
+        },
+        {
+          "id": "js4Uw",
+          "type": "ref",
+          "ref": "wYD2U",
+          "name": "Card 2",
+          "descendants": {
+            "USQ2q": {
+              "fill": "#9CA3AF"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "primary": {
+      "type": "color",
+      "value": "#1A56DB"
+    },
+    "surface": {
+      "type": "color",
+      "value": "#F3F4F6"
+    }
+  },
+  "fileToken": "c7ac48c2-c1a1-4864-91d0-fafecc262680"
+}

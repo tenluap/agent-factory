@@ -28,7 +28,45 @@ def frontmatter(text):
     m = re.match(r"---\n(.*?)\n---\n", text, re.S)
     if not m:
         raise SystemExit("missing frontmatter")
-    meta = dict(line.split(": ", 1) for line in m.group(1).splitlines())
+    meta = {}
+    block = m.group(1)
+    lines = block.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if line.startswith("  "):  # continuation of a block value
+            raise SystemExit(f"frontmatter: unexpected continuation line: {line!r}")
+        key, colon, value = line.partition(":")
+        if not colon:
+            raise SystemExit(f"frontmatter: expected 'key: value', got: {line!r}")
+        stripped = value.strip()
+        if stripped in ("", "|", ">"):  # block list or literal: collect indented lines
+            items = []
+            index += 1
+            while index < len(lines) and lines[index].startswith("  "):
+                items.append(lines[index].strip())
+                index += 1
+            if (
+                stripped == ""
+                and items
+                and all(item.startswith("- ") for item in items)
+            ):
+                values = [item[2:].strip() for item in items]
+                if all(
+                    value.startswith("{") and value.endswith("}") for value in values
+                ):
+                    import json
+
+                    meta[key] = [json.loads(value) for value in values]
+                else:
+                    meta[key] = values
+            elif items:
+                raise SystemExit(f"frontmatter: unsupported block for '{key}'")
+            else:
+                raise SystemExit(f"frontmatter: '{key}' has no value")
+            continue
+        meta[key] = stripped
+        index += 1
     return meta, text[m.end() :]
 
 
@@ -92,6 +130,31 @@ def agent_fields(adapter, meta, values, models=None):
     fields += [(k, v) for k, v in adapter.get("extra", {}).items() if k not in mode]
     fields += list(mode.items())
     fields += list(adapter["access"][meta["access"]].items())
+    # A role's optional `permissions` passthrough (approval prompts a harness
+    # can enforce, e.g. OpenCode's shell rules) merges into one field after
+    # the access rules. Frontmatter rules are JSON objects
+    # ({"action": "shell", "resource": "*npm install*", "effect": "ask"}).
+    # Adapters that cannot express them (tools lists, TOML string fields)
+    # drop them: permissions are advisory where a harness can carry them,
+    # and one role must not break every harness's render.
+    rules = []
+    for rule in meta.get("permissions", []):
+        if not isinstance(rule, dict):
+            raise SystemExit(f"role '{meta['name']}': bad permission rule {rule!r}")
+        effect = rule.get("effect", "ask")
+        if (
+            not isinstance(rule.get("action"), str)
+            or not isinstance(rule.get("resource"), str)
+            or effect not in ("ask", "deny", "allow")
+        ):
+            raise SystemExit(f"role '{meta['name']}': bad permission rule {rule!r}")
+        rules.append(
+            {"action": rule["action"], "resource": rule["resource"], "effect": effect}
+        )
+    if rules and any("permissions" in access for access in adapter["access"].values()):
+        merged = list(next(v for k, v in fields if k == "permissions"))
+        merged += rules
+        fields = [(k, merged if k == "permissions" else v) for k, v in fields]
     model = models.get(meta["tier"], "")
     if model:  # empty: the agent inherits the session's model
         fields.append(("model", model))

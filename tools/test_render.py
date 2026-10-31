@@ -62,7 +62,9 @@ class RenderHomeTests(unittest.TestCase):
                 agents = list((out / "agents").iterdir())
                 self.assertTrue(agents)
                 for agent in agents:
-                    self.assertIn(adapter["skill_dir"].format(home=home), agent.read_text())
+                    self.assertIn(
+                        adapter["skill_dir"].format(home=home), agent.read_text()
+                    )
 
 
 class RenderAgentTests(unittest.TestCase):
@@ -123,6 +125,16 @@ class RenderAgentTests(unittest.TestCase):
                     expected.insert(
                         0, {"action": "edit", "resource": "*", "effect": "deny"}
                     )
+                # A role's frontmatter `permissions` (JSON rules) merge after
+                # the access rules into the same field.
+                expected += [
+                    {
+                        "action": rule["action"],
+                        "resource": rule["resource"],
+                        "effect": rule.get("effect", "ask"),
+                    }
+                    for rule in meta.get("permissions", [])
+                ]
                 expected_mode = "all" if meta.get("mode") == "primary" else "subagent"
                 self.assertEqual(values["mode"], expected_mode)
                 self.assertEqual(values.get("permissions"), expected)
@@ -165,6 +177,12 @@ class RenderAgentTests(unittest.TestCase):
                     if meta["access"] in ("read", "research")
                     else ["subagent"]
                 )
+                # Frontmatter `permissions` rules append to the same field.
+                expected += [
+                    rule.get("action", "shell")
+                    for rule in meta.get("permissions", [])
+                    if isinstance(rule, dict)
+                ]
                 self.assertEqual(actions, expected)
             for name in render.known():
                 self.assertEqual(

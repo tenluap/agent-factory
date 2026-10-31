@@ -1,0 +1,32 @@
+{
+  "version": 3,
+  "framework": "html-js-css",
+  "commands": { "build": "", "test": "", "capture": "", "launch": "" },
+  "revisionFiles": ["styles.css"],
+  "targets": [
+    {
+      "designSource": { "file": "design/orbit.pen", "frameId": "home", "revision": "sha256:0000000000000000", "surveyedAt": "2026-10-30T09:00:00Z" },
+      "validation": [],
+      "components": [
+        {
+          "designId": "home",
+          "designName": "Home",
+          "kind": "frame",
+          "code": { "file": "index.html", "symbol": "body", "anchor": "Home" },
+          "instanceIds": [],
+          "instanceCount": 1,
+          "overrides": [],
+          "tokens": [],
+          "dependencies": ["styles.css"],
+          "status": "implemented"
+        }
+      ],
+      "instances": [],
+      "nodeMap": [
+        { "designId": "muted", "parentDesignId": "home", "coveredBy": "muted", "codeAnchor": { "file": "styles.css", "symbol": ".muted", "anchor": "Home/Muted" }, "status": "implemented" }
+      ],
+      "unmappedDesignNodes": [],
+      "orphanedCode": []
+    }
+  ]
+}

@@ -13,7 +13,7 @@ The agent session running the `/factory` skill: it owns the run's state, spawns 
 _Avoid_: driver, coordinator, main agent
 
 **Role**:
-A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, ui-designer, fixer, reviewers, judge). `facets-advisor` is the one role the user starts directly as a main agent instead.
+A prompt the orchestrator spawns an agent from, named by its job (spec-builder, code-build, design-to-code, fixer, reviewers, judge). `facets-advisor` and `design-to-code` are the roles the user can also start directly as main agents.
 _Avoid_: agent type, persona, worker
 
 **Stage**:
@@ -183,11 +183,11 @@ _Avoid_: UI flag, frontend change
 ## UI design
 
 **UI design run**:
-A factory run whose saved design context records a design source and a UI scope; its UI design tasks are implemented by the `ui-designer` role instead of `code-build`.
+A factory run whose saved design context records a design source and a UI scope; its UI design tasks are implemented by the `design-to-code` role instead of `code-build`.
 _Avoid_: design mode, Pen run, UI run
 
 **UI design task**:
-A task the tasks stage marks `[UI]`, routed to `ui-designer` by that marker alone.
+A task the tasks stage marks `[UI]`, routed to `design-to-code` by that marker alone.
 _Avoid_: design task, UI ticket
 
 **Design source**:
@@ -199,11 +199,11 @@ A design source classified at plan for a brief asking a purely visual change wit
 _Avoid_: restyle mode, visual tweak
 
 **Quality pass**:
-The single `ui-agent` pass (critique, audit, typeset, polish, re-verify) run once per UI design run by the spawn completing the last UI design task, over the whole changed UI surface.
+The single quality pass (critique, audit, typeset, polish, re-verify, the skill's fidelity-locked `qa` mode) run once per UI design run by the spawn completing the last UI design task, over the whole changed UI surface.
 _Avoid_: polish loop, UI review
 
 **Framework reference**:
-The per-framework guidance document `ui-designer` loads for the UI framework detected at plan; a framework without one is unsupported and stops the run.
+The per-framework guidance document `design-to-code` loads for the UI framework detected at plan; a framework without one is unsupported and stops the run.
 _Avoid_: framework adapter, framework plugin
 
 **UI scope**:

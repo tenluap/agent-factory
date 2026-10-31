@@ -236,10 +236,13 @@ class IssueValidationTests(unittest.TestCase):
         )
         self.assertIn("issues[0].partial_return", found)
 
-    def test_partial_return_accepted_for_ui_designer(self):
+    def test_partial_return_accepted_for_design_to_code(self):
         found = self.locations(
             lambda s: s["issues"][0].update(
-                kind="overrun", role="ui-designer", cause="other", partial_return=True
+                kind="overrun",
+                role="design-to-code",
+                cause="other",
+                partial_return=True,
             )
         )
         self.assertNotIn("issues[0].partial_return", found)

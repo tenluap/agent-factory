@@ -1,0 +1,56 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid #1a56db;
+  outline-offset: 2px;
+}
+
+.content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.muted {
+  color: #aaaaaa;
+  font-size: 16px;
+}

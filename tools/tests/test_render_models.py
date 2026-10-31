@@ -516,15 +516,15 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 self.assertIn("Edit", tools_line, meta["name"])
                 self.assertIn("Write", tools_line, meta["name"])
 
-    def test_ui_designer_renders_for_every_harness(self):
+    def test_design_to_code_renders_for_every_harness(self):
         import render as render_mod
 
-        role = REPO / "core/roles/ui-designer.md"
-        self.assertTrue(role.exists(), "ui-designer role missing")
+        role = REPO / "core/roles/design-to-code.md"
+        self.assertTrue(role.exists(), "design-to-code role missing")
         meta, _ = render_mod.frontmatter(role.read_text())
         self.assertEqual(
             (meta["name"], meta["tier"], meta["access"]),
-            ("ui-designer", "standard", "write"),
+            ("design-to-code", "standard", "write"),
         )
         for harness in HARNESSES:
             with self.subTest(harness=harness):
@@ -554,8 +554,31 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 if harness == "opencode":
                     self.assertNotIn('"action": "edit"', text)
 
-    def test_ui_designer_core_role_names_no_harness_tool(self):
-        text = (REPO / "core/roles/ui-designer.md").read_text()
+    def test_design_to_code_permissions_reach_only_supporting_adapters(self):
+        # The role's shell ask-rules merge into the one permissions field of
+        # adapters that express permissions (opencode), keeping the access
+        # rule (subagent deny); adapters without a permissions field
+        # (claude-code, zcode tools lists; codex TOML strings) drop them.
+        import render as render_mod
+
+        role = REPO / "core/roles/design-to-code.md"
+        meta, _ = render_mod.frontmatter(role.read_text())
+        self.assertIn("permissions", meta, "role must keep its ask-rule prompts")
+        render("opencode")
+        text = self.agent_path("opencode", meta).read_text()
+        self.assertEqual(text.count("permissions:"), 1, "one merged field")
+        self.assertIn('"action": "subagent"', text, "access rule kept")
+        self.assertIn('"resource": "*npm install*"', text, "role rule merged")
+        for harness in ("claude-code", "zcode", "codex"):
+            render(harness)
+            self.assertNotIn(
+                "npm install",
+                self.agent_path(harness, meta).read_text(),
+                harness,
+            )
+
+    def test_design_to_code_core_role_names_no_harness_tool(self):
+        text = (REPO / "core/roles/design-to-code.md").read_text()
         self.assertNotIn("adapters/", text)
         self.assertNotIn("dist/", text)
         for path in ADAPTERS.glob("*/adapter.json"):
@@ -572,11 +595,11 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                     pattern = rf"(?:`{re.escape(name)}`|\b{re.escape(name)} tool\b)"
                     self.assertNotRegex(text, pattern, (path, name))
 
-    def test_ui_designer_pen_source_is_cli_exclusive(self):
+    def test_design_to_code_pen_source_is_cli_exclusive(self):
         # FR-031: Pen source access goes through the pen CLI only; a harness
         # Pen MCP backend is never a fallback, and a missing CLI is an
         # honestly recorded unavailable gate, not an install trigger.
-        role = (REPO / "core/roles/ui-designer.md").read_text()
+        role = (REPO / "core/roles/design-to-code.md").read_text()
         self.assertIn("pen CLI", role)
         self.assertIn("pen interactive", role)
         self.assertIn("Never use a Pen MCP backend", role)

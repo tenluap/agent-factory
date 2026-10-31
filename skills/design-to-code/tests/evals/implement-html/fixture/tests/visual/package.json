@@ -1,0 +1,5 @@
+{
+  "name": "visual-tests",
+  "private": true,
+  "description": "Playwright host for design-to-code web-capture.mjs. The eval runner links node_modules."
+}

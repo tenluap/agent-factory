@@ -1,0 +1,7 @@
+dqvK9	frame	Screen	0	0	0	0	360	224		
+lFtWf	frame	Card 1	1	0	24	24	312	80		
+lFtWf/yPV1R	rectangle	Swatch	2	0	16	16	48	48		
+lFtWf/USQ2q	rectangle	Bar	2	1	76	34	220	12		
+js4Uw	frame	Card 2	1	1	24	120	312	80		
+js4Uw/yPV1R	rectangle	Swatch	2	0	16	16	48	48		
+js4Uw/USQ2q	rectangle	Bar	2	1	76	34	220	12		

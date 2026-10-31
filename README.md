@@ -104,7 +104,7 @@ manual fallback on other harnesses and reproducible comparison steps.
 - Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd` (the last two before any code-delivery work starts), in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
 - SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
 - Conditionally resolved skills, only when relevant: `brainstorming` when a run starts from an exploratory idea rather than a settled feature, and `impeccable` for UI reviews — the factory offers to install the latter the first time a run touches UI files.
-- `pen-design` when a run creates, references, or updates a Pen design intended as an implementation reference. Missing skill/backend inspection or rendering capabilities are reported explicitly; they are not installed or assumed automatically. The `ui-designer` role reaches a Pen source only through the pen CLI (`pen` commands, headless `pen interactive`, direct `.pen` reads), never a Pen MCP backend.
+- `pen-design` when a run creates, references, or updates a Pen design intended as an implementation reference. Missing skill/backend inspection or rendering capabilities are reported explicitly; they are not installed or assumed automatically. The `design-to-code` role reaches a Pen source only through the pen CLI (`pen` commands, headless `pen interactive`, direct `.pen` reads), never a Pen MCP backend.
 
 ### Pen design references
 
@@ -147,6 +147,6 @@ After pulling updates, rerun the same install command; it re-renders the selecte
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
 - `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`) list unfinished runs, build resume digests and report violations without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`) stamp, validate, write atomically and commit — state is never hand-edited. `envelope check`, `lock take` and `prune` complete the surface.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
-- `core/roles/`: eleven roles — spec-builder, code-build, ui-designer, five reviewers, review-judge, fixer, and facets-advisor (a main agent you start directly, outside the run) — with neutral `tier` and `access`.
+- `core/roles/`: eleven roles — spec-builder, code-build, design-to-code, five reviewers, review-judge, fixer, and facets-advisor (the two main agents you start directly, outside the run) — with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
 - `tools/render.py`: builds `dist/<harness>/` from core and an adapter.

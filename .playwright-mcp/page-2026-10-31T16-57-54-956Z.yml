@@ -1,0 +1,8 @@
+- generic [active] [ref=f5e1]:
+  - banner [ref=f5e2]:
+    - heading "Orbit Notes" [level=1] [ref=f5e3]
+    - button "Open menu" [ref=f5e4] [cursor=pointer]
+  - main [ref=f5e7]:
+    - img "Blue orbit graphic with a pale circular accent" [ref=f5e8]
+    - heading "Capture ideas before they drift" [level=2] [ref=f5e9]
+    - paragraph [ref=f5e10]: Notes sync across your devices within seconds.

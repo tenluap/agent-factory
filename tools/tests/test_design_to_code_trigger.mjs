@@ -3,10 +3,10 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import * as module from "../../plugins/ui-agent-trigger.js";
+import * as module from "../../plugins/design-to-code-trigger.js";
 
 async function fixture(t) {
-  const root = mkdtempSync(join(tmpdir(), "ui-agent-trigger-test-"));
+  const root = mkdtempSync(join(tmpdir(), "design-to-code-trigger-test-"));
   const factoryHome = process.env.FACTORY_HOME;
   process.env.FACTORY_HOME = join(root, "factory-home");
   t.after(() => {
@@ -33,7 +33,7 @@ function event(text, sessionID = "session-1", messageID = "message-1") {
 }
 
 test("exports a V2 default definition with a stable id and setup", () => {
-  assert.equal(module.default?.id, "ui-agent-trigger");
+  assert.equal(module.default?.id, "design-to-code-trigger");
   assert.equal(typeof module.default?.setup, "function");
 });
 
@@ -45,8 +45,8 @@ test("arms each supported text trigger without changing existing prompt fields",
     input.prompt.agents = [{ name: "reviewer", mention: { start: 0, end: 5 } }];
     const original = structuredClone(input);
     await prompt(input);
-    assert.ok(input.prompt.text.startsWith(`${text}\n\n[ui-agent]`));
-    assert.match(input.prompt.text, /Invoke the ui-agent skill now/);
+    assert.ok(input.prompt.text.startsWith(`${text}\n\n[design-to-code]`));
+    assert.match(input.prompt.text, /Invoke the design-to-code skill now/);
     assert.deepEqual({ ...input, prompt: { ...input.prompt, text } }, original);
     const injected = input.prompt.text;
     await prompt(input);
@@ -63,7 +63,7 @@ test("ignores unrelated text and does not latch until a match", async (t) => {
   }
   const input = event("Review UI");
   await prompt(input);
-  assert.match(input.prompt.text, /\[ui-agent\]/);
+  assert.match(input.prompt.text, /\[design-to-code\]/);
 });
 
 test("matches V2 attachment names and URIs, including attachment-only prompts", async (t) => {
@@ -76,7 +76,7 @@ test("matches V2 attachment names and URIs, including attachment-only prompts", 
     const input = event(undefined, `session-${i}`);
     input.prompt.files = [file];
     await prompt(input);
-    assert.match(input.prompt.text, /^\[ui-agent\]/);
+    assert.match(input.prompt.text, /^\[design-to-code\]/);
     assert.deepEqual(input.prompt.files, [file]);
   }
 });
@@ -96,7 +96,7 @@ test("latches per session, but reinjects on retry of the triggering message", as
   assert.equal(later.prompt.text, "Review UI");
   const other = event("Review UI", "session-2", "message-3");
   await prompt(other);
-  assert.match(other.prompt.text, /\[ui-agent\]/);
+  assert.match(other.prompt.text, /\[design-to-code\]/);
 });
 
 test("worktree factory state suppresses injection without latching", async (t) => {
@@ -109,7 +109,7 @@ test("worktree factory state suppresses injection without latching", async (t) =
   assert.equal(input.prompt.text, "Review UI");
   rmSync(state);
   await prompt(input);
-  assert.match(input.prompt.text, /\[ui-agent\]/);
+  assert.match(input.prompt.text, /\[design-to-code\]/);
 });
 
 test("pending factory state suppresses injection without latching", async (t) => {
@@ -123,5 +123,5 @@ test("pending factory state suppresses injection without latching", async (t) =>
   assert.equal(input.prompt.text, "Review UI");
   rmSync(state);
   await prompt(input);
-  assert.match(input.prompt.text, /\[ui-agent\]/);
+  assert.match(input.prompt.text, /\[design-to-code\]/);
 });

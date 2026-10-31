@@ -1,13 +1,13 @@
-// ui-agent OpenCode plugin
-// Arms the ui-agent skill when a session first shows UI intent: a pen.dev or
+// design-to-code OpenCode plugin
+// Arms the design-to-code skill when a session first shows UI intent: a pen.dev or
 // Figma design attachment (.pen file / design node), or a message mentioning
 // pen.dev, Figma, UX, or UI. Fires once per session (latched on first match).
-// Inert inside factory runs: the ui-designer role there has sole authority
-// over ui-agent invocations (factory FR-024), so the trigger never latches
+// Inert inside factory runs: the design-to-code role there has sole authority
+// over the quality pass (factory FR-024), so the trigger never latches
 // and never injects while a run's state files are present.
 //
-// The trigger arms the skill, it does not run it: the critique pipeline in
-// skills/ui-agent/SKILL.md still executes only when UI files are actually
+// The trigger arms the skill, it does not run it: the QA pipeline in
+// skills/design-to-code/SKILL.md still executes only when UI files are actually
 // edited. Triggers are hardcoded by design (five rarely-changing strings);
 // see the SKILL.md "Auto-Trigger" section.
 //
@@ -47,7 +47,7 @@ function inFactoryRun(directory) {
 }
 
 export default {
-  id: "ui-agent-trigger",
+  id: "design-to-code-trigger",
   async setup(ctx) {
     // Remember the triggering message so admission retries keep the reminder.
     const armed = new Map();
@@ -75,9 +75,9 @@ export default {
       const source = hit === ".pen" ? `design attachment (${hit})` : `keyword "${hit}"`;
       const reminder =
         previous?.reminder ??
-        (`[ui-agent] UI trigger matched (${source}). Invoke the ui-agent skill now to arm UI QA. ` +
+        (`[design-to-code] UI trigger matched (${source}). Invoke the design-to-code skill now to arm UI QA. ` +
           "Pipeline runs only when UI files are actually edited. " +
-          "For design-to-code conversion, use design-to-code; to create designs, pen-design; for new visual direction, frontend-design. " +
+          "For create/convert/build intent, defer to pen-design or frontend-design. " +
           "Inert during factory runs.");
       if (!prompt.text?.endsWith(reminder)) {
         prompt.text = prompt.text ? `${prompt.text}\n\n${reminder}` : reminder;

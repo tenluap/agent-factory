@@ -1,0 +1,7 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Orbit Notes" [level=1] [ref=e3]
+    - button [ref=e4] [cursor=pointer]
+  - main [ref=e7]:
+    - heading "Capture ideas before they drift" [level=2] [ref=e9]
+    - paragraph [ref=e10]: Notes sync across your devices within seconds.

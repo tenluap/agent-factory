@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ui-agent trigger hook for claude-code and codex.
+// design-to-code trigger hook for claude-code and codex.
 // Both harnesses fire UserPromptSubmit with the same stdin shape
 // ({ session_id, prompt, cwd, hook_event_name }) and accept the same JSON
 // output ({ hookSpecificOutput: { hookEventName, additionalContext } }), so
@@ -7,19 +7,19 @@
 // snippet to paste into ~/.claude/settings.json (hooks.UserPromptSubmit) or
 // ~/.codex/hooks.json (hooks.UserPromptSubmit).
 //
-// Behaviour mirrors plugins/ui-agent-trigger.js (the OpenCode plugin):
+// Behaviour mirrors plugins/design-to-code-trigger.js (the OpenCode plugin):
 // fires once per session when the prompt matches a UI trigger, injecting the
-// reminder that arms the ui-agent skill. The pipeline itself still runs only
+// reminder that arms the design-to-code skill. The pipeline itself still runs only
 // when UI files are actually edited. Inert inside factory runs (factory
-// FR-024: the ui-designer role there has sole authority over ui-agent).
+// FR-024: the design-to-code role there has sole authority over the quality pass).
 //
 // Hook processes are one-shot, so the latch is a tiny state file per session
-// under ${XDG_CACHE_HOME:-~/.cache}/ui-agent-trigger/, pruned when older
+// under ${XDG_CACHE_HOME:-~/.cache}/design-to-code-trigger/, pruned when older
 // than 7 days. Prompts are plain text here (no attachment parts), so `.pen`
 // matches when the file path appears in the prompt text.
 //
 // Triggers, case-insensitive: whole-word `ui`, `ux`, `.pen`; substring
-// `pen.dev`, `figma`. Hardcoded by design — see skills/ui-agent/SKILL.md.
+// `pen.dev`, `figma`. Hardcoded by design — see skills/design-to-code/SKILL.md.
 //
 // Never fail the prompt flow: any problem exits 0 silently.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync, rmSync } from "fs";
@@ -35,7 +35,7 @@ const TRIGGERS = [
 ];
 
 const CACHE_DIR =
-  process.env.XDG_CACHE_HOME || join(homedir(), ".cache", "ui-agent-trigger");
+  process.env.XDG_CACHE_HOME || join(homedir(), ".cache", "design-to-code-trigger");
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function armed(sessionId) {
@@ -99,9 +99,9 @@ function main() {
 
   latch(sessionId);
   const reminder =
-    `[ui-agent] UI trigger matched (keyword "${hit}"). Invoke the ui-agent skill now to arm UI QA. ` +
+    `[design-to-code] UI trigger matched (keyword "${hit}"). Invoke the design-to-code skill now to arm UI QA. ` +
     "Pipeline runs only when UI files are actually edited. " +
-    "For create/convert/build intent, defer to pen-design, pen-to-avalonia, or frontend-design. " +
+    "For create/convert/build intent, defer to pen-design or frontend-design. " +
     "Inert during factory runs.";
   process.stdout.write(
     JSON.stringify({
