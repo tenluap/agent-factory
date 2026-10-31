@@ -1,0 +1,37 @@
+{
+  "reviewer": "spec",
+  "round": 2,
+  "summary": "Re-entry and unwritable-path fixes close their findings, but claimed-entry protection still has two collision and locking gaps.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 279,
+      "summary": "Claim and add acquire different locks when improvements is a symlink.",
+      "evidence": "Plan item 3 requires a claimed own-run entry to be 'never overwritten'. add uses Path(home) / 'improvements' for its lock at lines 77 and 81, while claim resolves that directory at lines 273 and 279. If improvements is a symlink, lock.lock_path_for derives different lock files, so claim can race add's scan and replace and be overwritten back to ready. ENG-23 and ENG-26.",
+      "fix": "Derive the same canonical lock identity for both operations and add a regression test with a symlinked improvements directory."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 156,
+      "summary": "New Retro names can collide with unchanged Run export names, allowing an export to overwrite a claimed Retro entry.",
+      "evidence": "FR-016 and plan item 3 require claimed entries never to be overwritten. For branch 'feature', the new Retro path is '<repo>-feature.<hash>.retro.halt-cluster.implement.json'. A legal branch named 'feature.<hash>.retro.halt-cluster.implement' has exactly that Run export path. export at lines 197-217 unconditionally replaces it, bypassing the new collision check at lines 165-168. ENG-26.",
+      "fix": "Make Retro and Run export destinations collision-safe in both write directions without silently replacing an existing entry; cover the conflicting legal branch and claimed-entry case."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "specs/016-retro-self-improve/plan.md",
+      "line": 32,
+      "summary": "Updated naming contract conflicts with completed task acceptance text.",
+      "evidence": "The changed plan requires '<repo-name>-<branch>.<repo-hash>.retro.<kind>.<subject>.json', but tasks.md T001 and T005 still require '<repo-name>-<branch>.retro.<kind>.<subject>.json'. The checked task's specified filename no longer matches the implementation or plan.",
+      "fix": "Update the task acceptance text to reflect the revised naming contract and legacy-entry handling."
+    }
+  ]
+}
