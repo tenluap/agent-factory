@@ -281,6 +281,17 @@
       "duration_ms": 0,
       "commit": "1156eed",
       "partial_return": false
+    },
+    {
+      "at": "2026-10-31T01:58:41.471272Z",
+      "kind": "agent-failure",
+      "stage": "plan",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "Second consecutive failure, same agent and stage: Model unavailable: claude-code/claude-opus-5-5[1m] (exact selection preserved; source: installed agent file ~/.config/opencode/agents/factory-spec-builder.md, inherited adapter deep default; no config override). Original diagnostics on both spawns identical. Halting per failure policy; no model substitution.",
+      "duration_ms": 0,
+      "commit": "1156eed",
+      "partial_return": false
     }
   ],
   "history": [
