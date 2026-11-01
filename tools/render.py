@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Render the factory for one harness: core/ + adapters/ -> dist/<harness>/.
 
-dist/<harness>/skill/   the orchestrator skill, with references/harness/<name>.md for every
-                        adapter and roles/ added; identical for every harness
-dist/<harness>/agents/  one native agent file per role, in this harness's format
+dist/<harness>/skill/    the orchestrator skill, with references/harness/<name>.md for every
+                         adapter and roles/ added; identical for every harness
+dist/<harness>/skills/   the first-party skills (core/skills/ except factory), verbatim
+dist/<harness>/agents/   one native agent file per role, in this harness's format
 
 Usage: render.py <harness>          render, print nothing
        render.py <harness> --out <dir>  per-user render into <dir>
@@ -228,6 +229,12 @@ def render(name, out=None):
             ADAPTERS / other / "harness.md",
             skill / "references" / "harness" / f"{other}.md",
         )
+    # First-party skills render next to the orchestrator (ADR 0012): consumers
+    # see the whole core skill set inside dist/<harness>/skills/.
+    skills = target / "skills"
+    for source in sorted((ROOT / "core" / "skills").iterdir()):
+        if source.name != "factory" and (source / "SKILL.md").exists():
+            shutil.copytree(source, skills / source.name)
     (skill / "roles").mkdir()
     (target / "agents").mkdir()
 

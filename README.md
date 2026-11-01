@@ -18,7 +18,7 @@ The OpenCode adapter requires V2's `subagent` and `shell` tools and uses native 
 
 ## Install
 
-`install.sh` renders `core/` with the adapter into `dist/<harness>/`, then symlinks the skill and agents into the harness's directories. The skill is the same on every harness: it carries every adapter's `harness.md` and picks its own at the start of a run (set `FACTORY_HARNESS=<name>` to force one).
+`./install.sh` renders `core/` with the adapter into `dist/<harness>/` — the orchestrator skill under `skill/`, the first-party skills (`core/skills/` except `factory`) verbatim under `skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)) — then symlinks the skill, skills and agents into the harness's directories. The skill is the same on every harness: it carries every adapter's `harness.md` and picks its own at the start of a run (set `FACTORY_HARNESS=<name>` to force one).
 
 Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and an optional `config.json` to override models per harness:
 
@@ -30,7 +30,7 @@ Claude Code, Codex and OpenCode pin agent models by default; Copilot and Zcode i
 
 ### Skill library
 
-The installer links skills from this checkout's `skills/`, this checkout's first-party `core/skills/` (except `core/skills/factory`, which ships through the rendered `dist/`), and `${FACTORY_HOME:-~/.factory}/skills/` into the selected harness's skill root. The per-user layer wins when names match; core skills link from source like the library ([ADR 0009](docs/adr/0009-library-skills-are-linked-not-rendered.md)) into every harness. Add a local skill with `./install.sh --harness opencode --add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
+The installer links skills from the rendered distribution's `dist/<harness>/skills/` — the factory's first-party skills, rendered from `core/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)) — and from this checkout's `skills/` and `${FACTORY_HOME:-~/.factory}/skills/` into the selected harness's skill root. Precedence on name collision: per-user wins, then first-party, then vendored. Add a local skill with `./install.sh --harness opencode --add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
 
 Existing files, directories, and links outside the current library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun installation. Links made from another checkout or before moving this checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically.
 

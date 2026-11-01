@@ -137,7 +137,7 @@ library_link() {
   [ -L "$1" ] || return 1
   local target
   target="$(readlink "$1")"
-  [[ "$target" == "$src"/skills/* || "$target" == "$src"/core/skills/* || "$target" == "$factory_home"/skills/* ]]
+  [[ "$target" == "$src"/skills/* || "$target" == "$factory_home"/dist/* || "$target" == "$factory_home"/skills/* ]]
 }
 
 link_skill() {
@@ -181,31 +181,42 @@ PY
 }
 
 install_skills() {
-  local root="$1" harness="$2" f name allowed linked=""
+  local root="$1" dist="$2" harness="$3" f name allowed linked=""
   mkdir -p "$root"
   for f in "$root"/*; do
     if library_link "$f" && [ ! -e "$f" ]; then
       rm "$f"
       echo "removed: $f"
+    elif [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/core/skills/* ]]; then
+      # links from the superseded link-from-source layout; the rendered
+      # distribution is the source of first-party skills now
+      rm "$f"
+      echo "removed: $f"
     fi
   done
-  # core/skills/ carries the factory's first-party skills, linked from source
-  # like the library (ADR 0009); core/skills/factory itself ships via dist/.
-  for f in "$src"/skills/* "$src"/core/skills/* "$factory_home"/skills/*; do
+  # First-party skills are linked from the rendered distribution (ADR 0012),
+  # ahead of the vendored and per-user layers, which win on name collision.
+  for f in "$dist"/skills/*; do
+    [ -d "$f" ] || continue
+    name="$(skill_name "$f")"
+    if [ -z "$name" ]; then
+      echo "skip: $f: no frontmatter name"
+      continue
+    fi
+    if [ -f "$factory_home/skills/$name/SKILL.md" ]; then
+      echo "skip: $name: per-user skill takes precedence"
+      continue
+    fi
+    linked="$linked,$name"
+    link_skill "$f" "$root/$name"
+  done
+  for f in "$src"/skills/* "$factory_home"/skills/*; do
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
-    if [[ "$f" == "$src"/core/skills/factory ]]; then continue; fi
     if [ "$(basename "$f")" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
       continue
     fi
-    if [[ "$f" == "$src"/core/skills/* ]]; then
-      # First-party core skill: linked from source like the library (ADR 0009).
-      name="$(skill_name "$f")"
-      if [ -z "$name" ]; then
-        echo "skip: $f: no frontmatter name"
-        continue
-      fi
-    elif [[ "$f" == "$src"/skills/* ]]; then
+    if [[ "$f" == "$src"/skills/* ]]; then
       name="$(skill_name "$f")"
       if [ -z "$name" ]; then
         echo "skip: $f: no frontmatter name"
@@ -236,9 +247,6 @@ install_skills() {
       linked="$linked,$name"
     else
       name="$(basename "$f")"
-    fi
-    if [[ "$f" != "$factory_home"/skills/* ]] && [ -f "$factory_home/skills/$name/SKILL.md" ]; then
-      continue
     fi
     link_skill "$f" "$root/$name"
   done
@@ -359,7 +367,7 @@ install_one() {
     link "$f" "$agent_dir/$(basename "$f")"
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
-  install_skills "$skills_root" "$1"
+  install_skills "$skills_root" "$dist" "$1"
   case "$1" in
     opencode)
       install_plugin

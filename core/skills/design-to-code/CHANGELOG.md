@@ -2,7 +2,7 @@
 
 ## 1.3.0 — 2026-10-31
 
-- Moved to `core/skills/design-to-code/` as a first-party factory skill (ADR 0012); installation links it from source into every harness's skills root. `pen-design` moved alongside it. No behaviour change.
+- Moved to `core/skills/design-to-code/` as a first-party factory skill (ADR 0012): the renderer copies it verbatim into `dist/<harness>/skills/` and installation links it from there into every harness's skills root. `pen-design` moved alongside it. No behaviour change.
 
 ## 1.2.1 — 2026-10-31
 
