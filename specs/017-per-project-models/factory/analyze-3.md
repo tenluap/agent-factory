@@ -22,3 +22,15 @@ None.
 ## Metrics
 
 Counts: CRITICAL 0, HIGH 0, MEDIUM 0, LOW 0.
+
+```json
+{
+  "status": "done",
+  "stage": "analyze",
+  "summary": "Analyze pass 3: H1 closed (Confirmed Q13 line present, tasks.md cites Q13 2026-11-02). No new findings, coverage unchanged.",
+  "files": ["specs/017-per-project-models/factory/analyze-3.md"],
+  "questions": [],
+  "analyze": {"report": "factory/analyze-3.md", "critical": 0, "high": 0, "medium": 0, "low": 0},
+  "counts": {"critical": 0, "high": 0, "medium": 0, "low": 0}
+}
+```
