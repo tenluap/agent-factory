@@ -246,6 +246,18 @@
       "duration_ms": 180000,
       "started_at": "2026-11-02T12:08:00Z",
       "ended_at": "2026-11-02T12:11:00Z"
+    },
+    {
+      "at": "2026-11-02T12:06:35.394554Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 900,
+      "reported": null,
+      "duration_ms": 240000,
+      "started_at": "2026-11-02T12:14:00Z",
+      "ended_at": "2026-11-02T12:18:00Z"
     }
   ],
   "issues": [
