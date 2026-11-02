@@ -49,6 +49,11 @@ def _read_models(path, defaults):
                 raise ModelConfigError(
                     path, f"models.{harness}.{tier} must be a string"
                 )
+            if any(ord(ch) < 0x20 or ch == "\x7f" for ch in value):
+                raise ModelConfigError(
+                    path,
+                    f"models.{harness}.{tier} must not contain control characters",
+                )
     return models
 
 
@@ -72,6 +77,11 @@ def resolve(repo, home, *, include_project=True):
     return result
 
 
+def _sanitize(value):
+    """Defense-in-depth for terminal/README output: mask control characters."""
+    return "".join("?" if ord(ch) < 0x20 or ch == "\x7f" else ch for ch in value)
+
+
 def report(resolved, json_output=False):
     if json_output:
         return json.dumps(
@@ -88,7 +98,7 @@ def report(resolved, json_output=False):
     lines = ["harness  tier  model  source"]
     for harness, tiers in resolved.items():
         for tier, (value, source) in tiers.items():
-            lines.append(f"{harness}  {tier}  {value}  {source}")
+            lines.append(f"{harness}  {tier}  {_sanitize(value)}  {source}")
     return "\n".join(lines)
 
 

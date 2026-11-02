@@ -126,6 +126,32 @@ class ResolveTests(unittest.TestCase):
                         self.assertIn("standard", message)
                     path.unlink()
 
+    def test_refuses_control_character_model_values(self):
+        for value in ("bad\x1b[31m", "x\x7f", "line\nbreak", "null\x00"):
+            with self.subTest(value=repr(value)):
+                self.write(
+                    self.project,
+                    {"models": {"opencode": {"deep": value}}},
+                )
+                with self.assertRaises(models.ModelConfigError) as caught:
+                    models.resolve(self.repo, self.home)
+                message = str(caught.exception)
+                self.assertIn(str(self.project), message)
+                self.assertIn("deep", message)
+                self.assertIn("control", message)
+
+    def test_table_sanitizes_control_characters(self):
+        resolved = {
+            "opencode": {
+                "deep": ("esc\x1b]52" + "b" + "\x07gone", "user"),
+                "standard": ("ok", "adapter"),
+            }
+        }
+        table = models.report(resolved)
+        for line in table.splitlines():
+            self.assertNotRegex(line, r"[\x00-\x1f\x7f]")
+        self.assertIn("ok", table)
+
     def test_linked_worktree_uses_main_checkout(self):
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
         subprocess.run(
