@@ -234,6 +234,17 @@
       "duration_ms": 120000,
       "commit": "c891e4b",
       "partial_return": false
+    },
+    {
+      "at": "2026-11-02T11:43:31.845385Z",
+      "kind": "verify-fail",
+      "stage": "implement",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "documented runner form (-t .) imports only 140 tests, 23 ModuleNotFoundError for 'tests' helpers on Python 3.14; working form is -t tools / PYTHONPATH=tools (333 tests). Pre-existing on origin/main, unrelated to 017; single persistent failure test_design_to_code_permissions_reach_only_supporting_adapters also pre-existing (f9bc303 removed role permissions block, test still asserts it). Baseline: 332 pass / 1 fail.",
+      "duration_ms": 250000,
+      "commit": "35d1648",
+      "partial_return": false
     }
   ],
   "review": {
