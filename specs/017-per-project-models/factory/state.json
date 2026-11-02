@@ -143,6 +143,17 @@
       "duration_ms": 240000,
       "commit": "c891e4b",
       "partial_return": false
+    },
+    {
+      "at": "2026-11-02T10:52:41.480545Z",
+      "kind": "retry",
+      "stage": "tasks",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "resolved speckit-tasks path pointed at ~/.agents (absent); repo-local .agents/skills/speckit-tasks/SKILL.md exists — re-resolving state.skills to repo-local paths",
+      "duration_ms": 120000,
+      "commit": "c891e4b",
+      "partial_return": false
     }
   ],
   "review": {
