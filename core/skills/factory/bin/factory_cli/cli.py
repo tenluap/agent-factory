@@ -26,7 +26,8 @@ read:
 
 write (the single writer; each stamps its time, validates, writes atomically):
   init                              seed project model configuration
-  models-record '<json>'            record run models and report prior values
+  models-record [--from <path>]     record run models from a file or stdin;
+                                     never inline JSON on the command line
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
@@ -139,10 +140,26 @@ def main(argv):
                 raise CLIError(1, str(e)) from e
             return
         elif command == "models-record":
-            positional, flags = parse_flags(rest, command)
-            if len(positional) != 1:
-                die_usage("models-record needs exactly one JSON models block")
-            block = json_or_usage(positional[0], "models-record")
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--from")
+            )
+            if positional:
+                die_usage(
+                    "models-record takes no inline JSON; write the block to a file and pass"
+                    " --from <path>, or pipe it on stdin"
+                )
+            source = flags.get("--from")
+            if source is not None:
+                try:
+                    raw = Path(source).read_text(encoding="utf-8")
+                except OSError as error:
+                    die_usage(f"models-record: cannot read {source}: {error}")
+            else:
+                raw = sys.stdin.read()
+            try:
+                block = json.loads(raw)
+            except ValueError:
+                die_usage("models-record needs JSON")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_models_record(repo, Path.cwd(), block)
         elif command == "models":

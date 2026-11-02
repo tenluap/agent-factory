@@ -330,21 +330,33 @@ class ModelsRecordTests(unittest.TestCase):
             "source": {"deep": "project", "standard": "adapter"},
         }
         pending = box.pending_run("models", fixture("state-v3.json"))
-        out = box.cli("models-record", json.dumps(block))
+        out = box.cli(
+            "models-record", "--from", box.write_temp("block.json", json.dumps(block))
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertEqual(json.loads(pending.read_text())["models"], block)
         self.assertIsNone(json.loads(out.stdout)["previous"])
         pending.unlink()
         wt = box.worktree_run("040-models", fixture("state-v3.json"))
         state_path = wt / "specs/040-models/factory/state.json"
-        out = box.cli("models-record", json.dumps(block), cwd=wt)
+        out = box.cli(
+            "models-record",
+            "--from",
+            box.write_temp("block.json", json.dumps(block)),
+            cwd=wt,
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertEqual(json.loads(state_path.read_text())["models"], block)
         changed = {
             "resolved": {"deep": "new", "standard": "s"},
             "source": {"deep": "user", "standard": "adapter"},
         }
-        out = box.cli("models-record", json.dumps(changed), cwd=wt)
+        out = box.cli(
+            "models-record",
+            "--from",
+            box.write_temp("changed.json", json.dumps(changed)),
+            cwd=wt,
+        )
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertEqual(json.loads(out.stdout)["previous"], block)
         self.assertEqual(json.loads(out.stdout)["current"], changed)
@@ -360,6 +372,40 @@ class ModelsRecordTests(unittest.TestCase):
             ),
         ):
             before = state_path.read_bytes()
-            out = box.cli("models-record", payload, cwd=wt)
+            out = box.cli(
+                "models-record",
+                "--from",
+                box.write_temp("bad.json", payload),
+                cwd=wt,
+            )
             self.assertNotEqual(out.returncode, 0)
             self.assertEqual(state_path.read_bytes(), before)
+
+    def test_models_record_reads_stdin_and_refuses_inline_json(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        adversarial = "x'$(touch factory-sec1-marker)'"
+        block = {
+            "resolved": {"deep": adversarial, "standard": "s"},
+            "source": {"deep": "project", "standard": "adapter"},
+        }
+        wt = box.worktree_run("040-sec1", fixture("state-v3.json"))
+        out = box.cli("models-record", input=json.dumps(block), cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        state_path = wt / "specs/040-sec1/factory/state.json"
+        recorded = json.loads(state_path.read_text())["models"]
+        self.assertEqual(recorded, block)
+        self.assertEqual(recorded["resolved"]["deep"], adversarial)
+        self.assertFalse((box.dir / "factory-sec1-marker").exists())
+        inline = box.cli("models-record", json.dumps(block), cwd=wt)
+        self.assertEqual(inline.returncode, 5, inline.stderr)
+        self.assertIn("no inline JSON", inline.stderr)
+        self.assertEqual(json.loads(state_path.read_text())["models"], recorded)
+
+    def test_models_record_from_path_errors(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        box.pending_run("models", fixture("state-v3.json"))
+        missing = box.cli("models-record", "--from", str(box.dir / "nope.json"))
+        self.assertEqual(missing.returncode, 5, missing.stderr)
+        self.assertIn("nope.json", missing.stderr)
