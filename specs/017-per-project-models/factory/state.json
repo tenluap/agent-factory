@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/017-per-project-models",
   "spec_dir": "specs/017-per-project-models",
   "status": "running",
-  "stage": "implement",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -340,7 +340,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-11-02T12:11:07.140612Z",
+      "at": "2026-11-02T12:11:09.922458Z",
       "stage": "implement",
       "event": "verify-pass",
       "commit": null,
