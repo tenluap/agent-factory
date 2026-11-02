@@ -62,7 +62,7 @@ description: "Task list for 017-per-project-models"
 
 - [x] T008 [P] [US1] Edit `core/skills/factory/references/verbs.md`: `SPAWN`/`SPAWN_PARALLEL` carry resolved model for tier; empty string = inherit session model. Exempt: verbs.md - documentation only. Done: verb definition names model input.
 
-- [ ] T009 [P] [US1][US5] Edit `core/skills/factory/references/state.md`: v5 additive `models` block (`resolved`, `source` per tier); absent block on older states means not yet resolved. Exempt: state.md - documentation only. Done: schema and resume semantics documented.
+- [x] T009 [P] [US1][US5] Edit `core/skills/factory/references/state.md`: v5 additive `models` block (`resolved`, `source` per tier); absent block on older states means not yet resolved. Exempt: state.md - documentation only. Done: schema and resume semantics documented.
 
 ## Phase 7: User Stories 1, 6 - Adapter prose
 
