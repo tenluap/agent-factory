@@ -30,7 +30,7 @@ Add a project model layer `<repo>/.factory/config.json` above the user config an
 
 ### Adapter defaults at runtime
 
-The installed skill (`<harness skills>/factory/`) ships `SKILL.md`, `bin/`, `references/` and `roles/` only; `adapters/*/adapter.json` is not installed. The CLI therefore cannot read adapter defaults from `adapters/` at run time, and init must seed all five harnesses. Recommended (pending Q1): a checked-in data file `core/skills/factory/bin/factory_cli/adapter_models.json` mapping each harness to its `{deep, standard}` defaults, kept equal to every `adapters/<name>/adapter.json` `"models"` by a parity test in `tools/tests/test_render_models.py`. It is copied with `bin/` by the existing render/install, so render.py and install.sh stay unchanged.
+The installed skill (`<harness skills>/factory/`) ships `SKILL.md`, `bin/`, `references/` and `roles/` only; `adapters/*/adapter.json` is not installed. The CLI therefore cannot read adapter defaults from `adapters/` at run time, and init must seed all five harnesses. Decided (plan Q1, option A): a checked-in data file `core/skills/factory/bin/factory_cli/adapter_models.json` mapping each harness to its `{deep, standard}` defaults, kept equal to every `adapters/<name>/adapter.json` `"models"` by a parity test in `tools/tests/test_render_models.py`. It is copied with `bin/` by the existing render/install, so render.py, dist and install.sh stay unchanged. It is the CLI's only run-time source of adapter defaults; `adapters/*/adapter.json` stays the authored source, and the parity test fails on any drift between the two.
 
 ### Spawn-time model support per harness
 
@@ -68,7 +68,7 @@ specs/017-per-project-models/
 ```text
 core/skills/factory/bin/factory_cli/
 ├── models.py              # NEW resolver, report, init
-├── adapter_models.json    # NEW adapter default data (pending Q1)
+├── adapter_models.json    # NEW adapter default data (Q1)
 ├── cli.py                 # models / init dispatch + USAGE
 └── commands.py            # read_config() unchanged; models.py owns strict reading
 core/skills/factory/SKILL.md            # step 0 init route; preflight resolve/record/delta/disclose; SPAWN model
@@ -85,7 +85,7 @@ tools/tests/test_render_models.py       # parity test added
 ### New files, abstractions, dependencies
 
 - `core/skills/factory/bin/factory_cli/models.py` - file - single resolver required by FR-004; keeps strict config errors out of `commands.py`.
-- `core/skills/factory/bin/factory_cli/adapter_models.json` - file - adapter defaults must be readable by the installed CLI, which has no `adapters/` (pending Q1).
+- `core/skills/factory/bin/factory_cli/adapter_models.json` - file - adapter defaults must be readable by the installed CLI, which has no `adapters/` (decided Q1); parity-tested against `adapters/*/adapter.json`.
 - `tools/tests/test_models.py` - file - tests for the new module and commands.
 - `resolve(repo, home) -> {harness: {tier: (model, source)}}` - abstraction - one resolver shared by preflight, report and init.
 - Dependencies: none.
@@ -115,6 +115,8 @@ tools/tests/test_render_models.py       # parity test added
 - Exempt: `DESIGN.md`, `core/skills/factory/SKILL.md`, `references/verbs.md`, `references/state.md` prose - documentation only.
 - Exempt: `adapters/*/harness.md` - documentation only.
 - Overridden: none
+
+Confirmed: 2026-11-02 - Q2 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
 
 ## Complexity Tracking
 
