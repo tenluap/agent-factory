@@ -28,7 +28,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 3: User Story 1 + 2 - Resolver cascade and malformed stop (P1)
 
-- [ ] T003 [US1][US2] Add resolver `core/skills/factory/bin/factory_cli/models.py` with tests in new `tools/tests/test_models.py`.
+- [x] T003 [US1][US2] Add resolver `core/skills/factory/bin/factory_cli/models.py` with tests in new `tools/tests/test_models.py`.
   - Seam: `factory_cli.models.resolve(repo, home)`. Failure paths: invalid JSON in project config; invalid JSON in user config; non-object `models` or harness entry; unknown harness key; unknown tier key; non-string tier value.
   - Red: write tests first (temp dirs for repo and `FACTORY_HOME`): project beats user beats adapter per tier; per-key merge (project sets only `deep`); empty string kept as value with its layer's source; `copilot`/`zcode` with no project/user entry resolve to `""` with source `adapter`; missing file / missing `models` / missing harness fall through; no `.factory/` gives adapter values for all harnesses (SC-002); repo root from `cwd` inside a linked worktree (`git worktree add`) is the main checkout, so its `.factory/config.json` is read; each failure path (in project and in user config for unknown harness key, e.g. `opencod`) raises `ModelConfigError` whose message names the file path and detail (unknown harness/tier detail names the key and the known values). Run; fails on import.
   - Implement: `ModelConfigError(path, detail)`; `resolve` returns `{harness: {tier: (model, source)}}` over harnesses in `adapter_models.json`, rejecting harness keys outside it; strict reader separate from `commands.read_config()` (unchanged); `<repo>` is main checkout root = parent of `git rev-parse --path-format=absolute --git-common-dir`.
