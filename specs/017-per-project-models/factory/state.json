@@ -44,7 +44,20 @@
   "relay": null,
   "timeline": [],
   "decisions": [],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-11-02T10:47:30.862229Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 20000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 240000,
+      "started_at": "2026-11-02T10:56:00Z",
+      "ended_at": "2026-11-02T11:00:00Z"
+    }
+  ],
   "issues": [
     {
       "at": "2026-11-02T10:47:27.685560Z",
