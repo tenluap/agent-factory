@@ -1,0 +1,56 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "Delta 534d7ff..HEAD delivers the round-1 blocking fixes: models-record makes FR-005/FR-009 reachable through the CLI single-writer, roles/tiers.json plus SKILL.md preflight read makes FR-006 executable, resolve refuses symlinked/non-regular/oversized configs (FR-008 hardening) and init refuses a symlinked .factory, FR-014 refusal is intact, the FR-017 exception is the confirmed additive tiers.json output only, and FR-003 is resolved as truthful adapter prose per the confirmed fix-round scope; however three of the six failure-path groups the user-confirmed fix-round scope declares (control-character refusal + table sanitize, publish-race refusal, no-artifact retryable init) shipped no code and no tests.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 15,
+      "summary": "Declared confirmed fix-round failure path 'control-character model values refused (resolve + table sanitize)' has no implementation and no test (missing coverage, ENG-4/ENG-18 per engineering.md 'Confirmed test scope')",
+      "evidence": "plan.md 'Test seams (fix round 1 scope - orchestrator-confirmed 2026-11-02)' declares 'control-character model values refused (resolve + table sanitize)' (plan.md fix-round scope bullet, confirmed by user relay Q13, commit 75d09e6). The delta implements none of it: _read_models (models.py:15-56) validates only object shape, known harness, known tier and string type; report() interpolates model values raw into the table (models.py:91 f\"{harness}  {tier}  {value}  {source}\") and init embeds them raw in config.README.md; grep for control/escape/sanitize in models.py returns nothing; tools/tests/test_models.py delta adds only test_refuses_symlink_special_and_oversized_configs, test_init_refuses_symlinked_factory_directory and ModelsRecordTests. Round-1 advisory SEC-4 (control-sequence interpolation) therefore remains unaddressed despite being declared in the confirmed scope; confirmation text is evidence of scope, not of coverage.",
+      "fix": "Reject model values containing C0/C1 control characters in _read_models, sanitize them in report()/README output, and add the declared test; or obtain a fresh user-confirmed scope that removes this failure path from the fix-round declaration."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 137,
+      "summary": "Declared confirmed fix-round failure paths 'existing destination at publish -> refusal with temp cleanup' and 'publish failure leaves no artifacts (retryable)' are not implemented: os.replace overwrites the destination and a README failure leaves a half-complete init",
+      "evidence": "The same user-confirmed fix-round scope declares 'init publish race: existing destination at publish -> refusal with temp cleanup; init publish failure leaves no artifacts (retryable)' (plan.md fix-round scope bullet). init publishes with os.replace(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd) (models.py:137), which overwrites an existing destination unconditionally - a config.json created between the existence check (models.py:96 config.exists() or config.is_symlink()) and publish is silently clobbered, so the round-1 TOCTOU (advisory SEC-3/STD-3/SPEC-4) persists instead of the declared refusal. Temp cleanup alone exists (finally os.unlink, models.py:139-143). Because config.json is published before config.README.md, a README publish failure leaves config.json in place while FR-014's existing-config refusal (models.py:96) then blocks retry - the half-complete init of round-1 advisory STD-4/SPEC-5, contrary to the declared retryable/no-artifacts path; no test covers either failure path in the delta.",
+      "fix": "Publish with a no-replace operation (linkat/renameat with RENAME_NOREPLACE or exclusive protocol) that refuses when a destination appears, stage both outputs so a mid-init failure leaves nothing, and add the two declared tests; or re-confirm a reduced scope without these failure paths."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 109,
+      "summary": "Init-generated config.README.md still states 'An empty string inherits the session model.', contradicting the FR-003 accuracy fix shipped in the same round (ENG-7 prose accuracy)",
+      "evidence": "The FR-003 accuracy fix (plan.md:117; adapters/opencode/harness.md SPAWN row, adapters/claude-code/harness.md Notes, commits 482a27b/1b3a97d/0ad03bf) now truthfully discloses that an empty value inherits the session model only when the installed agent has no configured model and that omission does not clear a pinned model. models.py:109 init readme keeps the unqualified sentence \"An empty string inherits the session model.\\n\\n\", so every freshly seeded project config.README.md repeats the oversimplification the accuracy fix corrected elsewhere.",
+      "fix": "Update the init README sentence to match the adapter disclosure (inherit only when the installed agent has no configured model; a pinned agent cannot inherit by omission)."
+    },
+    {
+      "id": "SPEC-4",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/017-per-project-models/spec.md",
+      "line": 126,
+      "summary": "FR-003's MUST text ('inherit the session's model') is left unamended while the accepted resolution ships a stop-and-disclose rule for pinned agents, leaving spec and shipped guidance divergent",
+      "evidence": "spec.md:126 still reads 'FR-003: An empty-string model value MUST keep its existing meaning: inherit the session's model', but the orchestrator-confirmed resolution (plan.md:117 'FR-003 accuracy fix') and adapters/opencode/harness.md + adapters/claude-code/harness.md now instruct the run to stop and disclose when an empty selection meets a model-pinned installed agent, because omission cannot clear the pinned model. The limitation is truthfully disclosed at the adapter layer, yet no spec artifact records the accepted limitation, so the spec still promises inheritance behaviour the shipped guidance deliberately does not deliver.",
+      "fix": "Record the accepted limitation in spec.md FR-003 (or a clarification) so the MUST text and the shipped stop-and-disclose rule agree."
+    }
+  ],
+  "verified": [
+    "FR-005/FR-009 reachable: cli.py:141-147 dispatches write command 'models-record'; cmd_models_record (commands.py:435-465) validates the block shape {resolved:{deep,standard}, source in project|user|adapter}, writes under the state lock via write_run and returns {previous, current}; SKILL.md Preflight now calls SHELL: python3 <F>/bin/factory models-record '<JSON block>' before the first spawn and immediately on resume, comparing previous/current and never hand-editing; test_records_pending_and_worktree_with_resume_delta covers pending, worktree, resume delta and atomic refusal of malformed payloads.",
+    "FR-006 executable: tools/render.py:241/253 emits roles/tiers.json from authored core/roles frontmatter; SKILL.md:24 reads <F>/roles/tiers.json to map each role to its tier for every SPAWN/SPAWN_PARALLEL member; test_rendered_role_tiers_match_authored_roles asserts parity for every harness.",
+    "FR-017 respected per the user-relaxed exception (plan.md:116): render.py delta is exactly three additive lines serving only roles/tiers.json; dist reads no user or project config.",
+    "FR-008 hardening: _read_models opens with O_NOFOLLOW|O_NONBLOCK, rejects non-regular descriptors (S_ISREG), caps reads at 1 MiB+1 and rejects oversized files (models.py:15-27); symlink ELOOP is caught by the (OSError, UnicodeError) handler and surfaced as ModelConfigError naming the path; test_refuses_symlink_special_and_oversized_configs covers symlink, FIFO and oversize.",
+    "FR-014 intact: init refuses an existing or symlinked config.json (models.py:96) before creating anything, exits non-zero naming the path; test suite retains the byte-identical-refusal case; the concurrently-created-config TOCTOU window itself is covered by SPEC-2's missing declared coverage.",
+    "FR-003 resolved as truthful adapter prose per the confirmed fix-round scope: opencode and claude-code harness.md both state that omission does not clear a pinned model and mandate stop-and-disclose; SKILL.md delegates to the adapter's empty-model guidance; residual prose/spec gaps are SPEC-3 and SPEC-4.",
+    "Red proofs: fix commit 482a27b ('factory(fix): STD-1 SPEC-1 SPEC-2 SPEC-2 SEC-1 SEC-2') carries four form-1 'Red: <test> failed as expected' lines, one per behaviour-changing confirmed_blocking finding it fixes (models writer, tier map, SEC-1 init symlink, SEC-2 resolve hardening), each naming a test present in the diff; SPEC-3 commits 1b3a97d and 0ad03bf change adapters/*/harness.md prose only (documentation/config exemption, plan.md:128) and carry no Red line, which is correct for a documentation-only fix."
+  ]
+}
