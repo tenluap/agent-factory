@@ -1,0 +1,22 @@
+{
+  "claude-code": {
+    "deep": "claude-opus-5-5",
+    "standard": "claude-haiku-5-5"
+  },
+  "codex": {
+    "deep": "openai/gpt-6.1-sol",
+    "standard": "openai/gpt-6.1-terra"
+  },
+  "copilot": {
+    "deep": "",
+    "standard": ""
+  },
+  "opencode": {
+    "deep": "claude-code/claude-opus-5-5[1m]",
+    "standard": "openai/gpt-6.1-terra"
+  },
+  "zcode": {
+    "deep": "",
+    "standard": ""
+  }
+}

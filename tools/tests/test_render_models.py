@@ -24,6 +24,26 @@ HARNESSES = ("claude-code", "codex", "copilot", "opencode", "zcode")
 PERSONAL_IDS = ("xiaomi-token-plan-sgp", "mimo-v2.6-pro")
 
 
+class AdapterModelsParityTests(unittest.TestCase):
+    def test_defaults_match_all_adapters(self):
+        defaults = json.loads(
+            (
+                REPO / "core/skills/factory/bin/factory_cli/adapter_models.json"
+            ).read_text()
+        )
+        adapters = {
+            p.parent.name: json.loads(p.read_text())["models"]
+            for p in ADAPTERS.glob("*/adapter.json")
+        }
+        self.assertEqual(set(defaults), set(adapters))
+        for harness, models in adapters.items():
+            with self.subTest(harness=harness):
+                self.assertEqual(
+                    defaults[harness],
+                    {tier: models.get(tier, "") for tier in ("deep", "standard")},
+                )
+
+
 def render(harness, config=None):
     """Render one harness; FACTORY_HOME points at a temp home holding `config`."""
     home = tempfile.mkdtemp(prefix="factory-render-home-")

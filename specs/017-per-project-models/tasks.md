@@ -19,7 +19,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 2: Foundational
 
-- [ ] T002 [US1] Add `core/skills/factory/bin/factory_cli/adapter_models.json` plus parity test in `tools/tests/test_render_models.py`.
+- [x] T002 [US1] Add `core/skills/factory/bin/factory_cli/adapter_models.json` plus parity test in `tools/tests/test_render_models.py`.
   - Seam: `adapter_models.json` parity with `adapters/*/adapter.json`. Failure paths: none (drift fails test).
   - Red: add parity test first; it fails because `adapter_models.json` is missing.
   - Implement: write file mapping all five harnesses to `{deep, standard}` copied from each `adapters/<name>/adapter.json` `"models"`; `copilot` and `zcode` (`"models": {}`) get `{"deep": "", "standard": ""}`.
