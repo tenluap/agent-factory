@@ -52,25 +52,7 @@
       "at": "2026-11-02T10:57:14.972805Z"
     }
   },
-  "relay": {
-    "stage": "remediate",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q13"
-          }
-        ],
-        "answers": {
-          "Q13": {
-            "answer": "A - accept the updated test scope with the unknown-harness-key failure path",
-            "at": "2026-11-02T10:56:20.496215Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-02T10:50:36.535104Z",
@@ -96,6 +78,14 @@
       "answer": "A - accept all four seams and failure paths as declared",
       "auto": false,
       "at": "2026-11-02T10:51:20.298179Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "remediate",
+      "question": "Q13",
+      "answer": "A - accept the updated test scope with the unknown-harness-key failure path",
+      "auto": false,
+      "at": "2026-11-02T10:57:18.129159Z",
       "kind": "answer"
     }
   ],
@@ -252,7 +242,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-11-02T10:54:32.337720Z",
+      "at": "2026-11-02T10:57:18.129159Z",
       "stage": "analyze",
       "event": "complete",
       "commit": null,
