@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "core/skills/factory/bin"))
@@ -345,6 +346,61 @@ class ModelsCLITests(unittest.TestCase):
         self.assertIn(".factory", result.stderr)
         self.assertEqual(readme.read_text(), "important")
         self.assertFalse((target / "config.json").exists())
+
+
+class InitPublishTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name) / "repo"
+        self.home = Path(self.temp.name) / "home"
+        self.repo.mkdir()
+        self.home.mkdir()
+        self.factory = self.repo / ".factory"
+        self.config = self.factory / "config.json"
+
+    def leftovers(self):
+        return [n for n in os.listdir(self.factory) if n.startswith(".factory-")]
+
+    def test_publish_race_refuses_without_clobber(self):
+        real_link = os.link
+
+        def racing_link(src, dst, **kwargs):
+            if dst == "config.json":
+                fd = os.open(
+                    "config.json",
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                    0o600,
+                    dir_fd=kwargs["dst_dir_fd"],
+                )
+                with os.fdopen(fd, "wb") as other:
+                    other.write(b"other writer")
+            return real_link(src, dst, **kwargs)
+
+        with mock.patch.object(models.os, "link", racing_link):
+            with self.assertRaises(FileExistsError) as caught:
+                models.init(self.repo, self.home)
+        self.assertIn(str(self.config), str(caught.exception))
+        self.assertEqual(self.config.read_bytes(), b"other writer")
+        self.assertFalse((self.factory / "config.README.md").exists())
+        self.assertEqual(self.leftovers(), [])
+
+    def test_readme_failure_rolls_back_and_converts_oserror(self):
+        real_link = os.link
+
+        def failing_link(src, dst, **kwargs):
+            if dst == "config.README.md":
+                raise OSError("disk full")
+            return real_link(src, dst, **kwargs)
+
+        with mock.patch.object(models.os, "link", failing_link):
+            with self.assertRaises(models.ModelConfigError) as caught:
+                models.init(self.repo, self.home)
+        self.assertIn(str(self.factory), str(caught.exception))
+        self.assertIn("disk full", str(caught.exception))
+        self.assertFalse(self.config.exists())
+        self.assertFalse((self.factory / "config.README.md").exists())
+        self.assertEqual(self.leftovers(), [])
 
 
 class ModelsRecordTests(unittest.TestCase):

@@ -127,30 +127,61 @@ def init(repo, home):
         dirfd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     except OSError as error:
         raise ModelConfigError(directory, str(error)) from error
+    # config.README.md is staged and published first; config.json goes last as
+    # the commit point, so any earlier failure leaves no recoverable bootstrap.
+    payloads = (
+        ("config.README.md", readme),
+        (
+            "config.json",
+            json.dumps({"models": seeded}, indent=2, sort_keys=True) + "\n",
+        ),
+    )
+    published = []
     try:
-        for filename, text in (
-            (
-                "config.json",
-                json.dumps({"models": seeded}, indent=2, sort_keys=True) + "\n",
-            ),
-            ("config.README.md", readme),
-        ):
+        for filename, text in payloads:
             name = ".factory-" + secrets.token_hex(16)
-            created = False
             try:
                 fd = os.open(
                     name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dirfd
                 )
-                created = True
                 with os.fdopen(fd, "w", encoding="utf-8") as temp:
                     temp.write(text)
-                os.replace(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
-            finally:
-                if created:
+                try:
                     try:
-                        os.unlink(name, dir_fd=dirfd)
-                    except FileNotFoundError:
-                        pass
+                        os.link(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
+                    except FileExistsError:
+                        if filename != "config.json":
+                            # a stale README without config.json is rewritten by design
+                            os.unlink(filename, dir_fd=dirfd)
+                            os.link(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
+                        else:
+                            raise
+                    published.append(filename)
+                except FileExistsError as error:
+                    raise FileExistsError(
+                        f"{directory / filename}: already exists; refusing to overwrite"
+                    ) from error
+            finally:
+                try:
+                    os.unlink(name, dir_fd=dirfd)
+                except FileNotFoundError:
+                    pass
+    except FileExistsError:
+        for filename in published:
+            try:
+                os.unlink(filename, dir_fd=dirfd)
+            except OSError:
+                pass
+        raise
+    except OSError as error:
+        for filename in published:
+            try:
+                os.unlink(filename, dir_fd=dirfd)
+            except OSError:
+                pass
+        raise ModelConfigError(
+            directory, f"init failed; partial artifacts removed, retry: {error}"
+        ) from error
     finally:
         os.close(dirfd)
     return table + "\n\nModels are unverified until a run's preflight."
