@@ -45,7 +45,19 @@
   "timeline": [],
   "decisions": [],
   "ledger": [],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-11-02T10:47:27.685560Z",
+      "kind": "retry",
+      "stage": "plan",
+      "role": "spec-builder",
+      "cause": null,
+      "detail": "plan prerequisite missing: spec.md absent; specify seeded no spec.md, only state.json",
+      "duration_ms": 240000,
+      "commit": "c891e4b",
+      "partial_return": false
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
