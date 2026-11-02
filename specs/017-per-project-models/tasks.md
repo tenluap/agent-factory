@@ -72,7 +72,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 8: Polish and verification
 
-- [ ] T012 Render-side check: confirm core `SKILL.md`/references stay harness-neutral (no adapter tool names; adapter specifics only in `adapters/*/harness.md`); `tools/render.py`, `install.sh` untouched (`git diff --stat main -- tools/render.py install.sh` empty, FR-017); run `python3 tools/render.py` and confirm `adapter_models.json` appears under each `dist/<harness>/skills/factory/bin/factory_cli/`. Exempt: verification only. Done: checks recorded.
+- [x] T012 Render-side check: confirm core `SKILL.md`/references stay harness-neutral (no adapter tool names; adapter specifics only in `adapters/*/harness.md`); `tools/render.py`, `install.sh` untouched (`git diff --stat main -- tools/render.py install.sh` empty, FR-017); run `python3 tools/render.py` and confirm `adapter_models.json` appears under each `dist/<harness>/skills/factory/bin/factory_cli/`. Exempt: verification only. Done: `origin/main` diff empty; no forbidden harness tool names in core skill/references; `--list` and temporary renders for all five harnesses passed, each containing `skill/bin/factory_cli/adapter_models.json`.
 
 - [ ] T013 Final verification: `python3 -m unittest discover -s tools/tests -t .` green; render parity/dist tests green. Done: zero failures.
 
