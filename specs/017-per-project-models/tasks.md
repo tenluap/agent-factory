@@ -15,7 +15,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 1: Setup
 
-- [ ] T001 Update `DESIGN.md` with project model layer `<repo>/.factory/config.json`, cascade (project → user → adapter, per key, empty string = inherit), `adapter_models.json` data file, `factory models` / `factory init`, `/factory init` route, state `models` block. Exempt: DESIGN.md - documentation only (constitution I: lands before core/adapter edits). Done: DESIGN.md names every item above.
+- [x] T001 Update `DESIGN.md` with project model layer `<repo>/.factory/config.json`, cascade (project → user → adapter, per key, empty string = inherit), `adapter_models.json` data file, `factory models` / `factory init`, `/factory init` route, state `models` block. Exempt: DESIGN.md - documentation only (constitution I: lands before core/adapter edits). Done: DESIGN.md names every item above.
 
 ## Phase 2: Foundational
 
