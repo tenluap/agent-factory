@@ -11,7 +11,7 @@
 
 | Verb | On Claude Code |
 |---|---|
-| `SPAWN(role, inputs, model)` | The Agent tool with `subagent_type: factory-<role>` and the inputs as the prompt. Pass the resolved tier model as the Agent tool's `model` parameter; omit the parameter when it is empty. Its result is the agent's final message. |
+| `SPAWN(role, inputs, model)` | The Agent tool with `subagent_type: factory-<role>` and the inputs as the prompt. Pass a supported nonempty resolved tier model as the Agent tool's `model` parameter; omit the parameter when it is empty, subject to the limitation below. Its result is the agent's final message. |
 | `SPAWN_PARALLEL([...])` | One Agent tool call per role, all in **one message**, with each role's resolved model mapped as above. |
 | `ASK(text, options?)` | Initial grilling and relays, even one question: a plain Markdown message using protocol.md, "Questions", then wait. Other asks with options: `AskUserQuestion`. Other free text: a plain message, then wait. |
 | `NOTIFY(text)` | `PushNotification`. Load it once in preflight with `ToolSearch` (`select:PushNotification`). Unavailable: `NOTIFY` is a no-op for the run. |
@@ -22,6 +22,7 @@
 
 ## Notes
 
+- An empty (inherit) selection from any source, including `adapter`, `project` or `user`, cannot override a pinned agent by omission, so disclose the limitation and stop before spawning; nonempty project/user selections are passed as the spawn model only when supported (the Agent tool accepts aliases, not full IDs), otherwise disclose the exact selection and limitation and stop without substituting a model.
 - Main agent (`mode: primary`): start with `claude --agent factory-<role>`, or set the `agent` setting.
 - Figma capability discovery: use `ToolSearch` to discover available Figma MCP inspection tools; pass their exact identities and schemas to the role. If unavailable, report the gap.
 - `speckit-*` skills and `grill-with-docs` set `disable-model-invocation: true`: never call them with the Skill tool. `grilling`, `domain-modeling` and `pr` may be invoked with the Skill tool or read and followed.
