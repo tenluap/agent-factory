@@ -1,0 +1,62 @@
+{
+  "version": 5,
+  "started_at": "2026-11-02T10:50:00Z",
+  "harness": "opencode",
+  "feature": "Per-project deep and standard model selection with /factory init bootstrap",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "017-per-project-models",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/017-per-project-models",
+  "spec_dir": "specs/017-per-project-models",
+  "status": "running",
+  "stage": "specify",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": { "chain": "lite", "fast": true },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/.agents/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/.agents/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/.agents/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/.agents/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/.agents/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/.agents/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.config/opencode/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.config/opencode/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.config/opencode/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.config/opencode/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.config/opencode/skills/tdd/SKILL.md"
+  },
+  "commands": { "build": "python3 -m unittest discover -s tools/tests -t .", "test": "python3 -m unittest discover -s tools/tests -t ." },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [],
+  "models": {
+    "resolved": {
+      "deep": "claude-code/claude-opus-5-5[1m]",
+      "standard": "openai/gpt-6.1-terra"
+    },
+    "source": {
+      "deep": "adapter",
+      "standard": "adapter"
+    }
+  }
+}
