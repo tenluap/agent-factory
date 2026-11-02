@@ -2,7 +2,8 @@
 
 import json
 import os
-import tempfile
+import secrets
+import stat
 from pathlib import Path
 
 
@@ -13,7 +14,14 @@ class ModelConfigError(Exception):
 
 def _read_models(path, defaults):
     try:
-        data = json.loads(path.read_text())
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise ModelConfigError(path, "config must be a regular file")
+            contents = stream.read(1024 * 1024 + 1)
+        if len(contents) > 1024 * 1024:
+            raise ModelConfigError(path, "config exceeds 1 MiB")
+        data = json.loads(contents)
     except FileNotFoundError:
         return {}
     except json.JSONDecodeError as error:
@@ -105,19 +113,34 @@ def init(repo, home):
         "or restore the value shown above.\n"
     )
     directory.mkdir(parents=True, exist_ok=True)
-    for path, text in (
-        (config, json.dumps({"models": seeded}, indent=2, sort_keys=True) + "\n"),
-        (directory / "config.README.md", readme),
-    ):
-        name = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", encoding="utf-8", dir=directory, delete=False
-            ) as temp:
-                name = temp.name
-                temp.write(text)
-            os.replace(name, path)
-        finally:
-            if name:
-                Path(name).unlink(missing_ok=True)
+    try:
+        dirfd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except OSError as error:
+        raise ModelConfigError(directory, str(error)) from error
+    try:
+        for filename, text in (
+            (
+                "config.json",
+                json.dumps({"models": seeded}, indent=2, sort_keys=True) + "\n",
+            ),
+            ("config.README.md", readme),
+        ):
+            name = ".factory-" + secrets.token_hex(16)
+            created = False
+            try:
+                fd = os.open(
+                    name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dirfd
+                )
+                created = True
+                with os.fdopen(fd, "w", encoding="utf-8") as temp:
+                    temp.write(text)
+                os.replace(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
+            finally:
+                if created:
+                    try:
+                        os.unlink(name, dir_fd=dirfd)
+                    except FileNotFoundError:
+                        pass
+    finally:
+        os.close(dirfd)
     return table + "\n\nModels are unverified until a run's preflight."

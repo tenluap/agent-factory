@@ -25,6 +25,20 @@ PERSONAL_IDS = ("xiaomi-token-plan-sgp", "mimo-v2.6-pro")
 
 
 class AdapterModelsParityTests(unittest.TestCase):
+    def test_rendered_role_tiers_match_authored_roles(self):
+        import render as render_mod
+
+        expected = {meta["name"]: meta["tier"] for _, meta, _ in render_mod.roles()}
+        with tempfile.TemporaryDirectory() as directory:
+            for harness in HARNESSES:
+                with self.subTest(harness=harness):
+                    out = Path(directory) / harness
+                    render_to(harness, out)
+                    self.assertEqual(
+                        json.loads((out / "skill/roles/tiers.json").read_text()),
+                        expected,
+                    )
+
     def test_defaults_match_all_adapters(self):
         defaults = json.loads(
             (

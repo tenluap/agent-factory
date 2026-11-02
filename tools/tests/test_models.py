@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "core/skills/factory/bin"))
 from factory_cli import commands, models
+from . import Sandbox, fixture
 
 
 class ResolveTests(unittest.TestCase):
@@ -27,6 +28,24 @@ class ResolveTests(unittest.TestCase):
     def write(self, path, value):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value))
+
+    def test_refuses_symlink_special_and_oversized_configs(self):
+        for path in (self.project, self.user):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            target = self.repo / "target"
+            target.write_text("{}")
+            path.symlink_to(target)
+            with self.assertRaises(models.ModelConfigError):
+                models.resolve(self.repo, self.home)
+            path.unlink()
+            os.mkfifo(path)
+            with self.assertRaises(models.ModelConfigError):
+                models.resolve(self.repo, self.home)
+            path.unlink()
+            path.write_bytes(b" " * (1024 * 1024 + 1))
+            with self.assertRaises(models.ModelConfigError):
+                models.resolve(self.repo, self.home)
+            path.unlink()
 
     def test_defaults_and_fallthrough(self):
         defaults = json.loads(
@@ -288,3 +307,59 @@ class ModelsCLITests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(str(self.user), result.stderr)
         self.assertFalse(self.project.exists())
+
+    def test_init_refuses_symlinked_factory_directory(self):
+        target = self.repo / "outside"
+        target.mkdir()
+        readme = target / "config.README.md"
+        readme.write_text("important")
+        self.project.parent.symlink_to(target, target_is_directory=True)
+        result = self.cli("init")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(".factory", result.stderr)
+        self.assertEqual(readme.read_text(), "important")
+        self.assertFalse((target / "config.json").exists())
+
+
+class ModelsRecordTests(unittest.TestCase):
+    def test_records_pending_and_worktree_with_resume_delta(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        block = {
+            "resolved": {"deep": "d", "standard": "s"},
+            "source": {"deep": "project", "standard": "adapter"},
+        }
+        pending = box.pending_run("models", fixture("state-v3.json"))
+        out = box.cli("models-record", json.dumps(block))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(pending.read_text())["models"], block)
+        self.assertIsNone(json.loads(out.stdout)["previous"])
+        pending.unlink()
+        wt = box.worktree_run("040-models", fixture("state-v3.json"))
+        state_path = wt / "specs/040-models/factory/state.json"
+        out = box.cli("models-record", json.dumps(block), cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(state_path.read_text())["models"], block)
+        changed = {
+            "resolved": {"deep": "new", "standard": "s"},
+            "source": {"deep": "user", "standard": "adapter"},
+        }
+        out = box.cli("models-record", json.dumps(changed), cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout)["previous"], block)
+        self.assertEqual(json.loads(out.stdout)["current"], changed)
+        self.assertEqual(box.git("status", "--porcelain", cwd=wt).strip(), "")
+        for payload in (
+            "{bad",
+            json.dumps({"resolved": {}, "source": {}}),
+            json.dumps(
+                {
+                    "resolved": block["resolved"],
+                    "source": {"deep": "other", "standard": "user"},
+                }
+            ),
+        ):
+            before = state_path.read_bytes()
+            out = box.cli("models-record", payload, cwd=wt)
+            self.assertNotEqual(out.returncode, 0)
+            self.assertEqual(state_path.read_bytes(), before)

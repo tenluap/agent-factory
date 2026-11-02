@@ -432,6 +432,40 @@ def cmd_detect(repo):
     return detect.detect(repo)
 
 
+def cmd_models_record(repo, cwd, block):
+    """Record resolved models under the state lock and disclose the prior block."""
+    tiers = {"deep", "standard"}
+    if (
+        not isinstance(block, dict)
+        or set(block) != {"resolved", "source"}
+        or any(
+            not isinstance(block[key], dict) or set(block[key]) != tiers
+            for key in ("resolved", "source")
+        )
+        or any(not isinstance(value, str) for value in block["resolved"].values())
+        or any(
+            value not in ("project", "user", "adapter")
+            for value in block["source"].values()
+        )
+    ):
+        die(
+            1,
+            "models-record: expected resolved and source objects with deep and standard strings and valid sources",
+        )
+    path, loaded, _, worktree = resolve_target(repo, cwd)
+    previous = []
+
+    def mutate(s):
+        previous.append(s.get("models"))
+        s["models"] = block
+        return s
+
+    write_run(path, loaded, mutate)
+    if previous[0] != block:
+        commit_worktree(worktree, "factory: models recorded", loaded.get("spec_dir"))
+    return {"previous": previous[0], "current": block}
+
+
 def cmd_profile_record(repo, cwd, worktree=None, spec_dir=None):
     """Detect and record the profile into the one writable run (spec 017).
 

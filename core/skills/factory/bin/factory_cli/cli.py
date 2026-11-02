@@ -26,6 +26,7 @@ read:
 
 write (the single writer; each stamps its time, validates, writes atomically):
   init                              seed project model configuration
+  models-record '<json>'            record run models and report prior values
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
@@ -137,6 +138,13 @@ def main(argv):
             except FileExistsError as e:
                 raise CLIError(1, str(e)) from e
             return
+        elif command == "models-record":
+            positional, flags = parse_flags(rest, command)
+            if len(positional) != 1:
+                die_usage("models-record needs exactly one JSON models block")
+            block = json_or_usage(positional[0], "models-record")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_models_record(repo, Path.cwd(), block)
         elif command == "models":
             positional, flags = parse_flags(
                 rest, command, value_flags=(), bool_flags=("--json",)
