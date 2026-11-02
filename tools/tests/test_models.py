@@ -218,3 +218,73 @@ class ModelsCLITests(unittest.TestCase):
                         result.stderr,
                     )
                     path.unlink()
+
+    def test_init_seeds_effective_values_and_preserves_global_config(self):
+        original = b'{"models": {"opencode": {"deep": "my-model"}}}\n'
+        self.user.write_bytes(original)
+        before = json.loads(self.cli("models", "--json").stdout)
+        result = self.cli("init")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("unverified until", result.stdout.lower())
+        self.assertIn("user", result.stdout)
+        self.assertIn("adapter", result.stdout)
+        for harness in ("copilot", "zcode"):
+            self.assertTrue(
+                any(
+                    harness in line and "adapter" in line
+                    for line in result.stdout.splitlines()
+                )
+            )
+        self.assertEqual(self.user.read_bytes(), original)
+        raw = self.project.read_text()
+        seeded = json.loads(raw)
+        self.assertEqual(raw, json.dumps(seeded, indent=2, sort_keys=True) + "\n")
+        self.assertEqual(set(seeded["models"]), set(before))
+        after = json.loads(self.cli("models", "--json").stdout)
+        for harness, tiers in before.items():
+            self.assertEqual(set(seeded["models"][harness]), {"deep", "standard"})
+            for tier, item in tiers.items():
+                self.assertEqual(seeded["models"][harness][tier], item["model"])
+                self.assertEqual(
+                    after[harness][tier], {"model": item["model"], "source": "project"}
+                )
+        readme = (self.project.parent / "config.README.md").read_text()
+        for phrase in (
+            "models",
+            "deep",
+            "standard",
+            "project",
+            "user",
+            "adapter",
+            "restore",
+            "my-model",
+        ):
+            self.assertIn(phrase, readme.lower())
+        saved = self.project.read_bytes()
+        for remove_readme in (False, True):
+            if remove_readme:
+                (self.project.parent / "config.README.md").unlink()
+            refused = self.cli("init")
+            self.assertNotEqual(refused.returncode, 0)
+            self.assertIn(str(self.project), refused.stderr)
+            self.assertEqual(self.project.read_bytes(), saved)
+
+    def test_init_replaces_stale_readme_and_accepts_empty_directory(self):
+        self.project.parent.mkdir()
+        readme = self.project.parent / "config.README.md"
+        readme.write_text("stale")
+        result = self.cli("init")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(self.project.exists())
+        self.assertNotEqual(readme.read_text(), "stale")
+        self.project.unlink()
+        readme.unlink()
+        result = self.cli("init")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_init_rejects_malformed_user_config(self):
+        self.user.write_text("{bad")
+        result = self.cli("init")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(str(self.user), result.stderr)
+        self.assertFalse(self.project.exists())

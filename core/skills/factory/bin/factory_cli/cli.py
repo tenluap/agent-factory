@@ -25,6 +25,7 @@ read:
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
 
 write (the single writer; each stamps its time, validates, writes atomically):
+  init                              seed project model configuration
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
@@ -126,7 +127,17 @@ def main(argv):
         raise CLIError(5, USAGE)
     command, rest = args[0], args[1:]
     try:
-        if command == "models":
+        if command == "init":
+            positional, _ = parse_flags(rest, command, value_flags=())
+            if positional:
+                die_usage("init takes no arguments")
+            repo = commands.main_repo(Path.cwd())
+            try:
+                print(models.init(repo, commands.factory_home()))
+            except FileExistsError as e:
+                raise CLIError(1, str(e)) from e
+            return
+        elif command == "models":
             positional, flags = parse_flags(
                 rest, command, value_flags=(), bool_flags=("--json",)
             )

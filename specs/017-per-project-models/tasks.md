@@ -46,7 +46,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 5: User Story 4 - `factory init` (P2)
 
-- [ ] T005 [US4] Wire `init` in `cli.py` (dispatch + USAGE) with `init` function in `models.py`; tests in `tools/tests/test_models.py`.
+- [x] T005 [US4] Wire `init` in `cli.py` (dispatch + USAGE) with `init` function in `models.py`; tests in `tools/tests/test_models.py`.
   - Seam: `bin/factory` CLI command surface, `init`. Failure paths: existing `config.json` refused with non-zero exit and byte-identical file; malformed user config stops init.
   - Red: tests first: init in clean repo writes `.factory/config.json` (sorted keys, five harnesses, both tiers, effective adapter+user values) and `.factory/config.README.md` (schema, precedence, defaults table with sources, restore steps); stdout table labels `adapter`/`user` and contains unverified-until-preflight note; `${FACTORY_HOME}/config.json` bytes unchanged; `models --json` values identical before and after init, sources become `project` (SC-004); `copilot`/`zcode` seeded as `""` labelled `adapter`; second init exits non-zero naming path and file stays byte-identical (SC-005); init with `config.json` present but README deleted still refuses (refusal keys on `config.json` alone); init with stale `config.README.md` but no `config.json` writes config and rewrites README; init with pre-existing empty `.factory/` succeeds; malformed user config makes init exit non-zero, no `.factory/config.json` created. Run; fails.
   - Implement: resolve with project layer ignored; write via temp file + `os.replace`; never write `${FACTORY_HOME}`; no model inventory probe.
