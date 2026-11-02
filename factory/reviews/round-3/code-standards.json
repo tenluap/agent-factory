@@ -1,0 +1,65 @@
+{
+  "reviewer": "code-standards",
+  "round": 3,
+  "delta_base": "1f6c977",
+  "summary": "Delta 1f6c977..HEAD (three fix commits) follows the repo's CLI and test conventions: die_usage refusals with exit 5 for the new inline-JSON rejection, USAGE updated for --from with matching alignment, test style consistent with existing setUp/mock.patch.object precedents, SKILL.md prose matching shipped CLI behaviour with no stale inline-JSON text anywhere tracked, and all three commits are complete ENG-3 units with valid form-1 red proofs naming real tests; 18/18 focused tests green on my run. Five LOW non-blocking findings: an unhandled UnicodeDecodeError on non-UTF-8 --from/stdin input (same defect as SEC-5, kept for merge), a verbatim re-implementation of the json_or_usage helper, a duplicated control-character predicate between refusal and masking, an exit-code taxonomy divergence from the two sibling file-reading commands, and a duplicated rollback loop inside a now four-deep nested init().",
+  "verified_fixes": [
+    {
+      "source": ["STD-1", "STD-2"],
+      "status": "removed",
+      "evidence": "The round-2 publish-race code-standards facets shipped: models.py:130-184 publishes via no-replace os.link with config.README.md staged first and config.json last as the commit point, FileExistsError on config.json is re-raised as a named refusal (converted by cli.py:139-140 to CLIError(1)), any other OSError converts to ModelConfigError with temp cleanup and retry guidance; InitPublishTests.test_publish_race_refuses_without_clobber and test_readme_failure_rolls_back_and_converts_oserror assert the other writer's bytes survive, rollback removes partial artifacts and no .factory- temp remains; both green in my run (18/18)."
+    }
+  ],
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 154,
+      "summary": "Non-UTF-8 --from (or stdin) input escapes as a raw UnicodeDecodeError traceback instead of the CLI's clean usage refusal, leaving the error path undeliberate (ENG-17)",
+      "evidence": "cli.py:153-156 wraps Path(source).read_text(encoding='utf-8') in `except OSError` only; UnicodeDecodeError is a ValueError subclass, so it propagates out of main's ModelConfigError/StateError/CLIError handlers as a traceback. The module's own file-read precedent catches it: models.py:29 `except (OSError, UnicodeError) as error: raise ModelConfigError(...)`. sys.stdin.read() (cli.py:158) behaves the same on undecodable stdin. Same defect as round-3 SEC-5; listed here under the error-handling convention lens so the judge can merge sources.",
+      "fix": "Catch (OSError, UnicodeError) around the read and die_usage('models-record: cannot read <path>: <error>'); decode stdin defensively the same way."
+    },
+    {
+      "id": "STD-2",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 159,
+      "summary": "The new JSON-parse block re-implements the existing json_or_usage helper verbatim instead of reusing it (ENG-6)",
+      "evidence": "cli.py:159-162 inlines `try: block = json.loads(raw) except ValueError: die_usage('models-record needs JSON')`; the helper at cli.py:104-108 is `json.loads(value)` + `die_usage(f'{flag} needs JSON')`, and `block = json_or_usage(raw, 'models-record')` produces byte-identical behaviour including the exact message 'models-record needs JSON' (the pre-fix code called this helper). The helper stays in use for ledger-add/verify, so the two copies can drift in message or taxonomy while both live.",
+      "fix": "Replace the inline try/except with `block = json_or_usage(raw, \"models-record\")`."
+    },
+    {
+      "id": "STD-3",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 82,
+      "summary": "The control-character predicate is written twice — once for refusal, once for masking — so the two definitions of 'control character' can drift independently (ENG-6)",
+      "evidence": "models.py:52 refuses values with `any(ord(ch) < 0x20 or ch == \"\\x7f\" for ch in value)`; models.py:80-82 _sanitize masks with the same expression `\"?\" if ord(ch) < 0x20 or ch == \"\\x7f\" else ch`. Refusal and output-masking encode one piece of knowledge (which bytes are control characters); extending one site (e.g. C1 range) silently leaves the other behind, splitting the invariant the round-2 fix was meant to establish end-to-end.",
+      "fix": "Extract a single predicate (e.g. `def _is_control(ch): return ord(ch) < 0x20 or ch == \"\\x7f\"`) and use it in both _read_models and _sanitize."
+    },
+    {
+      "id": "STD-4",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 156,
+      "summary": "An unreadable --from file exits 5 (usage error) while both sibling file-reading commands report unreadable input files as exit 1, diverging from the documented exit-code taxonomy (ENG-7)",
+      "evidence": "cli.py:156 die_usage('models-record: cannot read ...') exits 5, and test_models.py:489-492 pins returncode 5. The established convention for exactly this failure is commands.py:383-386 (improvements add --from: `die(1, f\"cannot read {from_path}: {e}\")`) and commands.py:1462-1465 (envelope check: `die(1, f\"cannot read {path}: {e}\")`). cli.py's own header contract reserves 5 for usage errors (malformed invocation) and 1 for refusals; a bad path at runtime is the latter in this codebase. No caller distinguishes today (SKILL.md says stop on any non-zero), so the consequence is convention drift only.",
+      "fix": "Report the unreadable --from file as a refusal (exit 1, `cannot read <path>: <error>`) matching the two sibling commands, and update the returncode-5 assertion in test_models_record_from_path_errors; alternatively record the divergence as intentional in the exit-code contract."
+    },
+    {
+      "id": "STD-5",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 169,
+      "summary": "The rollback loop is duplicated verbatim across both failure handlers inside a now four-level-deep try nesting in init() (ENG-6, ENG-19; ENG-7 readability)",
+      "evidence": "models.py:169-175 and models.py:176-181 both execute the identical five-line cleanup `for filename in published: try: os.unlink(filename, dir_fd=dirfd) except OSError: pass`; the publish loop nests try(for(try(try/except)except)finally) and the error paths duplicate the cleanup knowledge a third time as the finally-unlink at models.py:164-168. Because FileExistsError is an OSError subclass, one `except OSError` handler that rolls back once and re-raises FileExistsError as-is (converting others to ModelConfigError) collapses the duplication without behaviour change; the correct behaviour is fully pinned by the green InitPublishTests, so this is a structure-only concern.",
+      "fix": "Fold the two handlers into one `except OSError as error:` block that runs the shared rollback, then re-raises FileExistsError untouched and converts every other OSError to ModelConfigError; optionally extract a _publish(dirfd, filename, text) helper to flatten the nesting."
+    }
+  ]
+}
