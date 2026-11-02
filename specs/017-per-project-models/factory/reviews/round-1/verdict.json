@@ -1,0 +1,79 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "summary": "Five blocking defects confirmed: the run cannot actually use resolved models end-to-end (no state-writer operation for the models block, no role-to-tier mapping in the installed skill, and an empty model fails to clear a pinned installed agent model), plus two reproduced init/resolve security defects (symlinked .factory escapes the repository; unbounded config read hangs or exhausts memory). Three medium advisory findings (init TOCTOU overwrite, control-sequence interpolation, unrecoverable half-complete init) are merged across reviewers. All 13 reviewer findings verified against the code; none rejected.",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 47,
+      "summary": "Resolved models cannot be recorded in run state: no CLI writer operation exists for the models block (STD-1, SPEC-1)",
+      "evidence": "SKILL.md:47 instructs preflight to record `models: {resolved, source}` in pending/run state (FR-005) and to compare/overwrite it on resume (FR-009), but references/state.md (\"CLI\": the CLI is the single writer, the orchestrator never hand-edits state.json) and ADR 0006 (no manual write fallback) make the CLI the only permitted writer, and no CLI command writes this field: cli.py's new dispatch adds only read-only `models` and `init`; `grep -n models core/skills/factory/bin/factory_cli/commands.py` returns nothing; cmd_resume (commands.py:1499-1530) mutates only status, halt_reason and history. tools/tests/test_models.py has no state-lifecycle test. FR-005 and FR-009 are therefore unreachable through the permitted interface (ENG-15, ENG-26).",
+      "fix": "Add a locked, validated state-writer operation that persists the resolved models block (and reports the prior/current delta for resume), invoke it from preflight and resume, and test both lifecycle paths.",
+      "sources": ["STD-1", "SPEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 24,
+      "summary": "Installed orchestrator has no role-to-tier mapping, so it cannot select each role's resolved model (STD-2, SPEC-2)",
+      "evidence": "FR-006/SC-001 require every SPAWN to receive the model for the agent's tier, and SKILL.md:24 says every spawn receives \"the resolved model for that agent's tier\", but nothing installed maps roles to tiers: the tier lives only in core/roles/*.md frontmatter (e.g. code-build `tier: standard`, facets-advisor `tier: deep`), which tools/render.py strips when installing role bodies (`(skill / 'roles' / role_name).write_text(body.lstrip())`, render.py:241-242), and agent_fields (render.py:124-162) writes the rendered `model` but never the tier. adapters/ is not installed. Inferring tier by matching installed agent models breaks when both tiers resolve to the same value or are empty. ENG-15.",
+      "fix": "Ship one authoritative role-to-tier mapping with the installed skill (or preserve tier metadata in the installed roles/agents) and have SKILL.md preflight/spawn use it; validate the mapping against authored core/roles/*.md.",
+      "sources": ["STD-2", "SPEC-2"]
+    },
+    {
+      "severity": "high",
+      "file": "adapters/opencode/harness.md",
+      "line": 15,
+      "summary": "An empty resolved model omits the spawn parameter but does not clear the installed agent's pinned model, so the session model is not inherited (SPEC-3)",
+      "evidence": "FR-003 and US1 scenario 4 require an empty winning value to inherit the session's model, but tools/render.py agent_fields pins a nonempty `model` into every rendered agent's frontmatter (`if model: fields.append(('model', model))`), and both opencode (deep claude-code/claude-opus-5-5[1m], standard openai/gpt-6.1-terra) and claude-code (deep claude-opus-5-5, standard claude-haiku-5-5) ship nonempty defaults. harness.md (opencode:15, claude-code:14-15) says to \"omit the parameter when it is empty\"; an omitted per-call model leaves the agent's own pinned frontmatter model in effect rather than the session model, so a project empty-string override silently runs the old installed selection. Same defect on both spawn-capable adapters.",
+      "fix": "Define a harness-supported way to explicitly select the invoking session's model when the resolved value is empty (not parameter omission on a model-pinned agent), and verify it on opencode and claude-code.",
+      "sources": ["SPEC-3"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 107,
+      "summary": "Symlinked .factory redirects init writes outside the repository and clobbers an external file (SEC-1)",
+      "evidence": "ENG-25/ENG-26. `directory.mkdir(parents=True, exist_ok=True)` (models.py:107) accepts an existing `.factory` symlink to any directory; temp files are then created and published with os.replace (114-119) through the symlink. Judge reproduction: with `.factory -> /tmp/target` containing an unrelated `config.README.md` (\"IMPORTANT\"), `factory init` exited 0, created `config.json` in /tmp/target and overwrote `config.README.md` there with the factory README. A checked-out repository controls the symlink, so repo content destroys/creates files outside the repo under two fixed names.",
+      "fix": "Reject a symlinked `.factory` directory and publish with directory-relative, no-follow semantics so a concurrent swap cannot redirect writes outside the repository.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 16,
+      "summary": "Unbounded read of repository-controlled config permits preflight hangs and memory exhaustion (SEC-2)",
+      "evidence": "ENG-24/ENG-25. `_read_models` does `json.loads(path.read_text())` (models.py:16) with no file-type check, byte limit or timeout on `.factory/config.json`, which is repository-controlled; `factory models` runs in every preflight (SKILL.md step 1) and `resolve` reads the project file. Judge reproduction: a FIFO at `.factory/config.json` left `factory models` blocked indefinitely (process alive past 3s, killed manually); a symlink to /dev/zero feeds the same unbounded read until memory is exhausted.",
+      "fix": "Open the project config without following symlinks, verify the descriptor is a regular file, and read at most a documented small maximum plus one byte, rejecting oversized or special files without blocking.",
+      "sources": ["SEC-2"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 119,
+      "summary": "Concurrent creation between init's existence check (line 90) and os.replace (line 119) is silently overwritten, violating FR-014's refuse-and-modify-nothing in the race window (ENG-26)",
+      "fix": "Publish the staged config with an atomic no-replace operation or exclusive-creation protocol and refuse when another writer wins, preserving its bytes.",
+      "sources": ["SEC-3", "STD-3", "SPEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 83,
+      "summary": "Untrusted model strings are interpolated raw into the human-readable table and README, emitting terminal control sequences from repository-controlled values (ENG-25)",
+      "fix": "Escape C0/C1 control characters (including ESC) in table and README output while preserving exact values in JSON and internal resolution.",
+      "sources": ["SEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 108,
+      "summary": "Init publishes config.json before config.README.md; a README failure leaves an uncaught traceback, a half-complete bootstrap that FR-013 requires whole, and retries are refused by the existing-config check (ENG-17, ENG-26, FR-011/FR-013)",
+      "fix": "Stage both outputs and make a failed init recoverable without deleting a created configuration; surface a concise diagnostic and add a failure-path test.",
+      "sources": ["STD-4", "SPEC-5"]
+    }
+  ],
+  "rejected": []
+}
