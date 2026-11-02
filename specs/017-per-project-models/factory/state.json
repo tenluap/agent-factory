@@ -531,7 +531,7 @@
       "at": "2026-11-02T12:55:27.957550Z",
       "stage": "fix",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "b8bd543",
       "harness": "opencode",
       "commands": [
         {
