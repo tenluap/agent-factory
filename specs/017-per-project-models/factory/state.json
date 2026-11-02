@@ -341,6 +341,17 @@
       "duration_ms": 250000,
       "commit": "35d1648",
       "partial_return": false
+    },
+    {
+      "at": "2026-11-02T12:19:42.942402Z",
+      "kind": "retry",
+      "stage": "review",
+      "role": "security-reviewer",
+      "cause": null,
+      "detail": "first attempt returned findings in envelope but wrote no report file; retry wrote and committed cf49276",
+      "duration_ms": 180000,
+      "commit": "a885ca8",
+      "partial_return": false
     }
   ],
   "review": {
