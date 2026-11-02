@@ -42,7 +42,16 @@
     "pending_clarify": []
   },
   "relay": null,
-  "timeline": [],
+  "timeline": [
+    {
+      "at": "2026-11-02T10:50:36.535104Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "plan relay: adapter-default source + test seam acceptance",
+      "answered_at": null,
+      "latency_ms": null
+    }
+  ],
   "decisions": [],
   "ledger": [
     {
