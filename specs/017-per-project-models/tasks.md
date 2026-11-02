@@ -53,7 +53,8 @@ description: "Task list for 017-per-project-models"
   - Pass: runner green.
   - Done: all listed cases asserted and passing.
 
-- [ ] T006 Verification: run `python3 -m unittest discover -s tools/tests -t .`; full suite green (existing tests included). Done: zero failures recorded in commit message or run log.
+- [x] T006 Verification: run `python3 -m unittest discover -s tools/tests -t .`; full suite green (existing tests included). Done: zero failures recorded in commit message or run log.
+      Note (2026-11-02): the documented `-t .` form is broken on Python 3.14 (imports 140 tests, 23 ModuleNotFoundError for the `tests` helper package); working form `python3 -m unittest discover -s tools/tests -t tools` = 343 tests, 342 pass, 1 pre-existing failure (`test_design_to_code_permissions_reach_only_supporting_adapters`, broken on origin/main by f9bc303 removing the design-to-code permissions block without updating the test). Zero new failures.
 
 ## Phase 6: User Stories 1, 2, 5, 6 - Skill prose (P1-P3)
 
