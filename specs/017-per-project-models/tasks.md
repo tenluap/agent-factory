@@ -68,7 +68,7 @@ description: "Task list for 017-per-project-models"
 
 - [x] T010 [P] [US1] Edit `adapters/claude-code/harness.md` and `adapters/opencode/harness.md`: map `SPAWN` model input to spawn tool `model` parameter; empty string omits parameter. Exempt: adapters/*/harness.md - documentation only. Done: both files state the mapping.
 
-- [ ] T011 [P] [US6] Edit `adapters/codex/harness.md`, `adapters/copilot/harness.md`, `adapters/zcode/harness.md`: spawn cannot take a model; preflight discloses that project/user models cannot apply when any source is `project`/`user`, continue on installed selections. Exempt: adapters/*/harness.md - documentation only. Done: all three state the disclosure.
+- [x] T011 [P] [US6] Edit `adapters/codex/harness.md`, `adapters/copilot/harness.md`, `adapters/zcode/harness.md`: spawn cannot take a model; preflight discloses that project/user models cannot apply when any source is `project`/`user`, continue on installed selections. Exempt: adapters/*/harness.md - documentation only. Done: all three state the disclosure.
 
 ## Phase 8: Polish and verification
 

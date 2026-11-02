@@ -11,7 +11,7 @@
 
 | Verb | On GitHub Copilot |
 |---|---|
-| `SPAWN(role, inputs)` | Delegate to the custom agent `factory-<role>` with the inputs as its task (the agent/subagent tool), and wait for its result. **Tier 2 fallback** when you cannot delegate: `SHELL` `copilot --agent factory-<role> --prompt "<inputs>"`, with the tool-approval flags your setup needs for a non-interactive run, and take the final fenced `json` block from its output. |
+| `SPAWN(role, inputs, model)` | Delegate to the custom agent `factory-<role>` with the inputs as its task (the agent/subagent tool), and wait for its result. Spawn cannot take a model; use the installed selection. **Tier 2 fallback** when you cannot delegate: `SHELL` `copilot --agent factory-<role> --prompt "<inputs>"`, with the tool-approval flags your setup needs for a non-interactive run, and take the final fenced `json` block from its output. |
 | `SPAWN_PARALLEL([...])` | Delegate to every listed agent at once if the harness runs subagents in parallel; otherwise one after another. In tier 2: background processes, then wait for all. |
 | `ASK(text, options?)` | A plain message, then wait for the reply. Initial grilling and relays, even one question, use the Markdown presentation in protocol.md, "Questions". |
 | `NOTIFY(text)` | No-op. |
@@ -32,6 +32,8 @@
 - Ledger (reported usage): delegation exposes no token usage — record `reported: null`. Tier-2 fallback: the `copilot --agent` output usually prints token usage; take `reported` from there when it does.
 
 ## Model inspection and recovery
+
+Preflight resolves configuration in order: `<repo>/.factory/config.json` (project), `${FACTORY_HOME}/config.json` (user), then adapter defaults. If either resolved tier's source is `project` or `user`, disclose that project/user model selections cannot apply at spawn and continue on the installed (rendered) selections.
 
 Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
 
