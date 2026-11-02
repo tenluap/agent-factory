@@ -111,7 +111,7 @@ On a harness whose spawn mechanism cannot accept a model, the user is told proje
 ### Edge Cases
 
 - Project config exists but has no `models` key, or no entry for the current harness: every tier falls through to user, then adapter.
-- Project config has entries for other harnesses only: those are ignored for this run; no error.
+- Project config has entries for other known harnesses only: those are ignored for this run; no error. A key naming an unknown harness (e.g. typo `opencod`) in project or user config is malformed config (FR-008): stop, naming file, key and the known harnesses.
 - `.factory/` exists without `config.json`: init writes both files into it.
 - `config.README.md` exists but `config.json` does not: init refuses only on an existing `config.json`, so it writes the config and regenerates the README it owns.
 - User global config itself malformed: same preflight stop, naming the global file.

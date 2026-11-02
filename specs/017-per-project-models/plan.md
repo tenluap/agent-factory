@@ -30,7 +30,7 @@ Add a project model layer `<repo>/.factory/config.json` above the user config an
 
 ### Adapter defaults at runtime
 
-The installed skill (`<harness skills>/factory/`) ships `SKILL.md`, `bin/`, `references/` and `roles/` only; `adapters/*/adapter.json` is not installed. The CLI therefore cannot read adapter defaults from `adapters/` at run time, and init must seed all five harnesses. Decided (plan Q1, option A): a checked-in data file `core/skills/factory/bin/factory_cli/adapter_models.json` mapping each harness to its `{deep, standard}` defaults, kept equal to every `adapters/<name>/adapter.json` `"models"` by a parity test in `tools/tests/test_render_models.py`. It is copied with `bin/` by the existing render/install, so render.py, dist and install.sh stay unchanged. It is the CLI's only run-time source of adapter defaults; `adapters/*/adapter.json` stays the authored source, and the parity test fails on any drift between the two.
+The installed skill (`<harness skills>/factory/`) ships `SKILL.md`, `bin/`, `references/` and `roles/` only; `adapters/*/adapter.json` is not installed. The CLI therefore cannot read adapter defaults from `adapters/` at run time, and init must seed all five harnesses. Decided (plan Q1, option A): a checked-in data file `core/skills/factory/bin/factory_cli/adapter_models.json` mapping each harness to its `{deep, standard}` defaults, kept equal to every `adapters/<name>/adapter.json` `"models"` by a parity test in `tools/tests/test_render_models.py`. It is copied with `bin/` by the existing render/install, so render.py, dist and install.sh stay unchanged. It is the CLI's only run-time source of adapter defaults; `adapters/*/adapter.json` stays the authored source, and the parity test fails on any drift between the two. `copilot` and `zcode` pin no models (`"models": {}`; their `harness.md` says "not set by default"), so `adapter_models.json` carries `"copilot": {"deep": "", "standard": ""}` and `"zcode": {"deep": "", "standard": ""}`: empty string = inherit the session's model, today's behaviour. The parity test treats a tier absent from `adapter.json` `"models"` as `""` and asserts equality including empties; `factory init` seeds those empty strings with source `adapter`.
 
 ### Spawn-time model support per harness
 
@@ -80,7 +80,7 @@ tools/tests/test_models.py              # NEW
 tools/tests/test_render_models.py       # parity test added
 ```
 
-**Structure Decision**: New module `factory_cli/models.py` rather than a section in `commands.py`: `commands.py` is already ~800 lines of run/state commands; model resolution is one coherent concern with three callers (preflight, `models`, `init`) and its own strict error policy (raise, naming the file), unlike `read_config()` which returns `{}` on malformed input for budget use.
+**Structure Decision**: New module `factory_cli/models.py` rather than a section in `commands.py`: `commands.py` is already over 1500 lines of run/state commands; model resolution is one coherent concern with three callers (preflight, `models`, `init`) and its own strict error policy (raise, naming the file), unlike `read_config()` which returns `{}` on malformed input for budget use.
 
 ### New files, abstractions, dependencies
 
@@ -88,14 +88,16 @@ tools/tests/test_render_models.py       # parity test added
 - `core/skills/factory/bin/factory_cli/adapter_models.json` - file - adapter defaults must be readable by the installed CLI, which has no `adapters/` (decided Q1); parity-tested against `adapters/*/adapter.json`.
 - `tools/tests/test_models.py` - file - tests for the new module and commands.
 - `resolve(repo, home) -> {harness: {tier: (model, source)}}` - abstraction - one resolver shared by preflight, report and init.
+- `ModelConfigError(path, detail)` - abstraction - dedicated error class so CLI exit paths can name the offending file distinctly from generic `CLIError(1)`.
 - Dependencies: none.
 
 ### Design
 
-- `resolve(repo, home)`: for each harness in `adapter_models.json`, per tier `deep`/`standard`: project value if the key is present, else user, else adapter. Empty string is a valid value (inherit session model). Missing file, missing `models`, missing harness entry: fall through. Invalid JSON, non-object `models`/harness entry, unknown tier key or non-string value: raise `ModelConfigError(path, detail)`; the CLI exits non-zero with `<path>: <detail>` and the fix line `Fix the file or delete it to fall back to the next layer.`
-- `<repo>` is the main repository root (`main_repo(cwd)` / `state.repo`), never the worktree.
+- `resolve(repo, home)`: for each harness in `adapter_models.json`, per tier `deep`/`standard`: project value if the key is present, else user, else adapter. Empty string is a valid value (inherit session model). Missing file, missing `models`, missing harness entry: fall through. Invalid JSON, non-object `models`/harness entry, unknown harness key, unknown tier key or non-string value: raise `ModelConfigError(path, detail)`; the CLI exits non-zero with `<path>: <detail>` and the fix line `Fix the file or delete it to fall back to the next layer.`
+- Unknown harness keys (not in `adapter_models.json`) in project or user config are a malformed-config error, never ignored: the detail names the key and the known harnesses. Unknown tier keys likewise name the key and `deep`, `standard`.
+- `<repo>` is the main checkout root: parent of `git rev-parse --path-format=absolute --git-common-dir` (`main_repo(cwd)` / `state.repo`), never the worktree, so a run started from a worktree reads the main checkout's `.factory/config.json`.
 - `factory models [--json]`: table `harness tier model source`; `--json` prints `{harness: {tier: {"model", "source"}}}`. Exit 1 on `ModelConfigError`.
-- `factory init`: refuse (exit 1, name path) if `<repo>/.factory/config.json` exists. Otherwise resolve with the project layer ignored, write `config.json` (sorted keys, all five harnesses, both tiers) and `config.README.md` (schema, precedence, defaults table with sources, restore instructions), print the table with `adapter`/`user` sources and the "unverified until a run's preflight" note. Never writes `${FACTORY_HOME}`. Writes go to a temp file then `os.replace` (no partial config on failure).
+- `factory init`: refuse (exit 1, name path) if `<repo>/.factory/config.json` exists, keyed on `config.json` alone (a missing README does not unlock init; an existing README without `config.json` is rewritten). Otherwise resolve with the project layer ignored, write `config.json` (sorted keys, all five harnesses, both tiers) and `config.README.md` (schema, precedence, defaults table with sources, restore instructions), print the table with `adapter`/`user` sources and the "unverified until a run's preflight" note. Never writes `${FACTORY_HOME}`. Writes go to a temp file then `os.replace` (no partial config on failure).
 - State: preflight writes `models: {resolved: {deep, standard}, source: {deep, standard}}` for the run's harness. On resume, compare with the recorded block, disclose each changed tier `old (source) -> new (source)`, overwrite, continue.
 - Preflight on a no-spawn-model harness with any `project`/`user` source: disclose and continue on installed selections.
 
@@ -108,7 +110,7 @@ tools/tests/test_render_models.py       # parity test added
 
 ## Test seams
 
-- Seam: `factory_cli.models.resolve` - cascade per tier, empty-string value, missing file/key/harness fall-through. Failure paths: invalid JSON in project config; invalid JSON in user config; non-object `models` or harness entry; unknown tier key; non-string tier value.
+- Seam: `factory_cli.models.resolve` - cascade per tier, empty-string value, missing file/key/harness fall-through. Failure paths: invalid JSON in project config; invalid JSON in user config; non-object `models` or harness entry; unknown harness key; unknown tier key; non-string tier value.
 - Seam: `bin/factory` CLI command surface, `models [--json]` - table and JSON output with source labels. Failure paths: malformed config exits non-zero naming file and fix.
 - Seam: `bin/factory` CLI command surface, `init` - seeded five harnesses x two tiers with effective values, README written, global config untouched, post-init `models` values unchanged. Failure paths: existing `config.json` refused with non-zero exit and byte-identical file; malformed user config stops init.
 - Seam: `adapter_models.json` parity with `adapters/*/adapter.json` (`tools/tests/test_render_models.py`). Failure paths: none.
@@ -116,7 +118,7 @@ tools/tests/test_render_models.py       # parity test added
 - Exempt: `adapters/*/harness.md` - documentation only.
 - Overridden: none
 
-Confirmed: 2026-11-02 - Q2 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
+Superseded (remediation 1 added resolve failure path "unknown harness key"; fresh acceptance pending as Q13): 2026-11-02 - Q2 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
 
 ## Complexity Tracking
 
