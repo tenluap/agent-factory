@@ -12,8 +12,8 @@
 
 | Verb | On OpenCode |
 |---|---|
-| `SPAWN(role, inputs)` | The `subagent` tool targeting agent ID `factory-<role>`, with a short `description` and the complete inputs as `prompt`. Use a foreground call and return the child's final message. Each spawn starts a fresh child session. |
-| `SPAWN_PARALLEL([...])` | One foreground `subagent` call per role, all in **one message**, or concurrent calls through `execute` when the catalog exposes them there. Wait for every result. |
+| `SPAWN(role, inputs, model)` | The `subagent` tool targeting agent ID `factory-<role>`, with a short `description` and the complete inputs as `prompt`. Pass the resolved tier model as its `model` parameter; omit the parameter when it is empty. Use a foreground call and return the child's final message. Each spawn starts a fresh child session. |
+| `SPAWN_PARALLEL([...])` | One foreground `subagent` call per role, all in **one message**, or concurrent calls through `execute` when the catalog exposes them there. Map each role's resolved model as above. Wait for every result. |
 | `ASK(text, options?)` | Initial grilling and relays, even one question: a plain Markdown message using protocol.md, "Questions", then wait. Other asks with options: the `question` tool when available. Otherwise: a plain message, then wait. |
 | `NOTIFY(text)` | No-op. |
 | `RESOLVE(name)` | First match of `<name>/SKILL.md` in: `<repo>/.opencode/skills/`, `<repo>/.claude/skills/`, `<repo>/.agents/skills/`, `~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/`. For a `speckit-<stage>` name with no skill, take the command file `speckit.<stage>.md` under `<repo>/.opencode/`. |
@@ -26,7 +26,7 @@
 - Main agent (`mode: primary`): rendered `mode: all`; select it with Tab or the agent picker. Other agents can still call it.
 - Figma capability discovery: search the session's available tool catalog for Figma MCP inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents live in `~/.config/opencode/agents/` with `mode: subagent` and ordered V2 `permissions` rules. Read-only roles deny `edit`; every role denies `subagent`, so only the orchestrator launches roles. Other permissions follow the user's OpenCode configuration.
-- Agent models come from the adapter defaults. Override `models.opencode.deep` / `.standard` (as `provider/model-id#variant`, with optional variant) in `${FACTORY_HOME}/config.json` and re-run `./install.sh --harness opencode`. An empty model inherits the session's model.
+- Override `models.opencode.deep` / `.standard` (as `provider/model-id#variant`, with optional variant) in project or user config; preflight resolves the change without reinstalling. An empty model inherits the session's model.
 - Never load the `speckit-*` skills or `grill-with-docs` with the `skill` tool: read the resolved file and follow it.
 - Invoke the factory as `/factory <args>` (the skill sets `opencode/slash`). `$ARGUMENTS` is whatever follows `/factory`.
 - Ledger (reported usage): unless the `subagent` result supplies attributable token usage, record `reported: null` and rely on the estimates.
@@ -37,6 +37,6 @@ This adapter targets OpenCode V2. Supported V1 agent and skill files remain comp
 
 ## Model inspection and recovery
 
-Read effective model/variant selections from installed role agents, including per-user overrides; repository defaults alone are insufficient. Check local `opencode models --help` for this version, then use supported `opencode models` inventory. Treat it as authoritative for rejection only when its result is complete for the selected provider; partial, failed or unknown-coverage output is unverified. Inventory membership does not prove provider access. If no supported inventory or resolvable inherited ID exists, disclose unverified and retain bounded runtime retry/halt.
+Read effective model/variant selections from `<repo>/.factory/config.json` first, then `${FACTORY_HOME}/config.json`, then installed adapter defaults; repository defaults alone are insufficient. Check local `opencode models --help` for this version, then use supported `opencode models` inventory. Treat it as authoritative for rejection only when its result is complete for the selected provider; partial, failed or unknown-coverage output is unverified. Inventory membership does not prove provider access. If no supported inventory or resolvable inherited ID exists, disclose unverified and retain bounded runtime retry/halt.
 
-For a rejected model, preserve its exact ID/variant, installed file/configuration source and original diagnostic. Guide the user to choose a valid accessible selection in `${FACTORY_HOME}/config.json` at `models.opencode.deep` / `.standard`, re-run `./install.sh --harness opencode`, start a fresh session and recheck. Do not guess an alias, silently choose another model or alter credentials.
+For a rejected model, preserve its exact ID/variant, configuration source and original diagnostic. Guide the user to choose a valid accessible selection in the applicable project or user config at `models.opencode.deep` / `.standard` and recheck. For installed adapter selections, reinstall with `./install.sh --harness opencode` and start a fresh session before rechecking. Do not guess an alias, silently choose another model or alter credentials.
