@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from factory_cli import commands, state
+from factory_cli import commands, models, state
 from factory_cli.commands import CLIError
 
 USAGE = """usage: factory <command> [args]
@@ -20,6 +20,7 @@ read:
   validate <run> | validate --all   validation violations; exit 1 when any
   resume <run>                      record the resumed entry, print the resume digest
   budget <role>                     the role's resolved seconds and deadline, JSON
+  models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
 
@@ -125,7 +126,21 @@ def main(argv):
         raise CLIError(5, USAGE)
     command, rest = args[0], args[1:]
     try:
-        if command == "runs":
+        if command == "models":
+            positional, flags = parse_flags(
+                rest, command, value_flags=(), bool_flags=("--json",)
+            )
+            if positional:
+                die_usage("models takes no positional arguments")
+            repo = commands.main_repo(Path.cwd())
+            print(
+                models.report(
+                    models.resolve(repo, commands.factory_home()),
+                    bool(flags.get("--json")),
+                )
+            )
+            return
+        elif command == "runs":
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_runs(repo)
@@ -408,6 +423,12 @@ def main(argv):
             # FR-011: the state write landed, the commit did not — the JSON
             # above names it and the exit code says the command failed
             raise SystemExit(1)
+    except models.ModelConfigError as e:
+        print(
+            f"factory: {e}\nFix the file or delete it to fall back to the next layer.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
     except commands.state.StateError as e:  # a refused write names its reason
         print(f"factory: {e}", file=sys.stderr)
         raise SystemExit(1)

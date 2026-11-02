@@ -37,7 +37,7 @@ description: "Task list for 017-per-project-models"
 
 ## Phase 4: User Story 3 - `factory models [--json]` (P2)
 
-- [ ] T004 [US3] Wire `models [--json]` in `core/skills/factory/bin/factory_cli/cli.py` (dispatch + USAGE) using `models.py` report helper; tests in `tools/tests/test_models.py`.
+- [x] T004 [US3] Wire `models [--json]` in `core/skills/factory/bin/factory_cli/cli.py` (dispatch + USAGE) using `models.py` report helper; tests in `tools/tests/test_models.py`.
   - Seam: `bin/factory` CLI command surface, `models [--json]`. Failure paths: malformed config (including unknown harness key) exits non-zero naming file and fix.
   - Red: subprocess tests on `core/skills/factory/bin/factory` with `cwd` = temp repo and `FACTORY_HOME` = temp dir: table rows `harness tier model source` for 5 x 2; `--json` gives `{harness: {tier: {"model", "source"}}}` with correct sources; malformed project or user config (invalid JSON; unknown harness key) exits 1, stderr contains `<path>: <detail>` and `Fix the file or delete it to fall back to the next layer.`; USAGE lists `models`. Run; fails (unknown command).
   - Implement: report formatter in `models.py`; dispatch and USAGE line in `cli.py`.

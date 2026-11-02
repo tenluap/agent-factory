@@ -1,6 +1,7 @@
 """Model cascade and CLI tests."""
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -146,3 +147,74 @@ class ResolveTests(unittest.TestCase):
             models.resolve(repo, self.home)["opencode"]["deep"],
             ("main-model", "project"),
         )
+
+
+class ModelsCLITests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name) / "repo"
+        self.home = Path(self.temp.name) / "home"
+        self.repo.mkdir()
+        self.home.mkdir()
+        subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        self.project = self.repo / ".factory/config.json"
+        self.user = self.home / "config.json"
+
+    def cli(self, *args):
+        return subprocess.run(
+            [sys.executable, str(ROOT / "core/skills/factory/bin/factory"), *args],
+            cwd=self.repo,
+            env=dict(os.environ, FACTORY_HOME=str(self.home)),
+            capture_output=True,
+            text=True,
+        )
+
+    def test_models_table_and_json(self):
+        self.user.write_text(
+            json.dumps({"models": {"opencode": {"standard": "user-model"}}})
+        )
+        self.project.parent.mkdir()
+        self.project.write_text(
+            json.dumps({"models": {"opencode": {"deep": "project-model"}}})
+        )
+        out = self.cli("models", "--json")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        data = json.loads(out.stdout)
+        self.assertEqual(len(data), 5)
+        self.assertEqual(
+            data["opencode"]["deep"], {"model": "project-model", "source": "project"}
+        )
+        self.assertEqual(
+            data["opencode"]["standard"], {"model": "user-model", "source": "user"}
+        )
+        table = self.cli("models")
+        self.assertEqual(table.returncode, 0, table.stderr)
+        self.assertEqual(len(table.stdout.splitlines()), 11)
+        for harness, tiers in data.items():
+            for tier, item in tiers.items():
+                self.assertTrue(
+                    any(
+                        harness in line
+                        and tier in line
+                        and item["model"] in line
+                        and item["source"] in line
+                        for line in table.stdout.splitlines()
+                    )
+                )
+        self.assertIn("models", self.cli().stderr)
+
+    def test_models_reports_bad_config_with_fix(self):
+        for path in (self.project, self.user):
+            for contents in ("{bad", '{"models":{"opencod":{}}}'):
+                with self.subTest(path=path, contents=contents):
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(contents)
+                    result = self.cli("models", "--json")
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(str(path) + ":", result.stderr)
+                    self.assertIn(
+                        "Fix the file or delete it to fall back to the next layer.",
+                        result.stderr,
+                    )
+                    path.unlink()

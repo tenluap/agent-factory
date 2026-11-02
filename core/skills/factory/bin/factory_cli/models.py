@@ -56,3 +56,23 @@ def resolve(repo, home):
                     value = (layer[harness][tier], source)
             result[harness][tier] = value
     return result
+
+
+def report(resolved, json_output=False):
+    if json_output:
+        return json.dumps(
+            {
+                h: {
+                    t: {"model": value, "source": source}
+                    for t, (value, source) in tiers.items()
+                }
+                for h, tiers in resolved.items()
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    lines = ["harness  tier  model  source"]
+    for harness, tiers in resolved.items():
+        for tier, (value, source) in tiers.items():
+            lines.append(f"{harness}  {tier}  {value}  {source}")
+    return "\n".join(lines)
