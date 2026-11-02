@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/017-per-project-models",
   "spec_dir": "specs/017-per-project-models",
   "status": "running",
-  "stage": "remediate",
+  "stage": "implement",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -271,6 +271,13 @@
       "stage": "analyze",
       "event": "complete",
       "commit": "394f6dc",
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-02T10:59:04.802904Z",
+      "stage": "analyze",
+      "event": "complete",
+      "commit": null,
       "harness": "opencode"
     }
   ],
