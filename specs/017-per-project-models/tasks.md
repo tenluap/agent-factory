@@ -6,7 +6,7 @@ description: "Task list for 017-per-project-models"
 
 **Input**: `specs/017-per-project-models/` (spec.md, plan.md)
 
-**Tests**: Required (engineering.md). Each behaviour-changing task is one commit unit: failing test (red proof), implementation, passing check. Runner: `python3 -m unittest discover -s tools/tests -t .` (existing). Seams: plan.md "Test seams" (Q2 confirmation superseded by remediation 1; fresh acceptance pending as Q13).
+**Tests**: Required (engineering.md). Each behaviour-changing task is one commit unit: failing test (red proof), implementation, passing check. Runner: `python3 -m unittest discover -s tools/tests -t .` (existing). Seams: plan.md "Test seams" (scope confirmed: Q13 accepted 2026-11-02, superseding Q2).
 
 ## Format: `[ID] [P?] [Story] Description`
 

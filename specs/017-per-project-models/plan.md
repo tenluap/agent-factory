@@ -118,7 +118,9 @@ tools/tests/test_render_models.py       # parity test added
 - Exempt: `adapters/*/harness.md` - documentation only.
 - Overridden: none
 
-Superseded (remediation 1 added resolve failure path "unknown harness key"; fresh acceptance pending as Q13): 2026-11-02 - Q2 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
+Confirmed: 2026-11-02 - Q13 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown harness key, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
+
+Superseded (remediation 1 added resolve failure path "unknown harness key"; replaced by Q13 above): 2026-11-02 - Q2 accepted - seams: factory_cli.models.resolve, bin/factory models [--json], bin/factory init, adapter_models.json parity; failure paths: resolve -> invalid JSON in project config, invalid JSON in user config, non-object models or harness entry, unknown tier key, non-string tier value; models -> malformed config exits non-zero naming file and fix; init -> existing config.json refused with non-zero exit and byte-identical file, malformed user config stops init; parity -> none (drift fails the test)
 
 ## Complexity Tracking
 
