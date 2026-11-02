@@ -48,12 +48,20 @@
         "questions": [
           {
             "id": "Q1"
+          },
+          {
+            "id": "Q2"
           }
         ],
         "answers": {
           "Q1": {
             "answer": "A - checked-in factory_cli/adapter_models.json with a parity test against every adapter.json; render.py/install.sh stay untouched",
             "at": "2026-11-02T10:50:41.420929Z",
+            "auto": false
+          },
+          "Q2": {
+            "answer": "A - accept all four seams and failure paths as declared",
+            "at": "2026-11-02T10:50:41.670083Z",
             "auto": false
           }
         }
