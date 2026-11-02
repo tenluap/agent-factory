@@ -108,6 +108,16 @@ tools/tests/test_render_models.py       # parity test added
 - Errors: every malformed case names file, error and fix (FR-008, SC-003).
 - Compatibility: repos without `.factory/` resolve exactly as today (SC-002); state `models` block is additive to v5.
 
+## Test seams (fix round 1 scope — orchestrator-confirmed 2026-11-02)
+
+Confirmed by the user (relay, 2026-11-02) as the fix-round-1 seam scope for verdict round 1, supplementing the seams above:
+
+- `factory_cli` state writer: new write command `models-record` (dispatch + cmd_*, validate models block shape {resolved:{deep,standard}, source:{deep,standard}}, source ∈ project|user|adapter; reject unknown source; atomic write + commit; usage error on malformed JSON payload). SKILL.md preflight prose updated to call it (FR-005, FR-009).
+- Role→tier map: rendered skill gains a machine-readable role→tier map (preferred: roles/tiers.json emitted by render.py — FR-017's no-render-change rule is explicitly relaxed by the user for this one additive output only; render stays otherwise untouched). Test: rendered tree contains the map matching core/roles frontmatter for all five harnesses.
+- opencode spawn-model prose: adapters/opencode/harness.md wording must state the truthful inheritance mechanism for an empty resolved model on a model-pinned installed agent (FR-003 accuracy fix); verified against OpenCode docs/behavior before wording.
+- Resolver/init hardening failure paths (test_models.py): symlinked `.factory/` dir refused (init); symlinked or non-regular config file refused (resolve); config file over the 1 MiB cap refused (resolve); control-character model values refused (resolve + table sanitize); init publish race: existing destination at publish → refusal with temp cleanup; init publish failure leaves no artifacts (retryable).
+- Full-suite bar stays: 343 tests, 342 pass, only the pre-existing design-to-code permissions failure.
+
 ## Test seams
 
 - Seam: `factory_cli.models.resolve` - cascade per tier, empty-string value, missing file/key/harness fall-through. Failure paths: invalid JSON in project config; invalid JSON in user config; non-object `models` or harness entry; unknown harness key; unknown tier key; non-string tier value.
