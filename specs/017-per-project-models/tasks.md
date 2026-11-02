@@ -60,7 +60,7 @@ description: "Task list for 017-per-project-models"
 
 - [x] T007 [US1][US2][US4][US5][US6] Edit `core/skills/factory/SKILL.md`: step 0 routes `init` (alongside `resume`/`improve`) to `SHELL: python3 <F>/bin/factory init`, show table, stop (FR-016); preflight resolves cascade via `factory models --json`, records `models: {resolved: {deep, standard}, source: {deep, standard}}` for run harness in state (FR-005), stops on non-zero exit showing CLI message (FR-008); on resume compares with recorded block and discloses each changed tier `old (source) -> new (source)`, overwrites, continues (FR-009); every `SPAWN`/`SPAWN_PARALLEL` passes resolved model for agent's tier (FR-006); disclosure step for harnesses whose spawn cannot take a model (FR-007), worded harness-neutral. Exempt: SKILL.md - documentation only. Done: each FR above cited by a prose step; no harness tool names in core.
 
-- [ ] T008 [P] [US1] Edit `core/skills/factory/references/verbs.md`: `SPAWN`/`SPAWN_PARALLEL` carry resolved model for tier; empty string = inherit session model. Exempt: verbs.md - documentation only. Done: verb definition names model input.
+- [x] T008 [P] [US1] Edit `core/skills/factory/references/verbs.md`: `SPAWN`/`SPAWN_PARALLEL` carry resolved model for tier; empty string = inherit session model. Exempt: verbs.md - documentation only. Done: verb definition names model input.
 
 - [ ] T009 [P] [US1][US5] Edit `core/skills/factory/references/state.md`: v5 additive `models` block (`resolved`, `source` per tier); absent block on older states means not yet resolved. Exempt: state.md - documentation only. Done: schema and resume semantics documented.
 
