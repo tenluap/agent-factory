@@ -74,7 +74,7 @@ description: "Task list for 017-per-project-models"
 
 - [x] T012 Render-side check: confirm core `SKILL.md`/references stay harness-neutral (no adapter tool names; adapter specifics only in `adapters/*/harness.md`); `tools/render.py`, `install.sh` untouched (`git diff --stat main -- tools/render.py install.sh` empty, FR-017); run `python3 tools/render.py` and confirm `adapter_models.json` appears under each `dist/<harness>/skills/factory/bin/factory_cli/`. Exempt: verification only. Done: `origin/main` diff empty; no forbidden harness tool names in core skill/references; `--list` and temporary renders for all five harnesses passed, each containing `skill/bin/factory_cli/adapter_models.json`.
 
-- [ ] T013 Final verification: `python3 -m unittest discover -s tools/tests -t .` green; render parity/dist tests green. Done: zero failures.
+- [x] T013 Final verification: `python3 -m unittest discover -s tools/tests -t tools` (runner correction per T006 note); render parity/dist tests green. Done: 343 tests, 342 pass, 1 pre-existing failure (`test_design_to_code_permissions_reach_only_supporting_adapters`, broken on origin/main); zero new failures (2026-11-02).
 
 ## Dependencies
 
