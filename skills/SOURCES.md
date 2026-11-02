@@ -13,3 +13,5 @@
 | impeccable | https://github.com/pbakaus/impeccable | .claude/skills/impeccable | 5adaee704634e9031ec8943721c4ffa1a3c22221 | Apache-2.0 | claude-code,zcode |
 | impeccable-opencode | https://github.com/pbakaus/impeccable | .opencode/skills/impeccable | 5adaee704634e9031ec8943721c4ffa1a3c22221 | Apache-2.0 | opencode |
 | impeccable-agents | https://github.com/pbakaus/impeccable | .agents/skills/impeccable | 5adaee704634e9031ec8943721c4ffa1a3c22221 | Apache-2.0 | codex,copilot |
+| design-to-code | https://github.com/tenluap/claude-factory | skills/design-to-code | 83a4517c3b55d6179a1711bae18c07d794cbf0af |  |  |
+| pen-design | https://github.com/tenluap/claude-factory | skills/pen-design | 83a4517c3b55d6179a1711bae18c07d794cbf0af |  |  |

@@ -19,7 +19,6 @@ References, read when a step points at them:
 - [`references/state.md`](references/state.md): `state.json` schema, checkpoints, discovery, resume.
 - [`references/protocol.md`](references/protocol.md): the envelope every agent returns, and the relay.
 - [`references/findings.md`](references/findings.md): reviewer findings and judge verdict shapes.
-- [`references/skills.md`](references/skills.md): skill-integration precedence and loading rules, shared with `code-build` and `fixer`.
 - [`references/design-code-mapping.md`](references/design-code-mapping.md): load whenever a run creates, references, or updates a Pen implementation reference, or encounters one on resume; governs source mapping and required fidelity evidence across frameworks.
 
 Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so it can read the references.

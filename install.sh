@@ -10,6 +10,7 @@ src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 factory_home="${FACTORY_HOME:-$HOME/.factory}"
 harness="claude-code"
 uninstall=""
+mirror_done=""
 add_path=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -65,6 +66,43 @@ except Exception as error:
     exit 2
   fi
 fi
+
+# The per-user layer doubles as the browsing mirror of the repo library
+# (Q&A). Mirror links point at this checkout's `skills/` and are managed
+# only by these two functions; the per-user skill scan must never treat
+# them as per-user skills.
+mirror_link() {
+  local from="$1" to="$2"
+  if [ -L "$to" ] && [[ "$(readlink "$to")" != "$src"/skills/* ]]; then
+    echo "skip: $to exists and is not a mirror link; to adopt it: ./install.sh --add-skill $to, remove the original, re-run"
+    return
+  fi
+  if [ ! -e "$to" ] || [ "$(readlink "$to")" != "$from" ]; then
+    ln -sfn "$from" "$to"
+  fi
+}
+
+mirror_library() {
+  [ -d "$factory_home/skills" ] || return 0
+  local f name
+  for f in "$factory_home"/skills/*; do
+    [ -L "$f" ] || continue
+    if [ -e "$f" ]; then
+      if [[ "$(readlink "$f")" == "$src"/skills/* ]] && [ ! -f "$f/SKILL.md" ]; then
+        rm "$f"
+        echo "pruned: $f (stale link)"
+      fi
+    else
+      rm "$f"
+      echo "pruned: $f (stale link)"
+    fi
+  done
+  for f in "$src"/skills/*; do
+    [ -f "$f/SKILL.md" ] || continue
+    mirror_link "$f" "$factory_home/skills/$(basename "$f")"
+  done
+  mirror_done=1
+}
 
 add_skill() {
   local path="$1" name dest temp error
@@ -211,6 +249,12 @@ install_skills() {
     link_skill "$f" "$root/$name"
   done
   for f in "$src"/skills/* "$factory_home"/skills/*; do
+    if [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/skills/* ]]; then
+      # The browsing mirror lives in the per-user layer but points back at
+      # the repo layer; it is not a per-user skill and must not bypass the
+      # SOURCES.md harness rules the repo layer is linked under.
+      continue
+    fi
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
     if [ "$(basename "$f")" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
@@ -258,6 +302,20 @@ unlink_skills() {
     if library_link "$f"; then
       rm "$f"
       echo "removed: $f"
+    fi
+  done
+}
+
+# Uninstall leaves the per-user layer to the user: it removes mirror links
+# only when their targets are gone from the checkout, so an uninstalled
+# mirror can still be browsed but shows nothing dead.
+prune_mirror() {
+  [ -d "$factory_home/skills" ] || return 0
+  local f
+  for f in "$factory_home"/skills/*; do
+    if [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/skills/* ]] && [ ! -e "$f" ]; then
+      rm "$f"
+      echo "pruned: $f (stale link)"
     fi
   done
 }
@@ -352,6 +410,7 @@ install_one() {
   eval "$(python3 "$src/tools/render.py" "$1" --paths --out "$dist")"
   if [ -n "$uninstall" ]; then
     unlink_skills "$skills_root"
+    prune_mirror
     unlink_ours "$skill_dir"
     [ "$1" = "opencode" ] && unlink_plugin
     case "$1" in claude-code|codex) uninstall_hook_script ;; esac
@@ -387,6 +446,11 @@ else
 fi
 for h in $harnesses; do install_one "$h"; done
 [ -n "$uninstall" ] && exit 0
+
+# The browsing mirror is refreshed once per run, after the per-user renders
+# it may point at are in place.
+mirror_library
+[ -n "$mirror_done" ] || echo "note: no browsing mirror: $factory_home/skills does not exist yet (use --add-skill to create it)"
 
 pending="$factory_home/pending"
 mkdir -p "$pending"

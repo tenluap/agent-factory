@@ -214,10 +214,6 @@ _Avoid_: blast radius, target set
 One layer of a UI scope (tokens and assets, then shared components, then views) implemented and committed as one unit of work.
 _Avoid_: wave, tier, chunk
 
-**Shared integration reference**:
-The one compact document (`core/skills/factory/references/skills.md`) holding skill precedence and loading rules for the orchestrator and both code-writing roles, linked rather than restated.
-_Avoid_: skills doc, integration guide
-
 ## Skill library
 
 **Skill library**:

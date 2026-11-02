@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "install.sh": {
-    "mtime": 1793485177.3533502,
-    "seen": 1793485299.105271,
-    "ast_hash": "dac31ddca9545a0d291fc1b501b9f0f2",
+    "mtime": 1793524057.0563598,
+    "seen": 1793524814.5076869,
+    "ast_hash": "b09c355e9291522bbd3a3e3832904fd4",
     "semantic_hash": ""
   },
   "skills/brainstorming/scripts/helper.js": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "tools/render.py": {
-    "mtime": 1793479056.3929234,
-    "seen": 1793485299.109545,
-    "ast_hash": "599584296982bb59ad98c9656a99af26",
+    "mtime": 1793516648.3916624,
+    "seen": 1793524814.514991,
+    "ast_hash": "c649cd5d4d3b76acc3550222bdc1ad72",
     "semantic_hash": ""
   },
   "tools/test_render.py": {
@@ -1710,21 +1710,21 @@
     "semantic_hash": ""
   },
   "CONTEXT.md": {
-    "mtime": 1793479056.3898509,
-    "seen": 1793485299.111386,
-    "ast_hash": "9c90fd6509c349dbeae45d5088fb45eb",
+    "mtime": 1793495031.8094025,
+    "seen": 1793524814.519372,
+    "ast_hash": "c8c9765772bd23d50b617fa129acf249",
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1793485240.988887,
-    "seen": 1793485299.1113868,
-    "ast_hash": "7f88abb3b540bfbbb5dfc3c2bf390ca5",
+    "mtime": 1793524140.3138702,
+    "seen": 1793524814.519373,
+    "ast_hash": "b50a4ac13cc1c842e3cc753c63967eb3",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793485244.6792305,
-    "seen": 1793485299.1113868,
-    "ast_hash": "f7cca10087935a631d67dfec5e41a2f1",
+    "mtime": 1793524708.5579784,
+    "seen": 1793524814.519373,
+    "ast_hash": "6c91afcff01c0f04f5e6e7bd7e0527d2",
     "semantic_hash": ""
   },
   "adapters/claude-code/harness.md": {
@@ -1830,9 +1830,9 @@
     "semantic_hash": ""
   },
   "core/roles/code-build.md": {
-    "mtime": 1793261189.104969,
-    "seen": 1793351532.672441,
-    "ast_hash": "8e4b47049a14e2e0700765a6488d8ae6",
+    "mtime": 1793495004.2442305,
+    "seen": 1793524814.5201762,
+    "ast_hash": "5ae5c72742beb6facd307c33b8d4b238",
     "semantic_hash": ""
   },
   "core/roles/code-standards.md": {
@@ -1848,9 +1848,9 @@
     "semantic_hash": ""
   },
   "core/roles/fixer.md": {
-    "mtime": 1793189378.9837809,
-    "seen": 1793351532.6724422,
-    "ast_hash": "8c82d36a4b5b0ac61b6f7ddb842a1b3a",
+    "mtime": 1793495007.5024183,
+    "seen": 1793524814.520247,
+    "ast_hash": "b27833a0ce67b6bb8fed8d95bc438e23",
     "semantic_hash": ""
   },
   "core/roles/review-judge.md": {
@@ -1878,9 +1878,9 @@
     "semantic_hash": ""
   },
   "core/roles/ui-reviewer.md": {
-    "mtime": 1792920035.802427,
-    "seen": 1793351532.672443,
-    "ast_hash": "a888467940b6b15c0f8ccf96e48ba546",
+    "mtime": 1793495010.3241777,
+    "seen": 1793524814.5203981,
+    "ast_hash": "9e8f179bde12797b6a32e51a7378d32d",
     "semantic_hash": ""
   },
   "core/roles/ux-reviewer.md": {
@@ -1890,9 +1890,9 @@
     "semantic_hash": ""
   },
   "core/skills/factory/SKILL.md": {
-    "mtime": 1793481906.9297802,
-    "seen": 1793485299.111983,
-    "ast_hash": "b220e370ac997f4cefbd06d8fab4f55a",
+    "mtime": 1793495015.3963256,
+    "seen": 1793524814.520442,
+    "ast_hash": "5fdafd62045eef8841c1be7726587052",
     "semantic_hash": ""
   },
   "core/skills/factory/references/design-code-mapping-avalonia.md": {
@@ -1941,12 +1941,6 @@
     "mtime": 1793479056.391626,
     "seen": 1793485299.112154,
     "ast_hash": "7fc0840ad44923d76759105814cbf71c",
-    "semantic_hash": ""
-  },
-  "core/skills/factory/references/skills.md": {
-    "mtime": 1793215682.8654702,
-    "seen": 1793351532.672446,
-    "ast_hash": "2d06eab2abdc78524a368a1dc51cd868",
     "semantic_hash": ""
   },
   "core/skills/factory/references/state.md": {
@@ -2088,9 +2082,9 @@
     "semantic_hash": ""
   },
   "skills/SOURCES.md": {
-    "mtime": 1793200185.9040408,
-    "seen": 1793351532.6724539,
-    "ast_hash": "000277f5b1ad6505d3b2074e2b8334b3",
+    "mtime": 1793524072.8171444,
+    "seen": 1793524814.521894,
+    "ast_hash": "ec8e52e9294986b88a783998806ac6dc",
     "semantic_hash": ""
   },
   "skills/analyzing-dotnet-performance/SKILL.md": {
@@ -4595,84 +4589,6 @@
     "ast_hash": "fe8aece205f22e7b3b827e249b3401ac",
     "semantic_hash": ""
   },
-  "core/skills/design-to-code/config.json": {
-    "mtime": 1793450851.5753188,
-    "seen": 1793485299.1051111,
-    "ast_hash": "3182ca23e7b219a0a7c30a95358d67d6",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/bounds-diff.py": {
-    "mtime": 1793450601.0068274,
-    "seen": 1793485299.105112,
-    "ast_hash": "9f78542f8343cc40a2f3c4fa0bef4a07",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/map-coverage.py": {
-    "mtime": 1793450611.0549684,
-    "seen": 1793485299.105112,
-    "ast_hash": "a84019727713e24df4ecd8532f21bd64",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/map-migrate.py": {
-    "mtime": 1793450621.7524233,
-    "seen": 1793485299.105113,
-    "ast_hash": "867d3939a9eba6f2d2e7471e8efc149f",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/map-revision.py": {
-    "mtime": 1793450611.2321446,
-    "seen": 1793485299.105113,
-    "ast_hash": "735e024e45ffe4304a7e2652d279d705",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/pen-read.py": {
-    "mtime": 1793441445.3529649,
-    "seen": 1793485299.1051142,
-    "ast_hash": "6b12253f8e294fcbd00aee5c3503970d",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/pixel-diff.py": {
-    "mtime": 1793448487.7635803,
-    "seen": 1793485299.105115,
-    "ast_hash": "27b546e0642cb6e2687f071bbc386ca4",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/tests/test_helpers.py": {
-    "mtime": 1793452601.192664,
-    "seen": 1793485299.105115,
-    "ast_hash": "3de03b4e7c6819f4ce02ec54d84faac4",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/scripts/web-capture.mjs": {
-    "mtime": 1793470855.8563242,
-    "seen": 1793485299.105115,
-    "ast_hash": "bc0df11e43f9f5720932e22b1375c2e2",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/check.py": {
-    "mtime": 1793473213.3990874,
-    "seen": 1793485299.105116,
-    "ast_hash": "65d0fb95c9c18ef0d5bfbf480a9417c3",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/fixture/tests/visual/package.json": {
-    "mtime": 1793452543.5740685,
-    "seen": 1793485299.105116,
-    "ast_hash": "66aa5162af82698109a23eaafe853544",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-html/check.py": {
-    "mtime": 1793452550.7157404,
-    "seen": 1793485299.1051168,
-    "ast_hash": "c7f3cc29f89a6a0f91f0abe8c4069f8f",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-locked/fixture/docs/design-code-map.json": {
-    "mtime": 1793452543.648733,
-    "seen": 1793485299.1051168,
-    "ast_hash": "b08f5f16452714197a4ee28fc903339d",
-    "semantic_hash": ""
-  },
   "core/skills/factory/bin/factory_cli/detect.py": {
     "mtime": 1793478836.6872823,
     "seen": 1793485299.10522,
@@ -4830,9 +4746,9 @@
     "semantic_hash": ""
   },
   "core/roles/design-to-code.md": {
-    "mtime": 1793459209.4737382,
-    "seen": 1793485299.1118112,
-    "ast_hash": "edab3d8bd90242dddf39874ecf7aa433",
+    "mtime": 1793495009.6653185,
+    "seen": 1793524814.520205,
+    "ast_hash": "0094a40a57d8a9d07c5815c6c9db1189",
     "semantic_hash": ""
   },
   "core/roles/retro.md": {
@@ -4841,160 +4757,10 @@
     "ast_hash": "6832c316b85b0cd7a92fe48b6691ef96",
     "semantic_hash": ""
   },
-  "core/skills/design-to-code/CHANGELOG.md": {
-    "mtime": 1793485236.9700809,
-    "seen": 1793485299.111974,
-    "ast_hash": "1c86dd01c105bfb04c5c79bd8c1ef08a",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/SKILL.md": {
-    "mtime": 1793485238.9556231,
-    "seen": 1793485299.111974,
-    "ast_hash": "04fd00559cb93cc91cdb63954c61ba1d",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/_template.md": {
-    "mtime": 1793452442.3557415,
-    "seen": 1793485299.111975,
-    "ast_hash": "c8000e9ee0c2a8553dd5bf367c9f8780",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/avalonia.md": {
-    "mtime": 1793452439.7066298,
-    "seen": 1793485299.111975,
-    "ast_hash": "1ed8a718e25b2bd370ca2047824c90a4",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/blazor.md": {
-    "mtime": 1793450948.3192785,
-    "seen": 1793485299.111976,
-    "ast_hash": "9b8ff11c21e2b7fc4e8bf11e83225a9c",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/html-js-css.md": {
-    "mtime": 1793474459.5228672,
-    "seen": 1793485299.111976,
-    "ast_hash": "d0cdd33c9f4e2b9ecc8c53becad1cd20",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/maui.md": {
-    "mtime": 1793452439.706962,
-    "seen": 1793485299.1119769,
-    "ast_hash": "67d1ad833c6f499f4cfb4d2f384e8165",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/nextjs.md": {
-    "mtime": 1793450948.408937,
-    "seen": 1793485299.1119769,
-    "ast_hash": "2dd79cd0fc84e4f478825935a977e333",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/frameworks/react.md": {
-    "mtime": 1793450948.3604212,
-    "seen": 1793485299.1119769,
-    "ast_hash": "0c697abfe5a68f33f32921aeaaf4a416",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/modes/implement.md": {
-    "mtime": 1793477194.5336373,
-    "seen": 1793485299.111978,
-    "ast_hash": "2edb8e94f2103806770f6a7725d00637",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/modes/qa.md": {
-    "mtime": 1793464067.8339796,
-    "seen": 1793485299.111978,
-    "ast_hash": "c65e39b52febe993eea0e6f9ad2d924f",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/references/capture-contract.md": {
-    "mtime": 1793473258.0803723,
-    "seen": 1793485299.111978,
-    "ast_hash": "db0ebc50d756c2b6771288f038182df2",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/references/map-schema.md": {
-    "mtime": 1793450763.625054,
-    "seen": 1793485299.111979,
-    "ast_hash": "6a07e3d09d4bc1c34518abbf8eccff0b",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/references/web-css.md": {
-    "mtime": 1793453657.29378,
-    "seen": 1793485299.111979,
-    "ast_hash": "565dfed84027edfdbdbd99ea59d3d6b0",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/sources/pen.md": {
-    "mtime": 1793452516.9053586,
-    "seen": 1793485299.111979,
-    "ast_hash": "f741eeb7d51d8067143d6e7f8f0e4e6b",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/README.md": {
-    "mtime": 1793453678.4378543,
-    "seen": 1793485299.11198,
-    "ast_hash": "18cb94e9fbce01cf6730eeb2638d45d5",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/README.md": {
-    "mtime": 1793480820.3771124,
-    "seen": 1793485299.11198,
-    "ast_hash": "5c5b220fce00c1ceb5b3ae524ed3136b",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/build-design.txt": {
-    "mtime": 1793452476.1274467,
-    "seen": 1793485299.11198,
-    "ast_hash": "b7c6fc3aeb6de25dbf1a67cacdfedc18",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/expected/rows.txt": {
-    "mtime": 1793452516.8787382,
-    "seen": 1793485299.1119812,
-    "ast_hash": "9bfc218e96a2a4f9b0a702f8aa8d6cf5",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/implement-html/fixture/index.html": {
-    "mtime": 1793452543.4948227,
-    "seen": 1793485299.1119812,
-    "ast_hash": "f415404fd49c61d391e6ab73c0df55d6",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-html/README.md": {
-    "mtime": 1793480772.450506,
-    "seen": 1793485299.111982,
-    "ast_hash": "6942c03ed52efce54f1b84eb3d067185",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-html/fixture/index.html": {
-    "mtime": 1793451630.9595492,
-    "seen": 1793485299.111982,
-    "ast_hash": "f37a8f8df9832b0cede6e71ac19824a2",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-locked/README.md": {
-    "mtime": 1793480811.0852737,
-    "seen": 1793485299.111983,
-    "ast_hash": "325358cfd6d9ce96cb043d880a07c2d5",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-locked/fixture/index.html": {
-    "mtime": 1793452533.7717648,
-    "seen": 1793485299.111983,
-    "ast_hash": "f37a8f8df9832b0cede6e71ac19824a2",
-    "semantic_hash": ""
-  },
-  "core/skills/pen-design/SKILL.md": {
-    "mtime": 1793286582.301,
-    "seen": 1793485299.112179,
-    "ast_hash": "7262b790e8493164e22858dbec3953e0",
-    "semantic_hash": ""
-  },
   "docs/adr/0012-first-party-skills-live-in-core-skills.md": {
-    "mtime": 1793485235.7634106,
-    "seen": 1793485299.1124852,
-    "ast_hash": "13b74e3a500996be8d9bccfe24a6ce4a",
+    "mtime": 1793524087.3401504,
+    "seen": 1793524814.5214999,
+    "ast_hash": "aecef3b72af050c2bf8bdb44107e9a6e",
     "semantic_hash": ""
   },
   "specs/016-retro-self-improve/checklists/requirements.md": {
@@ -5033,24 +4799,6 @@
     "ast_hash": "bbcd484356045d45a3546e872935d89a",
     "semantic_hash": ""
   },
-  "core/skills/design-to-code/tests/evals/implement-html/expected/dqvK9.png": {
-    "mtime": 1793452489.5375552,
-    "seen": 1793485299.125847,
-    "ast_hash": "be25126759c4bdfa2668215849a7167c",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-html/fixture/images/hero.svg": {
-    "mtime": 1793451631.066632,
-    "seen": 1793485299.125848,
-    "ast_hash": "30ce9932033174bf564fdd9b0fcb2268",
-    "semantic_hash": ""
-  },
-  "core/skills/design-to-code/tests/evals/qa-locked/fixture/images/hero.svg": {
-    "mtime": 1793452533.7725453,
-    "seen": 1793485299.125848,
-    "ast_hash": "30ce9932033174bf564fdd9b0fcb2268",
-    "semantic_hash": ""
-  },
   "eval-qa-html-2-smoke.png": {
     "mtime": 1793463718.6985428,
     "seen": 1793485299.125849,
@@ -5067,6 +4815,252 @@
     "mtime": 1793463736.014653,
     "seen": 1793485299.125898,
     "ast_hash": "e95f265956473ab526f24ad6230e5e3c",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/config.json": {
+    "mtime": 1793450851.5753188,
+    "seen": 1793524814.507998,
+    "ast_hash": "3182ca23e7b219a0a7c30a95358d67d6",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/bounds-diff.py": {
+    "mtime": 1793450601.0068274,
+    "seen": 1793524814.507998,
+    "ast_hash": "9f78542f8343cc40a2f3c4fa0bef4a07",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/map-coverage.py": {
+    "mtime": 1793450611.0549684,
+    "seen": 1793524814.507999,
+    "ast_hash": "a84019727713e24df4ecd8532f21bd64",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/map-migrate.py": {
+    "mtime": 1793450621.7524233,
+    "seen": 1793524814.507999,
+    "ast_hash": "867d3939a9eba6f2d2e7471e8efc149f",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/map-revision.py": {
+    "mtime": 1793450611.2321446,
+    "seen": 1793524814.508,
+    "ast_hash": "735e024e45ffe4304a7e2652d279d705",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/pen-read.py": {
+    "mtime": 1793441445.3529649,
+    "seen": 1793524814.508001,
+    "ast_hash": "6b12253f8e294fcbd00aee5c3503970d",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/pixel-diff.py": {
+    "mtime": 1793448487.7635803,
+    "seen": 1793524814.508002,
+    "ast_hash": "27b546e0642cb6e2687f071bbc386ca4",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/tests/test_helpers.py": {
+    "mtime": 1793452601.192664,
+    "seen": 1793524814.508002,
+    "ast_hash": "3de03b4e7c6819f4ce02ec54d84faac4",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/scripts/web-capture.mjs": {
+    "mtime": 1793470855.8563242,
+    "seen": 1793524814.508003,
+    "ast_hash": "bc0df11e43f9f5720932e22b1375c2e2",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/check.py": {
+    "mtime": 1793473213.3990874,
+    "seen": 1793524814.508003,
+    "ast_hash": "65d0fb95c9c18ef0d5bfbf480a9417c3",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/fixture/tests/visual/package.json": {
+    "mtime": 1793452543.5740685,
+    "seen": 1793524814.5080042,
+    "ast_hash": "66aa5162af82698109a23eaafe853544",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-html/check.py": {
+    "mtime": 1793452550.7157404,
+    "seen": 1793524814.5080042,
+    "ast_hash": "c7f3cc29f89a6a0f91f0abe8c4069f8f",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-locked/fixture/docs/design-code-map.json": {
+    "mtime": 1793452543.648733,
+    "seen": 1793524814.5080042,
+    "ast_hash": "b08f5f16452714197a4ee28fc903339d",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/CHANGELOG.md": {
+    "mtime": 1793524075.363997,
+    "seen": 1793524814.523989,
+    "ast_hash": "17d89d0a0c9c6d5f487fd457721b3903",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/SKILL.md": {
+    "mtime": 1793485238.9556231,
+    "seen": 1793524814.523989,
+    "ast_hash": "04fd00559cb93cc91cdb63954c61ba1d",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/_template.md": {
+    "mtime": 1793452442.3557415,
+    "seen": 1793524814.52399,
+    "ast_hash": "c8000e9ee0c2a8553dd5bf367c9f8780",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/avalonia.md": {
+    "mtime": 1793452439.7066298,
+    "seen": 1793524814.52399,
+    "ast_hash": "1ed8a718e25b2bd370ca2047824c90a4",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/blazor.md": {
+    "mtime": 1793450948.3192785,
+    "seen": 1793524814.523991,
+    "ast_hash": "9b8ff11c21e2b7fc4e8bf11e83225a9c",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/html-js-css.md": {
+    "mtime": 1793474459.5228672,
+    "seen": 1793524814.523991,
+    "ast_hash": "d0cdd33c9f4e2b9ecc8c53becad1cd20",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/maui.md": {
+    "mtime": 1793452439.706962,
+    "seen": 1793524814.523991,
+    "ast_hash": "67d1ad833c6f499f4cfb4d2f384e8165",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/nextjs.md": {
+    "mtime": 1793450948.408937,
+    "seen": 1793524814.523992,
+    "ast_hash": "2dd79cd0fc84e4f478825935a977e333",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/frameworks/react.md": {
+    "mtime": 1793450948.3604212,
+    "seen": 1793524814.523992,
+    "ast_hash": "0c697abfe5a68f33f32921aeaaf4a416",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/modes/implement.md": {
+    "mtime": 1793477194.5336373,
+    "seen": 1793524814.523993,
+    "ast_hash": "2edb8e94f2103806770f6a7725d00637",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/modes/qa.md": {
+    "mtime": 1793464067.8339796,
+    "seen": 1793524814.523993,
+    "ast_hash": "c65e39b52febe993eea0e6f9ad2d924f",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/references/capture-contract.md": {
+    "mtime": 1793473258.0803723,
+    "seen": 1793524814.5239942,
+    "ast_hash": "db0ebc50d756c2b6771288f038182df2",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/references/map-schema.md": {
+    "mtime": 1793450763.625054,
+    "seen": 1793524814.5239942,
+    "ast_hash": "6a07e3d09d4bc1c34518abbf8eccff0b",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/references/web-css.md": {
+    "mtime": 1793453657.29378,
+    "seen": 1793524814.5239942,
+    "ast_hash": "565dfed84027edfdbdbd99ea59d3d6b0",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/sources/pen.md": {
+    "mtime": 1793452516.9053586,
+    "seen": 1793524814.523995,
+    "ast_hash": "f741eeb7d51d8067143d6e7f8f0e4e6b",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/README.md": {
+    "mtime": 1793453678.4378543,
+    "seen": 1793524814.523995,
+    "ast_hash": "18cb94e9fbce01cf6730eeb2638d45d5",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/README.md": {
+    "mtime": 1793480820.3771124,
+    "seen": 1793524814.523995,
+    "ast_hash": "5c5b220fce00c1ceb5b3ae524ed3136b",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/build-design.txt": {
+    "mtime": 1793452476.1274467,
+    "seen": 1793524814.5239959,
+    "ast_hash": "b7c6fc3aeb6de25dbf1a67cacdfedc18",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/expected/rows.txt": {
+    "mtime": 1793452516.8787382,
+    "seen": 1793524814.5239959,
+    "ast_hash": "9bfc218e96a2a4f9b0a702f8aa8d6cf5",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/fixture/index.html": {
+    "mtime": 1793452543.4948227,
+    "seen": 1793524814.5239959,
+    "ast_hash": "f415404fd49c61d391e6ab73c0df55d6",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-html/README.md": {
+    "mtime": 1793480772.450506,
+    "seen": 1793524814.5239968,
+    "ast_hash": "6942c03ed52efce54f1b84eb3d067185",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-html/fixture/index.html": {
+    "mtime": 1793451630.9595492,
+    "seen": 1793524814.5239968,
+    "ast_hash": "f37a8f8df9832b0cede6e71ac19824a2",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-locked/README.md": {
+    "mtime": 1793480811.0852737,
+    "seen": 1793524814.5239968,
+    "ast_hash": "325358cfd6d9ce96cb043d880a07c2d5",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-locked/fixture/index.html": {
+    "mtime": 1793452533.7717648,
+    "seen": 1793524814.523998,
+    "ast_hash": "f37a8f8df9832b0cede6e71ac19824a2",
+    "semantic_hash": ""
+  },
+  "skills/pen-design/SKILL.md": {
+    "mtime": 1793286582.301,
+    "seen": 1793524814.530483,
+    "ast_hash": "7262b790e8493164e22858dbec3953e0",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/implement-html/expected/dqvK9.png": {
+    "mtime": 1793452489.5375552,
+    "seen": 1793524814.537833,
+    "ast_hash": "be25126759c4bdfa2668215849a7167c",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-html/fixture/images/hero.svg": {
+    "mtime": 1793451631.066632,
+    "seen": 1793524814.537834,
+    "ast_hash": "30ce9932033174bf564fdd9b0fcb2268",
+    "semantic_hash": ""
+  },
+  "skills/design-to-code/tests/evals/qa-locked/fixture/images/hero.svg": {
+    "mtime": 1793452533.7725453,
+    "seen": 1793524814.537834,
+    "ast_hash": "30ce9932033174bf564fdd9b0fcb2268",
     "semantic_hash": ""
   }
 }

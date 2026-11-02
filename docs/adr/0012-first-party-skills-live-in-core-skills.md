@@ -1,8 +1,10 @@
 # First-party skills render into the distribution
 
+2026-11-01: the `design-to-code` skill and its `pen-design` dependency moved back to the vendored library (`skills/`, with `SOURCES.md` provenance rows) and are linked from the checkout again; this ADR now covers the remaining first-party skill set.
+
 The factory previously had exactly one skill of its own: the orchestrator, rendered into `dist/` (ADR 0005). Everything else in the skill library was vendored (`skills/`, tracked in `skills/SOURCES.md`) or per-user. The `design-to-code` skill — the write role's engine, with its modes, framework rules, scripts, tests and evals — and its `pen-design` dependency were homegrown but lived in the vendored layer, so the factory's core capability depended on folders `skills/SOURCES.md` does not own.
 
-First-party skills now live in `core/skills/<name>/` next to `core/skills/factory/`, and the renderer copies every one that carries a `SKILL.md` — except `factory` itself — verbatim into `dist/<harness>/skills/<name>/`. The distribution therefore shows the factory's whole skill set in one place, and `install.sh` links each rendered skill into the harness's skills root under its frontmatter name, before the vendored and per-user layers: a per-user skill with the same name wins, and a vendored skill with the same name is skipped as a variant. Core skills reach every harness; no SOURCES.md row can exclude them.
+First-party skills now live in `core/skills/<name>/` next to `core/skills/factory/`, and the renderer copies every one that carries a `SKILL.md` — except `factory` itself — verbatim into `dist/<harness>/skills/<name>/`. The distribution therefore shows the factory's core skill set in one place, and `install.sh` links each rendered skill into the harness's skills root under its frontmatter name, before the vendored and per-user layers: a per-user skill with the same name wins, and a vendored skill with the same name is skipped as a variant. Core skills reach every harness; no SOURCES.md row can exclude them.
 
 ## Considered options
 
