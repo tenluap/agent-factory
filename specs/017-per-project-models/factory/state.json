@@ -185,6 +185,18 @@
       "duration_ms": 120000,
       "started_at": "2026-11-02T11:31:00Z",
       "ended_at": "2026-11-02T11:33:00Z"
+    },
+    {
+      "at": "2026-11-02T10:57:54.489662Z",
+      "stage": "remediate",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 800,
+      "reported": null,
+      "duration_ms": 90000,
+      "started_at": "2026-11-02T11:37:00Z",
+      "ended_at": "2026-11-02T11:38:30Z"
     }
   ],
   "issues": [
@@ -245,7 +257,7 @@
       "at": "2026-11-02T10:57:18.129159Z",
       "stage": "analyze",
       "event": "complete",
-      "commit": null,
+      "commit": "394f6dc",
       "harness": "opencode"
     }
   ],
