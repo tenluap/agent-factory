@@ -68,8 +68,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "run 017 ready for approval",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-02T18:53:48.398679Z",
+      "latency_ms": 17843126
     }
   ],
   "decisions": [
