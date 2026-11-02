@@ -28,6 +28,12 @@ Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and a
 
 Claude Code, Codex and OpenCode pin agent models by default; Copilot and Zcode inherit the session model. The mappings in `adapters/<harness>/adapter.json` are authoritative. Override tier selections here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
 
+### Per-project models
+
+Each project can carry its own tier selections in `<repo>/.factory/config.json`, using the same schema as the user-level config. At the start of every run the orchestrator resolves the cascade **project → user → adapter defaults**, per tier, and passes each spawned agent its tier's resolved model. An empty string inherits the session's model. Run `/factory init` in a repo to seed the project config with every harness's effective values (each labeled with its source) plus a `config.README.md` documenting schema, precedence and restore steps; it refuses when a config already exists.
+
+`python3 <factory-skill>/bin/factory models [--json]` prints the effective per-role cascade with sources for the current repo — run it any time to see what a run here would use. A malformed project or user config (bad JSON, unknown harness or tier key, control-character or oversized values, symlinked files) stops the run naming the file and the fix; delete the offending entry or fix the value to fall back to the next layer. Codex, Copilot and ZCode cannot take a model at spawn time: their preflight discloses that project and user selections cannot apply there and continues on the installed (rendered) selections.
+
 ### Skill library
 
 The installer links skills from the rendered distribution's `dist/<harness>/skills/` — the factory's first-party skills, rendered from `core/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)) — and from this checkout's `skills/` and `${FACTORY_HOME:-~/.factory}/skills/` into the selected harness's skill root. Precedence on name collision: per-user wins, then first-party, then vendored. Add a local skill with `./install.sh --harness opencode --add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
@@ -46,6 +52,7 @@ Start a run from the repo you want the feature built in. On Claude Code, OpenCod
 
 ```
 /factory                                      list unfinished runs; pick one to resume, or start a new run
+/factory init                                 seed <repo>/.factory/config.json with effective model defaults + README; refuses an existing config
 /factory resume <branch>                      resume that run from where it stopped (any session, any harness)
 /factory <feature description>                start a new run — lite chain and fast mode by default
 /factory <feature> --full                     start on the full chain instead
@@ -130,6 +137,7 @@ Pause with `--stop-at <stage>` and continue with `/factory resume <branch>` (Cod
 | Capability | What it does |
 |---|---|
 | Harness adapters | One shared workflow renders for Claude Code, OpenCode V2, Codex, GitHub Copilot, and ZCode; adapters own harness-specific tools, permissions, paths, and model settings. |
+| Per-project models | `<repo>/.factory/config.json` selects deep/standard per project; runs cascade project → user → adapter defaults per tier, record the resolution in run state, and disclose changes on resume. `/factory init` seeds it; `factory models` reports it. |
 | Idea intake | Exploratory requests can brainstorm alternatives before feature grilling; concrete requests go directly to grilling. The user confirms requirements before repository changes begin. |
 | Planning | Lite chain is `specify → plan → tasks → analyze`; full adds `clarify` and `grill-with-docs`, with bounded analysis/remediation loops. Serious findings in lite automatically escalate to full. |
 | Isolated delivery | Each feature gets its own branch and worktree. Stage checkpoints commit only the spec directory and role-declared files; unrelated dirty files are reported, not included. |
@@ -147,7 +155,7 @@ After pulling updates, rerun the same install command; it re-renders the selecte
 
 - `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
 - `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
-- `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`) list unfinished runs, build resume digests and report violations without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`) stamp, validate, write atomically and commit — state is never hand-edited. `envelope check`, `lock take` and `prune` complete the surface.
+- `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`, `models`) list unfinished runs, build resume digests, report violations and the effective per-role model cascade without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`, `models-record`) stamp, validate, write atomically and commit — state is never hand-edited. `init` seeds the project config, and `envelope check`, `lock take` and `prune` complete the surface.
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
 - `core/roles/`: eleven roles — spec-builder, code-build, design-to-code, five reviewers, review-judge, fixer, and facets-advisor (the two main agents you start directly, outside the run) — with neutral `tier` and `access`.
 - `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
