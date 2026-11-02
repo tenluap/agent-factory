@@ -55,3 +55,15 @@ No CRITICAL or HIGH findings. Test-scope checks per engineering.md: every behavi
 - Requirements: 17 FR + 5 SC; FR coverage 100%.
 - Tasks: 13; unmapped tasks: 0 (T006/T012/T013 verification).
 - Counts: CRITICAL 0, HIGH 0, MEDIUM 5, LOW 4.
+
+```json
+{
+  "status": "done",
+  "stage": "analyze",
+  "summary": "Analyze pass 1: FR coverage 100%, seams match TDD tasks, Q1=A consistent, brief decisions covered. 0 CRITICAL, 0 HIGH, 5 MEDIUM, 4 LOW. M1 copilot/zcode empty adapter models vs init seed shape; M3 unknown harness key silently ignored (pending user decision); M2 worktree config lookup untested; M5 README-regenerate edge untested; M4 ModelConfigError reason unstated (non-blocking).",
+  "files": ["specs/017-per-project-models/factory/analyze-1.md"],
+  "questions": [],
+  "analyze": {"report": "factory/analyze-1.md", "critical": 0, "high": 0, "medium": 5, "low": 4},
+  "counts": {"critical": 0, "high": 0, "medium": 5, "low": 4}
+}
+```
