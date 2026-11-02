@@ -17,6 +17,10 @@ The pending file uses this same schema from the moment the run is created: `star
   "version": 5,
   "started_at": "2026-10-22T14:00:00Z",
   "harness": "claude-code",
+  "models": {
+    "resolved": { "deep": "model-id", "standard": "" },
+    "source": { "deep": "project", "standard": "adapter" }
+  },
   "feature": "the user's feature text",
   "repo": "/abs/path/to/main/checkout",
   "default_branch": "main",
@@ -87,8 +91,9 @@ The pending file uses this same schema from the moment the run is created: `star
 }
 ```
 
-- `version`: `5` on every write; readers accept versions 1–5 including legacy relay shapes and never rewrite what they read; the writer upgrades a run in the same atomic write that first changes it (FR-022). **v5** adds one top-level field, `issues[]`; every v4 key keeps its name and shape.
+- `version`: `5` on every write; readers accept versions 1–5 including legacy relay shapes and never rewrite what they read; the writer upgrades a run in the same atomic write that first changes it (FR-022). **v5** adds `issues[]` and the additive optional `models` block; every v4 key keeps its name and shape.
 - `harness`: the adapter running the run now (`harness.md`, `name`). Each `history` entry records the harness that wrote it.
+- `models`: preflight's resolved model strings and source labels for the run harness, keyed by `deep` and `standard` in both `resolved` and `source`; each source is `project`, `user`, or `adapter`. An empty model inherits the session model. A missing block in an older state means not yet resolved. On resume, preflight resolves again, discloses each changed tier's old and new values and sources, then replaces the block; no prior block means no delta.
 - `skills`: keyed by logical name. Paths are only valid on the harness that resolved them.
 - `status`: closed vocabulary: `running` | `waiting_user` | `paused` | `halted` | `aborted` | `pr-open`.
 - `stop_at`: `null`, or the stage the run pauses before (SKILL.md, "Stop point").

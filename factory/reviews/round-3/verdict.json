@@ -1,0 +1,98 @@
+{
+  "round": 3,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "closed": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 143,
+      "summary": "Round-2 SEC-1 (models-record inline argv JSON let repo-controlled model values interpolate into shell syntax) is closed by fix commit 40cfef7.",
+      "evidence": "Verified in git diff 1f6c977..HEAD: cli.py:143-163 refuses any positional ('models-record takes no inline JSON; write the block to a file and pass --from <path>, or pipe it on stdin', die_usage exit 5) and parses --from/stdin before run resolution; SKILL.md:47 documents the temp-file/stdin transport and forbids inline argv JSON; all CLI subprocess call sites (commands.py:34,44,1494; improvements.py:42) use list argv with no shell; adversarial payload flows as inert data (test_models_record_reads_stdin_and_refuses_inline_json green; 18/18 focused tests OK on my run).",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 52,
+      "summary": "Round-2 SPEC-1/SEC-4 (control-character model values not refused or masked in resolve/table output) is closed by fix commit eafee1b for the C0+DEL range.",
+      "evidence": "Verified in git diff 1f6c977..HEAD: models.py:52-56 _read_models raises ModelConfigError naming file and tier key for any ord(ch) < 0x20 or 0x7f in user/project values; _sanitize (models.py:80-82) masks the same range in the 'factory models' table (models.py:101) and the init README; json.dumps escaping covers the --json path; test_refuses_control_character_model_values and test_table_sanitizes_control_characters green (18/18). Residual C1-range gap tracked as round-3 advisory SPEC-1.",
+      "sources": ["SPEC-1", "SEC-4"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 130,
+      "summary": "Round-2 SPEC-2/SEC-3/STD-1/STD-2 (init publish race could clobber a concurrent writer via os.replace) is closed by fix commit 0931f77.",
+      "evidence": "Verified in git diff 1f6c977..HEAD: init (models.py:130-184) stages both artifacts as .factory- temps, publishes config.README.md first and config.json last as the commit point via no-replace os.link; FileExistsError on config.json re-raises a named refusal converted by cli.py to CLIError(1); any other OSError converts to ModelConfigError 'init failed; partial artifacts removed, retry' with rollback of published artifacts and temp cleanup; InitPublishTests.test_publish_race_refuses_without_clobber (other writer's bytes survive) and test_readme_failure_rolls_back_and_converts_oserror green (18/18); stale-README rewrite regression test intact. Residual loser-README loss tracked as round-3 advisory SEC-6.",
+      "sources": ["SPEC-2", "SEC-3", "STD-1", "STD-2"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 154,
+      "summary": "Non-UTF-8 models-record --from (or stdin) input escapes as a raw UnicodeDecodeError traceback with exit 1 instead of a clean usage refusal (ENG-17, ENG-25 input-validation); judge reproduced it and confirmed it is fail-closed: no state write occurs.",
+      "evidence": "cli.py:153-156 wraps Path(source).read_text(encoding='utf-8') in `except OSError` only; UnicodeDecodeError is a ValueError and bypasses die_usage. Reproduced: printf '\\xff\\xfe{...}' > bad.json; factory models-record --from bad.json prints a codecs traceback, exits nonzero, and creates no .factory state (verified in a scratch repo). Not reachable by repo-controlled bytes through the documented preflight: the temp file is written by the calling agent from CLI JSON output, and repo config with bad bytes is refused cleanly earlier at models.py:29 (except (OSError, UnicodeError)). Same defect reported under both lenses; module precedent models.py:29 catches UnicodeError.",
+      "fix": "Catch (OSError, UnicodeError) around the read, decode stdin defensively, and die_usage('models-record: cannot read <path>: <error>').",
+      "sources": ["SEC-5", "STD-1"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 155,
+      "summary": "A losing concurrent init can delete the winner's config.README.md: stale-README recovery replaces the winner's README, then the loser's rollback unlinks it, and the pre-check at models.py:107-108 blocks a regenerating retry while config.json exists (ENG-26 data-integrity facet); the config.json commit point itself is never clobbered.",
+      "evidence": "models.py:152-158: FileExistsError on config.README.md unlinks the existing file and links the loser's own; if config.json then raises FileExistsError, the rollback (models.py:169-175, 176-181) unlinks the README that replaced the winner's. Reviewer reproduced via call-interleaved os.link patch: winner's config.json intact, config.README.md absent, retry refused by the init pre-check. Consequence is loss of a regenerable documentation artifact only.",
+      "fix": "In the rollback, unlink only artifacts this process created at a path it still owns (skip README rollback after stale-recovery replacement, or verify inode identity against the published temp before unlinking).",
+      "sources": ["SEC-6"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 52,
+      "summary": "Control-character refusal and masking cover C0+DEL only; C1 controls (U+0080-U+009F) stay accepted by resolve and unmasked in table/README output, a partial implementation of the confirmed 'control-character model values refused (resolve + table sanitize)' scope (ENG-18); advisory per the judgement ceiling since the exploitable terminal set (ESC/CR/LF/BEL/NUL/DEL) is refused, tested, and mainstream UTF-8 terminals do not execute C1 sequences.",
+      "evidence": "models.py:52-56 refuses only ord(ch) < 0x20 or ch == '\\x7f'; _sanitize (models.py:80-82) masks the identical range; a value such as 'x\\u009bc' (U+009B CSI) reaches the table and README raw; both tests assert only [\\x00-\\x1f\\x7f]. No demonstrated exploit.",
+      "fix": "Extend the refusal predicate and _sanitize through the C1 range (0x7f <= ord(ch) <= 0x9f) with a C1 test case on both paths, or record C0+DEL as the accepted interpretation of the scope.",
+      "sources": ["SPEC-1"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 159,
+      "summary": "The new JSON-parse block re-implements the existing json_or_usage helper verbatim instead of reusing it (ENG-6): the helper at cli.py:104-108 produces byte-identical behaviour including the exact message, and stays in use for ledger-add/verify, so the two copies can drift.",
+      "evidence": "cli.py:159-162 inlines `try: block = json.loads(raw) except ValueError: die_usage('models-record needs JSON')`; `block = json_or_usage(raw, 'models-record')` is equivalent; the pre-fix code called this helper.",
+      "fix": "Replace the inline try/except with `block = json_or_usage(raw, \"models-record\")`.",
+      "sources": ["STD-2"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 82,
+      "summary": "The control-character predicate is written twice - once for refusal (models.py:52), once for masking (models.py:80-82) - so the two definitions of 'control character' can drift independently (ENG-6).",
+      "evidence": "Identical expression `ord(ch) < 0x20 or ch == \"\\x7f\"` at models.py:52 (refusal) and models.py:82 (_sanitize); extending one site silently leaves the other behind.",
+      "fix": "Extract a single predicate (e.g. `def _is_control(ch): return ord(ch) < 0x20 or ch == '\\x7f'`) used by both _read_models and _sanitize.",
+      "sources": ["STD-3"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 156,
+      "summary": "An unreadable --from file exits 5 (usage) while both sibling file-reading commands report unreadable input files as exit 1, diverging from the codebase's exit-code taxonomy (ENG-7); no caller distinguishes today, so convention drift only.",
+      "evidence": "cli.py:156 die_usage('models-record: cannot read ...') exits 5, pinned by tools/tests/test_models.py returncode-5 assertion; the established convention for exactly this failure is commands.py:383-386 and commands.py:1462-1465 (`die(1, f\"cannot read {path}: {e}\")`).",
+      "fix": "Report the unreadable --from file as a refusal (exit 1, `cannot read <path>: <error>`) matching the sibling commands and update the pinned assertion, or record the divergence as intentional.",
+      "sources": ["STD-4"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 169,
+      "summary": "The rollback loop is duplicated verbatim across both failure handlers inside a four-level try nesting in init() (ENG-6, ENG-19; ENG-7 readability); structure-only concern - correct behaviour is fully pinned by the green InitPublishTests.",
+      "evidence": "models.py:169-175 and models.py:176-181 both run the identical five-line cleanup `for filename in published: try: os.unlink(...)`; the publish loop nests try(for(try(try/except)except)finally); since FileExistsError is an OSError subclass, one `except OSError` handler rolling back once and re-raising FileExistsError as-is collapses the duplication without behaviour change.",
+      "fix": "Fold the two handlers into one `except OSError as error:` block running the shared rollback, re-raising FileExistsError untouched and converting other OSErrors to ModelConfigError; optionally extract a _publish(dirfd, filename, text) helper.",
+      "sources": ["STD-5"]
+    }
+  ],
+  "rejected": [],
+  "escalate": false
+}

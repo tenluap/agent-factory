@@ -80,7 +80,7 @@ class Sandbox:
         path.write_text(json.dumps(state, indent=2) + "\n")
         return path
 
-    def cli(self, *args, cwd=None):
+    def cli(self, *args, cwd=None, input=None):
         """Run bin/factory as a process over the sandbox."""
         env = dict(os.environ, FACTORY_HOME=str(self.home))
         return subprocess.run(
@@ -89,6 +89,7 @@ class Sandbox:
             text=True,
             env=env,
             cwd=str(cwd or self.repo),
+            input=input,
         )
 
     def write_temp(self, name, content):

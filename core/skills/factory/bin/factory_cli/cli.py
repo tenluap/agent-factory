@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from factory_cli import commands, state
+from factory_cli import commands, models, state
 from factory_cli.commands import CLIError
 
 USAGE = """usage: factory <command> [args]
@@ -20,10 +20,14 @@ read:
   validate <run> | validate --all   validation violations; exit 1 when any
   resume <run>                      record the resumed entry, print the resume digest
   budget <role>                     the role's resolved seconds and deadline, JSON
+  models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
 
 write (the single writer; each stamps its time, validates, writes atomically):
+  init                              seed project model configuration
+  models-record [--from <path>]     record run models from a file or stdin;
+                                     never inline JSON on the command line
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
   analyze-record <envelope>         validate and record an analysis outcome
@@ -125,7 +129,54 @@ def main(argv):
         raise CLIError(5, USAGE)
     command, rest = args[0], args[1:]
     try:
-        if command == "runs":
+        if command == "init":
+            positional, _ = parse_flags(rest, command, value_flags=())
+            if positional:
+                die_usage("init takes no arguments")
+            repo = commands.main_repo(Path.cwd())
+            try:
+                print(models.init(repo, commands.factory_home()))
+            except FileExistsError as e:
+                raise CLIError(1, str(e)) from e
+            return
+        elif command == "models-record":
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--from")
+            )
+            if positional:
+                die_usage(
+                    "models-record takes no inline JSON; write the block to a file and pass"
+                    " --from <path>, or pipe it on stdin"
+                )
+            source = flags.get("--from")
+            if source is not None:
+                try:
+                    raw = Path(source).read_text(encoding="utf-8")
+                except OSError as error:
+                    die_usage(f"models-record: cannot read {source}: {error}")
+            else:
+                raw = sys.stdin.read()
+            try:
+                block = json.loads(raw)
+            except ValueError:
+                die_usage("models-record needs JSON")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_models_record(repo, Path.cwd(), block)
+        elif command == "models":
+            positional, flags = parse_flags(
+                rest, command, value_flags=(), bool_flags=("--json",)
+            )
+            if positional:
+                die_usage("models takes no positional arguments")
+            repo = commands.main_repo(Path.cwd())
+            print(
+                models.report(
+                    models.resolve(repo, commands.factory_home()),
+                    bool(flags.get("--json")),
+                )
+            )
+            return
+        elif command == "runs":
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_runs(repo)
@@ -408,6 +459,12 @@ def main(argv):
             # FR-011: the state write landed, the commit did not — the JSON
             # above names it and the exit code says the command failed
             raise SystemExit(1)
+    except models.ModelConfigError as e:
+        print(
+            f"factory: {e}\nFix the file or delete it to fall back to the next layer.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
     except commands.state.StateError as e:  # a refused write names its reason
         print(f"factory: {e}", file=sys.stderr)
         raise SystemExit(1)

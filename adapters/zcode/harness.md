@@ -11,7 +11,7 @@
 
 | Verb | On ZCode |
 |---|---|
-| `SPAWN` | Agent/Task tool with `subagent_type: factory-<role>`, inputs as the prompt |
+| `SPAWN` | Agent/Task tool with `subagent_type: factory-<role>`, inputs as the prompt. Spawn cannot take a model; use the installed selection. |
 | `SPAWN_PARALLEL` | one Agent call per role, all in one message |
 | `ASK` | grilling and relays: Markdown layout from protocol.md; other choice asks: `AskUserQuestion`; free text: plain message |
 | `NOTIFY` | no-op (no notification tool) |
@@ -31,6 +31,8 @@
 - Ledger (reported usage): Agent results expose no token usage — record `reported: null` and rely on the estimates.
 
 ## Model inspection and recovery
+
+Preflight resolves configuration in order: `<repo>/.factory/config.json` (project), `${FACTORY_HOME}/config.json` (user), then adapter defaults. If either resolved tier's source is `project` or `user`, disclose that project/user model selections cannot apply at spawn and continue on the installed (rendered) selections.
 
 Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
 

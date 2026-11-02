@@ -238,7 +238,9 @@ def render(name, out=None):
     (skill / "roles").mkdir()
     (target / "agents").mkdir()
 
+    tiers = {}
     for role_name, meta, body in roles():
+        tiers[meta["name"]] = meta["tier"]
         (skill / "roles" / role_name).write_text(body.lstrip("\n"))
         values = {
             "role": meta["name"],
@@ -248,6 +250,7 @@ def render(name, out=None):
         fields = agent_fields(adapter, meta, values, models=models)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
         (target / "agents" / adapter["agent_file"].format(**values)).write_text(text)
+    (skill / "roles" / "tiers.json").write_text(json.dumps(tiers, indent=2) + "\n")
     return target
 
 

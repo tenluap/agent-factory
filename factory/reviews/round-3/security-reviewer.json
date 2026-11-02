@@ -1,0 +1,45 @@
+{
+  "reviewer": "security",
+  "round": 3,
+  "delta_base": "1f6c977",
+  "summary": "All three round-2 blocking fixes verified removed (models-record file/stdin transport with inline refusal, control-char refusal + table sanitize, no-replace publish with config.json commit point and retryable init); 18/18 focused tests green and the prior single-quote payload re-attempted through every documented shape; two new LOW non-blocking defects found in the fix diff (unhandled UnicodeDecodeError on --from/stdin decode, and a concurrent-init loser whose rollback deletes the winner's config.README.md).",
+  "verified_fixes": [
+    {
+      "source": ["SEC-1"],
+      "status": "removed",
+      "evidence": "SKILL.md:47 now documents `models-record --from <temp-file>` (stdin equivalent) and forbids inline argv JSON; cli.py:142-162 refuses any positional ('models-record takes no inline JSON...', exit 5) and parses --from/stdin before run resolution; the adversarial payload x'$(touch factory-sec1-marker)' flows as inert data via stdin (test_models_record_reads_stdin_and_refuses_inline_json, green) and my manual re-run of all three shapes produced no marker; grep shows no remaining models-record '<json>' prose and all CLI subprocess call sites (commands.py:34,44,1494, improvements.py:42) use list argv with no shell."
+    },
+    {
+      "source": ["SPEC-1", "SEC-4"],
+      "status": "removed",
+      "evidence": "models.py:52-56 _read_models rejects any C0 (<0x20) or 0x7f char in user and project values; models.py:80-82,101 _sanitize masks them in the table, and init's README embeds that sanitized table (models.py:115-121); json.dumps escaping covers the --json path; python3 -m unittest tools.tests.test_models = 18 tests OK including test_refuses_control_character_model_values and test_table_sanitizes_control_characters."
+    },
+    {
+      "source": ["SPEC-2", "SEC-3", "STD-1", "STD-2"],
+      "status": "removed",
+      "evidence": "models.py:130-184 publishes via os.link (no-replace) staging config.README.md first and config.json last as the commit point; FileExistsError on config.json is refused with temp cleanup and converted by cli.py:137-140 to CLIError(1); any other OSError converts to ModelConfigError 'init failed; partial artifacts removed, retry'; InitPublishTests.test_publish_race_refuses_without_clobber plants config.json inside the pre-check..publish window via monkeypatched os.link and asserts the other writer's bytes survive, the README rolls back and no .factory- temp remains; verified green."
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-5",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/cli.py",
+      "line": 154,
+      "summary": "models-record --from (and stdin) decode failure escapes as a raw UnicodeDecodeError traceback with exit 1 instead of a clean usage error (ENG-17, ENG-25 input-validation facet).",
+      "evidence": "cli.py:153-156 wraps Path(source).read_text(encoding='utf-8') in `except OSError` only; UnicodeDecodeError is a ValueError, so a non-UTF-8 file bypasses die_usage — reproduced: `printf '\\xff\\xfe{...}' > bad.json; factory models-record --from bad.json` prints a codecs traceback and exits 1 (contract: 'no matching run or refused write') instead of exit 5 usage; sys.stdin.read() has the same behavior on undecodable stdin. New code path introduced by the SEC-1 fix; not attacker-reachable in practice (the temp file is written by the calling agent from CLI JSON output).",
+      "fix": "Catch (OSError, UnicodeError) around the read (and decode stdin defensively) and die_usage('models-record: cannot read <path>: <error>')."
+    },
+    {
+      "id": "SEC-6",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/models.py",
+      "line": 155,
+      "summary": "A losing concurrent init deletes the winner's config.README.md: the stale-README recovery replaces the winner's README, then the loser's rollback unlinks it, and no later init can restore it (ENG-26 data-integrity facet of the publish race).",
+      "evidence": "models.py:152-158: on FileExistsError for config.README.md the code unlinks the existing file and links its own; if a concurrent writer then holds config.json, the loser's rollback (models.py:169-175) unlinks the README it published — which replaced the winner's. Reproduced by driving models.init with a call-interleaved os.link patch: final state = winner's config.json intact (commit point never clobbered — the SEC-3 property holds) but config.README.md absent, and the pre-check at models.py:108 refuses any regenerating retry while config.json exists. Consequence is loss of a regenerable documentation artifact only.",
+      "fix": "In the rollback, only unlink artifacts this process created at a path it still owns (e.g. skip README rollback when it entered via the stale-recovery replacement, or verify inode identity against the published temp before unlinking)."
+    }
+  ]
+}

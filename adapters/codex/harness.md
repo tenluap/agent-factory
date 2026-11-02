@@ -11,7 +11,7 @@
 
 | Verb | On Codex |
 |---|---|
-| `SPAWN(role, inputs)` | Spawn the custom agent `factory_<role>` (hyphens in the role become underscores, e.g. `factory_spec_builder`) with the inputs as its task, and wait for its result. This skill's instruction is your explicit request to spawn it. |
+| `SPAWN(role, inputs, model)` | Spawn the custom agent `factory_<role>` (hyphens in the role become underscores, e.g. `factory_spec_builder`) with the inputs as its task, and wait for its result. Spawn cannot take a model; use the installed selection. This skill's instruction is your explicit request to spawn it. |
 | `SPAWN_PARALLEL([...])` | Spawn every listed agent at once, wait until all results are in, then continue. |
 | `ASK(text, options?)` | A plain message, then wait for the reply. Initial grilling and relays, even one question, use the Markdown presentation in protocol.md, "Questions". |
 | `NOTIFY(text)` | No-op. |
@@ -32,6 +32,8 @@
 - Ledger (reported usage): subagent results expose no token usage — record `reported: null` and rely on the estimates.
 
 ## Model inspection and recovery
+
+Preflight resolves configuration in order: `<repo>/.factory/config.json` (project), `${FACTORY_HOME}/config.json` (user), then adapter defaults. If either resolved tier's source is `project` or `user`, disclose that project/user model selections cannot apply at spawn and continue on the installed (rendered) selections.
 
 Read effective installed role selections and their configuration source, including overrides; preserve an unresolved inherited session choice. This adapter provides no authoritative model inventory command. Unless the session itself exposes a supported authoritative inventory, disclose availability as unverified and retain the existing bounded runtime retry/halt policy. Never invent an inventory API or treat rendered IDs as proof of service access.
 

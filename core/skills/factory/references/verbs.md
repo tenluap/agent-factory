@@ -4,8 +4,8 @@ The core never names a harness tool. It uses these verbs; `references/harness/<n
 
 | Verb | Meaning |
 |---|---|
-| `SPAWN(role, inputs)` | Run one role (its agent file is named in `harness.md`, usually `factory-<role>`) to completion in a fresh context. The prompt is the inputs plus `F` (this skill's base directory). Returns the role's final message. `harness.md` names where the harness exposes the spawn's reported token usage, if anywhere. Roles keep nothing between spawns: whatever a later spawn needs is in `state.json` or on disk. |
-| `SPAWN_PARALLEL([(role, inputs), ...])` | `SPAWN` several roles concurrently and collect every final message. |
+| `SPAWN(role, inputs, model)` | Run one role (its agent file is named in `harness.md`, usually `factory-<role>`) to completion in a fresh context. `model` is the resolved model for the role's tier; an empty string omits it and inherits the session model. The prompt is the inputs plus `F` (this skill's base directory); apply `model` through the adapter's spawn mapping. Returns the role's final message. `harness.md` names where the harness exposes the spawn's reported token usage, if anywhere. Roles keep nothing between spawns: whatever a later spawn needs is in `state.json` or on disk. |
+| `SPAWN_PARALLEL([(role, inputs, model), ...])` | `SPAWN` several roles concurrently, each with its own tier's resolved model, and collect every final message. Empty model strings omit the model and inherit the session model. |
 | `ASK(text, options?)` | Put a question or a choice to the user and wait for the answer. |
 | `NOTIFY(text)` | Tell the user the run is waiting on them. A no-op where the harness has no notification. |
 | `RESOLVE(name)` | Absolute path of a skill's `SKILL.md`, or of a SpecKit command file, by logical name (`speckit-plan`, `grilling`, ...). The search order is in `harness.md`; first match wins. |
