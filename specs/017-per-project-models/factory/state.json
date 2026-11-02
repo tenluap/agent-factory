@@ -18,12 +18,12 @@
     "fast": true
   },
   "skills": {
-    "speckit-specify": "/Users/tenluap/.agents/skills/speckit-specify/SKILL.md",
-    "speckit-clarify": "/Users/tenluap/.agents/skills/speckit-clarify/SKILL.md",
-    "speckit-plan": "/Users/tenluap/.agents/skills/speckit-plan/SKILL.md",
-    "speckit-tasks": "/Users/tenluap/.agents/skills/speckit-tasks/SKILL.md",
-    "speckit-analyze": "/Users/tenluap/.agents/skills/speckit-analyze/SKILL.md",
-    "speckit-implement": "/Users/tenluap/.agents/skills/speckit-implement/SKILL.md",
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.agents/skills/speckit-implement/SKILL.md",
     "grilling": "/Users/tenluap/.config/opencode/skills/grilling/SKILL.md",
     "domain-modeling": "/Users/tenluap/.config/opencode/skills/domain-modeling/SKILL.md",
     "pr": "/Users/tenluap/.config/opencode/skills/pr/SKILL.md",
@@ -150,7 +150,7 @@
       "stage": "tasks",
       "role": "spec-builder",
       "cause": null,
-      "detail": "resolved speckit-tasks path pointed at ~/.agents (absent); repo-local .agents/skills/speckit-tasks/SKILL.md exists — re-resolving state.skills to repo-local paths",
+      "detail": "resolved speckit-tasks path pointed at ~/.agents (absent); repo-local .agents/skills/speckit-tasks/SKILL.md exists \u2014 re-resolving state.skills to repo-local paths",
       "duration_ms": 120000,
       "commit": "c891e4b",
       "partial_return": false
