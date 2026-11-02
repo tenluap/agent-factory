@@ -364,6 +364,17 @@
       "duration_ms": 180000,
       "commit": "a885ca8",
       "partial_return": false
+    },
+    {
+      "at": "2026-11-02T12:26:21.807750Z",
+      "kind": "retry",
+      "stage": "review",
+      "role": "review-judge",
+      "cause": null,
+      "detail": "recorded deep model claude-code/claude-opus-5-5[1m] and variants unavailable for spawn in this session; substituted zai-coding-plan/glm-5.3 (disclosed substitution, bounded failure policy)",
+      "duration_ms": 180000,
+      "commit": "a885ca8",
+      "partial_return": false
     }
   ],
   "review": {
