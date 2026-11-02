@@ -51,7 +51,25 @@
       "at": "2026-11-02T10:54:28.982086Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "remediate",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q13"
+          }
+        ],
+        "answers": {
+          "Q13": {
+            "answer": "A - accept the updated test scope with the unknown-harness-key failure path",
+            "at": "2026-11-02T10:56:20.496215Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-11-02T10:50:36.535104Z",
