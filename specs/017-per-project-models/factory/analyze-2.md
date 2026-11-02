@@ -33,3 +33,15 @@ In-place verification of remediation 1 (commit 1d065db). Artifacts: `spec.md` 18
 ## Metrics
 
 Counts: CRITICAL 0, HIGH 1, MEDIUM 0, LOW 0.
+
+```json
+{
+  "status": "done",
+  "stage": "analyze",
+  "summary": "Analyze pass 2: M1-M5 and L1-L4 closed. One new HIGH (H1): plan.md lacks the Confirmed line for the post-remediation seam scope though Q13 was answered A in state.relay; fix is a plan/tasks doc patch. FR coverage 100%, seams match T002-T005.",
+  "files": ["specs/017-per-project-models/factory/analyze-2.md"],
+  "questions": [],
+  "analyze": {"report": "factory/analyze-2.md", "critical": 0, "high": 1, "medium": 0, "low": 0},
+  "counts": {"critical": 0, "high": 1, "medium": 0, "low": 0}
+}
+```
