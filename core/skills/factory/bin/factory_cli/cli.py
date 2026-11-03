@@ -418,7 +418,9 @@ def main(argv):
                 if "--commands" in flags
                 else []
             )
-            if not isinstance(payload, list) or payload == []:
+            if not isinstance(payload, list) or not payload or not all(
+                isinstance(command, dict) for command in payload
+            ):
                 die_usage("--commands needs a JSON list of {command, status} objects")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_verify(
@@ -428,7 +430,6 @@ def main(argv):
                 commands_payload=[
                     (c.get("command"), c.get("status"))
                     for c in payload
-                    if isinstance(c, dict)
                 ],
             )
         elif command == "lock":
