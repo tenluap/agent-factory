@@ -203,6 +203,19 @@ def latest_verify(state_dict):
     return None
 
 
+def verify_commands_passed(commands):
+    """Require passing evidence for every command in a verification record."""
+    return isinstance(commands, list) and bool(commands) and all(
+        isinstance(command, dict)
+        and _str(command.get("command"))
+        and (
+            command.get("status") == "pass"
+            or (_int(command.get("status")) and command["status"] == 0)
+        )
+        for command in commands
+    )
+
+
 def _decisions(state_dict, stage, kinds):
     return [
         d
@@ -225,6 +238,8 @@ def gate_violation(state_dict, into):
                 f"the latest verify record is '{latest.get('event')}' "
                 f"({latest.get('at')}); a passing latest verify record is required"
             )
+        if not verify_commands_passed(latest.get("commands")):
+            return "the latest verify-pass record lacks passing results for every command"
         return None
     if into == "implement":
         if _decisions(state_dict, "analyze", ("gate-override",)):

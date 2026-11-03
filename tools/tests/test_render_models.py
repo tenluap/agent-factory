@@ -159,7 +159,7 @@ class ModelPolicyTests(unittest.TestCase):
         self.assertIn(
             "Claude Code, Codex and OpenCode pin agent models by default", readme
         )
-        self.assertIn("Copilot and Zcode inherit the session model", readme)
+        self.assertIn("Copilot and ZCode inherit the session model", readme)
         for name in ("copilot", "zcode"):
             adapter = json.loads((ADAPTERS / name / "adapter.json").read_text())
             self.assertEqual(adapter.get("models"), {}, name)

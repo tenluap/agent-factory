@@ -14,149 +14,266 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 
 `./install.sh --harness all` installs every adapter and links the skill library described below. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
 
-The OpenCode adapter requires V2's `subagent` and `shell` tools and uses native `permissions` rules. Install with `./install.sh --harness opencode`; it verifies the factory skill and role-agent links. Start a fresh OpenCode session after installation so it loads them. If an existing non-symlink blocks a link, resolve that path and rerun the installer. If `/factory` loads but reports a missing tool, enable that capability and restart the session; if `/factory` itself is unavailable, install and reload first. OpenCode translates supported V1 agent and skill files, so existing installations are intended to keep working. See the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
+## Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Run-state CLI](#run-state-cli)
+- [Design-to-code](#design-to-code)
+- [Self-improvement](#self-improvement)
+- [FACETS advisor](#facets-advisor)
+- [Benchmark and conformance](#benchmark-and-conformance)
+- [Layout](#layout)
+
+## Features
+
+| Capability | What it does |
+|---|---|
+| Harness adapters | One shared workflow renders for Claude Code, OpenCode V2, Codex, GitHub Copilot and ZCode. Adapters own harness-specific tools, permissions, paths, model settings and the capability tier (native subagents, headless subprocess, or inline). |
+| Idea intake | The request is classified as exploration, delivery or ambiguous. Exploratory ideas go through `brainstorming` first; concrete requests go straight to grilling; ambiguous ones get one question. You confirm requirements before anything is written to the repository. |
+| Grilling and relays | A relentless interview settles the design and the spec chain. Later agent questions reach you as batched relay rounds with lettered options, suggested answers and reply shortcuts. |
+| Spec chain | Lite chain `specify → plan → tasks → analyze` by default; full chain adds `clarify` and `grill-with-docs` with a bounded analyze/remediate loop. CRITICAL/HIGH findings on lite escalate to full automatically. |
+| Fast mode | On by default: eligible relay questions auto-accept the recommended answer, are logged, and are listed for veto at approval. Remediation questions that would overturn your decisions, and every halt, always reach you. |
+| Stack detection | Preflight detects languages, frameworks, package managers, monorepo layout and UI stacks from marker files (no network, no subprocess), records the profile in run state and `profile.md`, and proposes build/test commands where the repo documents none. |
+| Isolated delivery | Each feature gets its own branch and sibling worktree. Stage checkpoints commit only the spec directory and role-declared files; unrelated dirty files are reported, not included. |
+| Engineering rules | Every planning, coding and reviewing role follows [`engineering.md`](core/skills/factory/references/engineering.md) (ENG-1..ENG-31): test-first with the red step recorded in the commit body, seams settled at plan time, KISS/YAGNI, deliberate error handling. The repo's own conventions win and are recorded as overrides. |
+| Specialist roles | Spec builder, code builder, design-to-code (UI write role), fixer, five reviewers (security, code standards, spec conformance, and UI/UX on UI diffs), an independent review judge, and a post-PR retro. Reviews run in parallel where the harness supports it. |
+| Verification and repair | The orchestrator runs build and test commands itself. Verdict-driven fix rounds are capped at two; later rounds are delta reviews of the fix only. Red builds, exhausted loops and repeated agent failures halt for your direction. |
+| Time budgets | Each spawned role gets a deadline (default 300 s, configurable per role). File-writing roles stop at safe commit boundaries and return `partial`; a fresh agent resumes from disk. Three partial returns of one stage with no new commit halt the run. |
+| Cost ledger and totals | Every spawn is ledgered with timing, estimated and harness-reported token usage, and any overrun. Approval and the final notice show one totals line: wall clock split into your time, agent time and overhead. |
+| Per-project models | `<repo>/.factory/config.json` selects deep/standard models per project; runs cascade project → user → adapter defaults per tier, record the resolution in run state, and disclose changes on resume. |
+| Resumable audit trail | Versioned `state.json` holds stage, answers, decisions, waits, ledger, issues, verification, findings, checkpoints and PR URL. A run resumes in any session, on any installed harness on the same machine. |
+| Approval gate | Nothing is pushed until you choose **Approve**. The factory never merges or deploys. |
+| Archive on PR | After the PR opens, the run folder is archived under `${FACTORY_HOME}/archive/` and removed from the branch; design evidence moves to `docs/design/<branch>/`. |
+| Retro and improvement backlog | After every PR a retro agent proposes up to three improvement candidates from the run's issues; `/factory improve` lists them as ready-made feature descriptions. |
+| Design-to-code | Pen, Figma, image or text-only design sources map to code anchors with rendered-fidelity evidence, across Avalonia and web stacks. Also usable standalone, with an auto-trigger plugin/hook. |
+| Skill library | The installer links a vendored skill library, the factory's first-party skills and your own per-user skills into each harness, with collision precedence and per-harness restrictions. |
+| Benchmark | Replays a pre-settled feature headlessly and scores runs, so factory versions can be compared before and after a change. |
+
+## Requirements
+
+- An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
+- In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
+- SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). For ZCode: `specify init --here --integration zcode --integration-options="--skills"`. The factory offers to do this when `.specify/` is missing.
+- Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, and — before any code-delivery work starts — `ponytail` and `tdd`. They must be in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads). The bundled skill library provides all of them.
+- Conditionally resolved skills:
+  - `brainstorming` when a run starts from an exploratory idea.
+  - `impeccable` for UI reviews; the factory offers to install it the first time a run touches UI files.
+  - `pen-design` when a run creates, references or updates a Pen design used as an implementation reference. Missing capabilities are reported, never installed or assumed. The `design-to-code` role reaches a Pen source only through the pen CLI, never a Pen MCP backend.
+  - A `figma` skill, or an available Figma MCP inspection capability, when the design source is Figma.
+- Node.js, only for the optional design-to-code trigger hook on Claude Code and Codex.
 
 ## Install
 
-`./install.sh` renders `core/` with the adapter into `dist/<harness>/` — the orchestrator skill under `skill/`, the first-party skills (`core/skills/` except `factory`) verbatim under `skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)) — then symlinks the skill, skills and agents into the harness's directories. The skill is the same on every harness: it carries every adapter's `harness.md` and picks its own at the start of a run (set `FACTORY_HARNESS=<name>` to force one).
-
-Harness-neutral data lives in `${FACTORY_HOME:-~/.factory}`: pending runs, and an optional `config.json` to override models per harness:
-
-```json
-{ "models": { "claude-code": { "deep": "opus", "standard": "sonnet" }, "opencode": { "deep": "anthropic/<model-id>" } } }
+```sh
+./install.sh                              # Claude Code (default)
+./install.sh --harness opencode           # one harness
+./install.sh --harness all                # every adapter
+./install.sh --harness opencode --add-skill /path/to/my-skill
+./install.sh --harness <name|all> --uninstall
+python3 tools/render.py --list            # available harnesses
 ```
 
-Claude Code, Codex and OpenCode pin agent models by default; Copilot and Zcode inherit the session model. The mappings in `adapters/<harness>/adapter.json` are authoritative. Override tier selections here and re-run `install.sh`, which renders a per-user copy into `${FACTORY_HOME:-~/.factory}/dist/<harness>` with your overrides merged and links that harness's skill and agent directories from it, printing the effective model per role. The committed `dist/` in the repository stays canonical: no install ever merges your configuration into it.
+`./install.sh` renders `core/` with the adapter into `${FACTORY_HOME:-~/.factory}/dist/<harness>/`, merging any model overrides from your config, then symlinks the skill, skills and agents into the harness's directories and prints the effective model per role. The repository's own `dist/` stays canonical: no install ever merges your configuration into it. The orchestrator skill is the same on every harness: it carries every adapter's `harness.md` and picks its own at the start of a run (set `FACTORY_HARNESS=<name>` to force one).
 
-### Per-project models
+A config file that does not parse aborts the install before anything is rendered or linked. An explicitly configured `FACTORY_HOME` must exist and be writable; the default `~/.factory` is created when missing.
 
-Each project can carry its own tier selections in `<repo>/.factory/config.json`, using the same schema as the user-level config. At the start of every run the orchestrator resolves the cascade **project → user → adapter defaults**, per tier, and passes each spawned agent its tier's resolved model. An empty string inherits the session's model. Run `/factory init` in a repo to seed the project config with every harness's effective values (each labeled with its source) plus a `config.README.md` documenting schema, precedence and restore steps; it refuses when a config already exists.
+### Harness notes
 
-`python3 <factory-skill>/bin/factory models [--json]` prints the effective per-role cascade with sources for the current repo — run it any time to see what a run here would use. A malformed project or user config (bad JSON, unknown harness or tier key, control-character or oversized values, symlinked files) stops the run naming the file and the fix; delete the offending entry or fix the value to fall back to the next layer. Codex, Copilot and ZCode cannot take a model at spawn time: their preflight discloses that project and user selections cannot apply there and continues on the installed (rendered) selections.
+- **OpenCode** requires V2's `subagent` and `shell` tools and uses native `permissions` rules. The installer verifies the skill and role-agent links and also links the design-to-code trigger plugin into OpenCode's `plugins/` directory. If an existing non-symlink blocks a link, resolve that path and rerun. If `/factory` loads but reports a missing tool, enable that capability and restart; if `/factory` is unavailable, install and reload first. OpenCode translates V1 agent and skill files, so existing installations keep working; see the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
+- **Claude Code and Codex** get the design-to-code trigger as a `UserPromptSubmit` hook script copied to `${FACTORY_HOME}/bin/design-to-code-hook.mjs`. The installer never edits your harness config; it prints the snippet to paste into `~/.claude/settings.json` or `~/.codex/hooks.json`.
+- **Codex, Copilot and ZCode** cannot take a model at spawn time: they run on the installed (rendered) model selections.
 
 ### Skill library
 
-The installer links skills from the rendered distribution's `dist/<harness>/skills/` — the factory's first-party skills, rendered from `core/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)) — and from this checkout's `skills/` and `${FACTORY_HOME:-~/.factory}/skills/` into the selected harness's skill root. Precedence on name collision: per-user wins, then first-party, then vendored. Add a local skill with `./install.sh --harness opencode --add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
+The installer links three layers of skills into the selected harness's skill root:
 
-After every non-uninstall run, the installer refreshes a browsing mirror of the vendored library in `${FACTORY_HOME:-~/.factory}/skills/`: one symlink per `skills/` folder, so the whole library is visible in one place outside the checkout. Mirror links are not per-user skills — they never override the vendored links in a harness's skill root and are not governed by `SOURCES.md`. Stale mirror links (targets removed from the checkout) are pruned; `--uninstall` prunes them too and otherwise leaves the mirror in place. A non-symlink or a symlink pointing elsewhere in the per-user layer is still a per-user skill and is skipped, with an adoption hint.
+1. **Per-user** skills in `${FACTORY_HOME:-~/.factory}/skills/` — they win on name collision and always link to every harness.
+2. **First-party** skills rendered from `core/skills/` (every folder with a `SKILL.md` except `factory`) into `dist/<harness>/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)).
+3. **Vendored** skills in this checkout's `skills/`, with provenance in `skills/SOURCES.md` — including `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming`, `impeccable`, `design-to-code` and `pen-design`.
 
-Existing files, directories, and links outside the current library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun installation. Links made from another checkout or before moving this checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically.
+Add a local skill with `--add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
 
-Uninstall removes library links but keeps all layers. Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared library links. Maintainers refresh vendored skills manually by copying the upstream skill and license and updating `skills/SOURCES.md` with the source commit; no sync tool is provided. First-party skills live in `core/skills/` and are not listed in `SOURCES.md`; see [ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md).
+A `skills/SOURCES.md` row may restrict a vendored skill to specific harnesses with the optional sixth `harnesses` column: a comma-separated list of adapter names (`claude-code`, `codex`, `copilot`, `opencode`, `zcode`). An empty cell links the skill into every harness. An excluded skill has its existing link removed and is reported with `skip:`.
 
-A `skills/SOURCES.md` row may restrict a vendored skill to specific harnesses with the optional sixth `harnesses` column: a comma-separated list of adapter names (`claude-code`, `codex`, `copilot`, `opencode`, `zcode`). An empty cell — the default — links the skill into every harness. When a skill is excluded from the selected harness, the installer removes its existing library link and reports `skip:`. The column only governs the repo layer; per-user skills in `${FACTORY_HOME}/skills/` always link everywhere.
+After every non-uninstall run, the installer refreshes a browsing mirror of the vendored library in `${FACTORY_HOME}/skills/`: one symlink per `skills/` folder. Mirror links are not per-user skills and never override vendored links; stale mirror links are pruned. A non-symlink, or a symlink pointing elsewhere, in the per-user layer is a real per-user skill and is skipped with an adoption hint.
+
+Existing files, directories and links outside the library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun. Links made from another checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically. Uninstall removes library links but keeps all layers; Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared links. Maintainers refresh vendored skills by copying the upstream skill and license and updating `skills/SOURCES.md` with the source commit.
+
+### Updating and removing
+
+After pulling, rerun the same install command; it re-renders the adapter and refreshes factory-owned links. `./install.sh --harness <name> --uninstall` (or `all`) removes factory-owned links, the OpenCode plugin link and rendered copies. Your configuration, pending runs, archives and backlogs under `${FACTORY_HOME}` are kept.
 
 ## Usage
 
-Start a run from the repo you want the feature built in. On Claude Code, OpenCode and Copilot the skill is `/factory`; on Codex it is `$factory`.
+Start a run from the repo you want the feature built in. On Claude Code, OpenCode, Copilot and ZCode the skill is `/factory`; on Codex it is `$factory`.
 
 ```
 /factory                                      list unfinished runs; pick one to resume, or start a new run
-/factory init                                 seed <repo>/.factory/config.json with effective model defaults + README; refuses an existing config
-/factory resume <branch>                      resume that run from where it stopped (any session, any harness)
 /factory <feature description>                start a new run — lite chain and fast mode by default
 /factory <feature> --full                     start on the full chain instead
 /factory <feature> --no-fast                  ask every relay question instead of auto-accepting
 /factory <feature> --stop-at review           pause cleanly before the review stage
+/factory resume <branch>                      resume that run from where it stopped (any session, any harness)
 /factory resume <branch> --full --no-fast     resume, switching mode before the stage restarts
+/factory init                                 seed <repo>/.factory/config.json with effective model defaults + README
+/factory improve                              list ready improvement backlogs with suggested feature text
 ```
-
-A new run takes the feature through: grilling (with you, in this session), a worktree on its own branch, the SpecKit spec chain, implementation, parallel reviews, a judge verdict, fix rounds, your approval, and a PR. Progress is checkpoint-committed per stage: a checkpoint commits the spec directory plus exactly the files the role's envelope declared, and reports anything else dirty without committing it. A run that stops — deliberately or not — resumes from the recorded stage with `/factory resume <branch>`, even on a different harness. Sharing `${FACTORY_HOME}` alone does not move a run: after moving or copying a worktree, run `factory rebind <branch> --worktree <new-path>` to validate the branch and rewrite the run's stored paths.
-
-After the PR opens, `factory drop` archives the run folder at `${FACTORY_HOME:-~/.factory}/archive/<repo-name>-<branch>/` and commits its removal from the branch. The archive is verified before removal and excludes the transient lock. Design evidence, when present, moves to `docs/design/<branch>/` in the same commit.
 
 ### Flags
 
-Flags follow the feature description or `resume <branch>` and may combine; when both flags of a pair appear, the last one wins:
+Flags follow the feature description or `resume <branch>` and may combine; when both flags of a pair appear, the last one wins. An unknown flag or invalid stage is never ignored: the factory names it and asks you to fix or drop it.
 
 | Flag | Effect |
 |---|---|
-| `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. The two interactive spec stages (clarify, grill-with-docs) are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates the run to the full chain automatically. **This is the default.** |
-| `--full` | Pin the **full chain**: specify → clarify → grill-with-docs → plan → tasks → analyze, with the analyze loop (max 2). |
-| `--fast` | Relay rounds auto-accept the agent's recommended answer. Each accept is logged; the approver screen lists them all for veto before you approve. Never automated: questions a remediation defers to you (it would overturn one of your decisions), and every halt — loop exhaustion, red build, agent failure. Grilling at the top is always with you. **This is the default.** |
-| `--no-fast` | Turn fast mode off: every relay round reaches you for an answer. |
-| `--stop-at <stage>` | Pause the run cleanly before that stage and end the turn; resume later. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. |
+| `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. Clarify and grill-with-docs are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates to the full chain automatically. **Default.** |
+| `--full` | Pin the **full chain**: specify → clarify → grill-with-docs → plan → tasks → analyze, with the analyze loop (max 2 passes). |
+| `--fast` | Relay rounds auto-accept the agent's recommended answer. Each accept is logged and listed on the approver screen for veto. Never automated: questions a remediation defers to you, protected design decisions, and every halt. Grilling is always with you. **Default.** |
+| `--no-fast` | Every relay round reaches you for an answer. |
+| `--stop-at <stage>` | Pause cleanly before that stage and end the turn. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. A stage the chain skips never triggers. |
 
-The defaults are `--lite --fast`: a run with no flags uses the lite chain and auto-accepts relay rounds. Grilling's closing summary names the chain in effect and your confirmation covers it — object once to flip it to `full`. Flags also work on `resume <branch>` and update the run before the stage restarts; a `--stop-at` stage the chain skips (say `clarify` on a lite run that never escalates) simply never triggers.
+Grilling's closing summary names the chain in effect and recommends `full` when the feature's size calls for it; object once to flip it.
+
+### The run, stage by stage
+
+1. **Route** — list runs, resume, `init`, `improve`, or classify a new request as exploration, delivery or ambiguous.
+2. **Preflight** — pick the harness adapter, check required capabilities, resolve models (project → user → adapter) and skills, detect the stack profile, confirm build/test commands, and activate design context when a design source is present. Nothing partial is started if a requirement is missing.
+3. **Brainstorm** (exploration only) — alternatives and trade-offs, saved as a brief.
+4. **Grill** — interview until shared understanding; writes `brief.md` and settles the chain.
+5. **Worktree** — a numbered feature branch and a sibling worktree at `<repo>/../<repo-name>-factory/<branch>`; run state moves to `specs/<branch>/factory/state.json`.
+6. **Spec** — one fresh `spec-builder` per SpecKit stage, with checkpoints and the analyze/remediate rules for the chosen chain.
+7. **Implement** — `code-build` (and `design-to-code` for `[UI]` tasks) works through `tasks.md`, committing per task; the orchestrator then runs build and tests itself and gives a red build one repair attempt.
+8. **Review** — parallel reviewers, then the `review-judge` merges, dedupes and verifies findings into one verdict. Confirmed blockers go to the `fixer`, up to two rounds.
+9. **Approver** — your decision (below).
+10. **PR** — push, PR body written with the `pr` skill, `gh pr create`, retro, archive, final push and totals.
+
+Progress is checkpoint-committed per stage. A checkpoint commits the spec directory plus exactly the files the role declared, and reports anything else dirty without committing it.
 
 ### What the run asks of you
 
-- **Grilling** at the start: a relentless interview until you confirm shared understanding. The chain choice is settled here. Grilling and relays share the same emoji-rich chat layout: 🧭 round progress, lettered options with descriptions, ✨ AI suggested markers, and 💡 suggested answers with a rationale and reply shortcut.
-- **Relays**: each round shows the whole frontier of questions whose prerequisites are settled; dependent questions wait for later rounds. Reply `Q7: B`, `Q7: <your answer>`, or `Q7: accept`; bare `accept` takes only unanswered suggestions and preserves your explicit answers. Choice questions include 💬 Something else; open-ended questions accept free text. Under fast mode (the default; `--no-fast` turns it off), eligible relay questions auto-accept; remediation questions still reach you. Existing saved runs use the new layout with their answers and IDs preserved.
-- **Halts**: trouble always reaches you — CRITICAL/HIGH findings left after 2 loop passes, a build that stays red, an agent that fails twice. Your answer resumes, redirects, or aborts.
-- **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, remaining advisory findings, and (with fast mode on) the auto-accepted answers. Approve opens the PR; request changes sends it back through a fix round; abort keeps the worktree.
+- **Grilling** at the start: a relentless interview until you confirm shared understanding. Grilling and relays share one chat layout: 🧭 round progress, lettered options with descriptions, ✨ AI-suggested markers, and 💡 suggested answers with a rationale and reply shortcut.
+- **Relays**: each round shows every question whose prerequisites are settled; dependent questions wait for later rounds. Reply `Q7: B`, `Q7: <your answer>` or `Q7: accept`; bare `accept` takes only unanswered suggestions and keeps your explicit answers. Choice questions include 💬 Something else; open-ended questions accept free text.
+- **Halts**: trouble always reaches you — CRITICAL/HIGH findings left after 2 loop passes, a build that stays red, an agent that fails twice, a stage stalled by three partial returns. Your answer resumes, redirects or aborts.
+- **The approver**: summary, diff stat, spec link, judge verdict, what each fix round fixed, advisory and unresolved findings, run totals, the capability tier when it is not native subagents, UI-review coverage on UI diffs, and (with fast mode) every auto-accepted answer for veto.
+  - **Approve** opens the PR.
+  - **Request changes** sends your text to the `fixer`, re-verifies and re-reviews (no round cap), then returns to approval.
+  - **Abort** marks the run aborted and keeps the worktree.
+
+### First run, pause and resume
+
+1. Install the adapter for your harness, then start a fresh session.
+2. In the repository to change, invoke `/factory <feature>` (Codex: `$factory <feature>`). Describe the desired behaviour and constraints; the factory interviews you and confirms a brief before creating any repository work.
+3. Answer relay questions by ID. Fast mode may accept eligible recommendations automatically; every automatic decision appears at approval and can be vetoed.
+4. Let the run plan, implement, verify and review. Only **Approve** allows the push and PR.
+
+Pause with `--stop-at <stage>` and continue with `/factory resume <branch>`. After a crash or session change, invoke `/factory` with no arguments to discover unfinished runs (worktree runs and pending runs from `${FACTORY_HOME}/pending/`), then resume one. Resume rechecks models, skills and the stack profile, discloses anything that changed, and restarts the recorded stage from its beginning while keeping committed progress.
+
+Sharing `${FACTORY_HOME}` alone does not move a run. After moving or copying a worktree, run `python3 <factory-skill>/bin/factory rebind <branch> --worktree <new-path>` to validate the branch and rewrite the run's stored paths.
+
+### After the PR
+
+The orchestrator runs the retro (see [Self-improvement](#self-improvement)), then `factory drop` archives the run folder at `${FACTORY_HOME}/archive/<repo-name>-<branch>/` and commits its removal from the branch. The archive is verified before removal and excludes the transient lock. Design evidence moves to `docs/design/<branch>/` in the same commit. If the session is interrupted between opening the PR and the final push, run `python3 <factory-skill>/bin/factory drop` and then `git push` from the worktree.
+
+## Configuration
 
 ### Environment
 
 | Variable | Meaning |
 |---|---|
 | `FACTORY_HARNESS` | Force a specific adapter's `harness.md` in preflight instead of auto-recognition. |
-| `FACTORY_HOME` | Where pending runs and `config.json` live (default `~/.factory`). |
+| `FACTORY_HOME` | Harness-neutral home (default `~/.factory`): `pending/`, `archive/`, `improvements/`, `dist/`, `skills/`, `bin/`, `config.json`, and the optional `facets-profile.md`. Every harness shares it. |
 
-### Benchmark factory versions
+### User config: `${FACTORY_HOME}/config.json`
 
-`python3 tools/bench.py run --harness opencode --bench greet-001` replays a
-pre-settled greeting feature in a disposable repository, stopping before the
-approver gate. This spends model tokens; nothing is approved and no PR opens.
-Headless drivers support `opencode` and `claude-code` only.
+```json
+{
+  "models": {
+    "claude-code": { "deep": "opus", "standard": "sonnet" },
+    "opencode": { "deep": "anthropic/<model-id>" }
+  },
+  "budget": {
+    "default_s": 300,
+    "roles": { "code-build": 900, "spec-builder": 600 }
+  }
+}
+```
 
-Score recorded runs offline with `python3 tools/bench.py score <state.json>`;
-save two outputs and run `python3 tools/bench.py compare before.json after.json`.
-All four named conditions must pass. Missing evidence is a failed condition,
-not a successful benchmark. See [benchmark guide](docs/benchmark.md) for the
-manual fallback on other harnesses and reproducible comparison steps.
+- **`models`** — per-harness overrides for the two tiers. Deep roles: `spec-builder`, `review-judge`, `facets-advisor`; every other role is standard. Claude Code, Codex and OpenCode pin agent models by default; Copilot and ZCode inherit the session model. The defaults in `adapters/<harness>/adapter.json` are authoritative; re-run `install.sh` after changing overrides. An empty string inherits the session model.
+- **`budget`** — seconds per spawned role. `default_s` applies to every role without its own entry; a missing or invalid value falls back to 300 and never fails a run. Reviewers and the judge are never stopped (their overruns are only recorded).
 
-## Requirements
+### Per-project models: `<repo>/.factory/config.json`
 
-- An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
-- In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
-- Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd` (the last two before any code-delivery work starts), in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads).
-- SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). The factory offers to do this when `.specify/` is missing. For ZCode: `specify init --here --integration zcode --integration-options="--skills"`.
-- Conditionally resolved skills, only when relevant: `brainstorming` when a run starts from an exploratory idea rather than a settled feature, and `impeccable` for UI reviews — the factory offers to install the latter the first time a run touches UI files.
-- `pen-design` when a run creates, references, or updates a Pen design intended as an implementation reference. Missing skill/backend inspection or rendering capabilities are reported explicitly; they are not installed or assumed automatically. The `design-to-code` role reaches a Pen source only through the pen CLI (`pen` commands, headless `pen interactive`, direct `.pen` reads), never a Pen MCP backend.
+Same schema as the user-level `models` block. At the start of every run the orchestrator resolves **project → user → adapter defaults** per tier and passes each spawned agent its tier's resolved model; the resolution is recorded in run state and changes are disclosed on resume.
 
-### Pen design references
+- `/factory init` seeds the project config with every harness's effective values (each labelled with its source) plus a `config.README.md` documenting schema, precedence and restore steps. It refuses when a config already exists.
+- `python3 <factory-skill>/bin/factory models [--json]` prints the effective per-role cascade with sources for the current repo.
+- A malformed project or user config (bad JSON, unknown harness or tier key, control-character or oversized values, symlinked files) stops the run naming the file and the fix. Delete or fix the entry to fall back to the next layer.
+- Codex, Copilot and ZCode cannot take a model at spawn time: their preflight discloses that project and user selections cannot apply and continues on the installed selections.
+- An unavailable model, when the adapter can prove it from a complete inventory, stops startup with the exact ID, its config source and correction steps. Models are never silently replaced.
 
-Pen reference work automatically follows the [design-code mapping contract](core/skills/factory/references/design-code-mapping.md), across frameworks, with [Avalonia guidance](core/skills/factory/references/design-code-mapping-avalonia.md) for that stack. The repository's `docs/design-code-map.json` (or existing equivalent) maps scoped design nodes, components, and instances to stable code anchors. Later requests such as “update the design” resolve the saved target and update code from the design; ambiguous targets are clarified. Editing the design source requires an explicit request.
+## Run-state CLI
 
-The reference governs visual decisions. Mapped implementation requires current build/runtime, mapping, and rendered-comparison evidence, independently of optional UI polish. Scoped sources, exports, captures, and metadata live under `specs/<branch>/factory/design/`; the permanent map points to them. Design-only tasks record source/targets until code implementation begins. Existing projects bootstrap the requested scope rather than migrating the whole application.
+`<factory-skill>/bin/factory` (stdlib Python 3) is the run's **single writer**: every state change goes through it, is time-stamped, validated, written atomically and committed. State files are never hand-edited, and there is no manual fallback. Run `python3 <factory-skill>/bin/factory` with no arguments for full usage.
 
-Design repairs share the existing two automatic fix rounds. Missing or failed required evidence leaves the work partial/blocked; an explicit scoped exception can permit proceeding while retaining its unverified status. Ordinary approval and fast mode do not infer that exception. These are factory orchestration instructions, not a background synchronizer for standalone Pen invocations.
-
-### First run, pause, and resume
-
-1. Install the adapter for your harness (table above), then start a fresh session.
-2. In the repository to change, invoke `/factory <feature>` (Codex: `$factory <feature>`). Describe desired behaviour and constraints; the factory interviews you and confirms a brief before creating repository work.
-3. Answer relay questions by ID, for example `Q1: B`, `Q1: <answer>`, or `Q1: accept`. Bare `accept` accepts unanswered recommendations only. Fast mode may accept eligible recommendations automatically; every automatic decision appears in final approval and can be vetoed.
-4. Let the run plan, implement, verify, and review. At approval, choose **Approve**, **Request changes**, or **Abort**. Only approval allows push and PR creation; factory does not merge or deploy.
-
-Pause with `--stop-at <stage>` and continue with `/factory resume <branch>` (Codex: `$factory resume <branch>`). After a crash or session change, invoke `/factory` with no arguments to discover unfinished runs, then resume one. Worktrees are siblings of the main checkout; run state and evidence live in `specs/<branch>/factory/`. If a worktree was moved, rebind it with `python3 <factory-skill>/bin/factory rebind <branch> --worktree <new-path>`; sharing `FACTORY_HOME` alone does not move worktree files.
-
-### Feature inventory
-
-| Capability | What it does |
+| Group | Commands |
 |---|---|
-| Harness adapters | One shared workflow renders for Claude Code, OpenCode V2, Codex, GitHub Copilot, and ZCode; adapters own harness-specific tools, permissions, paths, and model settings. |
-| Per-project models | `<repo>/.factory/config.json` selects deep/standard per project; runs cascade project → user → adapter defaults per tier, record the resolution in run state, and disclose changes on resume. `/factory init` seeds it; `factory models` reports it. |
-| Idea intake | Exploratory requests can brainstorm alternatives before feature grilling; concrete requests go directly to grilling. The user confirms requirements before repository changes begin. |
-| Planning | Lite chain is `specify → plan → tasks → analyze`; full adds `clarify` and `grill-with-docs`, with bounded analysis/remediation loops. Serious findings in lite automatically escalate to full. |
-| Isolated delivery | Each feature gets its own branch and worktree. Stage checkpoints commit only the spec directory and role-declared files; unrelated dirty files are reported, not included. |
-| Specialist roles | Spec builder, implementation agent, UI designer, security/code-standards/spec-conformance reviewers, conditional UI/UX reviewers, independent review judge, and fixer. Reviews run in parallel where supported. |
-| Verification and repair | Orchestrator independently runs repository build and test commands. Verdict-driven automatic fixes are capped at two rounds; failed checks, exhausted loops, and repeated agent failures halt for user direction. |
-| Resumable audit trail | Versioned state persists stage, answers and decisions, waits, role ledger, verification, findings, checkpoints, and PR URL. Resume can use another installed harness on the same machine when worktree paths remain valid. |
-| Pen design references | Scoped design-to-code mapping and rendered fidelity evidence apply when a Pen design is used as implementation reference; see [Pen design references](#pen-design-references). |
-| Run-state CLI | `factory runs`, `show`, and `validate` inspect state; writer commands enforce validated atomic updates, checkpoints, verification, locks, rebind, and safe pending-run pruning. State files are not edited by hand. |
+| Read | `runs`, `show <run>`, `validate <run>\|--all`, `resume <run>`, `budget <role>`, `models [--json]`, `improvements`, `detect` |
+| Run state | `checkpoint`, `analyze-record`, `profile-record`, `ledger-add`, `issue-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `models-record` |
+| Lifecycle | `init`, `drop`, `rebind <run> --worktree <path>`, `prune [--dry-run\|--delete]`, `lock take <run> [--force]` |
+| Backlog | `improvements claim <name>`, `improvements add --from <file> --run <branch>` |
+| Agents | `envelope check <file>` validates a role's final fenced `json` block |
 
-### Updating and removing
+`<run>` is a branch name (worktree runs) or a pending file's name. Exit codes: 0 success, 1 no run or refused, 2 not a git repository, 3 ambiguous name, 4 recorded worktree gone, 5 usage error. Writes refuse under a live lock held by another session.
 
-After pulling updates, rerun the same install command; it re-renders the selected adapter and refreshes factory-owned links. Remove factory-owned links and rendered copies with `./install.sh --harness <name> --uninstall` (use `all` for every adapter). User configuration and pending runs under `${FACTORY_HOME:-~/.factory}` are separate from rendered adapters. The installer preserves existing non-symlink files rather than replacing them; resolve any reported path conflict, then rerun installation.
+## Design-to-code
+
+When a run has a UI design source — a Pen (pen.dev `.pen`) file, a Figma node, an image, or a text-only description against existing code — the factory activates design context during intake and follows the [design-code mapping contract](core/skills/factory/references/design-code-mapping.md), with framework guidance for [Avalonia](core/skills/factory/references/design-code-mapping-avalonia.md) and [web stacks](core/skills/factory/references/design-code-mapping-web.md). The detected stack profile seeds the framework choice; an ambiguous stack becomes one relay question.
+
+- `docs/design-code-map.json` (or an existing equivalent) maps scoped design nodes, components and instances to stable code anchors. Later requests such as "update the design" resolve the saved target; ambiguous targets are clarified. Editing the design source requires an explicit request.
+- `[UI]` tasks in `tasks.md` are routed to the `design-to-code` role in contiguous ranges; other tasks go to `code-build`.
+- The design governs visual decisions. Mapped implementation requires current build/runtime, mapping and rendered-comparison evidence. Sources, exports, captures and metadata live under `specs/<branch>/factory/design/` during the run.
+- Design repairs share the two automatic fix rounds. Missing or failed required evidence leaves the work partial or blocked; only an explicit scoped exception from you lets the run proceed, and it stays labelled unverified. Ordinary approval and fast mode never infer that exception.
+- Existing projects bootstrap the requested scope only; nothing migrates the whole application.
+
+Outside factory runs, `design-to-code` is also a standalone main agent and skill for implementing, reviewing or QA-checking UI in Avalonia, MAUI, Blazor, React, Next.js or HTML/JS/CSS. The OpenCode plugin and the Claude Code/Codex hook arm it once per session when a prompt mentions `ui`, `ux`, `.pen`, `pen.dev` or `figma`; they stay inert inside factory runs.
+
+## Self-improvement
+
+Everything that goes wrong in a run — retries, agent failures, overruns, partial returns, failed verification, halts — is recorded as an issue in run state.
+
+- When a run reaches `pr-open` or `aborted`, the writer exports its issues and totals to `${FACTORY_HOME}/improvements/<repo-name>-<branch>.json`. The backlog never exists before its run ends.
+- After the PR opens, a `retro` agent reads the run's state, analyze reports and verdicts and proposes up to three ranked candidates, each with evidence and a one-line feature description. Candidates are deduplicated against existing ready entries. A failed retro is retried once and otherwise skipped; it never halts the run.
+- `/factory improve` lists ready backlogs with kind counts and a `suggested_feature`. Starting an improvement run stays manual: submit the chosen text with `/factory <feature>`. `factory improvements claim <name>` marks a backlog taken.
+
+## FACETS advisor
+
+`facets-advisor` is a main agent you start directly (it is never spawned by `/factory`). It scores projects or income options on the six-facet FACETS checklist using cited web research, ranks them (pursue / investigate / drop) and discusses trade-offs. It keeps your constraints in `${FACTORY_HOME}/facets-profile.md`, which it writes only after you confirm. See [`facets.md`](core/skills/factory/references/facets.md).
+
+## Benchmark and conformance
+
+```sh
+python3 tools/bench.py run --harness opencode --bench greet-001
+python3 tools/bench.py score <state.json>
+python3 tools/bench.py compare before.json after.json
+```
+
+`run` replays a pre-settled greeting feature (`conformance/bench/greet-001/`) in a disposable repository, stopping before the approver gate. It spends model tokens; nothing is approved and no PR opens. Headless drivers support `opencode` and `claude-code` only. All four named conditions must pass, and missing evidence is a failed condition. See the [benchmark guide](docs/benchmark.md) for the manual fallback on other harnesses.
+
+`conformance/` also holds a fixture repo and per-harness golden-run transcripts. CI runs the full test suite (`python3 -m unittest discover -s tools`), renders all five harnesses, and checks installer syntax.
 
 ## Layout
 
-- `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it.
-- `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs.
-- `core/skills/factory/bin/factory`: the state CLI and single writer. Read commands (`runs`, `show`, `validate`, `models`) list unfinished runs, build resume digests, report violations and the effective per-role model cascade without reading whole `state.json` files into context; write commands (`checkpoint`, `ledger-add`, `wait-open`/`wait-close`, `answer`, `set-status`, `decisions-add`, `verify`, `rebind`, `resume`, `models-record`) stamp, validate, write atomically and commit — state is never hand-edited. `init` seeds the project config, and `envelope check`, `lock take` and `prune` complete the surface.
-- `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, the findings shapes.
-- `core/roles/`: eleven roles — spec-builder, code-build, design-to-code, five reviewers, review-judge, fixer, and facets-advisor (the two main agents you start directly, outside the run) — with neutral `tier` and `access`.
-- `adapters/<harness>/`: `harness.md` (how to recognise this harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
-- `tools/render.py`: builds `dist/<harness>/` from core and an adapter.
+- `DESIGN.md`: every decision behind the flow and the harness model. Change it first, then the files built from it. `CONTEXT.md` holds the domain glossary; `docs/adr/` the architecture decisions.
+- `core/skills/factory/SKILL.md`: the orchestrator loop, written against neutral verbs (`SPAWN`, `SPAWN_PARALLEL`, `ASK`, `NOTIFY`, `RESOLVE`, `SHELL`, `WEB_SEARCH`, `WEB_FETCH`).
+- `core/skills/factory/bin/factory`: the run-state CLI and single writer.
+- `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, findings shapes, engineering rules, design-code mapping and the FACETS checklist.
+- `core/roles/`: twelve roles with neutral `tier` and `access` — spec-builder, code-build, design-to-code, fixer, five reviewers, review-judge, retro, and facets-advisor.
+- `adapters/<harness>/`: `harness.md` (how to recognise the harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
+- `skills/`: the vendored skill library and `SOURCES.md`.
+- `plugins/`: the design-to-code trigger (OpenCode plugin and Claude Code/Codex hook).
+- `tools/render.py`: builds `dist/<harness>/` from core and an adapter. `tools/bench.py`: the benchmark. `tools/tests/`: the test suite.
+- `conformance/`: benchmark fixtures and golden runs.
+- `specs/`: the SpecKit specs for each factory feature.

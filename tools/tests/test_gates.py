@@ -73,6 +73,15 @@ class ReviewGateTests(unittest.TestCase):
         s["history"] += [verify("verify-fail")]
         self.assertIsNotNone(checks.gate_violation(s, "review"))
 
+    def test_latest_pass_record_requires_passing_command_statuses(self):
+        s = base(stage="review")
+        latest = verify("verify-pass")
+        s["history"] += [verify("verify-pass"), latest]
+        latest["commands"].append({"command": "make build", "status": "pass"})
+        self.assertIsNone(checks.gate_violation(s, "review"))
+        latest["commands"][1]["status"] = 1
+        self.assertIsNotNone(checks.gate_violation(s, "review"))
+
 
 class ImplementGateTests(unittest.TestCase):
     def test_refuses_when_analyze_never_reported(self):
@@ -179,6 +188,26 @@ class AcceptingSideCliTests(unittest.TestCase):
 
     def load(self):
         return json.loads(self.state_path.read_text())
+
+    def test_verify_pass_refuses_a_failed_command_without_writing(self):
+        before = self.load()
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        out = self.box.cli(
+            "verify",
+            "--pass",
+            "--commands",
+            json.dumps(
+                [
+                    {"command": "make build", "status": 0},
+                    {"command": "make test", "status": 1},
+                ]
+            ),
+            cwd=self.wt,
+        )
+        self.assertNotEqual(out.returncode, 0, out.stdout)
+        self.assertIn("passing", out.stderr)
+        self.assertEqual(self.load(), before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
 
     def test_approval_satisfies_pr_gate_and_history_carries_the_decision(self):
         out = self.box.cli(

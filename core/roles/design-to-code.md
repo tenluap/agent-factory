@@ -4,6 +4,31 @@ description: "Implements, reviews, or QA-checks UI from pen.dev (.pen), Figma, i
 tier: standard
 access: write
 mode: primary
+permissions:
+  - {"action": "shell", "resource": "*npm install*", "effect": "ask"}
+  - {"action": "shell", "resource": "*npm i *", "effect": "ask"}
+  - {"action": "shell", "resource": "*pnpm add*", "effect": "ask"}
+  - {"action": "shell", "resource": "*yarn add*", "effect": "ask"}
+  - {"action": "shell", "resource": "*bun add*", "effect": "ask"}
+  - {"action": "shell", "resource": "*playwright install*", "effect": "ask"}
+  - {"action": "shell", "resource": "*dotnet add*package*", "effect": "ask"}
+  - {"action": "shell", "resource": "*dotnet new*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pen login*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pen signup*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pen *--prompt*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git commit*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git push*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git checkout*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git reset*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git stash*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git clean*", "effect": "ask"}
+  - {"action": "shell", "resource": "*git restore*", "effect": "ask"}
+  - {"action": "shell", "resource": "*npm add*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pnpm i*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pnpm install*", "effect": "ask"}
+  - {"action": "shell", "resource": "*dotnet tool install*", "effect": "ask"}
+  - {"action": "shell", "resource": "*pip install*", "effect": "ask"}
+  - {"action": "shell", "resource": "*brew install*", "effect": "ask"}
 ---
 
 # Design to Code

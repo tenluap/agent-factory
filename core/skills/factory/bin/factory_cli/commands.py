@@ -1417,6 +1417,9 @@ def cmd_lock_take(repo, name, force=False):
 
 def cmd_verify(repo, cwd, passed, commands_payload):
     """The verify record (FR-006, R3): the review gate reads the latest one."""
+    command_results = [{"command": c, "status": st} for c, st in commands_payload]
+    if passed and not checks.verify_commands_passed(command_results):
+        die(1, "verify --pass requires named commands with passing statuses (0 or 'pass')")
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"
@@ -1445,9 +1448,7 @@ def cmd_verify(repo, cwd, passed, commands_payload):
                 "event": event,
                 "commit": None,
                 "harness": s.get("harness"),
-                "commands": [
-                    {"command": c, "status": st} for c, st in commands_payload
-                ],
+                "commands": command_results,
             }
         ]
         return s
