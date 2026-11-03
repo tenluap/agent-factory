@@ -28,6 +28,8 @@ A well-formed `design` gate failure or missing capability is a verification/acti
 
 Reviewers and the judge return their report or verdict (findings.md) as their final fenced block instead.
 
+Keep `summary` and any text between tool calls terse: fragments, no filler, no narration of the next tool call. Never abbreviate code symbols, paths or error strings. Code, comments, commit messages, question text, repository files and quoted failure output stay normal prose; the orchestrator's messages to the user are unaffected.
+
 ## Verification handoff
 
 At each passing commit-unit boundary, check actual time before another unit or broad verification. Use available observed check duration. Omit optional repeats that cannot reasonably fit, or whose fit is uncertain near the deadline. If all work and required checks are already complete, return `done` without an unnecessary repeat.

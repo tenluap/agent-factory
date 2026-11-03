@@ -6,12 +6,12 @@ The original `ENG-1`..`ENG-11` ids retain their meanings; the 2026-10-25 revisio
 
 ## Rules
 
-- **ENG-1** Test behaviour and important boundaries, including relevant failure paths and edge cases. Use unit tests for focused logic, integration tests for real interactions, and end-to-end tests for critical journeys where appropriate; coverage percentage alone is not proof of quality. Write or extend a failing test before implementing the behaviour, then the smallest passing code, then refactor while tests stay green. This yields to a test-first exemption the plan declares.
+- **ENG-1** Test behaviour and important boundaries, including relevant failure paths and edge cases. Use unit tests for focused logic, integration tests for real interactions, and end-to-end tests for critical journeys where appropriate; coverage percentage alone is not proof of quality. Write or extend a failing test before implementing the behaviour, then the smallest passing code, then refactor the code the unit changes while tests stay green. This yields to a test-first exemption the plan declares.
 - **ENG-2** Record the red step in the task's commit body, in one of the two forms below. This yields to a test-first exemption the plan declares: an exempt task's commit carries no `Red:` line.
 - **ENG-3** Complete each commit unit once, with test and implementation together in one passing commit; use the commit-unit definition below for new tasks and legacy resume.
 - **ENG-4** Put under test only the seams the plan lists; never invent a seam. When a task needs an unlisted seam, stop and report the missing seam as a failure.
 - **ENG-5** Skip a test only where the plan states the exemption and its reason, and only for a part that is documentation or configuration.
-- **ENG-6** Give each business rule or piece of knowledge a clear source of truth (DRY). Before a new function or method, search the changed module and shared utility locations once by the concept's keywords; reuse or extend a suitable implementation. Similar-looking code can represent different concepts: abstract only when shared meaning justifies the coupling.
+- **ENG-6** Give each business rule or piece of knowledge a clear source of truth (DRY). Before new code — a function, method, class or file, or a logic block (branch, loop, parse, error handler, validation) that is not a plain call to existing code — run the repository search once per concept per commit unit by the concept's keywords and likely names; reuse or extend a suitable implementation, preferring an edit to existing code over new code. Similar-looking code can represent different concepts: abstract only when shared meaning justifies the coupling. New code that remains carries its new-code reason.
 - **ENG-7** Use meaningful, consistent domain names and the repository's vocabulary. Write focused, readable functions with straightforward control flow and no unnecessary nesting; no universal line limit applies. Comments and documentation explain reasoning, constraints, surprising behaviour and public contracts; update them when behaviour changes. Follow the repository's conventions.
 - **ENG-8** Apply SOLID where it improves the design, respecting the language and repository idiom: **S**, one coherent responsibility and main reason to change, not one method per class; **O**, extend stable behaviour where variation is expected, without speculative extension mechanisms; **L**, preserve callers' behavioural contracts when replacing implementations; **I**, expose focused interfaces consumers need; **D**, keep core policy independent of infrastructure details. Dependency injection can help; interfaces everywhere are unnecessary.
 - **ENG-9** Prefer predictable functions, local state, immutable values and visible side effects where practical. Control shared mutation explicitly. Compose collaborating components when inheritance adds complexity; use inheritance when the relationship, behavioural contract or framework requires it. A functional style is a preference, not a universal architecture.
@@ -24,7 +24,7 @@ The original `ENG-1`..`ENG-11` ids retain their meanings; the 2026-10-25 revisio
 - **ENG-16** Use types to express valid states where practical: meaningful domain types, enums and explicit optional values. Prevent invalid combinations instead of scattering repeated checks.
 - **ENG-17** Handle errors deliberately. Distinguish expected failures from programming defects, preserve diagnostic context, and release resources on success and failure. Surface failures rather than silently swallowing exceptions.
 - **ENG-18** Keep tests deterministic, readable and capable of detecting meaningful regressions. Mock external boundaries when useful while retaining enough integration testing to verify real interactions.
-- **ENG-19** Refactor incrementally while preserving behaviour. Remove dead code and obsolete abstractions; add regression tests for consequential bug fixes. Keep checks green between small structural changes.
+- **ENG-19** Refactor incrementally, within the code the unit changes, while preserving behaviour. Remove the dead code and obsolete abstractions the change leaves behind; add regression tests for consequential bug fixes. Keep checks green between small structural changes.
 - **ENG-20** Measure before optimising performance: establish a baseline, profile representative workloads, identify the bottleneck, and compare after the change. Investigate CPU, waiting, memory, storage and network activity as appropriate. Optimise to stated requirements, not unmeasured intuition.
 - **ENG-21** Choose algorithms and data structures for the expected data volume and growth. Consider time and space complexity; avoid repeated searches, redundant calculations and loading entire datasets when bounded processing meets the need.
 - **ENG-22** Treat database and network access as performance decisions. Check relevant N+1 queries, round trips, indexes, payload sizes and result bounds; inspect query plans and measure realistic volumes when changing a performance-sensitive access path.
@@ -80,8 +80,18 @@ Red: not applicable - <existing test> already covers this
 
 `<test name>` and `<existing test>` identify a test precisely enough to find it. The separator in the second form is a space, a hyphen-minus, a space. No other wording counts as a red proof, and there is no third form.
 
+## New-code reason
+
+Each new file, function, method or class a commit adds gets one line in that commit's body (ENG-6):
+
+```text
+New: <path or symbol> - <why no existing code fits>
+```
+
+Test code is exempt, and so is a file the plan already gives a reason for (ENG-10); a new function, method or class inside such a file still gets its line.
+
 ## Definitions
 
 - **Behaviour-changing** (the trigger for ENG-1 and ENG-2): a unit of work changes what an entry point returns or does, and a change confined to documentation, configuration or generated output is not.
-- **Shared utility locations** (the bound of ENG-6): the directories the repository's own conventions name as shared (for example `helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/`), plus any module the module being changed already imports for helpers, searched as a keyword-level text search rather than a review of the whole repository.
+- **Repository search** (the bound of ENG-6): a keyword-level text search over tracked files (for example `git grep -n`), excluding generated, vendored and build-output paths, rather than a review of the whole repository.
 - **When the red step cannot be observed at all** (ENG-1): a repository with a test runner whose test command cannot be run (missing dependency, broken configuration, no runner binary) is a stop, not an exemption — the role stops and reports the un-runnable command and its error as a failure, exactly as ENG-4 handles a missing seam, writing no behaviour-changing code and recording no third form of red proof, and this binds the fixing role on the same terms as the implementing role.
