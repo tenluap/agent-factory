@@ -9,7 +9,7 @@
   "branch": "021-cruise-mode",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
   "spec_dir": "specs/021-cruise-mode",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -599,8 +599,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-11-04T07:35:29.495068Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/16",
   "history": [
     {
       "at": "2026-11-04T00:41:26.788573Z",
@@ -765,6 +765,13 @@
       "commit": null,
       "harness": "claude-code",
       "decision": "APPROVE"
+    },
+    {
+      "at": "2026-11-04T07:35:29.495068Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
