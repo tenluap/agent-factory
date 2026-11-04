@@ -44,7 +44,7 @@ First reason named in `refusal`; every dirty path listed even when another reaso
 
 Holding the pending run's lock (`lock.acquire` on the pending path; a live foreign lock exits 1) for the whole write:
 
-1. Load `pending/<repo-name>-adopt-<branch>.json` (branch from the re-resolved source). Missing → exit 1 "no pending adoption `<name>`; run `/factory adopt <src>`". Status `aborted` or `pr-open` → exit 1, ended.
+1. Load `pending/<repo-name>-adopt-<branch>.json` (branch from the re-resolved source). Missing → exit 1 "no pending adoption `<name>`; start it with adopt <src>" (the CLI names its own verb; the skill names the harness command). Status `aborted` or `pr-open` → exit 1, ended.
 2. Re-run the inspection against the pending `base`; any refusal (including another pending file) exits 1, nothing written. This also re-reads the branch HEAD, so a branch that moved since the dry-run is adopted at its new HEAD (spec edge case).
 3. `git worktree add <path> <branch>` (`branch`), `git worktree add --track -b <branch> <path> origin/<branch>` (`remote-branch`), or `git worktree add -b <branch> <path> <base>` (`default-branch`).
 4. Record `base_commit` = `git rev-parse <branch>` in the new worktree; write `<worktree>/<spec_dir>/factory/state.json` from the pending state through `state.write_state` (`worktree`, `branch`, `spec_dir`, `stage` = chosen, `status: running`, the `adopted` block, one `adopted` history entry, [data-model.md](data-model.md)); copy `<pending>.brief.md` → `brief.md` and `<pending>.profile.md` → `profile.md` when present.

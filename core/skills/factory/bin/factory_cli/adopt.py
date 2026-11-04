@@ -12,6 +12,10 @@ from pathlib import Path
 from factory_cli import commands, lock, state
 
 NEEDS_CLARIFICATION = "[NEEDS CLARIFICATION"
+NO_BASE = (
+    "no base ref resolves (origin/HEAD unset, no origin/main or origin/master); "
+    "set origin/HEAD with `git remote set-head origin -a`"
+)
 
 
 def _try(repo, *args):
@@ -21,13 +25,19 @@ def _try(repo, *args):
 
 
 def default_base(repo):
-    """The `base` a dry run reports (D3): origin's default branch, else origin/main, else main."""
+    """The `base` a dry run reports (D3): the first existing of origin's default branch, origin/main,
+    origin/master, and main when the repo has no origin; None when none exists, so the caller refuses by name."""
+    candidates = []
     head = _try(repo, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
     if head:
-        return head.strip().removeprefix("refs/remotes/")
-    if _try(repo, "show-ref", "--verify", "--quiet", "refs/remotes/origin/main") is not None:
-        return "origin/main"
-    return "main"
+        candidates.append(head.strip())
+    candidates += ["refs/remotes/origin/main", "refs/remotes/origin/master"]
+    if _try(repo, "config", "--get", "remote.origin.url") is None:
+        candidates.append("refs/heads/main")
+    for ref in candidates:
+        if _try(repo, "show-ref", "--verify", "--quiet", ref) is not None:
+            return ref.removeprefix("refs/remotes/").removeprefix("refs/heads/")
+    return None
 
 
 def _checkouts(repo):
@@ -129,6 +139,33 @@ def _markers(repo, ref, spec_dir):
     return [line.strip() for line in text.splitlines() if NEEDS_CLARIFICATION in line]
 
 
+def _no_link(worktree, path):
+    """Refuse a symlink on the way to `path` in the checkout: the write never follows one (SEC-1)."""
+    current = worktree
+    for part in path.relative_to(worktree).parts:
+        current = current / part
+        if current.is_symlink():
+            commands.die(1, f"{current.relative_to(worktree)} is a symlink in the checkout; refusing to write through it")
+
+
+def _factory_problem(repo, ref, spec_dir):
+    """Why `<spec_dir>/factory` at `ref` cannot take the adopted files, or None (SEC-1).
+
+    The folder must be absent or a real directory, and hold no symlink anywhere under it."""
+    folder = f"{spec_dir}/factory"
+    links = [
+        line.split("\t", 1)[1]
+        for line in commands.git(repo, "ls-tree", "-r", ref, "--", folder).splitlines()
+        if line.startswith("120000 ")
+    ]
+    if links:
+        return f"{links[0]} is a symlink on the branch; adopt never writes through links"
+    entry = commands.git(repo, "ls-tree", ref, "--", folder).split()
+    if entry and entry[1] != "tree":
+        return f"{folder} is not a directory on the branch"
+    return None
+
+
 def _refusal(repo, report, ref):
     """The first refusal reason in D5's order, or None; `dirty` already lists every path."""
     branch, spec_dir = report["branch"], report["spec_dir"]
@@ -143,6 +180,9 @@ def _refusal(repo, report, ref):
         return f"{spec_dir} already has factory/state.json; resume it with `resume {branch}`"
     if "spec.md" not in report["artifacts"]:
         return f"spec.md is required; {spec_dir} has none on '{branch}'"
+    problem = _factory_problem(repo, ref, spec_dir)
+    if problem:
+        return problem
     for path, held in _checkouts(repo):
         if held == branch:
             return f"'{branch}' is checked out at {path}; switch that checkout away from it first"
@@ -169,6 +209,12 @@ def inspect(repo, src, base):
     }
     if _try(repo, "check-ref-format", "--branch", src) is None:
         report["refusal"] = f"'{src}' is not a valid branch name"
+        return report
+    if base is None:
+        report["refusal"] = NO_BASE
+        return report
+    if _try(repo, "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}") is None:
+        report["refusal"] = f"base '{base}' does not resolve"
         return report
     found = _resolve(repo, src, base)
     if found is None:
@@ -205,7 +251,7 @@ def write(repo, src, stage=None):
     name = probe["pending"]
     pending = commands.factory_home() / "pending" / f"{name}.json"
     if not pending.exists():
-        commands.die(1, f"no pending adoption '{name}'; run `/factory adopt {src}`")
+        commands.die(1, f"no pending adoption '{name}'; start it with adopt {src}")
     try:
         lock.acquire(pending, harness="unknown")
     except lock.LockHeld as e:
@@ -227,9 +273,36 @@ def write(repo, src, stage=None):
 def _adopt_worktree(repo, report, loaded, pending, stage):
     """D7 steps 3-6: the worktree for the source shape, then its state and adoption commit.
 
-    A branch this write creates (remote-branch, default-branch) is removed again on failure.
+    Failures before the commit lands roll back: the worktree, and the branch only when this write
+    creates it (FR-013). After the commit only the pending cleanup can fail; that is reported and not rolled back.
     """
     worktree = Path(report["worktree"])
+    created = _created_branch(repo, report)
+    try:
+        _add_worktree(repo, report, worktree)
+        sha, summary = _record_worktree_run(worktree, report, loaded, pending, stage)
+    except (commands.CLIError, state.StateError, OSError) as e:
+        leftovers = _rollback(repo, worktree, created)
+        if leftovers:
+            commands.die(1, f"adopt failed: {e}; rollback left {'; '.join(leftovers)}")
+        commands.die(1, f"adopt failed and was rolled back: {e}")
+    try:
+        _clear_pending(pending)
+    except OSError as e:
+        commands.die(1, f"committed {sha}; pending cleanup failed: {e}")
+    return summary
+
+
+def _created_branch(repo, report):
+    """The branch this write creates (remote-branch, default-branch) when it does not exist yet, else None."""
+    branch = report["branch"]
+    if report["shape"] == "branch" or _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}") is not None:
+        return None
+    return branch
+
+
+def _add_worktree(repo, report, worktree):
+    """D7 step 3: the worktree for the source shape."""
     branch, shape = report["branch"], report["shape"]
     if shape == "remote-branch":
         commands.git(repo, "worktree", "add", "--track", "-b", branch, str(worktree), f"origin/{branch}")
@@ -237,16 +310,12 @@ def _adopt_worktree(repo, report, loaded, pending, stage):
         commands.git(repo, "worktree", "add", "-b", branch, str(worktree), report["base"])
     else:
         commands.git(repo, "worktree", "add", str(worktree), branch)
-    created = branch if shape != "branch" else None
-    try:
-        return _record_worktree_run(worktree, report, loaded, pending, stage)
-    except (commands.CLIError, state.StateError, OSError) as e:
-        _rollback(repo, worktree, created)
-        commands.die(1, f"adopt failed and was rolled back: {e}")
 
 
 def _record_worktree_run(worktree, report, loaded, pending, stage):
-    """D7 steps 4-6: the adopted state, the sidecars and the one adoption commit."""
+    """D7 steps 4-5: the adopted state, the sidecars and the one adoption commit.
+
+    Returns (short sha, resume digest); the digest is built before the commit so nothing after it can fail."""
     branch, spec_dir = report["branch"], report["spec_dir"]
     chosen = stage or report["inferred_stage"]
     base_commit = commands.git(str(worktree), "rev-parse", "HEAD").strip()
@@ -275,32 +344,45 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
         ],
     )
     folder = worktree / spec_dir / "factory"
+    _no_link(worktree, folder)
     folder.mkdir(parents=True, exist_ok=True)
     state_path = folder / "state.json"
+    _no_link(worktree, state_path)
     written = state.write_state(state_path, run)
     for suffix, target in ((".brief.md", "brief.md"), (".profile.md", "profile.md")):
         sidecar = pending.with_name(pending.name.replace(".json", suffix))
         if sidecar.exists():
+            _no_link(worktree, folder / target)
             (folder / target).write_text(sidecar.read_text())
-    commands.commit_worktree(str(worktree), f"factory: adopt {branch}", spec_dir=f"{spec_dir}/factory")
+    summary = commands.digest(written, state_path, "worktree")
+    sha = commands.commit_worktree(str(worktree), f"factory: adopt {branch}", spec_dir=f"{spec_dir}/factory")
+    return sha, summary
+
+
+def _clear_pending(pending):
+    """D7 step 6: delete the pending JSON, brief and profile once the adoption commit has landed."""
     pending.unlink()
     for suffix in (".brief.md", ".profile.md"):
         pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
-    return commands.digest(written, state_path, "worktree")
 
 
 def _rollback(repo, worktree, created_branch):
-    """Remove the worktree a failed write created, and the branch too when the write created it.
+    """Remove the worktree a failed write added, and the branch too when the write created it.
 
-    The pending files are the caller's to keep (FR-013).
+    Returns what git left behind, named with its stderr; empty when clean. The pending files are the caller's to keep (FR-013).
     """
-    subprocess.run(
+    leftovers = []
+    removed = subprocess.run(
         ["git", "-C", repo, "worktree", "remove", "--force", str(worktree)],
         capture_output=True,
         text=True,
     )
-    if created_branch:
-        subprocess.run(
+    if removed.returncode != 0 and worktree.exists():
+        leftovers.append(f"worktree {worktree} ({removed.stderr.strip()})")
+    if created_branch and _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{created_branch}") is not None:
+        deleted = subprocess.run(
             ["git", "-C", repo, "branch", "-D", created_branch], capture_output=True, text=True
         )
-
+        if deleted.returncode != 0:
+            leftovers.append(f"branch {created_branch} ({deleted.stderr.strip()})")
+    return leftovers

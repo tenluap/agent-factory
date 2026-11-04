@@ -27,4 +27,4 @@ Done = every reviewer finding id appears exactly once across the verdict. Read-o
 
 ## Adopted runs
 
-When `adopted_base` is passed, confirm no finding against pre-adoption work: commits in `<adopted_base>` and tasks checked there. Reject such a finding with the reason `pre-adoption`, and keep the reviewers' other findings as usual (FR-019, FR-020).
+When `adopted_base` is passed, reject a finding only when it rests on the ENG-1, ENG-2 or ENG-3 commit-evidence checks against commits in `<base>..<adopted_base>` or tasks checked at `<adopted_base>`, with the reason `pre-adoption`. Every other finding against pre-adoption code (security, correctness, design and the other lenses) is judged as usual: it is verified, rated and confirmed like any other (FR-019, FR-020).

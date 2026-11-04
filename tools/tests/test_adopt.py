@@ -9,11 +9,12 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import state  # noqa: E402
+from factory_cli import adopt, commands, state  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -395,6 +396,37 @@ class DryRunRefusalTests(DryRunFixture):
         self.assertIn("007-x", out.stderr)
         self.assertIn("008-x", out.stderr)
         self.assertEqual(self.snapshot(), before)
+
+    def test_several_spec_dirs_on_base_exit_3_listing_both(self):
+        for name in ("007-y", "008-y"):
+            spec = self.box.repo / "specs" / name
+            spec.mkdir(parents=True)
+            (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "two specs on main")
+        before = self.snapshot()
+        out = self.box.cli("adopt", "y", "--dry-run")
+        self.assertEqual(out.returncode, 3, out.stdout + out.stderr)
+        self.assertIn("007-y", out.stderr)
+        self.assertIn("008-y", out.stderr)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_branch_adding_two_spec_dirs_exits_3_and_writes_nothing(self):
+        self.box.git("checkout", "-q", "-b", "014-two")
+        for name in ("014-a", "014-b"):
+            spec = self.box.repo / "specs" / name
+            spec.mkdir(parents=True)
+            (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "two spec dirs on one branch")
+        self.box.git("checkout", "-q", "main")
+        before = self.snapshot()
+        for args in (("adopt", "014-two", "--dry-run"), ("adopt", "014-two")):
+            out = self.box.cli(*args)
+            self.assertEqual(out.returncode, 3, out.stdout + out.stderr)
+            self.assertIn("specs/014-a", out.stderr)
+            self.assertIn("specs/014-b", out.stderr)
+            self.assertEqual(self.snapshot(), before)
 
 
 class OtherShapeTests(DryRunFixture):
@@ -797,6 +829,172 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
         hook = self.box.repo / ".git" / "hooks" / "pre-commit"
         hook.write_text("#!/bin/sh\necho 'rejected by test hook' >&2\nexit 1\n")
         hook.chmod(0o755)
+
+
+class DefaultBaseTests(DryRunFixture):
+    """default_base resolves a ref that exists or refuses by name; it never dies with git's exit 2 (STD-1)."""
+
+    def setUp(self):
+        super().setUp()
+        self.spec_branch("007-x", {"spec.md": "# Spec\n"})
+        self.origin = self.box.dir / "origin.git"
+        self.box.git("init", "-q", "--bare", str(self.origin))
+        self.box.git("remote", "add", "origin", str(self.origin))
+
+    def test_default_branch_shape_on_master_without_origin_head_resolves(self):
+        self.box.git("branch", "-M", "master")
+        spec = self.box.repo / "specs" / "008-y"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec 008-y on master")
+        self.box.git("push", "-q", "origin", "master")
+        out = self.box.cli("adopt", "008-y", "--dry-run")
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual(report["base"], "origin/master")
+        self.assertEqual(report["shape"], "default-branch")
+        self.assertIsNone(report["refusal"])
+
+    def test_local_only_spec_dir_on_master_is_refused_without_origin_head(self):
+        self.box.git("branch", "-M", "master")
+        self.box.git("push", "-q", "origin", "master")
+        spec = self.box.repo / "specs" / "011-l"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "local-only spec")
+        before = self.snapshot()
+        out = self.box.cli("adopt", "011-l", "--dry-run")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        refusal = json.loads(out.stdout)["refusal"]
+        self.assertIn("not on 'origin/master'", refusal)
+        self.assertIn("push it or create its branch first", refusal)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_no_resolvable_base_is_a_named_refusal_not_a_git_failure(self):
+        self.box.git("branch", "-M", "trunk")
+        self.box.git("push", "-q", "origin", "trunk")
+        before = self.snapshot()
+        out = self.box.cli("adopt", "007-x", "--dry-run")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        report = json.loads(out.stdout)
+        self.assertIsNone(report["base"])
+        self.assertIn("no base ref", report["refusal"])
+        self.assertEqual(self.snapshot(), before)
+
+
+class SymlinkWriteTests(DryRunFixture):
+    """Symlinks in the adopted branch's spec factory folder never let the write reach outside (SEC-1)."""
+
+    def setUp(self):
+        super().setUp()
+        self.outside = self.box.dir / "outside"
+        self.outside.mkdir()
+        (self.outside / "brief.md").write_text("precious\n")
+        self.worktree = self.box.dir / "repo-factory" / "evil"
+        self.box.git("checkout", "-q", "-b", "evil")
+        spec = self.box.repo / "specs" / "evil"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec evil")
+        self.box.git("checkout", "-q", "main")
+        self.pending = self.box.pending_run(
+            "adopt-evil", pending_state(self.box.repo, branch="evil", spec_dir="specs/evil")
+        )
+        self.brief = self.pending.with_name("repo-adopt-evil.brief.md")
+        self.brief.write_text("# Brief from pending\n")
+
+    def commit_evil(self, path, target):
+        self.box.git("checkout", "-q", "evil")
+        link = self.box.repo / "specs" / "evil" / path
+        link.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(str(target), str(link))
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", f"symlink {path}")
+        self.box.git("checkout", "-q", "main")
+
+    def assert_refused_and_outside_untouched(self, dry_fragment):
+        before = files_under(self.outside)
+        dry = self.box.cli("adopt", "evil", "--dry-run")
+        self.assertEqual(dry.returncode, 1, dry.stdout + dry.stderr)
+        self.assertIn(dry_fragment, json.loads(dry.stdout)["refusal"])
+        out = self.box.cli("adopt", "evil")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        self.assertEqual(files_under(self.outside), before)
+        self.assertEqual(files_under(self.outside), {"brief.md": b"precious\n"})
+        self.assertFalse(self.worktree.exists())
+        self.assertTrue(self.pending.exists())
+
+    def test_committed_symlinked_factory_directory_is_refused(self):
+        self.commit_evil("factory", self.outside)
+        self.assert_refused_and_outside_untouched("symlink")
+
+    def test_committed_symlinked_brief_is_refused(self):
+        self.box.git("checkout", "-q", "evil")
+        (self.box.repo / "specs" / "evil" / "factory").mkdir()
+        self.box.git("checkout", "-q", "main")
+        self.commit_evil("factory/brief.md", self.outside / "brief.md")
+        self.assert_refused_and_outside_untouched("symlink")
+
+    def test_symlink_created_in_the_checkout_is_not_written_through(self):
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"mkdir -p specs/evil/factory && ln -s '{self.outside / 'brief.md'}' specs/evil/factory/brief.md\n"
+        )
+        hook.chmod(0o755)
+        before = files_under(self.outside)
+        out = self.box.cli("adopt", "evil")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        self.assertEqual(files_under(self.outside), before)
+        self.assertFalse(self.worktree.exists())
+        self.assertTrue(self.pending.exists())
+
+
+class WriteFailureTests(AdoptWriteFixture):
+    """Failures after the worktree exists roll back; failures after the commit do not (SEC-2, SEC-3, SPEC-4, SPEC-5, STD-4)."""
+
+    def test_failing_post_checkout_hook_rolls_back_the_worktree(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        worktrees = self.box.git("worktree", "list", "--porcelain")
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text("#!/bin/sh\necho 'checkout rejected by test hook' >&2\nexit 1\n")
+        hook.chmod(0o755)
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("checkout rejected by test hook", combined)
+        self.assertFalse(self.worktree.exists())
+        self.assertEqual(self.box.git("worktree", "list", "--porcelain"), worktrees)
+        self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
+        self.assertTrue(self.pending.exists())
+
+    def test_missing_pending_names_the_cli_verb_not_the_harness_command(self):
+        self.pending.unlink()
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("start it with adopt 007-x", combined)
+        self.assertNotIn("/factory", combined)
+
+    def test_failure_after_the_commit_is_reported_without_rollback(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        env = dict(os.environ, FACTORY_HOME=str(self.box.home))
+        with mock.patch.dict(os.environ, env), mock.patch.object(
+            adopt, "_clear_pending", side_effect=OSError("pending busy")
+        ):
+            with self.assertRaises(commands.CLIError) as caught:
+                adopt.write(str(self.box.repo), "007-x")
+        self.assertEqual(caught.exception.code, 1)
+        self.assertIn("committed", str(caught.exception))
+        self.assertIn("pending cleanup failed", str(caught.exception))
+        self.assertTrue(self.worktree.exists())
+        self.assertEqual(
+            self.box.git("log", "--format=%s", f"{head}..007-x").splitlines(),
+            ["factory: adopt 007-x"],
+        )
 
 
 if __name__ == "__main__":
