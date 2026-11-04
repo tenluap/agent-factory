@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/023-pr-self-assign",
   "spec_dir": "specs/023-pr-self-assign",
   "status": "running",
-  "stage": "remediate",
+  "stage": "analyze",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -37,8 +37,8 @@
     "test": "python3 -m unittest discover -s tools"
   },
   "analyze": {
-    "pass": 1,
-    "loops": 0,
+    "pass": 2,
+    "loops": 1,
     "reports": [
       "factory/analyze-1.md"
     ],
@@ -270,6 +270,13 @@
     {
       "at": "2026-11-04T17:12:20.208320Z",
       "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T17:13:49.417758Z",
+      "stage": "remediate",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
