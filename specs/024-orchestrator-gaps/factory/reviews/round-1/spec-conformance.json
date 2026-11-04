@@ -1,0 +1,97 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "Review found blocking gaps in fix-round recovery, relay evidence durability, and confirmed test coverage.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/references/state.md",
+      "line": 243,
+      "summary": "Legacy design reservations are cleared before the counter can detect that they were already counted.",
+      "evidence": "FR-003 requires no increment when a legacy reservation's attempt equals review.fix_rounds. Resume at state.md:243 and design-code-mapping.md:102 instead clear the marker before checkpoint fix; commands.py:925-930 then sees no reservation and increments it. For counter=1 and attempt=1, resume advances the counter to 2 after only one fix. The S1(c) test at tools/tests/test_commands.py:852-879 checkpoints with the marker still present and misses the documented sequence.",
+      "fix": "Preserve legacy reservation identity through the checkpoint, or atomically clear and count using its saved attempt; test the complete documented legacy resume path. Confirm any changed seam/failure scope before implementation."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 147,
+      "summary": "Active-design reservation and clearance have no state-CLI writer.",
+      "evidence": "FR-003 and plan.md:119 require the orchestrator to persist review.pending_design_fix before spawning and clear it afterward; SKILL.md:147 instructs both operations. state.md:199-220 declares the CLI the single state writer, but none of commands.py's cmd_* writers sets or clears pending_design_fix: cmd_checkpoint only reads it at lines 925-930. The required active-design path therefore needs forbidden hand edits and cannot be resumed as specified. ENG-4: the plan's S1-S4 declarations include no reservation-writing seam.",
+      "fix": "Declare and obtain acceptance for a suitable existing-writer extension and its failure paths, then implement and test atomic reservation and clearance through the CLI; document exact commands."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1465,
+      "summary": "Retry after a failed answer commit falsely succeeds without committing the answer or relay record.",
+      "evidence": "FR-007 requires the record to be committed with the answer, and FR-008's identical-answer no-op assumes a completed record. cmd_answer writes state and the record at lines 1500-1509 before commit_worktree at line 1510, but lines 1454-1466 return unchanged merely because the file exists. In a Sandbox with a git index.lock, the first answer fails after both writes; after removing the lock, the identical retry returns success/unchanged while state.json remains modified and the record untracked.",
+      "fix": "Make the answer and record transaction recoverable on commit failure, without treating an uncommitted partial write as a completed no-op; add a public-seam failure/retry test after confirming any expanded failure scope."
+    },
+    {
+      "id": "SPEC-4",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1454,
+      "summary": "Concurrent answers can leave the stored answer different from the immutable record.",
+      "evidence": "SC-003 requires every relay record's answer to equal the stored answer. The existence/conflict check at lines 1454-1467 happens outside the state write lock; the state write at line 1500 and exclusive record creation at line 1506 are separate. Two writers can both observe no record, write different answers in succession, and then one lose the file-creation race, leaving the other writer's record beside its own later state answer. FR-008's refusal-before-write guarantee is then violated.",
+      "fix": "Serialize conflict detection, state mutation and record creation as one recoverable transaction, including rollback on failure; cover competing answers through an accepted public failure seam."
+    },
+    {
+      "id": "SPEC-5",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/references/state.md",
+      "line": 243,
+      "summary": "Ordinary fix resume counts an attempt even when the fixer never completed or never started.",
+      "evidence": "FR-002 says review.fix_rounds counts completed fix rounds. SKILL.md:147 first moves the stored stage to fix and only then spawns the fixer. If interrupted between those operations, state.md:243 directs resume to verify, checkpoint fix and re-review without resuming the fixer. commands.py:925-930 increments solely because the stage is fix, so an unperformed attempt consumes a cap slot. The same path skips an interrupted partial fixer.",
+      "fix": "Persist and recover the actual fix assignment/completion boundary; resume unfinished fixer work before verification and counting. Test interruption both before spawn and during a partial return using an accepted seam."
+    },
+    {
+      "id": "SPEC-6",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/references/design-code-mapping.md",
+      "line": 102,
+      "summary": "Design resume checkpoints into review before running the verification required by that transition.",
+      "evidence": "FR-019/T009 require a workable design resume order. design-code-mapping.md:102 and state.md:243 instruct checkpoint fix --next review before verification. commands.py:912-916 calls checks.gate_violation for the target, and checks.py:304-319 rejects review when the latest verify record is a failure. An interrupted fix with a previous verify-fail therefore cannot reach the verification step prescribed immediately after that checkpoint.",
+      "fix": "Verify and record the completed fix before entering review, while preserving reservation identity and once-only counting; cover a resumed design fix after verify-fail."
+    },
+    {
+      "id": "SPEC-7",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 147,
+      "summary": "First review reads a checkpoint counter result before any checkpoint returning it exists.",
+      "evidence": "SC-002 and T010 require the checkpoint's review.fix_rounds as the cap read. Step 7 removed the review checkpoint after the verdict and now says to read that result before deciding whether to call checkpoint review. On round 1, checkpoint implement/verify has no review result (commands.py:974-982), and no checkpoint fix has occurred. The instructions therefore provide no cap value for the initial decision, including resumed/adopted runs whose counter is nonzero.",
+      "fix": "Specify a real current counter source before branching, such as the existing show digest, or introduce a safely ordered checkpoint/read sequence that returns it before choosing the target."
+    },
+    {
+      "id": "SPEC-8",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_commands.py",
+      "line": 980,
+      "summary": "Confirmed S2(c) lacks coverage for an unsafe stage when no record is due.",
+      "evidence": "ENG-1 and ENG-4: plan.md:126/138 declares and confirms 'unsafe qid/stage characters ... the same characters with no record due [are] answered as today'. test_invalid_question_and_unsafe_record_paths_refused_before_write tests both unsafe qid and stage when a record is due, but only unsafe qid with no record due at lines 980-983; no test drives --stage a/b without requires_user. Thus the confirmed stage half of S2(c) is unchecked despite T004 being marked done.",
+      "fix": "Add a CLI seam test for the unsafe stage without a due record, asserting the pre-existing answer behavior and absence of a record."
+    },
+    {
+      "id": "SPEC-9",
+      "severity": "high",
+      "blocking": true,
+      "file": "8c5704d7023601538bbf0f0a54f669526db4a343 (T005)",
+      "line": 0,
+      "summary": "T005 was implemented in two separate implementation commits rather than one commit unit.",
+      "evidence": "ENG-3 requires each behavior-changing task to be completed once in one passing test-and-implementation commit. Commit 6abb9e5efc64f83e31269385f7e253cce5e376aa already implemented and checked T005 with its tests; 8c5704d7023601538bbf0f0a54f669526db4a343 subsequently adds another T005 implementation and regression test after that completed unit. Both carry parseable Red proofs, but the second duplicates the completed unit rather than mapping to a distinct task.",
+      "fix": "Preserve the completed commits; reconcile the follow-up regression as its own explicitly scoped task/commit unit and record its test mapping without rewriting the completed T005 commit."
+    }
+  ]
+}
