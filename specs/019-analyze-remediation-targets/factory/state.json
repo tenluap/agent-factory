@@ -84,8 +84,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "approve/request changes/abort for 019-analyze-remediation-targets",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T07:46:06.583859Z",
+      "latency_ms": 36936
     }
   ],
   "decisions": [
