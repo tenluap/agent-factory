@@ -52,7 +52,25 @@
       "at": "2026-11-04T10:37:00.614678Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "grill-with-docs",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q2"
+          }
+        ],
+        "answers": {
+          "Q2": {
+            "answer": "A",
+            "at": "2026-11-04T10:48:07.819806Z",
+            "auto": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-11-04T10:18:28.440115Z",
