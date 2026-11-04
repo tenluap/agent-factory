@@ -210,7 +210,7 @@ class DryRunFixture(unittest.TestCase):
         self.addCleanup(self.box.close)
         self.box.git("branch", "-M", "main")
         self.origin = self.box.dir / "origin.git"
-        self.box.git("init", "-q", "--bare", str(self.origin))
+        self.box.git("init", "-q", "--bare", "--initial-branch=main", str(self.origin))
         self.box.git("remote", "add", "origin", str(self.origin))
         self.box.git("push", "-q", "origin", "main")
 
