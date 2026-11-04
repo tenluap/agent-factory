@@ -83,6 +83,14 @@
       "summary": "Plan relay: test-scope acceptance (requires_user)",
       "answered_at": "2026-11-04T00:26:31.369382Z",
       "latency_ms": 102048
+    },
+    {
+      "at": "2026-11-04T07:39:32.810383Z",
+      "kind": "questions",
+      "stage": "fix",
+      "summary": "Review round 1 Q1: tree_digest test seam (requires_user)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
