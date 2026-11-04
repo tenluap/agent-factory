@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from factory_cli import commands, models, state
+from factory_cli import adopt, commands, models, state
 from factory_cli.commands import CLIError
 
 USAGE = """usage: factory <command> [args]
@@ -25,6 +25,8 @@ read:
   models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
+  adopt <branch|spec_dir> [--stage <s>] --dry-run
+                                    the adoption report for a spec factory did not start, JSON
 
 write (the single writer; each stamps its time, validates, writes atomically):
   init                              seed project model configuration
@@ -498,6 +500,21 @@ def main(argv):
                 kind=flags.get("--kind") or "answer",
                 cruise_override=bool(flags.get("--cruise-override")),
             )
+        elif command == "adopt":
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--stage",), bool_flags=("--dry-run",)
+            )
+            if len(positional) != 1:
+                die_usage("adopt needs exactly one <src>")
+            if flags.get("--stage") not in (None, *state.ADOPT_STAGES):
+                die_usage(f"adopt: --stage must be one of {', '.join(state.ADOPT_STAGES)}")
+            if not flags.get("--dry-run"):
+                die_usage("adopt needs --dry-run")
+            repo = commands.main_repo(Path.cwd())
+            result = adopt.inspect(repo, positional[0], adopt.default_base(repo))
+            if result["refusal"]:
+                emit(result)
+                raise SystemExit(1)
         else:
             die_usage(f"unknown command '{command}'")
         emit(result)

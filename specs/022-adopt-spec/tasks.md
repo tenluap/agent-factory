@@ -27,7 +27,7 @@ description: "Task list for 022-adopt-spec"
 
 ## Phase 3: User Story 2 - Safe preview and refusals (P1)
 
-- [ ] T003 [US2][US1][US4] Add `inspect(repo, src, base)` and the dry-run report to new `core/skills/factory/bin/factory_cli/adopt.py`; `adopt` dispatch, `--stage`/`--dry-run` parsing and USAGE line in `core/skills/factory/bin/factory_cli/cli.py`; tests in `tools/tests/test_adopt.py`.
+- [x] T003 [US2][US1][US4] Add `inspect(repo, src, base)` and the dry-run report to new `core/skills/factory/bin/factory_cli/adopt.py`; `adopt` dispatch, `--stage`/`--dry-run` parsing and USAGE line in `core/skills/factory/bin/factory_cli/cli.py`; tests in `tools/tests/test_adopt.py`.
   - Seam: `bin/factory adopt <src> --dry-run`. Failure paths: `--stage implement` or an unknown value exits 5.
   - Red: write tests first: `adopt 007-x --dry-run` exits 0 printing the contracts/cli.md JSON: `shape: branch`, `branch`, `spec_dir: specs/007-x`, `base`, `artifacts`, `dirty: []`, `worktree` = `<repo>/../<repo-name>-factory/007-x`, `pending` = `<repo-name>-adopt-007-x`, `refusal: null`; inferred stage `plan` for `spec.md` only, `tasks` with `plan.md`, `analyze` with `tasks.md` holding checked boxes (FR-008); two `[NEEDS CLARIFICATION: ...]` lines both listed in `needs_clarification`; `adopt specs/007-x --dry-run` resolves the same; repo unchanged (SC-002); `--stage implement` and `--stage bogus` exit 5, repo unchanged (FR-009). Run; fails (unknown command).
   - Implement: D2 steps 1 and 3 (local branch, spec dir with its own branch); artifacts and markers from the ref (`git ls-tree`, `git show <ref>:<path>`); `<src>` checked with `git check-ref-format --branch`, passed as argv only; dry-run `base` per D3; `--stage` validated in `cli.py` before any read.
