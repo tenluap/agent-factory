@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/023-pr-self-assign",
   "spec_dir": "specs/023-pr-self-assign",
   "status": "running",
-  "stage": "review",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -552,6 +552,13 @@
           "status": "pass"
         }
       ]
+    },
+    {
+      "at": "2026-11-04T18:42:26.657978Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
