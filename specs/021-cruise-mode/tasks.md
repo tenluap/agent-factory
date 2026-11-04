@@ -15,7 +15,7 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 1: Setup
 
-- [ ] T001 Update `DESIGN.md` ("Modes", "Interactive steps", "Approver", "Validation plan"): `mode.cruise` (opt-in `--cruise`/`--no-cruise`, last wins, implies fast, `--no-fast` conflict exits 5), `cruise_override` marker shape and invariants, `factory mode`, `resume` mode flags, `answer`/`decisions-add --cruise-override` with the cruise-only guard, `pr` gate ignoring marked records, approver veto-list grouping, notify only on real waits, per-adapter `no_prompt_launch`; setup-offer records at `grill` (`setup-speckit`, `setup-commands`, `intake`) and `review` (`setup-impeccable`), `STAGES` unchanged; missing or stale seam at implement or fix still halts (ENG-4); validation-plan entries for the agent-driven flows (SC-001..SC-003); cites ADR 0014. `CONTEXT.md` (cruise mode, cruise override, veto list, no-prompt launch option; amended protected question and seam confirmation) and ADR 0014 were written at grill-with-docs (FR-022): check only, no rewrite. Exempt: `DESIGN.md` - documentation only (constitution I: lands before core/adapter edits). Done: every item above named in `DESIGN.md`; the four terms present in `CONTEXT.md`; ADR 0014 present.
+- [ ] T001 Update `DESIGN.md` ("Modes", "Interactive steps", "Approver", "Validation plan"): `mode.cruise` (opt-in `--cruise`/`--no-cruise`, last wins, implies fast, `--no-fast` conflict exits 5), `cruise_override` marker shape and invariants, `factory mode`, `resume` mode flags, `answer`/`decisions-add --cruise-override` with the cruise-only guard, `pr` gate ignoring marked records, approver veto-list grouping, notify only on real waits, per-adapter `no_prompt_launch`; setup-offer records at `grill` (`setup-speckit`, `setup-commands`, `intake`) and `review` (`setup-impeccable`), `STAGES` unchanged; missing or stale seam at implement or fix still halts (ENG-4); validation-plan entry naming one cruise fixture run of a tiny feature that checks SC-001 (no `questions` timeline entry left waiting before the approver entry), SC-002 (`git ls-remote` shows no branch and no PR exists before the user's Approve) and SC-003 (every cruise-made override sits in the veto list's cruise-override group); cites ADR 0014. Also update `README.md` "Usage" and "Flags": a `/factory <feature> --cruise` line, a `/factory resume <branch> --cruise` example, `--cruise` and `--no-cruise` table rows (implies fast, `--no-fast` conflict, stops at the approver, never publishes without Approve), and the `--fast` row's "Never automated" note pointing to cruise (FR-022). `CONTEXT.md` (cruise mode, cruise override, veto list, no-prompt launch option; amended protected question and seam confirmation) and ADR 0014 were written at grill-with-docs (FR-022): check only, no rewrite. Exempt: `DESIGN.md`, `README.md` - documentation only (constitution I: lands before core/adapter edits). Done: every item above named in `DESIGN.md`; the validation-plan entry names the fixture run and SC-001..SC-003 checks; `README.md` lists both flags and the resume example; the four terms present in `CONTEXT.md`; ADR 0014 present.
 
 ## Phase 2: Foundational - state schema (blocks every CLI task)
 
@@ -30,7 +30,7 @@ description: "Task list for 021-cruise-mode"
 
 - [ ] T003 [US4] Add `resolve_mode(base, flags)` to `core/skills/factory/bin/factory_cli/state.py`, `cmd_mode` to `core/skills/factory/bin/factory_cli/commands.py`, `mode` dispatch and USAGE line to `core/skills/factory/bin/factory_cli/cli.py`; tests in `tools/tests/test_cruise.py`.
   - Seam: `bin/factory mode [flags...]`. Failure paths: `--cruise` with `--no-fast` in either order exits 5 naming the conflict; unknown flag exits 5.
-  - Red: tests first: no flags prints `{"chain": "lite", "fast": true, "cruise": false}`; `--cruise` gives `fast: true, cruise: true`; `--no-fast --cruise --no-cruise` gives `fast: false, cruise: false` (pairs last-wins); `--cruise --no-cruise` and `--no-cruise --cruise` resolve to the last; `--no-cruise` alone leaves `fast` unchanged; `--full` / `--lite` set `chain`; `--cruise --no-fast` and `--no-fast --cruise` exit 5 with stderr naming both `--cruise` and `--no-fast`; `--bogus` exits 5; the command writes no file (temp `FACTORY_HOME` and repo unchanged). Run; fails (unknown command).
+  - Red: tests first: no flags prints `{"chain": "lite", "fast": true, "cruise": false}`; `--cruise` gives `fast: true, cruise: true`; `--no-fast --cruise --no-cruise` gives `fast: false, cruise: false` (pairs last-wins); `--cruise --no-cruise` and `--no-cruise --cruise` resolve to the last; `--no-cruise` alone leaves `fast` unchanged; `--full` / `--lite` set `chain`; `--cruise --no-fast`, `--no-fast --cruise` and `--no-fast --fast --cruise` (presence rule: `--no-fast` anywhere conflicts even when `fast` ends on, FR-003) exit 5 with stderr naming both `--cruise` and `--no-fast`; `--bogus` exits 5; the command writes no file (temp `FACTORY_HOME` and repo unchanged). Run; fails (unknown command).
   - Implement: `resolve_mode` applies flags in argv order, sets `fast` true when `cruise` ends on, raises on cruise-on plus `--no-fast`; `cmd_mode` uses the default base and prints JSON; the conflict reuses the usage exit 5 path.
   - Pass: runner green.
   - Done: output and exit codes match the tests; nothing written.
@@ -54,7 +54,7 @@ description: "Task list for 021-cruise-mode"
 - [ ] T006 [US1][US5] Add `--cruise-override` to `decisions-add` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_decisions_add` in `core/skills/factory/bin/factory_cli/commands.py`; tests in `tools/tests/test_cruise.py`.
   - Seam: `bin/factory decisions-add ... --cruise-override`. Failure paths: run without `mode.cruise: true` refused; `--kind approved` with the marker refused; `--kind gate-override` with the marker at a stage other than `analyze` refused.
   - Red: tests first on a cruise run: `decisions-add grill intake delivery --cruise-override` records kind `answer`, `auto: true`, `cruise_override: true`; `decisions-add analyze analyze-exhaustion 'proceed to implement' --kind gate-override --cruise-override` records it and `checkpoint analyze --next implement` then succeeds (FR-011); each failure path exits 1 with a message naming the reason and leaves `state.json` bytes and HEAD unchanged; without the flag `decisions-add` behaves as today. Run; fails (unknown flag).
-  - Implement: cruise guard as in T005 (shared helper if both need it); refuse marker with `approved` and with `gate-override` outside `analyze` before writing; marked records get `auto: true`.
+  - Implement: the same two-line cruise guard as T005, inline in `cmd_decisions_add` (no shared helper, plan "Writer guard"); refuse marker with `approved` and with `gate-override` outside `analyze` before writing; marked records get `auto: true`.
   - Pass: runner green.
   - Done: every listed case asserted and passing.
 
@@ -83,7 +83,7 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 7: Polish and verification
 
-- [ ] T014 Harness-neutrality and build check: `git grep -n -e bypassPermissions -e dangerously-bypass -e allow-all-tools -- core/` is empty; `git diff --stat origin/main -- tools/render.py install.sh` is empty; run the build command (render all five harnesses into a temp `FACTORY_HOME`, `bash -n install.sh`) (FR-023, SC-006). Exempt: verification only. Done: build exits 0; both checks empty.
+- [ ] T014 Harness-neutrality and build check: `git grep -n -e bypassPermissions -e dangerously-bypass -e allow-all-tools -- core/` is empty; `git diff --stat origin/main -- tools/render.py install.sh` is empty; `test -z "$(git ls-files -- dist/)"` passes (constitution workflow gate: `dist/` untracked); run the build command (render all five harnesses into a temp `FACTORY_HOME`, `bash -n install.sh`) (FR-023, SC-006). Exempt: verification only. Done: build exits 0; all three checks pass.
 
 - [ ] T015 Final verification: `python3 -m unittest discover -s tools`. Exempt: verification only. Done: all tests pass, or any failure is shown to be pre-existing on `origin/main` and recorded here; zero new failures (SC-004).
 
@@ -91,7 +91,7 @@ description: "Task list for 021-cruise-mode"
 
 - T001 first (constitution I).
 - T002 before T003-T007 (writers validate the new fields).
-- T003 before T004 (`resume` uses `resolve_mode`). T005 before T006 if they share the cruise guard helper. T007 after T002 only.
+- T003 before T004 (`resume` uses `resolve_mode`). T005 before T006 (same files). T007 after T002 only.
 - T008 after T003-T006 (prose calls the new commands). T009-T013 parallel with each other and with T008 (separate files), after T006.
 - T014, T015 last.
 
