@@ -1,0 +1,118 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 277,
+      "summary": "The adopt write follows symlinks committed in the adopted branch's <spec_dir>/factory path, so it overwrites or creates files outside the worktree; a symlinked factory/brief.md makes adopt exit 0 after overwriting an arbitrary user-writable file.",
+      "evidence": "_record_worktree_run does folder.mkdir(exist_ok=True) and (folder / target).write_text(sidecar.read_text()) with no symlink or containment check; _refusal only probes spec.md and cat-file -e <ref>:<spec_dir>/factory/state.json. Judge reproduction in scratch: branch 'evil' with specs/evil/factory/brief.md -> ../outside.txt ('precious'), pending brief '# Brief from pending'; 'factory adopt evil' exited 0 and outside.txt now reads '# Brief from pending'. A remote-branch source is content another contributor controls. The repo already enforces resolve()/is_relative_to containment for branch-derived paths (commands.py analyze-record, lines 1017-1024). ENG-25, ENG-26.",
+      "fix": "Before any write, refuse the adoption when <ref>:<spec_dir>/factory is not a tree or contains a mode-120000 entry (git ls-tree -r <ref> -- <spec_dir>/factory). In _record_worktree_run, refuse when folder or any target is a symlink or folder.resolve() is not inside worktree.resolve(). Add tests for a symlinked factory/ directory and a symlinked factory/brief.md: each exits 1, the outside target is unchanged, and nothing is written.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 30,
+      "summary": "default_base() falls back to a literal 'main' without checking that it exists. In a repo with origin/HEAD unset and a non-main default branch, the dry run and the write's probe die with exit 2 for the default-branch shape, and a local-only spec dir can resolve without the FR-007 refusal.",
+      "evidence": "Judge reproduction in scratch: repo with default branch master pushed to origin, origin/HEAD unset, spec dir specs/008-y only on master/origin/master. 'factory adopt 008-y --dry-run' printed 'factory: fatal: Not a valid object name main' and exited 2, outside the contract's 0/1/3/5. _resolve line 69 runs _entries(repo, 'main', 'specs') through commands.git, which dies. write() line 202 runs the same probe with default_base(), so the authoritative pending base is never reached. spec.md Assumptions: base and the default branch are 'resolved as for a new run'. FR-007 requires the local-only refusal. No test covers origin/HEAD unset or a non-main default (ENG-1).",
+      "fix": "Resolve the base for the dry run as SKILL.md step 2 does, or accept it as input. Verify each candidate ref with show-ref before use and refuse with a named reason (exit 1) when none resolves; never treat a local branch as base. In write(), use the pending file's base for the first probe as well. Add tests: origin/HEAD unset with default master for the default-branch shape and for a local-only spec dir (expects the FR-007 refusal).",
+      "sources": ["STD-1"]
+    },
+    {
+      "severity": "high",
+      "file": "tools/tests/test_adopt.py",
+      "line": 390,
+      "summary": "The confirmed dry-run failure path 'several matching spec dirs exit 3 listing them' has no asserting test. This covers _resolve's several-dirs-on-base exit and _spec_dir's branch-adds-several-dirs exit; the only exit-3 test covers two matching branches.",
+      "evidence": "plan.md Test seams (dry-run seam) and the Q2 snapshot in factory/relay/plan-Q2.md list 'several matching spec dirs exit 3 listing them' in the confirmed scope. adopt.py lines 69-71 and 95-96 implement die(3). test_ambiguous_source_exits_3_listing_both_branches creates branches 007-x and 008-x only. Missing coverage of a confirmed failure path is HIGH (engineering.md 'Confirmed test scope', ENG-1).",
+      "fix": "Add a refusal test that commits specs/007-y and specs/008-y on the base, runs 'adopt y --dry-run', and asserts exit 3, both names on stderr and an unchanged snapshot. Add a second test for a branch that adds two spec dirs under specs/: it exits 3 and writes nothing.",
+      "sources": ["STD-2", "SPEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/roles/review-judge.md",
+      "line": 30,
+      "summary": "The judge's adopted-run rule rejects every finding against pre-adoption work, not only ENG-1/ENG-2/ENG-3 commit-evidence findings, so real security or correctness defects in adopted code can be dropped from the gate.",
+      "evidence": "review-judge.md: 'confirm no finding against pre-adoption work: commits in <adopted_base> and tasks checked there. Reject such a finding with the reason pre-adoption'. FR-019 waives only the ENG-1, ENG-2 and ENG-3 commit checks. Clarify Q5: 'code reviewed in full'. research.md D10: the judge 'never confirms an ENG-1, ENG-2 or ENG-3 commit-evidence finding against them'.",
+      "fix": "Limit the rejection to findings resting on the ENG-1, ENG-2 or ENG-3 commit-evidence checks against commits in <base>..<adopted_base> or tasks checked at <adopted_base>, with reason pre-adoption. State that every other finding against pre-adoption code (security, correctness, design) is judged as usual.",
+      "sources": ["SPEC-2"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 53,
+      "summary": "The adoption grill never summarises spec.md, which FR-010 requires as the grill's seed.",
+      "evidence": "FR-010: the grill is 'seeded from spec.md: summarise the spec, ask only open gaps, the chain ... and confirmation of the entry stage'. SKILL.md Adoption step 2 shows only the dry-run summary and the needs_clarification lines. plan.md Design says 'summarise spec.md from the report's branch'.",
+      "fix": "In Adoption step 2, read <spec_dir>/spec.md from the report's branch (git -C <repo> show <branch>:<spec_dir>/spec.md) and summarise it for the user before asking the open gaps, the chain and the entry stage.",
+      "sources": ["SPEC-3"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 234,
+      "summary": "ENG-26 write failure handling misses FR-013 and contracts/cli.md exit 1. 'worktree add' runs outside the rollback try: a failing post-checkout hook leaves the worktree and created branch and exits 2. pending.unlink() after commit_worktree sits inside the try, so a cleanup failure rolls back a landed commit. _rollback ignores git's return codes but still reports 'rolled back'.",
+      "fix": "Move the worktree-add calls under the guarded block. Delete a created branch only when this write's add created it. Keep only steps before and including the commit under rollback. After the commit, report cleanup failures as 'committed; pending cleanup failed' without rolling back. Check _rollback's return codes and name any leftover worktree or branch. Add a failing post-checkout hook test.",
+      "sources": ["SEC-2", "SEC-3", "STD-3", "SPEC-4", "SPEC-5"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 190,
+      "summary": "ENG-26 for a branch name containing '/', the pending name becomes a nested path under pending/. The non-recursive glob('*.json') in pending_states and stale_pending_files never sees it, which bypasses the FR-007 other-pending guard.",
+      "fix": "Encode '/' in the pending name (for example '--') consistently in the report, write() and state.md, or make the pending scans recursive. Add a slash-named-branch test.",
+      "sources": ["SEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 208,
+      "summary": "ENG-11 the no-pending-adoption error names the harness invocation '/factory adopt' in core/ code, against constitution Principle II and research.md D9, and disagrees with resume's 'adopt <branch|spec_dir>' hint.",
+      "fix": "Name the CLI verb, for example \"no pending adoption '{name}'; start it with adopt {src}\", and align research.md D7's wording.",
+      "sources": ["STD-4"]
+    },
+    {
+      "severity": "low",
+      "file": "fb2d038 (T013)",
+      "line": 0,
+      "summary": "ENG-3 commit fb2d038 (T012) ticks T013's checkbox before T013's commit 854aea9. Disclosed, documentation-only, final tree correct; no history rewrite.",
+      "fix": "Approver accepts the disclosed early check; the retro records it.",
+      "sources": ["STD-5"]
+    },
+    {
+      "severity": "low",
+      "file": "3d3bfce (T014)",
+      "line": 0,
+      "summary": "ENG-5 the T014 and T015 commits cite 'Exempt: verification only (ENG-5; plan.md Test seams)', but the plan declares no such exemption. Neither commit changes behaviour.",
+      "fix": "No history rewrite. Drop the 'Exempt' label for non-behaviour verification commits, or declare a verification-only line in the plan.",
+      "sources": ["STD-6"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 33,
+      "summary": "ENG-6 _checkouts re-implements the 'git worktree list --porcelain' parsing that commands.worktree_states already performs.",
+      "fix": "Extract a commands.worktree_checkouts(repo) helper yielding (path, branch), and build worktree_states and adopt._checkouts on it.",
+      "sources": ["STD-7"]
+    },
+    {
+      "severity": "low",
+      "file": "57acb04 (T008)",
+      "line": 0,
+      "summary": "ENG-6 the T006 New: line names factory_cli.adopt._adopt_branch, which T008 renamed to _adopt_worktree without a New: line for the current name.",
+      "fix": "Record the rename in the retro; no history rewrite.",
+      "sources": ["STD-8"]
+    },
+    {
+      "severity": "low",
+      "file": "specs/022-adopt-spec/factory/relay/plan-Q2.md",
+      "line": 9,
+      "summary": "The Q2 acceptance snapshot is not verbatim: plan.md's documentation Exempt line now also lists core/roles/code-standards.md. Seam and failure-path scope unchanged, so acceptance holds.",
+      "fix": "Refresh the snapshot to match plan.md, or record a new immutable snapshot.",
+      "sources": ["SPEC-6"]
+    }
+  ],
+  "rejected": []
+}
