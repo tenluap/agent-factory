@@ -370,6 +370,14 @@
       "auto": false,
       "at": "2026-11-04T18:08:56.720291Z",
       "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q2-post-commit-contract",
+      "answer": "A: keep exit 1, amend FR-013/contracts/D7/SKILL.md: committed; pending cleanup failed: resume <branch>, do not retry",
+      "auto": false,
+      "at": "2026-11-04T18:08:57.261288Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
