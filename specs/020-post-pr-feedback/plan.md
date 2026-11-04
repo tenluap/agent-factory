@@ -167,6 +167,8 @@ Exit 0 without gaps (zero runs included), 1 with any gap or a refused `<branch>`
 - Exempt: `DESIGN.md`, `CONTEXT.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md` - documentation only; rendering is verified by the build command.
 - Overridden: none
 
+Confirmed: 2026-11-04 - Q1 accepted - seams: `factory_cli.feedback.refresh`, `factory_cli.improvements` feedback entries (`add_feedback`, `list_backlogs`, `claim`), `bin/factory feedback [<branch>]` CLI; failure paths: `refresh` -> `gh` missing inaccessible, unauthenticated inaccessible, PR not found missing, no access inaccessible, transient error (5xx/network/timeout) transient, malformed JSON from either read transient, unparseable `pr_url` missing, malformed existing outcome file inaccessible with file unchanged, lock held past the wait transient, each writing nothing for that run and keeping earlier outcomes and entries; `improvements` -> unreadable or foreign file at the entry name refused and not overwritten, backlog lock held past the wait refused with nothing written; CLI -> unknown `<branch>` exit 1 nothing written, `<branch>` without `pr_url` exit 1 nothing written, `gh` not on `PATH` inaccessible gap exit 1, fake `gh` server error transient gap exit 1.
+
 ## Verification
 
 - `python3 -m unittest discover -s tools` and the build command (all five harnesses render, `dist/` untracked, `bash -n install.sh`).
