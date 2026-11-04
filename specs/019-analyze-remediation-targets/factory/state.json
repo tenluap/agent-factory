@@ -50,6 +50,14 @@
       "summary": "grill round 1: 7 questions",
       "answered_at": "2026-11-04T00:05:53.556919Z",
       "latency_ms": 101802
+    },
+    {
+      "at": "2026-11-04T00:15:45.587532Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "plan: test-scope confirmation (requires_user)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
