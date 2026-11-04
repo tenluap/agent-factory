@@ -24,7 +24,7 @@
 
 A factory user wants implementation to start only after remediation has measurably reduced the spec findings. The implement gate compares the latest recheck with the baseline analysis and refuses to enter implementation until every acceptance target is met.
 
-**Why this priority**: Today MEDIUM/LOW findings are remediated once and implementation proceeds whatever the recheck shows; the gate makes improvement a precondition.
+**Why this priority**: Today implementation proceeds whatever the recheck shows; the gate makes improvement a precondition.
 
 **Independent Test**: Feed the implement gate a run state with a baseline and a latest result, and check that it allows or refuses with a reason that names each unmet target, for each acceptance example below.
 
@@ -63,7 +63,7 @@ The first completed analysis report's severity counts are stored once as the bas
 
 ### User Story 3 - Bounded automatic repair, then the user decides (Priority: P2)
 
-When targets are unmet the factory repairs the artifacts in place and rechecks, at most twice automatically. If the targets are still unmet, the user sees the baseline counts, the latest counts and the unmet targets, and chooses what happens next.
+When targets are unmet the factory repairs the artifacts in place and rechecks, at most twice automatically. If targets stay unmet, the user sees baseline and latest counts and the unmet targets, and decides.
 
 **Why this priority**: Prevents endless loops and silent progress past unmet targets; builds on Stories 1 and 2.
 
@@ -114,7 +114,7 @@ When a finding is best fixed by changing the project constitution, the user sees
 ### Functional Requirements
 
 - **FR-001**: The analysis recorder MUST store the first completed analyze report's CRITICAL, HIGH, MEDIUM and LOW counts, its report path and its record time as `analyze.baseline`, exactly once per run.
-- **FR-002**: Every later recorded report MUST update only `analyze.result` and the report list; nothing except an explicit user choice to re-run analysis as a fresh baseline (FR-012) may change `analyze.baseline`.
+- **FR-002**: Every later recorded report MUST update only `analyze.result` and the report list; only a fresh-baseline choice (FR-012) may change `analyze.baseline`.
 - **FR-003**: Resume (on any harness) and lite-to-full escalation MUST preserve `analyze.baseline` and `analyze.loops` unchanged. Tests verify escalation through a later `analyze-record` keeping the baseline and `analyze.loops` changing only via `checkpoint remediate`; a `mode.chain` writer is out of scope.
 - **FR-004**: The implement gate MUST refuse unless the latest result has CRITICAL == 0 and HIGH == 0.
 - **FR-005**: For each of total (CRITICAL + HIGH + MEDIUM + LOW) and LOW, the gate MUST require: when the baseline count is 0, a latest count of 0; otherwise `2 * latest < baseline`, using integer arithmetic only.
@@ -125,23 +125,23 @@ When a finding is best fixed by changing the project constitution, the user sees
 - **FR-010**: When the baseline is absent, the gate and recorder MUST derive it from `analyze.result` only when `analyze.reports` has exactly one entry and `analyze.result.report` names it.
 - **FR-011**: When the baseline is absent, `analyze.reports` has one or more entries, and the baseline cannot be derived, the gate MUST refuse with a reason stating that no trustworthy baseline exists; report markdown MUST NOT be parsed for counts. With zero reports the gate keeps its existing "analyze.reports is empty" refusal, and the orchestrator runs analyze without a user question.
 - **FR-012**: For an underivable baseline the orchestrator MUST ask the user to re-run analysis as a fresh baseline, record a `gate-override`, or abort; a fresh-baseline choice makes the next recorded report the baseline.
-- **FR-013**: Lite-to-full escalation on CRITICAL or HIGH findings MUST be kept and MUST NOT consume a repair cycle. The escalated re-analysis MUST be written to `factory/analyze-<n>-full.md`, so the baseline report file is never overwritten, and it leaves `analyze.pass` and `analyze.loops` untouched. This is a prose rule in `SKILL.md` and `roles/spec-builder.md`.
+- **FR-013**: Lite-to-full escalation on CRITICAL or HIGH findings MUST be kept and MUST NOT consume a repair cycle. The escalated re-analysis MUST be written to `factory/analyze-<n>-full.md`, so the baseline report file is never overwritten, and it leaves `analyze.pass` and `analyze.loops` untouched. Escalation happens at most once per run (none while `analyze.reports` holds a `-full.md` report); later CRITICAL or HIGH follows FR-014 and FR-016. This is a prose rule in `SKILL.md` and `roles/spec-builder.md`.
 - **FR-014**: When any target is unmet and `analyze.loops < 2`, the orchestrator MUST run one repair cycle: `remediate`, increment `analyze.loops` and `analyze.pass`, then recheck (via `clarify` and `grill-with-docs` first when `pending_clarify` is non-empty). It applies on both chains, including MEDIUM/LOW-only findings, replacing the lite "remediate once" and full-chain "CRITICAL/HIGH only" rules.
 - **FR-015**: Remediation MUST edit `spec.md`, `plan.md`, `tasks.md` and other spec artifacts in place; it never regenerates them.
 - **FR-016**: When targets are unmet after 2 cycles, the orchestrator MUST show baseline counts, latest counts and the unmet targets, and ask the exhaustion question, `requires_user`, with options: one more guided pass, an explicit recorded `gate-override`, or abort. Fast mode MUST NOT auto-answer it.
 - **FR-017**: Implementation MUST stay paused while any target is unmet and no `gate-override` is recorded.
 - **FR-018**: When a finding warrants a constitution change, remediate MUST write the exact amendment text, rationale, version bump and any implied `DESIGN.md` changes to `<spec_dir>/factory/constitution-amendment-<n>.md` and return a `requires_user` question carrying the draft's content hash, without touching the constitution.
-- **FR-019**: After approval, a fresh remediate MUST verify the current draft hash equals the approved hash and then apply exactly that draft through the `speckit-constitution` amendment process; any mismatch or missing draft MUST trigger a fresh approval question and apply nothing.
+- **FR-019**: After approval, a fresh remediate MUST verify the current draft hash equals the approved hash and then apply exactly that draft through the `speckit-constitution` amendment process, plus its `DESIGN.md` changes, listing `.specify/memory/constitution.md` and `DESIGN.md` in its envelope `files` so one checkpoint commits both; any mismatch or missing draft MUST trigger a fresh approval question and apply nothing.
 - **FR-020**: A declined amendment, or a run aborted or overridden without approval, MUST leave the constitution unchanged; the finding is fixed in the spec artifacts or stays counted.
 - **FR-021**: An applied amendment MUST be followed by the cycle's recheck before the gate is evaluated.
-- **FR-022**: The rule MUST be recorded as ADR 0014 and reflected in `DESIGN.md` (including a "Validation plan" entry), `references/state.md`, `SKILL.md` step 5 (rules and done condition) and `roles/spec-builder.md`. `docs/factory-overview.md` (analyze diagram and paragraph) and `docs/product-brief.md` "Analysis and remediation policy" (with a revision line) are updated, documentation-exempt; behaviour changes live in `core/` and render cleanly for all five harnesses.
+- **FR-022**: The rule MUST be recorded as ADR 0014 and reflected in `DESIGN.md` (including a "Validation plan" entry), `references/state.md`, `SKILL.md` step 5 (rules and done condition) and `roles/spec-builder.md`. `docs/factory-overview.md` and `docs/product-brief.md` are updated, documentation-exempt; behaviour changes live in `core/` and render cleanly for all five harnesses.
 - **FR-023**: Automated tests MUST cover every acceptance example in this spec, including exactly-half, odd and zero baselines, legacy derivation and refusal, and every amendment approval path.
-- **FR-024**: After an implement-gate refusal, the orchestrator MUST classify the cause from run state (`factory show`), never from the reason text, in this order. (1) An open `pending_clarify` or an unanswered `requires_user` question routes to `clarify` or the relay wait, with no cycle charged. (2) Zero reports runs analyze (FR-011). (3) No stored `analyze.baseline` asks for a fresh baseline, an override or an abort (FR-012); `analyze-record` always stores a derivable baseline first. (4) Otherwise, unmet targets run a repair cycle when `analyze.loops < 2` (FR-014), or ask the exhaustion question (FR-016).
+- **FR-024**: After an implement-gate refusal, the orchestrator MUST classify the cause from run state (`factory show`), never from the reason text, in this order. (1) An open `pending_clarify` or an unanswered `requires_user` question routes to `clarify` or the relay wait, with no cycle charged. (2) Zero reports runs analyze (FR-011). (3) No stored and no derivable baseline (FR-010) asks for a fresh baseline, an override or an abort (FR-012); a derivable one falls through. (4) Otherwise, unmet targets run a repair cycle when `analyze.loops < 2` (FR-014), or ask the exhaustion question (FR-016).
 
 ### Key Entities
 
 - **Baseline analysis**: the first completed analysis of a run; four severity counts, report path, record time. Its report file is never overwritten; it changes only through a fresh-baseline choice.
-- **Recheck**: any analysis after the baseline analysis; the most recent one is the latest result, compared with the baseline at the implement gate.
+- **Recheck**: any analysis after the baseline analysis; the most recent one is the latest result.
 - **Implement gate**: the transition check that refuses implementation while any acceptance target is unmet, a protected question is open, or no trustworthy baseline exists.
 - **Acceptance targets**: zero CRITICAL, zero HIGH, total below half of baseline total, LOW below half of baseline LOW, and zero stays zero.
 - **Repair cycle**: one remediate plus recheck (including any clarify and grill-with-docs loop pass); counted in `analyze.loops`, capped at 2 automatic cycles per run.
@@ -166,7 +166,7 @@ When a finding is best fixed by changing the project constitution, the user sees
 - The existing state writer's validation rules (non-negative counts, non-decreasing timestamps, paths relative to `spec_dir`) extend to the baseline.
 - The content hash is SHA-256 of the draft file bytes; any change to the file changes the hash.
 - "One more guided pass" increments `analyze.loops` like an automatic cycle; the user's guidance is passed to remediate.
-- Past the cap, any non-auto analyze answer newer than the latest result authorises remediate; only a guided pass reaches it (abort ends the run, an override passes the gate, a fresh baseline runs analyze first). Plan and `DESIGN.md` state why.
+- Past the cap, any non-auto analyze answer newer than the latest result authorises remediate; only a guided pass reaches it (abort ends the run, an override passes the gate, a fresh baseline or an escalation record is followed by a newer result). Plan and `DESIGN.md` state why.
 - The amendment file number `<n>` is the current `analyze.pass`.
 - A run started before this change resumes under the new rules, with legacy baseline handling per FR-010 to FR-012.
 - Build and test commands are those in `factory/brief.md` (Q1).
