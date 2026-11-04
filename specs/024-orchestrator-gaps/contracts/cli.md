@@ -4,7 +4,7 @@ Exit codes follow the existing CLI: 0 success, 1 refusal (nothing written), 2 us
 
 ## `factory checkpoint review|fix [...]`
 
-Unchanged flags. Result for `review` and `fix` adds:
+`checkpoint review --next fix --design-fix '<worktree-relative verdict path>'` atomically records the design reservation and fix stage. After fixer completion and successful verification, `checkpoint fix --next review` counts and clears it atomically, without recounting a legacy reservation. Result for `review` and `fix` adds:
 
 ```json
 { "review": { "round": 2, "fix_rounds": 1 } }
@@ -16,7 +16,7 @@ Also present on the `commit_error` result.
 
 - `--question` (new): protocol question object; `id` must equal `<qid>`, else exit 1.
 - `requires_user` question on a worktree run: writes `<spec_dir>/factory/relay/<stage>-<qid>.md`, committed with the answer. Result adds `"record": "<path>"`.
-- Existing record, same answer: exit 0, `{"answered": qid, "unchanged": true}`, no write.
+- Existing record, same answer: exit 0, `{"answered": qid, "unchanged": true}`, no write when the record is in HEAD and record and state are clean; otherwise commit the pending state and record.
 - Existing record, different answer: exit 1 `relay record <path> already holds a different answer`.
 - `<stage>` or `<qid>` outside `[A-Za-z0-9_-]+` with a record due: exit 1.
 

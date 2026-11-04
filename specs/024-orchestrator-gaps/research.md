@@ -10,9 +10,9 @@ No NEEDS CLARIFICATION remained in the Technical Context. Each entry records one
 
 ## R2. Interaction with the design-run reservation
 
-- **Decision** (revised in remediation 1, analyze-1 F2): keep §5's clear-before-re-review order. The reservation stores `attempt` = counter + 1 and no longer increments; the orchestrator clears it after the attempt, then `checkpoint fix --next review` increments once. The guard still skips when `review.pending_design_fix.attempt == review.fix_rounds` (a legacy reservation that already counted the attempt).
-- **Rationale**: §5 clears the marker before verification/re-review; a checkpoint after the clear sees no reservation, so the reservation must not have counted the attempt, or it would be counted twice. One writer of the counter (the checkpoint) is simpler than two.
-- **Alternatives considered**: always skip for design runs (breaks when no reservation exists); move the reservation increment into the CLI (out of scope; reservation writer unchanged).
+- **Decision** (revised in fix round 1): `checkpoint review --next fix --design-fix <verdict>` writes the reservation with `attempt` = counter + 1 without incrementing. After fixer completion and verification, `checkpoint fix --next review` inspects and clears the reservation while counting; a legacy `attempt == fix_rounds` does not increment again.
+- **Rationale**: the prior clear-before-checkpoint order lost the legacy marker and double-counted; inspecting and clearing in one locked write preserves retry safety.
+- **Alternatives considered**: always skip for design runs (breaks when no reservation exists); clear before the checkpoint (cannot distinguish legacy reservations).
 
 ## R3. How a verdict-raised question reaches the writer
 

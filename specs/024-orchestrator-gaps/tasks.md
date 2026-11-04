@@ -123,3 +123,13 @@ After T001: T002, T004, T006 touch different functions but share `commands.py`; 
 ## Implementation Strategy
 
 MVP = T001-T003 (counters, fix-round cap reliable). Then US2, US3, US4 in order; docs; verification.
+
+## Fix round 1
+
+These repairs supersede T001/T009/T010's original reservation and resume order; the checked entries above record the work originally completed, not the current contract. Scope extension and acceptance are recorded in plan.md.
+
+- [x] F001 Fix identical answer retry after a failed commit; test the injected failure and committed retry at S2.
+- [x] F002 Add the S1 design-reservation checkpoint writer and atomic count/clear, including legacy resume; document fixer completion, verification, checkpoint, then re-review for both design and ordinary resumes.
+- [x] F003 Pass full question JSON through every relay answer path; test a protected plan-stage answer and its record at S2.
+- [x] F004 Cover an unsafe stage with no record due at S2(c).
+- [x] F005 Run the required build and full test suite for the fix round (five harness renders and shell syntax passed; 641 tests passed; no tracked `dist/` files).

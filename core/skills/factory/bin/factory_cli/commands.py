@@ -888,7 +888,9 @@ def dirty_paths(worktree):
     return [line[3:].strip().strip('"') for line in status.splitlines() if line.strip()]
 
 
-def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None):
+def cmd_checkpoint(
+    repo, cwd, stage, next_stage=None, files=None, envelope=None, design_fix=None
+):
     if stage not in state.STAGES:
         die(
             1,
@@ -899,6 +901,10 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     target = next_stage or successor(stage)
+    if design_fix is not None and (
+        stage != "review" or target != "fix" or not worktree
+    ):
+        die(1, "--design-fix requires checkpoint review --next fix in a worktree")
     # Every refusal point passes before the state write, so a refused
     # checkpoint leaves the stage, history, relay and worktree untouched.
     declared = list(files or [])
@@ -921,6 +927,12 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
                 number = verdict.parent.name.removeprefix("round-")
                 if number.isascii() and number.isdigit() and verdict.is_file():
                     review["round"] = max(review.get("round", 0), int(number))
+            if design_fix is not None and s.get("stage") == "review":
+                review["pending_design_fix"] = {
+                    "attempt": review.get("fix_rounds", 0) + 1,
+                    "round": review.get("round", 0),
+                    "verdict": design_fix,
+                }
             s["review"] = review
         if stage == "fix" and s.get("stage") == "fix":
             review = dict(s.get("review") or {})
@@ -928,6 +940,7 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             reservation = review.get("pending_design_fix")
             if not isinstance(reservation, dict) or reservation.get("attempt") != count:
                 review["fix_rounds"] = count + 1
+            review.pop("pending_design_fix", None)
             s["review"] = review
         if stage == "remediate" and s.get("stage") == "remediate":
             # ADR 0006 / FR-014: the only writer of the repair-cycle counters; a
@@ -1463,7 +1476,23 @@ def cmd_answer(
                     die(1, f"relay record {record} has an ambiguous legacy answer")
                 same = previous.partition("\n- Origin: ")[0] == answer
             if same:
-                return {"answered": qid, "unchanged": True}
+                state_path = str(Path(path).relative_to(worktree))
+                tracked = git(
+                    worktree, "ls-tree", "--name-only", "HEAD", "--", str(record)
+                )
+                dirty = git(
+                    worktree, "status", "--porcelain", "--", str(record), state_path
+                )
+                if tracked.strip() and not dirty.strip():
+                    return {"answered": qid, "unchanged": True}
+                commit_worktree(
+                    worktree, f"factory: answer {qid}", loaded.get("spec_dir")
+                )
+                return {
+                    "answered": qid,
+                    "auto": bool(auto or cruise_override),
+                    "record": str(record),
+                }
             die(1, f"relay record {record} already holds a different answer")
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer

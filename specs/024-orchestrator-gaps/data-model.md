@@ -8,7 +8,7 @@ No schema version change (state version 5 stays). Fields below already exist unl
 |-------|------|--------|------|
 | `round` | int ≥ 0 | `checkpoint review` | `max(round, highest n with factory/reviews/round-<n>/verdict.json)`; never decreases |
 | `fix_rounds` | int ≥ 0 | `checkpoint fix` | `+1` only when run stage is `fix` and no matching `pending_design_fix` reservation |
-| `pending_design_fix` | object or absent | design flow | `{attempt, round, verdict}`; stores `attempt` = `fix_rounds + 1` without incrementing the counter; cleared after the attempt, then `checkpoint fix` counts it; a legacy reservation with `attempt == fix_rounds` suppresses the checkpoint increment |
+| `pending_design_fix` | object or absent | `checkpoint review --next fix --design-fix <verdict>`; cleared by `checkpoint fix` | `{attempt, round, verdict}`; stores `attempt` = `fix_rounds + 1` without incrementing the counter; after fixer completion and verification, `checkpoint fix` counts and clears it atomically; a legacy reservation with `attempt == fix_rounds` suppresses the checkpoint increment |
 
 ## Relay question (`state.relay.rounds[-1].questions[]`)
 

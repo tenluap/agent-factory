@@ -849,6 +849,59 @@ class CheckpointStagingTests(unittest.TestCase):
 
 
 class ReviewCounterTests(unittest.TestCase):
+    def test_design_reservation_set_and_cleared_by_checkpoints(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        run = v4_state(stage="review")
+        wt = box.worktree_run("076-design", run)
+        root = wt / "specs/076-design/factory"
+        verdict = "specs/076-design/factory/reviews/round-1/verdict.json"
+        (wt / verdict).parent.mkdir(parents=True)
+        (wt / verdict).write_text("{}")
+        review = box.cli(
+            "checkpoint", "review", "--next", "fix", "--design-fix", verdict, cwd=wt
+        )
+        self.assertEqual(review.returncode, 0, review.stderr)
+        saved = json.loads((root / "state.json").read_text())
+        self.assertEqual(saved["stage"], "fix")
+        self.assertEqual(saved["review"]["fix_rounds"], 0)
+        self.assertEqual(
+            saved["review"]["pending_design_fix"],
+            {
+                "attempt": 1,
+                "round": 1,
+                "verdict": verdict,
+            },
+        )
+        fix = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+        self.assertEqual(fix.returncode, 0, fix.stderr)
+        saved = json.loads((root / "state.json").read_text())
+        self.assertEqual(saved["review"]["fix_rounds"], 1)
+        self.assertNotIn("pending_design_fix", saved["review"])
+        self.assertEqual(saved["stage"], "review")
+
+    def test_legacy_design_resume_checkpoint_clears_without_recount(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        run = v4_state(stage="fix")
+        run["review"].update(
+            {
+                "fix_rounds": 1,
+                "pending_design_fix": {
+                    "attempt": 1,
+                    "round": 1,
+                    "verdict": "verdict.json",
+                },
+            }
+        )
+        wt = box.worktree_run("077-legacy", run)
+        out = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        saved = json.loads((wt / "specs/077-legacy/factory/state.json").read_text())
+        self.assertEqual(saved["review"]["fix_rounds"], 1)
+        self.assertNotIn("pending_design_fix", saved["review"])
+        self.assertEqual(saved["stage"], "review")
+
     def test_fix_counts_once_and_respects_legacy_reservation(self):
         for reservation, expected in ((None, 1), ({"attempt": 0}, 0)):
             with self.subTest(reservation=reservation):
@@ -939,6 +992,35 @@ class RelayRecordTests(unittest.TestCase):
         self.root = self.wt / "specs/074-relay/factory"
         self.path = self.root / "state.json"
 
+    def test_failed_answer_commit_is_completed_by_identical_retry(self):
+        question = json.dumps({"id": "R2-Q1", "requires_user": True})
+        gitdir = self.box.repo / ".git/worktrees/wt-074-relay"
+        lock = gitdir / "index.lock"
+        lock.write_text("")
+        first = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", question, cwd=self.wt
+        )
+        self.assertNotEqual(first.returncode, 0)
+        record = "specs/074-relay/factory/relay/review-R2-Q1.md"
+        self.assertTrue((self.wt / record).exists())
+        self.assertEqual(
+            json.loads(self.path.read_text())["relay"]["rounds"][-1]["answers"][
+                "R2-Q1"
+            ]["answer"],
+            "A",
+        )
+        lock.unlink()
+        retry = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", question, cwd=self.wt
+        )
+        self.assertEqual(retry.returncode, 0, retry.stderr)
+        committed = self.box.git(
+            "show", "--format=", "--name-only", "HEAD", cwd=self.wt
+        )
+        self.assertIn(record, committed)
+        self.assertIn("specs/074-relay/factory/state.json", committed)
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=self.wt), "")
+
     def test_question_replaces_stub_and_appends_missing(self):
         for qid in ("R2-Q1", "R2-Q2"):
             question = {"id": qid, "title": "Choose", "text": "Context"}
@@ -981,6 +1063,46 @@ class RelayRecordTests(unittest.TestCase):
             "answer", "../x", "A", "--question", '{"id":"../x"}', cwd=self.wt
         )
         self.assertEqual(out.returncode, 0, out.stderr)
+
+    def test_unsafe_stage_without_protected_question_stores_answer(self):
+        out = self.box.cli(
+            "answer",
+            "Q1",
+            "A",
+            "--stage",
+            "a/b",
+            "--question",
+            '{"id":"Q1"}',
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        relay = json.loads(self.path.read_text())["relay"]
+        self.assertEqual(relay["stage"], "a/b")
+        self.assertEqual(relay["rounds"][-1]["answers"]["Q1"]["answer"], "A")
+        self.assertFalse((self.root / "relay").exists())
+
+    def test_plan_protected_answer_with_full_question_creates_record(self):
+        question = {"id": "Q1", "title": "Confirm test scope", "requires_user": True}
+        out = self.box.cli(
+            "answer",
+            "Q1",
+            "A",
+            "--stage",
+            "plan",
+            "--question",
+            json.dumps(question),
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        name = "specs/074-relay/factory/relay/plan-Q1.md"
+        self.assertEqual(json.loads(out.stdout)["record"], name)
+        self.assertIn("Confirm test scope", (self.wt / name).read_text())
+        self.assertEqual(
+            json.loads(self.path.read_text())["relay"]["rounds"][-1]["answers"]["Q1"][
+                "answer"
+            ],
+            "A",
+        )
 
     def test_protected_answer_record_is_immutable_and_committed(self):
         question = {
@@ -1073,6 +1195,8 @@ class RelayRecordTests(unittest.TestCase):
         record = self.wt / json.loads(first.stdout)["record"]
         legacy = record.read_text().replace('- Answer JSON: "A"\n', "")
         record.write_text(legacy)
+        self.box.git("add", "--", str(record.relative_to(self.wt)), cwd=self.wt)
+        self.box.git("commit", "-m", "record legacy answer", cwd=self.wt)
         same = self.box.cli("answer", "R2-Q1", "A", cwd=self.wt)
         self.assertEqual(same.returncode, 0, same.stderr)
         self.assertTrue(json.loads(same.stdout)["unchanged"])

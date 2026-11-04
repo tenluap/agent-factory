@@ -34,7 +34,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   models-record [--from <path>]     record run models from a file or stdin;
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
-  checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
+  checkpoint <stage> [--next <stage>] [--design-fix <verdict>] [--files <path>... | --envelope <file>]
   amendment-check <draft> [--sha256 <hex>]
                                     hash a constitution draft; refuses a changed draft
   analyze-record <envelope> [--fresh-baseline]
@@ -233,7 +233,7 @@ def main(argv):
             positional, flags = parse_flags(
                 rest,
                 command,
-                value_flags=("--repo", "--next", "--envelope"),
+                value_flags=("--repo", "--next", "--envelope", "--design-fix"),
                 repeat_flags=("--files",),
             )
             if len(positional) != 1:
@@ -246,6 +246,7 @@ def main(argv):
                 next_stage=flags.get("--next"),
                 files=flags.get("--files"),
                 envelope=flags.get("--envelope"),
+                design_fix=flags.get("--design-fix"),
             )
         elif command == "detect":
             _, flags = parse_flags(rest, command)
