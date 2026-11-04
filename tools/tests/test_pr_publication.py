@@ -22,6 +22,7 @@ def pr_section(skill_text):
 
 LOOKUP = "gh pr list --head <branch> --state open --json url,assignees"
 AFTER_ERROR_LITERALS = ("gh pr create", "error", "Branch PR lookup", "retry")
+REVERTED_RESUME = "- `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded."
 
 
 def pr_contract_gaps(skill_text, state_text):
@@ -43,6 +44,12 @@ def pr_contract_gaps(skill_text, state_text):
         gaps.append("lookup-after-error")
     if re.search(r"\bASK\b", section):
         gaps.append("no-ask")
+    resume = next(
+        (line.strip() for line in state_text.splitlines() if line.strip().startswith("- `pr`:")),
+        "",
+    )
+    if not ("step 9" in resume and "Branch PR lookup" in resume and "gh pr view" not in resume):
+        gaps.append("resume-rule")
     return gaps
 
 
@@ -87,6 +94,15 @@ class PrPublicationContractTests(unittest.TestCase):
             lambda s: s + "ASK: ask the user for a GitHub username.\n",
         )
         self.assertEqual(pr_contract_gaps(mutated, self.state), ["no-ask"])
+
+    def test_resume_pr_reverted_reports_resume_rule(self):
+        mutated = re.sub(
+            r"(?m)^(\s*)- `pr`:.*$",
+            lambda m: m.group(1) + REVERTED_RESUME,
+            self.state,
+            count=1,
+        )
+        self.assertEqual(pr_contract_gaps(self.skill, mutated), ["resume-rule"])
 
 
 if __name__ == "__main__":

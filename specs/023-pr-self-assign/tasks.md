@@ -47,7 +47,7 @@ None: the test module is created by the first commit unit (T002), and no shared 
   - Pass: runner green; build command green.
   - Done: all tests pass; at most 2 creation requests and 3 Branch PR lookups per attempt are stated in item 3.
 
-- [ ] T004 [US2] Add `resume-rule` to `pr_contract_gaps` in `tools/tests/test_pr_publication.py`, and replace the Resume `pr` line in `core/skills/factory/references/state.md` (depends on T003).
+- [x] T004 [US2] Add `resume-rule` to `pr_contract_gaps` in `tools/tests/test_pr_publication.py`, and replace the Resume `pr` line in `core/skills/factory/references/state.md` (depends on T003).
   - Seam: `pr_contract_gaps(skill_text, state_text)`. Failure paths: `resume-rule` (real state text with the `pr` line reverted to `- \`pr\`: check \`gh pr view <branch>\` first; an existing PR only needs its URL recorded.`).
   - Red: tests first: the real-text test also asserts the rule (the state.md Resume line whose stripped text starts `` - `pr`: `` contains `step 9` and `Branch PR lookup` and not `gh pr view`); the injected copy gives `["resume-rule"]`. Run; the real-text test fails with `["resume-rule"]` (current line uses `gh pr view <branch>`). Commit body: `Red: tools.tests.test_pr_publication.PrPublicationContractTests.test_real_core_text_has_no_gaps failed as expected`.
   - Implement: state.md line ``- `pr`:`` becomes: restart SKILL.md step 9 from item 1; its Branch PR lookup reuses an existing open PR, so resume never opens a duplicate (FR-010). `git push -u` of an already-pushed branch is a no-op (research R5). Leave the existing manual recovery for interruptions after `set-status pr-open` unchanged.
