@@ -233,6 +233,14 @@
       "auto": false,
       "at": "2026-11-04T10:44:14.330329Z",
       "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q2-unpushed-spec",
+      "answer": "A: refuse exit 1 with own reason (push it or create its branch first)",
+      "auto": false,
+      "at": "2026-11-04T10:44:14.577200Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
