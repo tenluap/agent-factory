@@ -1,5 +1,6 @@
 """Analysis results must reach state through the CLI before implementation."""
 
+import hashlib
 import json
 import sys
 import unittest
@@ -453,3 +454,53 @@ class RepairCycleCheckpointTests(unittest.TestCase):
         after = self.analyze()
         self.assertEqual(after["baseline"], before["baseline"])
         self.assertEqual(after["loops"], before["loops"])
+
+
+class AmendmentCheckTests(unittest.TestCase):
+    """`amendment-check` hashes an approved constitution draft read-only (FR-018, FR-019, SC-005)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.constitution = self.box.repo / ".specify" / "memory" / "constitution.md"
+        self.constitution.parent.mkdir(parents=True)
+        self.constitution.write_text("# Constitution v1\n")
+        self.draft = self.box.dir / "constitution-amendment-1.md"
+        self.draft.write_text("# Constitution v2\n\nRationale.\n")
+
+    def check(self, *args):
+        return self.box.cli("amendment-check", *args, cwd=self.box.repo)
+
+    def test_prints_the_lower_case_sha256_of_the_draft_bytes(self):
+        out = self.check(str(self.draft))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        digest = hashlib.sha256(self.draft.read_bytes()).hexdigest()
+        self.assertEqual(json.loads(out.stdout), {"draft": str(self.draft), "sha256": digest})
+
+    def test_matching_approved_hash_exits_zero(self):
+        digest = hashlib.sha256(self.draft.read_bytes()).hexdigest()
+        out = self.check(str(self.draft), "--sha256", digest)
+        self.assertEqual(out.returncode, 0, out.stderr)
+
+    def test_missing_draft_exits_one_naming_the_path(self):
+        missing = self.box.dir / "absent.md"
+        out = self.check(str(missing))
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(str(missing), out.stderr)
+
+    def test_draft_edited_after_approval_exits_one_naming_both_hashes(self):
+        approved = hashlib.sha256(self.draft.read_bytes()).hexdigest()
+        self.draft.write_text("# Constitution v2 (edited)\n")
+        current = hashlib.sha256(self.draft.read_bytes()).hexdigest()
+        out = self.check(str(self.draft), "--sha256", approved)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(approved, out.stderr)
+        self.assertIn(current, out.stderr)
+
+    def test_constitution_stays_byte_identical_after_each_call(self):
+        before = self.constitution.read_bytes()
+        digest = hashlib.sha256(self.draft.read_bytes()).hexdigest()
+        self.check(str(self.draft))
+        self.check(str(self.draft), "--sha256", digest)
+        self.check(str(self.box.dir / "absent.md"))
+        self.assertEqual(self.constitution.read_bytes(), before)

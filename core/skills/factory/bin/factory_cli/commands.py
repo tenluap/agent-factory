@@ -6,6 +6,7 @@ T015, `lock`); this module adds only discovery, digests and CLI errors.
 """
 
 import filecmp
+import hashlib
 import json
 import os
 import shutil
@@ -1039,6 +1040,24 @@ def cmd_analyze_record(repo, cwd, envelope, fresh_baseline=False):
         "recorded": normalized,
         "counts": counts,
     }
+
+
+def cmd_amendment_check(draft, approved=None):
+    """Hash a constitution amendment draft; read-only (FR-018, FR-019).
+
+    With `approved`, a draft whose bytes changed since approval is refused.
+    """
+    try:
+        digest = hashlib.sha256(Path(draft).read_bytes()).hexdigest()
+    except OSError as e:
+        die(1, f"amendment-check: cannot read draft {draft}: {e}")
+    if approved is not None and approved.lower() != digest:
+        die(
+            1,
+            f"amendment-check: draft {draft} differs from the approved draft: "
+            f"approved sha256 {approved.lower()}, current sha256 {digest}",
+        )
+    return {"draft": draft, "sha256": digest}
 
 
 def append_issue(state_dict, record):

@@ -30,6 +30,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
+  amendment-check <draft> [--sha256 <hex>]
+                                    hash a constitution draft; refuses a changed draft
   analyze-record <envelope> [--fresh-baseline]
                                     validate and record an analysis outcome; the
                                     first record sets the baseline
@@ -230,6 +232,11 @@ def main(argv):
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_profile_record(repo, Path.cwd())
+        elif command == "amendment-check":
+            positional, flags = parse_flags(rest, command, value_flags=("--sha256",))
+            if len(positional) != 1:
+                die_usage("amendment-check needs exactly one <draft>")
+            result = commands.cmd_amendment_check(positional[0], flags.get("--sha256"))
         elif command == "analyze-record":
             positional, flags = parse_flags(
                 rest, command, bool_flags=("--fresh-baseline",)

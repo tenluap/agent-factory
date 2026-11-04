@@ -72,7 +72,7 @@ description: "Task list for 019-analyze-remediation-targets"
 
 **Goal**: a tested hash check for amendment drafts. **Independent test**: `amendment-check` over temp drafts.
 
-- [ ] T008 [US4] Add `cmd_amendment_check` to `core/skills/factory/bin/factory_cli/commands.py` and `amendment-check <draft> [--sha256 <hex>]` dispatch and USAGE to `core/skills/factory/bin/factory_cli/cli.py`; tests in `tools/tests/test_analyze_record.py`.
+- [X] T008 [US4] Add `cmd_amendment_check` to `core/skills/factory/bin/factory_cli/commands.py` and `amendment-check <draft> [--sha256 <hex>]` dispatch and USAGE to `core/skills/factory/bin/factory_cli/cli.py`; tests in `tools/tests/test_analyze_record.py`.
   - Seam: `bin/factory amendment-check`. Failure paths: missing draft exits 1; changed draft (hash mismatch) exits 1; constitution file byte-identical after each.
   - Red: subprocess tests first: prints `{"draft", "sha256"}` with the lower-case hex SHA-256 of the file bytes; matching `--sha256` exits 0; missing draft exits 1 naming the path; a draft edited after hashing exits 1 naming approved and current hashes; `.specify/memory/constitution.md` in the temp repo is byte-identical after each call. USAGE is updated in Implement and not asserted (no usage-refusal failure path is declared). Run; fails (unknown command).
   - Implement: `hashlib.sha256` over the file bytes; read-only; reuse `die` for exits; add the command to USAGE.
