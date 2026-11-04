@@ -106,7 +106,7 @@ None: every unit extends an existing command and test module.
   - Exempt: `core/skills/factory/SKILL.md` step 7 - documentation only.
   - Done: `git grep -n 'increment `review.fix_rounds`' core/` prints nothing; `--round`, `relay/`, `checkpoint fix --next review` and the `review.fix_rounds` cap read appear in step 7 (SC-002).
 
-- [ ] T011 Final verification (depends on T001-T010): run the build command, `python3 -m unittest discover -s tools`, and `test -z "$(git ls-files -- dist/)"` (FR-020, FR-021, SC-006). Walk `quickstart.md`.
+- [x] T011 Final verification (depends on T001-T010): run the build command, `python3 -m unittest discover -s tools`, and `test -z "$(git ls-files -- dist/)"` (FR-020, FR-021, SC-006). Walk `quickstart.md`.
   - Exempt: verification only, no file change.
   - Done: all three commands exit 0.
 
