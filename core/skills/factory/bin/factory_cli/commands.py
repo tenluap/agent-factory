@@ -386,14 +386,15 @@ def read_config():
         return {}
 
 
-def cmd_budget(role):
+def cmd_budget(role, full=False):
     """The role's resolved budget and derived deadline (FR-001); a missing or
     malformed config falls back to the default and never fails."""
-    seconds = budget.resolve(role, read_config())
+    seconds = budget.resolve(role, read_config(), full=full)
     return {
         "role": role,
         "seconds": seconds,
         "deadline": budget.deadline_for(seconds),
+        "full": full,
     }
 
 

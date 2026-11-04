@@ -114,6 +114,20 @@ def int_or_usage(value, flag):
         die_usage(f"{flag} needs an integer")
 
 
+def review_full(flags):
+    if "--round" in flags and "--full" in flags:
+        raise CLIError(2, "--round and --full are mutually exclusive")
+    if "--round" in flags:
+        try:
+            number = int(flags["--round"])
+        except ValueError:
+            raise CLIError(2, "--round needs a positive integer")
+        if number <= 0:
+            raise CLIError(2, "--round needs a positive integer")
+        return number == 1
+    return bool(flags.get("--full"))
+
+
 def json_or_usage(value, flag):
     try:
         return json.loads(value)
@@ -335,10 +349,12 @@ def main(argv):
                 partial_return=bool(flags.get("--partial-return")),
             )
         elif command == "budget":
-            positional, flags = parse_flags(rest, command)
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--round"), bool_flags=("--full",)
+            )
             if len(positional) != 1:
                 die_usage("budget needs exactly one <role>")
-            result = commands.cmd_budget(positional[0])
+            result = commands.cmd_budget(positional[0], full=review_full(flags))
         elif command == "improvements":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--from", "--run")

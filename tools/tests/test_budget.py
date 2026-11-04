@@ -56,6 +56,44 @@ class BudgetCommandTests(unittest.TestCase):
     def cli(self, *args):
         return self.box.cli("budget", *args)
 
+    def test_full_review_budgets_and_validation(self):
+        for flags, seconds, full in (
+            (("--round", "1"), 600, True),
+            (("--full",), 600, True),
+            (("--round", "2"), 300, False),
+        ):
+            out = self.cli("spec-conformance", *flags)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(
+                (json.loads(out.stdout)["seconds"], json.loads(out.stdout)["full"]),
+                (seconds, full),
+            )
+        for config, expected in (
+            ({"budget": {"review_full_s": 900}}, 900),
+            ({"budget": {"roles": {"spec-conformance": 1200}}}, 1200),
+            ({"budget": {"review_full_s": "x"}}, 600),
+            ({"budget": {"review_full_s": 0}}, 600),
+            ({"budget": {"review_full_s": -5}}, 600),
+            ({}, 600),
+            ([], 600),
+        ):
+            self.config.write_text(json.dumps(config))
+            out = self.cli("spec-conformance", "--round", "1")
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(json.loads(out.stdout)["seconds"], expected)
+        for role, flags in (
+            ("review-judge", ("--round", "1")),
+            ("code-build", ("--full",)),
+        ):
+            self.assertEqual(json.loads(self.cli(role, *flags).stdout)["seconds"], 300)
+        for flags in (
+            ("--round", "0"),
+            ("--round", "-1"),
+            ("--round", "x"),
+            ("--round", "1", "--full"),
+        ):
+            self.assertEqual(self.cli("spec-conformance", *flags).returncode, 2)
+
     def test_reports_role_seconds_and_absolute_deadline(self):
         self.config.write_text(json.dumps({"budget": {"roles": {"code-build": 240}}}))
         out = self.cli("code-build")

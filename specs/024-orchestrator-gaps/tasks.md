@@ -82,7 +82,7 @@ None: every unit extends an existing command and test module.
 **Goal**: full-diff reviewer spawns resolve `review_full_s` (default 600) for both budget read and overrun detection.
 **Independent test**: `ResolutionTests`, `BudgetCommandTests` and `OverrunDetectionTests` pass.
 
-- [ ] T007 [US4] `budget <role> [--round n | --full]`, in `core/skills/factory/bin/factory_cli/budget.py` (`REVIEWER_ROLES`, `resolve(role, config, full=False)`), `commands.py` `cmd_budget` and `cli.py`; tests in `tools/tests/test_budget.py`.
+- [x] T007 [US4] `budget <role> [--round n | --full]`, in `core/skills/factory/bin/factory_cli/budget.py` (`REVIEWER_ROLES`, `resolve(role, config, full=False)`), `commands.py` `cmd_budget` and `cli.py`; tests in `tools/tests/test_budget.py`.
   - Seam: S3 `factory budget <role> [--round n | --full]`. Failure paths: S3(a) missing or malformed `review_full_s` / config falls back to 600 without failure; S3(b) non-positive or non-integer `--round` exits 2.
   - Red: tests first: `budget spec-conformance --round 1` gives 600 and `"full": true`; `--full` same; `--round 2` gives 300 and `"full": false`; `review_full_s: 900` gives 900; role override 1200 with `--round 1` gives 1200 (never below normal); `review-judge --round 1` and `code-build --full` resolve as today (FR-014, FR-015); S3(a) `review_full_s` of `"x"`, `0`, `-5`, absent, and a non-dict config each give 600, exit 0; S3(b) `--round 0`, `--round -1`, `--round x` exit 2; `--round 1 --full` together exits 2 (contract). Run; flags unknown.
   - Implement: `REVIEWER_ROLES` = the five reviewer roles; `resolve` returns `max(normal, review_full_s if positive int else 600)` when `full` and role is a reviewer; `--round 1` or `--full` set `full`; output adds `"full"` (FR-013, FR-017).
