@@ -2,19 +2,19 @@
 
 **Branch**: `020-post-pr-feedback` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; settled decisions Q1-Q9 in `factory/brief.md`.
+**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; settled decisions Q1-Q19 (grill, clarify, grill-with-docs); terms in `CONTEXT.md`; ADR 0014.
 
 ## Summary
 
-Add `factory feedback [<branch>]`: a manual, read-only refresh of every archived run of the current repository that has a `pr_url`. It reads PR state and failed checks with `gh pr view` and change requests with `gh api .../reviews`, through one injectable runner. New outcomes are merged into a per-run sidecar `${FACTORY_HOME}/outcomes/<repo-name>-<branch>.json`, and actionable ones become `feedback` entries in the existing improvement backlog. Fetch problems become classified `gaps`; nothing is written for that run and the command exits 1. A `/factory feedback` route runs it and shows the result. Phase 0/1 outputs (decisions, data model, CLI contract, validation) live in this plan, following the 016/017 precedent.
+Add `factory feedback [<branch>] [--repo <path>]` and a `/factory feedback` route: a manual, read-only feedback refresh of the repository's archived runs with a `pr_url`, through one injectable `gh` runner. New PR outcomes go into a per-run outcome file `${FACTORY_HOME}/outcomes/<repo-name>-<branch>.json`; actionable ones become feedback entries for their source run. Problems become classified refresh gaps (`gaps`); exit 1. Phase 0/1 outputs live here (016/017 precedent).
 
 ## Technical Context
 
 **Language/Version**: Python 3 standard library; Markdown skill prose.
 
-**Primary Dependencies**: none new. `gh` (already used by the PR step) is invoked as an external process.
+**Primary Dependencies**: none new; `gh` (already used by the PR step) as an external process.
 
-**Storage**: JSON files in the factory home: `outcomes/<repo-name>-<branch>.json` (new), `improvements/*.json` (new `feedback` kind). The run archive is read only.
+**Storage**: factory-home JSON: `outcomes/` (new), `improvements/` (new `feedback` kind); archive read only.
 
 **Testing**: `python3 -m unittest discover -s tools` (existing runner, `tools/tests/`).
 
@@ -22,19 +22,19 @@ Add `factory feedback [<branch>]`: a manual, read-only refresh of every archived
 
 **Project Type**: CLI plus agent skill prose.
 
-**Performance Goals**: bounded by archived runs with a `pr_url`; two `gh` reads per non-terminal run, sequential.
+**Performance Goals**: two sequential `gh` reads per non-terminal run.
 
-**Constraints**: read-only toward GitHub and the archive (FR-003, FR-006); no automatic retries (FR-013); harness-neutral core (constitution II).
+**Constraints**: read-only toward GitHub and the archive; no automatic retries; harness-neutral core.
 
 **Scale/Scope**: tens of archived runs per repository.
 
 ## Constitution Check
 
 - **I. Design First**: PASS. `DESIGN.md` gains the feedback refresh in the first task, before core edits.
-- **II. Harness-Neutral Core**: PASS. The route uses `SHELL: python3 <F>/bin/factory feedback`; `gh` is called only by the CLI, like `factory_sha` calls `git`. No adapter change.
-- **III. Generated Dist**: PASS. No `render.py` change; the build command re-renders all five harnesses.
-- **IV. Stateless Agents**: PASS. No agent is spawned; results live on disk.
-- **V. Simplicity and Reuse**: PASS. Reuses `improvements._write_atomic`, `backlog_name`, `factory_sha`, the home-level lock wait, `commands.main_repo`/`factory_home`, `state.parse_iso`/`iso`. New file, abstractions and fields are reasoned below.
+- **II. Harness-Neutral Core**: PASS. The route uses `SHELL` only; `gh` is called by the CLI, as `factory_sha` calls `git`.
+- **III. Generated Dist**: PASS. No `render.py` change; the build re-renders all harnesses.
+- **IV. Stateless Agents**: PASS. No agent spawned.
+- **V. Simplicity and Reuse**: PASS. Reuses `_write_atomic`, `backlog_name`, `factory_sha`, the lock wait, `main_repo`/`factory_home`, `parse_iso`/`iso`; new code is reasoned below.
 
 Post-design re-check: PASS, no violations.
 
@@ -48,27 +48,28 @@ core/skills/factory/bin/factory_cli/
 └── cli.py             # `feedback [<branch>]` dispatch, USAGE, exit 1 on gaps
 core/skills/factory/SKILL.md             # `feedback` route + argument-hint
 core/skills/factory/references/state.md  # CLI section: feedback command
-DESIGN.md, CONTEXT.md                    # design record, glossary terms
+DESIGN.md, CONTEXT.md                    # design record, limitations; `evidence` type per kind
 tools/tests/test_feedback.py             # NEW
+tools/tests/test_improvements.py         # feedback entry tests
 ```
 
-**Structure Decision**: a new `feedback.py` module rather than a section of `commands.py` (over 1500 lines of run-state commands) or `improvements.py` (backlog only). The refresh is one concern with its own external integration and error policy; backlog writes stay in `improvements.py`, their single owner (ENG-6, ENG-13).
+**Structure Decision**: a new `feedback.py`, not `commands.py` (1500+ lines of run-state commands) or `improvements.py` (backlog only, still the single owner of backlog writes; ENG-6, ENG-13).
 
 ### New files, abstractions, dependencies
 
 - `core/skills/factory/bin/factory_cli/feedback.py` - file - GitHub reads, gap classification and the outcome file have no existing home; keeps `gh` out of run-state and backlog code.
-- `tools/tests/test_feedback.py` - file - tests for the new seams; `gh` responses are inline dict fixtures, no fixture files.
+- `tools/tests/test_feedback.py` - file - tests for the new seams; inline `gh` fixtures.
 - `feedback.run_gh(args) -> (returncode, stdout, stderr)` - abstraction - the single injectable GitHub runner (Q9, FR-014).
 - `feedback.Gap(cls, reason)` - abstraction - one exception carrying a gap class, so every failure point maps to `gaps` the same way.
-- `improvements.add_feedback(home, run, items, now=None)` - abstraction - feedback upsert rules (one entry per run and key, append to `ready`, never touch `claimed`) differ from retro `add` (cap, cross-run cover).
+- `improvements.add_feedback(home, run, items, now=None)` - abstraction - per-run upsert rules differ from retro `add` (cap, cross-run cover).
 - Dependencies: none.
 
 ## Design
 
 ### Discovery (FR-002)
 
-- Archived runs: `${FACTORY_HOME}/archive/*/state.json` whose `repo` resolves to `commands.main_repo(cwd)` and whose `pr_url` is a non-empty string. Unreadable archive states are skipped, as `list_backlogs` skips unreadable files.
-- `<branch>` narrows to one run; no matching archived run, or one without `pr_url`: exit 1 naming the reason, nothing written.
+- Archived runs: `archive/*/state.json` whose `repo` equals `commands.main_repo(<--repo or cwd>)` (Q18) and whose `pr_url` is a non-empty string. An unreadable archive state is `skipped` with its reason, not a gap.
+- `<branch>` narrows to one run. No such archived run, or no `pr_url`: `ValueError` before any `gh` call; CLI exit 1, nothing written, not a gap (Q12).
 - Outcome file name: `improvements.backlog_name(repo, branch)` under `outcomes/`, matching the archive's `<repo-name>-<branch>`.
 - A run whose outcome file holds `state:merged` or `state:closed` is listed under `skipped` and not fetched.
 
@@ -76,7 +77,7 @@ tools/tests/test_feedback.py             # NEW
 
 - `pr_url` must match `https://<host>/<owner>/<repo>/pull/<n>` (host, owner and repo limited to `[A-Za-z0-9_.-]`); otherwise gap `missing`, "unparseable pr_url". Arguments go to the runner as a list, never through a shell.
 - Read 1: `gh pr view <pr_url> --json state,mergedAt,closedAt,headRefOid,statusCheckRollup,url`.
-- Read 2: `gh api --hostname <host> --paginate repos/<owner>/<repo>/pulls/<n>/reviews --jq '.[] | {id, state, submitted_at, html_url, user: .user.login}'`, one JSON object per line. REST gives the numeric review id and its `html_url`, which `gh pr view --json reviews` lacks.
+- Read 2: `gh api --hostname <host> --paginate repos/<owner>/<repo>/pulls/<n>/reviews --jq '.[] | {id, state, submitted_at, html_url, user: .user.login}'`, one JSON object per line (REST has the numeric id and `html_url`).
 - Default runner: `subprocess.run(["gh", *args], capture_output=True, text=True, timeout=60)`. Nothing reads or stores credentials.
 
 ### Gap classification (FR-012)
@@ -86,23 +87,24 @@ tools/tests/test_feedback.py             # NEW
 | runner raises `OSError` (`gh` not installed) | `inaccessible` |
 | exit 4, or stderr names `gh auth login` or `HTTP 401` | `inaccessible` |
 | stderr `Could not resolve to a PullRequest` or `HTTP 404` | `missing` |
-| stderr `Could not resolve to a Repository`, `HTTP 403` or `Resource not accessible` | `inaccessible` (GitHub hides private repositories as unresolvable) |
+| stderr `Could not resolve to a Repository`, `HTTP 403` or `Resource not accessible` | `inaccessible` |
 | `subprocess.TimeoutExpired`, any other non-zero exit | `transient` |
-| unparseable JSON or wrong shape (`state` not `OPEN`/`CLOSED`/`MERGED`, `headRefOid` not hex, non-list rollup, review without integer `id` or string `state`/`user`) | `transient` |
+| unparseable JSON or wrong shape (`state` not `OPEN`/`CLOSED`/`MERGED`, `headRefOid` not hex, non-list rollup, a review that is not an object with a string `state`, a `CHANGES_REQUESTED` review without an integer `id`) | `transient` |
 | existing outcome file unreadable or malformed | `inaccessible`, file kept |
-| backlog entry at the target name unreadable or owned by another run | `inaccessible` |
-| outcome or backlog lock still held after the 5 s wait | `transient` |
+| backlog entry at the target name unreadable or owned by another run | `inaccessible`, both files kept |
+| outcome or backlog lock still held after the 5 s wait | `transient`, both files kept |
+| outcome-file write fails after the backlog write | `transient`, backlog links kept |
 
-Each gap is `{run, pr_url, class, reason}`; `reason` carries the first stderr line or the exception text. No retry (FR-013).
+Each gap is `{run, pr_url, class, reason}`; `reason` is the first stderr line or exception text.
 
 ### Outcome capture (FR-004, FR-005)
 
 - Check runs: `conclusion` in `FAILURE`, `TIMED_OUT`, `STARTUP_FAILURE`; id `check:<name>@<headRefOid>`, `event_at` = `completedAt`, `url` = `detailsUrl`.
 - Status contexts: `state` `FAILURE` only (`ERROR`, `PENDING`, `SUCCESS` ignored per FR-004's "every other conclusion"); name = `context`, `event_at` = `startedAt`, `url` = `targetUrl`.
-- Two runs of one check on one head commit share an id: the first in response order is kept (observed on PR 15: two `test` runs from push and pull_request workflows).
-- Reviews: `state` `CHANGES_REQUESTED`; id `review:<id>`, `event_at` = `submitted_at`, `url` = `html_url`, `detail` `{reviewer}`.
+- Two runs of one check on one head commit share an id; the first in response order is kept.
+- Reviews: `state` `CHANGES_REQUESTED`; id `review:<id>`, `event_at` = `submitted_at`, `url` = `html_url`, `detail` `{reviewer}`. A null login (deleted account) is stored as `ghost`; other reviews need no `id` (Q13).
 - PR state: `MERGED` gives `state:merged` (`mergedAt`); `CLOSED` gives `state:closed` (`closedAt`).
-- Missing times or links are stored as `null`/`""`, never invented. Values are lowercased conclusions; names keep GitHub's text.
+- Missing times or links are stored as `null`/`""`, never invented. Conclusions lowercased; names verbatim.
 
 ### Data model
 
@@ -127,13 +129,14 @@ Feedback entry (`improvements/<repo-name>-<branch>.<repo-hash>.feedback.<kind>.<
 
 - Keys: `ci-failure:<slug(name)>`, `changes-requested:<slug(login)>`, `pr-closed:unmerged`; `state:merged` maps to nothing. Slug: lowercase, runs outside `[a-z0-9-]` become one `-`, trimmed, at most 64 characters, `unnamed` when empty.
 - Templates: `Prevent factory PRs failing CI check '<name>' (seen on run <branch>)`; `Address the changes <reviewer> requests on factory PRs (seen on run <branch>)`; `Find why factory PRs are closed without merging (seen on run <branch>)`. Untrusted names are reduced to one printable line, at most 100 characters, before templating.
-- `add_feedback`: create a `ready` entry when absent; on `ready`, append links not already present (empty links skipped); on `claimed`, leave untouched and report it. No cap, no cross-run cover. Result `{created, updated, claimed}`.
+- `add_feedback`: create a `ready` entry when absent; on `ready`, append new non-empty links; on `claimed`, leave untouched and report it. Result `{created, updated, claimed}`.
+- `evidence` is a list here and a string on Retro entries; `CONTEXT.md` and `DESIGN.md` state the type per kind.
 
 ### Write order and integrity (FR-006, FR-009, FR-010, ENG-26)
 
-Per run: read the outcome file (no lock) for the terminal check and to compute new outcomes; fetch; on success, `add_feedback` for new actionable outcomes under the backlog lock; then, under the outcomes lock, re-read, append ids not yet stored with `recorded_at` = now, and write atomically when anything changed. A backlog failure leaves both files untouched. An outcome-write failure after the backlog succeeded repeats the same new outcomes next refresh, and `add_feedback` is idempotent for them. A concurrent refresh never loses records: each write re-reads under its lock. The archive is opened read-only.
+Per run (FR-010, Q10): read the outcome file unlocked for the terminal skip; fetch; take the outcomes lock, re-read and compute unstored ids; `add_feedback` under the nested backlog lock; then append the new outcomes (`recorded_at` = now) and write atomically. Lock order is always outcomes then backlog; retro `add` and `claim` take only the backlog lock, so no deadlock. A lock timeout or refused backlog entry writes nothing. A failed outcome write after the backlog write is a `transient` gap: links stay, and the next refresh re-sees the ids while `add_feedback` skips present links. The archive is opened read-only.
 
-`_acquire_backlog_lock` becomes `_acquire_home_lock(directory, harness)`, shared by the backlog and outcome writes.
+`_acquire_backlog_lock` becomes `_acquire_home_lock(directory, harness)` for both writes. `feedback.py` imports `_write_atomic` by name, so a test can fail the outcome write alone.
 
 ### CLI contract (FR-013)
 
@@ -142,37 +145,41 @@ Per run: read the outcome file (no lock) for the terminal check and to compute n
 ```json
 {"refreshed": [{"run": "...", "pr_url": "...", "new_outcomes": [...],
   "backlog": {"created": [], "updated": [], "claimed": []}}],
- "skipped": [{"run": "...", "reason": "terminal outcome recorded"}],
+ "skipped": [{"run": "...", "reason": "terminal outcome recorded | unreadable archive state"}],
  "gaps": [{"run": "...", "pr_url": "...", "class": "transient", "reason": "..."}]}
 ```
 
-Exit 0 without gaps (zero runs included), 1 with any gap or a refused `<branch>`, 5 usage.
+Exit 0 without gaps (zero runs included), 1 with any gap or a refused `<branch>`, 2 when `--repo` is not a git repository (`main_repo`), 5 usage. `--repo` uses the existing `value_flags` convention.
 
 ### Route (FR-001)
 
-`SKILL.md` step 0: `feedback [<branch>]` runs `SHELL: python3 <F>/bin/factory feedback [<branch>]`, shows each refreshed run's new outcomes and backlog changes, skipped runs and every gap with class and reason, then stops. No other route refreshes.
+`SKILL.md` step 0: `feedback [<branch>]` runs `SHELL: python3 <F>/bin/factory feedback [<branch>]`, shows new outcomes, backlog changes, skipped runs and every gap with class and reason, then stops. No other route refreshes. The `improve` route also shows each entry's `kind` and `signal_key` (US3 AS7).
 
 ### Quality constraints
 
-- Security: untrusted GitHub text is never executed; it is validated, slugged for keys and file names, and reduced to one line for feature text. `pr_url` parts are pattern-checked; `gh` gets argument lists. No credentials stored or logged.
-- Errors and limits: 60 s timeout per `gh` call; a failed run never stops the others. ENG-24's retry guidance yields to FR-013: refresh is manual, so the user re-runs.
-- Compatibility: Run exports and Retro entries unchanged (FR-011); retro `add` already filters `kind: retro`.
+- Security: untrusted GitHub text is validated, slugged for keys and file names, one-lined for feature text, never executed; `gh` gets argument lists. No credentials stored or logged.
+- Errors and limits: 60 s timeout per `gh` call; a failed run never stops the others. No retry (FR-013 over ENG-24): the user re-runs.
+- Compatibility: Run exports and Retro entries unchanged; retro `add` filters `kind: retro`.
 - Observability: the JSON report is the record; no logs.
+- Known limitations, recorded in `DESIGN.md`: a reopened PR is missed after `state:closed` (ADR 0014); `ERROR` status contexts are ignored (Q4); moved checkouts' runs are not found.
 
 ## Test seams
 
-- Seam: `factory_cli.feedback.refresh(home, repo, branch=None, gh=run_gh, now=None)` with an injected fake runner - discovery, `<branch>` narrowing, terminal skip, capture and ignore rules, ids, dedup across refreshes, new-commit outcome, archive byte-identical, other runs refreshed beside a gap. Failure paths: `gh` missing -> inaccessible; unauthenticated -> inaccessible; PR not found -> missing; no access -> inaccessible; transient error (5xx/network/timeout) -> transient; malformed JSON from either read -> transient; unparseable `pr_url` -> missing; malformed existing outcome file -> inaccessible, file unchanged; lock held past the wait -> transient. Each: nothing written for that run, earlier outcomes and entries intact.
+Injection: a fake runner passed as `gh`; bad files, foreign entries and held locks (`lock.acquire`) planted in a temporary factory home; the outcome-file write failed by patching `factory_cli.feedback._write_atomic` to raise `OSError`.
+
+- Seam: `factory_cli.feedback.refresh(home, repo, branch=None, gh=run_gh, now=None)` - discovery, narrowing, terminal skip, capture/ignore rules, null login as `ghost`, ids, dedup, new-commit outcome, archive byte-identical, other runs refreshed beside a gap. Failure paths: `gh` missing -> inaccessible; unauthenticated -> inaccessible; PR not found -> missing; no access -> inaccessible; transient error (5xx/network/timeout) -> transient; malformed JSON or shape from either read (including a review not an object with a string `state`, or a `CHANGES_REQUESTED` review without an integer `id`) -> transient; unparseable `pr_url` -> missing; malformed existing outcome file -> inaccessible; foreign or unreadable backlog file at the entry name -> inaccessible; outcomes lock held past the wait -> transient; backlog lock held past the wait -> transient; each writing nothing for that run and keeping earlier outcomes and entries. Outcome-file write failing after the backlog write -> transient, backlog links kept, next refresh stores the outcomes with no duplicate link. `<branch>` naming no archived run, or a run without `pr_url` -> `ValueError`, runner never called, nothing written. Unreadable archive state -> listed under `skipped`, not a gap.
 - Seam: `factory_cli.improvements` feedback entries (`add_feedback`, `list_backlogs`, `claim`) - create, append to `ready`, untouched `claimed`, one entry per run per key, separate runs, merged not actionable, listing shows `kind`/`signal_key`/`suggested_feature`, Run export and Retro regressions. Failure paths: unreadable or foreign file at the entry name -> refused, not overwritten; backlog lock held past the wait -> refused, nothing written.
-- Seam: `bin/factory feedback [<branch>]` CLI with a fake `gh` executable on `PATH` (exercises the default `run_gh`) - JSON shape, exit 0 with no gaps and with zero runs. Failure paths: unknown `<branch>` -> exit 1, nothing written; `<branch>` without `pr_url` -> exit 1, nothing written; `gh` not on `PATH` -> inaccessible gap, exit 1; fake `gh` failing with a server error -> transient gap, exit 1.
+- Seam: `bin/factory feedback [<branch>] [--repo <path>]` CLI with a fake `gh` executable on `PATH` (exercises the default `run_gh`) - JSON shape with `refreshed`/`skipped`/`gaps`, exit 0 with no gaps and with zero runs, `--repo` selects that repository's runs from another directory. Failure paths: unknown `<branch>` -> exit 1, not a gap, nothing written; `<branch>` without `pr_url` -> exit 1, not a gap, nothing written; `--repo` not a git repository -> exit 2, nothing written; `gh` not on `PATH` -> inaccessible gap, exit 1; fake `gh` failing with a server error -> transient gap, exit 1.
 - Exempt: `DESIGN.md`, `CONTEXT.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md` - documentation only; rendering is verified by the build command.
+- Exempt: final verification task - runs the build and test commands, changes no file.
 - Overridden: none
 
-Confirmed: 2026-11-04 - Q1 accepted - seams: `factory_cli.feedback.refresh`, `factory_cli.improvements` feedback entries (`add_feedback`, `list_backlogs`, `claim`), `bin/factory feedback [<branch>]` CLI; failure paths: `refresh` -> `gh` missing inaccessible, unauthenticated inaccessible, PR not found missing, no access inaccessible, transient error (5xx/network/timeout) transient, malformed JSON from either read transient, unparseable `pr_url` missing, malformed existing outcome file inaccessible with file unchanged, lock held past the wait transient, each writing nothing for that run and keeping earlier outcomes and entries; `improvements` -> unreadable or foreign file at the entry name refused and not overwritten, backlog lock held past the wait refused with nothing written; CLI -> unknown `<branch>` exit 1 nothing written, `<branch>` without `pr_url` exit 1 nothing written, `gh` not on `PATH` inaccessible gap exit 1, fake `gh` server error transient gap exit 1.
+Confirmation: pending. The plan-Q1 acceptance (2026-11-04) is stale: clarify Q11, Q13 and Q14 changed the declared scope. Fresh acceptance is requested as Q20.
 
 ## Verification
 
 - `python3 -m unittest discover -s tools` and the build command (all five harnesses render, `dist/` untracked, `bash -n install.sh`).
-- Manual smoke, read-only: with a real archived run, `factory feedback <branch>` twice; the second run reports no new outcomes and changes no files.
+- Manual read-only smoke: `factory feedback <branch>` twice on a real archived run; the second reports nothing new and changes no files.
 
 ## Complexity Tracking
 
