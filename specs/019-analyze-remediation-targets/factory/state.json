@@ -526,6 +526,18 @@
       "duration_ms": 125000,
       "started_at": "2026-11-04T02:02:00Z",
       "ended_at": "2026-11-04T02:04:05Z"
+    },
+    {
+      "at": "2026-11-04T07:39:14.079678Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "claude-code",
+      "in_est": 15000,
+      "out_est": 900,
+      "reported": null,
+      "duration_ms": 20233000,
+      "started_at": "2026-11-04T02:02:00Z",
+      "ended_at": "2026-11-04T07:39:13Z"
     }
   ],
   "issues": [
@@ -560,6 +572,17 @@
       "detail": "review-judge ran 463s past its 300s budget without a self-report",
       "duration_ms": 463000,
       "commit": "e8beb84",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-04T07:39:14.080187Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "security-reviewer",
+      "cause": "unreported",
+      "detail": "security-reviewer ran 20233s past its 300s budget without a self-report",
+      "duration_ms": 20233000,
+      "commit": "a3199ba",
       "partial_return": false
     }
   ],
