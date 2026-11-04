@@ -99,7 +99,7 @@ Stage order, by `mode.chain`. Full: `specify`, `clarify`, `grill-with-docs`, `pl
 
 After `analyze`, save the returned envelope to a file and run `python3 <F>/bin/factory analyze-record <envelope>` before checkpointing. This records the report and severity counts through the state writer; the first record also sets `analyze.baseline` (ADR 0014). Then:
 
-- Any CRITICAL or HIGH, and no `-full.md` report in `analyze.reports` yet: **escalate** — set `mode.chain` to `full`, then continue the full chain: run `clarify` (with the latest analyze report as context), `grill-with-docs`, then re-run `plan` and `tasks` (decisions settled since they were first derived), then `analyze`, whose report is written to `factory/analyze-<n>-full.md`. Escalation runs at most once per run, consumes no repair cycle and leaves `pass` and `loops` unchanged (FR-013).
+- On the lite chain (`mode.chain` is `lite`), any CRITICAL or HIGH, and no `-full.md` report in `analyze.reports` yet: **escalate** — set `mode.chain` to `full`, then continue the full chain: run `clarify` (with the latest analyze report as context), `grill-with-docs`, then re-run `plan` and `tasks` (decisions settled since they were first derived), then `analyze`, whose report is written to `factory/analyze-<n>-full.md`. Escalation runs at most once per run, consumes no repair cycle and leaves `pass` and `loops` unchanged (FR-013).
 - Otherwise, try `SHELL: python3 <F>/bin/factory checkpoint analyze --next implement`. Allowed: go to step 6.
 - Refused: read `SHELL: python3 <F>/bin/factory show`, never the refusal text, and route in this order (FR-024):
   1. Open `pending_clarify`, or an unanswered `requires_user` question: run `clarify` or wait on the relay. No cycle is charged (FR-007).

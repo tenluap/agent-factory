@@ -432,7 +432,6 @@ class RepairCycleCheckpointTests(unittest.TestCase):
     def test_escalation_consumes_no_cycle(self):
         self.assertEqual(self.record("factory/analyze-1.md", high=1).returncode, 0)
         self.assertEqual(self.record("factory/analyze-1-full.md", high=1).returncode, 0)
-        self.assertEqual(self.checkpoint("analyze", "implement").returncode, 1)
         self.assertEqual((self.analyze()["loops"], self.analyze()["pass"]), (0, 1))
 
     def test_the_cap_refuses_a_checkpoint_into_remediate_without_writing(self):

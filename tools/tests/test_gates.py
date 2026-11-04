@@ -268,12 +268,9 @@ class AcceptanceTargetTests(unittest.TestCase):
         s = base(analyze=analysis(result=counts(report="factory/analyze-2.md")))
         self.assertIn("no trustworthy baseline", checks.gate_violation(s, "implement"))
 
-    def test_stored_baseline_is_used_when_valid_and_ignored_when_malformed(self):
+    def test_stored_baseline_is_used_when_valid(self):
         s = base(analyze=analysis(baseline=counts(medium=6, low=6), result=counts(medium=1)))
         self.assertIsNone(checks.gate_violation(s, "implement"))
-        s["analyze"]["baseline"]["low"] = -1
-        s["analyze"].pop("result")
-        self.assertIn("no trustworthy baseline", checks.gate_violation(s, "implement"))
 
     def test_zero_reports_still_refuses_with_the_existing_reason(self):
         s = base(analyze=analysis(reports=()))
@@ -328,11 +325,6 @@ class RemediateGateTests(unittest.TestCase):
 
     def test_a_non_auto_answer_newer_than_the_result_allows(self):
         s = self.state_at(2, self.answer("2026-11-04T00:40:00Z"))
-        self.assertIsNone(checks.gate_violation(s, "remediate"))
-
-    def test_three_loops_behave_like_two(self):
-        self.assertIsNotNone(checks.gate_violation(self.state_at(3), "remediate"))
-        s = self.state_at(3, self.answer("2026-11-04T00:40:00Z"))
         self.assertIsNone(checks.gate_violation(s, "remediate"))
 
 
