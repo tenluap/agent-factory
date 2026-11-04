@@ -32,7 +32,7 @@ None: every unit extends an existing command and test module.
 **Goal**: `review.round` and `review.fix_rounds` need no hand edit.
 **Independent test**: `python3 -m unittest tools.tests.test_commands -v` passes the new checkpoint tests.
 
-- [ ] T002 [US1] `checkpoint review` derives `review.round` and returns the `review` object, in `core/skills/factory/bin/factory_cli/commands.py` `cmd_checkpoint`; tests in `tools/tests/test_commands.py` (new class `ReviewCounterTests`).
+- [x] T002 [US1] `checkpoint review` derives `review.round` and returns the `review` object, in `core/skills/factory/bin/factory_cli/commands.py` `cmd_checkpoint`; tests in `tools/tests/test_commands.py` (new class `ReviewCounterTests`).
   - Seam: S1 `factory checkpoint review|fix`. Failure path: S1(b) no `round-<n>/verdict.json` present leaves `review.round` unchanged.
   - Red: tests first: run at stage `review` with `reviews/round-1/verdict.json` and `round-2/verdict.json` written under `<worktree>/<spec_dir>/factory/` gives `review.round == 2` and result `review == {"round": 2, "fix_rounds": 0}`; stored round 3 with only `round-2` stays 3; no verdict folder (S1(b)) keeps the stored value; `round-x` folders ignored. Run; fails on the missing derivation.
   - Implement: when `stage == "review"` and the run has a worktree, inside `mutate` set `review.round = max(current, highest n)` over `round-<n>/verdict.json` (integer `n` only); add `"review": {"round", "fix_rounds"}` to the result for `review` and `fix`, including the commit-failure return (FR-001, FR-004).

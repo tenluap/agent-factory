@@ -848,6 +848,36 @@ class CheckpointStagingTests(unittest.TestCase):
         self.assertIn("docs/bare.md", json.loads(out.stdout)["declared"])
 
 
+class ReviewCounterTests(unittest.TestCase):
+    def test_review_round_uses_highest_verdict_without_decreasing(self):
+        for current, folders, expected in (
+            (0, ("1", "2", "x"), 2),
+            (3, ("2",), 3),
+            (2, (), 2),
+        ):
+            with self.subTest(current=current, folders=folders):
+                box = Sandbox()
+                self.addCleanup(box.close)
+                run = v4_state(stage="review")
+                run["review"]["round"] = current
+                wt = box.worktree_run("071-review", run)
+                root = wt / "specs/071-review/factory"
+                for suffix in folders:
+                    verdict = root / "reviews" / f"round-{suffix}" / "verdict.json"
+                    verdict.parent.mkdir(parents=True)
+                    verdict.write_text("{}")
+                out = box.cli("checkpoint", "review", "--next", "fix", cwd=wt)
+                self.assertEqual(out.returncode, 0, out.stderr)
+                self.assertEqual(
+                    json.loads(out.stdout)["review"],
+                    {"round": expected, "fix_rounds": 0},
+                )
+                self.assertEqual(
+                    json.loads((root / "state.json").read_text())["review"]["round"],
+                    expected,
+                )
+
+
 class CheckpointCommitFailureTests(unittest.TestCase):
     """FR-011: a checkpoint whose git commit fails after the state write
     exits 1 with 'state written, commit failed: <reason>', its JSON carrying
