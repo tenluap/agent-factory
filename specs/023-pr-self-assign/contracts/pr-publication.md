@@ -5,7 +5,7 @@
 Step 9 keeps its item numbers; only items 3, 4 and 8 change.
 
 - **Item 3 - publish (lookup-then-create)**:
-  1. Branch PR lookup: `gh pr list --head <branch> --state open --json url,assignees`. Found: reuse its `url`, skip creation. Failed: halt with the lookup error as halt reason.
+  1. Branch PR lookup: `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository`. Found: an entry whose `isCrossRepository` is false; reuse its `url`, skip creation. None: no such entry (`[]` or fork entries only). Failed: halt with the lookup error as halt reason, and never create. A fork's PR is never reused.
   2. None: `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file> --assignee @me`, ready for review.
   3. After a `gh pr create` error, repeat the Branch PR lookup before any retry. Found: reuse. Failed: halt with the lookup error. None: retry creation once; after a second error and a lookup still finding none, halt with the creation error. No URL is recorded on any halt.
   4. After a successful creation, repeat the Branch PR lookup once to read its assignees. Found: use its assignees for item 4. Any other outcome (none or failed) keeps the URL `gh pr create` printed and counts as an assignment problem; this lookup never creates, retries or halts.
@@ -20,10 +20,15 @@ Step 9 keeps its item numbers; only items 3, 4 and 8 change.
 | Element | Present when |
 |---------|--------------|
 | `self-assign` | a section line contains `gh pr create` and `--assignee @me` |
-| `lookup-before-create` | the section contains `gh pr list --head <branch> --state open --json url,assignees` before its first `gh pr create` |
-| `lookup-after-error` | one section line contains all four literals `gh pr create`, `error`, `Branch PR lookup` and `retry` |
+| `lookup-before-create` | the section contains `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository` before its first `gh pr create` |
+| `lookup-failure-never-creates` | the section contains `halt per Policies (Halt) with the lookup error as the reason, and never create` |
+| `same-repo-lookup` | the section contains `` `isCrossRepository` is false `` |
+| `lookup-after-error` | one section line contains `After a `gh pr create` error, repeat the Branch PR lookup before any retry` |
+| `bounded-retry` | the section contains `retry creation once` |
+| `no-url-on-halt` | the section contains `No URL is recorded on any halt.` |
+| `assignment-non-blocking` | the section contains `Continue: never halt,` |
 | `assignment-report` | the item 8 line (the section line matching `^\s*8\.\s`) contains `NOTIFY` and `assignment problem` |
 | `no-ask` | no match of the whole-word regular expression `\bASK\b` in the section |
-| `resume-rule` | the state.md Resume line starting `` - `pr`: `` contains `step 9` and `Branch PR lookup` and not `gh pr view` |
+| `resume-rule` | the state.md Resume line starting `` - `pr`: `` contains `restart SKILL.md step 9 from item 1` and `Branch PR lookup reuses an existing open PR`, and not `gh pr view` |
 
-Injected failure paths: for each element, a copy of the real core text with that element's marker removed (or, for `no-ask`, an `ASK` line inserted into the section) makes `pr_contract_gaps` return exactly that element's name.
+Injected failure paths: for each element, a copy of the real core text with that element's marker removed or reversed (for `no-ask`, an `ASK` line inserted into the section) makes `pr_contract_gaps` return exactly that element's name. The reversed-meaning copies are `and never create` to `and create anyway` (`lookup-failure-never-creates`), `` `isCrossRepository` is false `` to `` `isCrossRepository` is true `` (`same-repo-lookup`), `retry creation once` to `retry creation until it succeeds` (`bounded-retry`), `No URL is recorded on any halt.` to `Record the URL on any halt.` (`no-url-on-halt`), `Continue: never halt,` to `Halt the run;` (`assignment-non-blocking`), `repeat the Branch PR lookup before any retry` to `retry creation before any Branch PR lookup` (`lookup-after-error`), and `restart SKILL.md step 9 from item 1` to `skip SKILL.md step 9` in the state.md `pr` line (`resume-rule`).

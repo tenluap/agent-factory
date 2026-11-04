@@ -4,7 +4,7 @@ No persisted data changes: `state.json` schema, status, issue-kind and history-e
 
 ## Branch PR
 
-The open pull request whose head is the run's branch, read from `gh pr list --head <branch> --state open --json url,assignees`.
+The open pull request whose head is the run's branch, read from `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository`. Only an entry whose `isCrossRepository` is false (same repository) is a Branch PR; a fork's PR with the same head name is never reused.
 
 - `url` (string): recorded through the existing `set-status pr-open --pr-url <url>`.
 - `assignees` (list of `{ login }`): read for the assignment check only.

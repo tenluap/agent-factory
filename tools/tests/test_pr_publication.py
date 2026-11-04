@@ -20,8 +20,9 @@ def pr_section(skill_text):
     return match.group(1) if match else ""
 
 
-LOOKUP = "gh pr list --head <branch> --state open --json url,assignees"
-AFTER_ERROR_LITERALS = ("gh pr create", "error", "Branch PR lookup", "retry")
+LOOKUP = "gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository"
+AFTER_ERROR_CLAUSE = "After a `gh pr create` error, repeat the Branch PR lookup before any retry"
+RESUME_CLAUSES = ("restart SKILL.md step 9 from item 1", "Branch PR lookup reuses an existing open PR")
 REVERTED_RESUME = "- `pr`: check `gh pr view <branch>` first; an existing PR only needs its URL recorded."
 
 
@@ -38,10 +39,18 @@ def pr_contract_gaps(skill_text, state_text):
     lookup_at = section.find(LOOKUP)
     if not 0 <= lookup_at < create_at:
         gaps.append("lookup-before-create")
-    if not any(
-        all(literal in line for literal in AFTER_ERROR_LITERALS) for line in lines
-    ):
+    if "halt per Policies (Halt) with the lookup error as the reason, and never create" not in section:
+        gaps.append("lookup-failure-never-creates")
+    if "`isCrossRepository` is false" not in section:
+        gaps.append("same-repo-lookup")
+    if not any(AFTER_ERROR_CLAUSE in line for line in lines):
         gaps.append("lookup-after-error")
+    if "retry creation once" not in section:
+        gaps.append("bounded-retry")
+    if "No URL is recorded on any halt." not in section:
+        gaps.append("no-url-on-halt")
+    if "Continue: never halt," not in section:
+        gaps.append("assignment-non-blocking")
     item8 = next((line for line in lines if re.match(r"^\s*8\.\s", line)), "")
     if not ("NOTIFY" in item8 and "assignment problem" in item8):
         gaps.append("assignment-report")
@@ -51,7 +60,7 @@ def pr_contract_gaps(skill_text, state_text):
         (line.strip() for line in state_text.splitlines() if line.strip().startswith("- `pr`:")),
         "",
     )
-    if not ("step 9" in resume and "Branch PR lookup" in resume and "gh pr view" not in resume):
+    if not (all(clause in resume for clause in RESUME_CLAUSES) and "gh pr view" not in resume):
         gaps.append("resume-rule")
     return gaps
 
@@ -117,6 +126,63 @@ class PrPublicationContractTests(unittest.TestCase):
             lambda m: m.group(1) + REVERTED_RESUME,
             self.state,
             count=1,
+        )
+        self.assertEqual(pr_contract_gaps(self.skill, mutated), ["resume-rule"])
+
+    def test_failed_lookup_that_creates_reports_lookup_failure_never_creates(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace("and never create", "and create anyway"),
+        )
+        self.assertEqual(
+            pr_contract_gaps(mutated, self.state), ["lookup-failure-never-creates"]
+        )
+
+    def test_fork_lookup_reuse_reports_same_repo_lookup(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace("`isCrossRepository` is false", "`isCrossRepository` is true"),
+        )
+        self.assertEqual(pr_contract_gaps(mutated, self.state), ["same-repo-lookup"])
+
+    def test_retry_until_success_reports_bounded_retry(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace("retry creation once", "retry creation until it succeeds"),
+        )
+        self.assertEqual(pr_contract_gaps(mutated, self.state), ["bounded-retry"])
+
+    def test_url_recorded_on_halt_reports_no_url_on_halt(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace(
+                "No URL is recorded on any halt.", "Record the URL on any halt."
+            ),
+        )
+        self.assertEqual(pr_contract_gaps(mutated, self.state), ["no-url-on-halt"])
+
+    def test_assignment_halt_reports_assignment_non_blocking(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace("Continue: never halt,", "Halt the run;"),
+        )
+        self.assertEqual(
+            pr_contract_gaps(mutated, self.state), ["assignment-non-blocking"]
+        )
+
+    def test_reversed_after_error_order_reports_lookup_after_error(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: s.replace(
+                "repeat the Branch PR lookup before any retry",
+                "retry creation before any Branch PR lookup",
+            ),
+        )
+        self.assertEqual(pr_contract_gaps(mutated, self.state), ["lookup-after-error"])
+
+    def test_resume_pr_skipping_step_9_reports_resume_rule(self):
+        mutated = self.state.replace(
+            "restart SKILL.md step 9 from item 1", "skip SKILL.md step 9"
         )
         self.assertEqual(pr_contract_gaps(self.skill, mutated), ["resume-rule"])
 

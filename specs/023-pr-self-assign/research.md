@@ -10,7 +10,7 @@ No `NEEDS CLARIFICATION` remained after grilling (Q1-Q7). The decisions below fi
 
 ## R2 - Branch PR lookup command
 
-- **Decision**: `gh pr list --head <branch> --state open --json url,assignees`. Exit 0 with `[]` means no open Branch PR; exit 0 with entries means reuse the first entry; a non-zero exit is a lookup failure.
+- **Decision**: `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository`. Exit 0 with no entry whose `isCrossRepository` is false (`[]` or fork entries only) means no open Branch PR; exit 0 with a same-repository entry means reuse the first such entry; a non-zero exit is a lookup failure. The `--base` scope and the fork filter stop a same-named fork PR from being reused (SEC-1).
 - **Rationale**: The brief named `gh pr view <branch> --json url,assignees`. `gh pr view <branch>` exits non-zero both when no PR exists and when GitHub is unreachable, so it cannot satisfy FR-007 (never treat an unanswered lookup as "no PR"), and it can return a closed or merged PR, which the spec's edge case says must not be reused. `gh pr list ... --state open` separates the three outcomes by exit code and output and returns open PRs only. The intent of the settled answer (look up URL and assignees before and after creation) is unchanged.
 - **Alternatives**: `gh pr view` plus stderr parsing (brittle, locale- and version-dependent); `gh api` GraphQL query (more text, same result).
 
