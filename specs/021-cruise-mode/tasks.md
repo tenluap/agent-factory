@@ -79,7 +79,7 @@ description: "Task list for 021-cruise-mode"
 
 - [X] T012 [P] [US1] Edit `core/roles/spec-builder.md` and `core/roles/spec-conformance.md`: Confirmed line form `Confirmed: <date> - <Qid> accepted (cruise override) - seams: ...; failure paths: ...` is valid acceptance when the answer carries `cruise_override`. Exempt: both files - documentation only. Done: both roles accept and name the form.
 
-- [ ] T013 [P] [US5] Add one `no_prompt_launch` bullet to each of `adapters/claude-code/harness.md`, `adapters/codex/harness.md`, `adapters/copilot/harness.md`, `adapters/opencode/harness.md`, `adapters/zcode/harness.md`, each verified against that harness's documentation (`WEB_FETCH`) when written; unverifiable is written as "none documented" (FR-021). Exempt: `adapters/*/harness.md` - documentation only. Done: all five files carry the bullet; candidates from plan.md used only where verified.
+- [X] T013 [P] [US5] Add one `no_prompt_launch` bullet to each of `adapters/claude-code/harness.md`, `adapters/codex/harness.md`, `adapters/copilot/harness.md`, `adapters/opencode/harness.md`, `adapters/zcode/harness.md`, each verified against that harness's documentation (`WEB_FETCH`) when written; unverifiable is written as "none documented" (FR-021). Exempt: `adapters/*/harness.md` - documentation only. Done: all five files carry the bullet; candidates from plan.md used only where verified.
 
 ## Phase 7: Polish and verification
 

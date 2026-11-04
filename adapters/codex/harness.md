@@ -22,6 +22,7 @@
 
 ## Notes
 
+- `no_prompt_launch`: `codex --dangerously-bypass-approvals-and-sandbox` (alias `--yolo`) runs every command without approvals or sandboxing (Codex CLI reference). Use only inside an externally sandboxed environment; launch-time only.
 - Main agent (`mode: primary`): unsupported; Codex custom agents are subagents only. Ask your session to spawn `factory_<role_>` instead.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are TOML files in `~/.codex/agents/` (`factory_<role>.toml`). Subagents inherit the session's sandbox and approval policy, so read-only roles are read-only by instruction. The session needs write access to the worktree and network for `git push` and `gh`.
