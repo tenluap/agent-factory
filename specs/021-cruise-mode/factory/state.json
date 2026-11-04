@@ -69,6 +69,14 @@
       "summary": "Plan Q1: protected test-seam confirmation",
       "answered_at": "2026-11-04T00:51:07.614187Z",
       "latency_ms": 156241
+    },
+    {
+      "at": "2026-11-04T02:57:14.403968Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approver gate: cruise mode run 021 ready for Approve / Request changes / Abort",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
