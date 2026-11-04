@@ -134,6 +134,14 @@
       "auto": false,
       "at": "2026-11-04T00:18:00.586800Z",
       "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "ESC1",
+      "answer": "escalate lite->full: pass 1 has HIGH=1; mode.chain has no CLI writer, so state still reads lite",
+      "auto": false,
+      "at": "2026-11-04T00:24:19.164262Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
