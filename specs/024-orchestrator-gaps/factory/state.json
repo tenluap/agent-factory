@@ -17,7 +17,20 @@
     "fast": true,
     "cruise": true
   },
-  "skills": {},
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "speckit-constitution": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-constitution/SKILL.md",
+    "grilling": "/Users/tenluap/.config/opencode/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.config/opencode/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.config/opencode/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.config/opencode/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.config/opencode/skills/tdd/SKILL.md"
+  },
   "relay": null,
   "timeline": [],
   "decisions": [
@@ -269,5 +282,9 @@
     "notes": [],
     "detected_at": "2026-11-04T21:59:58.260907Z",
     "detected_by": "factory detect 017"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
   }
 }
