@@ -18,7 +18,26 @@
     "cruise": true
   },
   "skills": {},
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A",
+            "at": "2026-11-04T22:07:08.745185Z",
+            "auto": true,
+            "cruise_override": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
