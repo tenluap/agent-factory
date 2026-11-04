@@ -86,7 +86,7 @@ Exempt: `DESIGN.md` benchmark bullet - documentation only (constitution I)
 
 Overridden: none
 
-Confirmation: pending explicit acceptance of the complete scope above (relay question Q1).
+Confirmed: 2026-11-04 - Q1 accepted - seams: `bench.py run` CLI, `bench.py score` CLI, `bench.checkout_provenance(path)`; failure paths: `bench.py run` CLI -> isolated install fails, harness exits non-zero, harness `--version` fails, installed factory absent, selected harness executable missing, `--from-checkout` with `--home`; `bench.py score` CLI -> no `provenance.json`, malformed `provenance.json`, provenance repo mismatch, unreadable state; `bench.checkout_provenance(path)` -> not a git repository. Accepted scope snapshot: `specs/018-live-conformance/factory/relay/plan-Q1.md`.
 
 ## Project Structure
 
