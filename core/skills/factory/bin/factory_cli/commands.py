@@ -961,8 +961,13 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
     }
 
 
-def cmd_analyze_record(repo, cwd, envelope):
-    """Persist a validated analysis result without bypassing transition gates."""
+def cmd_analyze_record(repo, cwd, envelope, fresh_baseline=False):
+    """Persist a validated analysis result without bypassing transition gates.
+
+    The first record sets `analyze.baseline` (or the derived one of a legacy
+    run is stored); later records never move it. `fresh_baseline` replaces it
+    only when none is stored or derivable (FR-012).
+    """
     path, loaded, source, worktree = resolve_target(repo, cwd)
     block = read_envelope(envelope)
     problems = checks.block_problems(block, "envelope")
@@ -999,6 +1004,20 @@ def cmd_analyze_record(repo, cwd, envelope):
 
     def mutate(s):
         analyze = dict(s.get("analyze") or {})
+        prior = checks.analyze_baseline(analyze)
+        new_baseline = {**counts, "report": normalized, "at": recorded_at}
+        if fresh_baseline:
+            if prior is not None:
+                die(
+                    1,
+                    "--fresh-baseline refused: the run already has a stored or "
+                    "derivable baseline",
+                )
+            analyze["baseline"] = new_baseline
+        elif prior is not None and analyze.get("baseline") is None:
+            analyze["baseline"] = dict(prior)
+        elif prior is None and not analyze.get("reports"):
+            analyze["baseline"] = new_baseline
         reports = list(analyze.get("reports") or [])
         if normalized not in reports:
             reports.append(normalized)

@@ -30,7 +30,9 @@ write (the single writer; each stamps its time, validates, writes atomically):
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
-  analyze-record <envelope>         validate and record an analysis outcome
+  analyze-record <envelope> [--fresh-baseline]
+                                    validate and record an analysis outcome; the
+                                    first record sets the baseline
   profile-record                    detect the repo and record the profile into
                                     the one writable run; discloses a changed stack
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
@@ -229,11 +231,18 @@ def main(argv):
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_profile_record(repo, Path.cwd())
         elif command == "analyze-record":
-            positional, flags = parse_flags(rest, command)
+            positional, flags = parse_flags(
+                rest, command, bool_flags=("--fresh-baseline",)
+            )
             if len(positional) != 1:
                 die_usage("analyze-record needs exactly one <envelope>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
-            result = commands.cmd_analyze_record(repo, Path.cwd(), positional[0])
+            result = commands.cmd_analyze_record(
+                repo,
+                Path.cwd(),
+                positional[0],
+                fresh_baseline=bool(flags.get("--fresh-baseline")),
+            )
         elif command == "ledger-add":
             positional, flags = parse_flags(
                 rest,

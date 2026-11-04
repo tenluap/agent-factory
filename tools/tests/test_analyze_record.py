@@ -215,3 +215,138 @@ class AnalyzeBaselineValidationTests(unittest.TestCase):
 
     def test_empty_report_is_located_at_report(self):
         self.assertEqual(self.locations(self.with_baseline(report="")), ["analyze.baseline.report"])
+
+
+class AnalyzeBaselineRecordTests(unittest.TestCase):
+    """`analyze-record` sets the baseline once and keeps it (FR-001..FR-003, FR-010, FR-012)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "096-baseline"
+        state = fixture("state-v4.json")
+        state.update(stage="analyze", relay=None)
+        state["analyze"] = {
+            "pass": 1,
+            "loops": 0,
+            "reports": [],
+            "remediations": [],
+            "pending_clarify": [],
+        }
+        self.wt = self.box.worktree_run(self.branch, state)
+        self.spec = self.wt / "specs" / self.branch
+        self.state_path = self.spec / "factory" / "state.json"
+        for name in ("analyze-1.md", "analyze-2.md", "analyze-1-full.md"):
+            (self.spec / "factory" / name).write_text("# Analysis\n")
+
+    def load(self):
+        return json.loads(self.state_path.read_text())
+
+    def record(self, report, fresh=False, **counts):
+        block = {
+            "status": "done",
+            "stage": "analyze",
+            "summary": "Analysis",
+            "files": [],
+            "questions": [],
+            "error": None,
+            "analyze": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                **counts,
+                "report": report,
+            },
+        }
+        path = self.box.write_temp(f"analysis-{report.replace('/', '_')}.json", json.dumps(block))
+        args = ["analyze-record", path] + (["--fresh-baseline"] if fresh else [])
+        return self.box.cli(*args, cwd=self.wt)
+
+    def legacy_state(self, reports):
+        """A pre-019 run: no baseline, `result` names the report when exactly one exists."""
+        def mutate(s):
+            s["analyze"] = {
+                "pass": 1,
+                "loops": 0,
+                "reports": reports,
+                "remediations": [],
+                "pending_clarify": [],
+                "result": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 4,
+                    "low": 0,
+                    "report": "factory/analyze-1.md",
+                    "at": "2026-11-04T00:00:00Z",
+                },
+            }
+        self.box.corrupt_worktree_state(self.branch, mutate)
+
+    def test_first_record_sets_the_baseline_to_its_counts_and_time(self):
+        self.assertEqual(self.record("factory/analyze-1.md", medium=2, low=1).returncode, 0)
+        analyze = self.load()["analyze"]
+        self.assertEqual(
+            analyze["baseline"],
+            {
+                "critical": 0,
+                "high": 0,
+                "medium": 2,
+                "low": 1,
+                "report": "factory/analyze-1.md",
+                "at": analyze["result"]["at"],
+            },
+        )
+
+    def test_later_record_changes_only_result_and_reports(self):
+        self.record("factory/analyze-1.md", medium=2, low=1)
+        before = self.load()["analyze"]["baseline"]
+        self.assertEqual(self.record("factory/analyze-2.md", medium=0).returncode, 0)
+        analyze = self.load()["analyze"]
+        self.assertEqual(analyze["baseline"], before)
+        self.assertEqual(analyze["result"]["report"], "factory/analyze-2.md")
+        self.assertEqual(analyze["reports"], ["factory/analyze-1.md", "factory/analyze-2.md"])
+
+    def test_legacy_single_report_derives_the_baseline_on_the_next_record(self):
+        self.legacy_state(["factory/analyze-1.md"])
+        self.assertEqual(self.record("factory/analyze-2.md", medium=1).returncode, 0)
+        baseline = self.load()["analyze"]["baseline"]
+        self.assertEqual(baseline["report"], "factory/analyze-1.md")
+        self.assertEqual(baseline["medium"], 4)
+
+    def test_legacy_two_reports_without_baseline_stay_without_baseline(self):
+        self.legacy_state(["factory/analyze-1.md", "factory/analyze-1-full.md"])
+        self.assertEqual(self.record("factory/analyze-2.md", medium=1).returncode, 0)
+        self.assertNotIn("baseline", self.load()["analyze"])
+
+    def test_fresh_baseline_on_an_underivable_state_sets_the_new_record(self):
+        self.legacy_state(["factory/analyze-1.md", "factory/analyze-1-full.md"])
+        out = self.record("factory/analyze-2.md", fresh=True, medium=3)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.load()["analyze"]["baseline"]["report"], "factory/analyze-2.md")
+        self.assertEqual(self.load()["analyze"]["baseline"]["medium"], 3)
+
+    def assert_fresh_refused_unchanged(self):
+        before = self.state_path.read_bytes()
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        out = self.record("factory/analyze-2.md", fresh=True, medium=0)
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(self.state_path.read_bytes(), before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_fresh_baseline_refused_with_a_stored_baseline(self):
+        self.record("factory/analyze-1.md", medium=2)
+        self.assert_fresh_refused_unchanged()
+
+    def test_fresh_baseline_refused_with_a_derivable_baseline(self):
+        self.legacy_state(["factory/analyze-1.md"])
+        self.assert_fresh_refused_unchanged()
+
+    def test_escalation_record_keeps_baseline_loops_and_pass(self):
+        self.record("factory/analyze-1.md", medium=2)
+        before = self.load()["analyze"]
+        self.assertEqual(self.record("factory/analyze-1-full.md", high=1).returncode, 0)
+        after = self.load()["analyze"]
+        self.assertEqual(after["baseline"], before["baseline"])
+        self.assertEqual((after["loops"], after["pass"]), (0, 1))
+        self.assertEqual(after["result"]["report"], "factory/analyze-1-full.md")
