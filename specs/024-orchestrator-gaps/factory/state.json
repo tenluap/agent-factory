@@ -313,6 +313,27 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T23:15:49.318197Z",
+      "stage": "implement",
+      "event": "verify-pass",
+      "commit": null,
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh",
+          "status": "pass"
+        },
+        {
+          "command": "python3 -m unittest discover -s tools",
+          "status": "pass"
+        },
+        {
+          "command": "test -z \"$(git ls-files -- dist/)\"",
+          "status": "pass"
+        }
+      ]
     }
   ],
   "models": {
