@@ -15,7 +15,7 @@ description: "Task list for 018-live-conformance"
 
 ## Phase 1: Setup
 
-- [ ] T001 Update the "Benchmark" bullet in `DESIGN.md` (section "Time budget, issues, improvement backlog, benchmark"): `run` options `--model` (forwarded as `claude --model` / `opencode run -m`) and `--from-checkout` (isolated `install.sh` render under the output directory; exclusive with `--home`); the scoped Claude Code grant (`--add-dir` output directory plus skill directory in use; `--allowedTools Read Edit Write Agent Skill Bash(git:*) Bash(python3:*) Bash(<skill_dir>/bin/factory:*)`; never a bypass mode); `provenance.json` written before launch; `score` entries carry `provenance` or a missing marker without changing `pass`. Exempt: `DESIGN.md` benchmark bullet - documentation only (constitution I: lands before the `tools/bench.py` changes). Done: the bullet names every item above.
+- [X] T001 Update the "Benchmark" bullet in `DESIGN.md` (section "Time budget, issues, improvement backlog, benchmark"): `run` options `--model` (forwarded as `claude --model` / `opencode run -m`) and `--from-checkout` (isolated `install.sh` render under the output directory; exclusive with `--home`); the scoped Claude Code grant (`--add-dir` output directory plus skill directory in use; `--allowedTools Read Edit Write Agent Skill Bash(git:*) Bash(python3:*) Bash(<skill_dir>/bin/factory:*)`; never a bypass mode); `provenance.json` written before launch; `score` entries carry `provenance` or a missing marker without changing `pass`. Exempt: `DESIGN.md` benchmark bullet - documentation only (constitution I: lands before the `tools/bench.py` changes). Done: the bullet names every item above.
 
 ## Phase 2: Foundational
 
