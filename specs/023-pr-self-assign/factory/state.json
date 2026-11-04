@@ -39,9 +39,27 @@
   "analyze": {
     "pass": 1,
     "loops": 0,
-    "reports": [],
+    "reports": [
+      "factory/analyze-1.md"
+    ],
     "remediations": [],
-    "pending_clarify": []
+    "pending_clarify": [],
+    "baseline": {
+      "critical": 0,
+      "high": 0,
+      "medium": 3,
+      "low": 4,
+      "report": "factory/analyze-1.md",
+      "at": "2026-11-04T17:12:16.482579Z"
+    },
+    "result": {
+      "critical": 0,
+      "high": 0,
+      "medium": 3,
+      "low": 4,
+      "report": "factory/analyze-1.md",
+      "at": "2026-11-04T17:12:16.482579Z"
+    }
   },
   "relay": null,
   "timeline": [],
