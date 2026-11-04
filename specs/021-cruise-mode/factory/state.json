@@ -9,7 +9,7 @@
   "branch": "021-cruise-mode",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
   "spec_dir": "specs/021-cruise-mode",
-  "status": "running",
+  "status": "waiting_user",
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
