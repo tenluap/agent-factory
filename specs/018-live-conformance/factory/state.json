@@ -347,6 +347,18 @@
       "duration_ms": 68000,
       "started_at": "2026-11-04T08:00:30Z",
       "ended_at": "2026-11-04T08:01:38Z"
+    },
+    {
+      "at": "2026-11-04T08:04:59.469790Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "claude-code",
+      "in_est": 15000,
+      "out_est": 2000,
+      "reported": null,
+      "duration_ms": 233000,
+      "started_at": "2026-11-04T08:00:30Z",
+      "ended_at": "2026-11-04T08:04:23Z"
     }
   ],
   "issues": [
