@@ -35,11 +35,27 @@ def load_bench(name):
     return folder, json.loads((folder / "bench.json").read_text())
 
 
+def load_provenance(state):
+    """The provenance beside the state's fixture when it names the same repo; never raises."""
+    try:
+        repo = state["repo"]
+        path = Path(repo).parent / "provenance.json"
+        record = json.loads(path.read_text())
+    except FileNotFoundError:
+        return {"missing": "no provenance.json beside the fixture"}
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
+        return {"missing": f"unreadable provenance.json: {error}"}
+    if not isinstance(record, dict) or record.get("repo") != repo:
+        return {"missing": "provenance repo does not match the state repo"}
+    return record
+
+
 def score(path, acceptance):
     """A missing or malformed artifact fails by condition name, never by traceback."""
     result = {
         "state": str(path),
         "run": Path(path).stem,
+        "provenance": {"missing": "state unreadable"},
         "metrics": {
             "wall_ms": 0,
             "agent_ms": 0,
@@ -61,6 +77,7 @@ def score(path, acceptance):
         if error:
             raise ValueError(error)
         result["run"] = loaded.get("branch") or result["run"]
+        result["provenance"] = load_provenance(loaded)
         computed = totals.compute(loaded)
         metrics = result["metrics"]
         for key in ("wall_ms", "agent_ms", "human_ms", "spawns"):

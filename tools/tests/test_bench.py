@@ -523,3 +523,76 @@ class ProvenanceRunTests(unittest.TestCase):
         )
         (call,) = self.stub.calls()
         self.assertFalse(any("skills" in path for path in add_dirs(call["argv"])))
+
+
+class ScoreProvenanceTests(unittest.TestCase):
+    """`score` attaches the run's provenance without changing pass."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.dir = self.box.dir
+        self.repo = self.dir / "fixture-greet-001"
+
+    def state(self, name="run", repo=None):
+        """A copy of the passing recorded run (its verdicts sit beside state.json)."""
+        folder = self.dir / name
+        shutil.copytree(FIXTURES / "bench-pass", folder)
+        path = folder / "state.json"
+        loaded = json.loads(path.read_text())
+        loaded["repo"] = str(repo or self.repo)
+        path.write_text(json.dumps(loaded))
+        return path
+
+    def record(self, **changes):
+        body = {"version": 1, "repo": str(self.repo), "bench": "greet-001"}
+        body.update(changes)
+        return body
+
+    def score_one(self, path):
+        out = bench("score", path)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertNotIn("Traceback", out.stderr)
+        return json.loads(out.stdout)["scores"][0]
+
+    def test_matching_record_is_attached_and_pass_is_unchanged(self):
+        (self.dir / "provenance.json").write_text(json.dumps(self.record()))
+        score = self.score_one(self.state())
+        self.assertEqual(score["provenance"], self.record())
+        self.assertTrue(score["pass"])
+
+    def test_absent_malformed_or_mismatched_record_is_marked_missing(self):
+        path = self.state()
+        cases = {
+            "absent": None,
+            "malformed": "{not json",
+            "mismatched": json.dumps(self.record(repo=str(self.dir / "elsewhere"))),
+        }
+        for name, content in cases.items():
+            with self.subTest(name):
+                record = self.dir / "provenance.json"
+                if content is None:
+                    record.unlink(missing_ok=True)
+                else:
+                    record.write_text(content)
+                score = self.score_one(path)
+                self.assertIn("missing", score["provenance"])
+                self.assertTrue(score["provenance"]["missing"])
+                self.assertTrue(score["pass"])
+
+    def test_unreadable_state_is_marked_missing_alongside_failed_conditions(self):
+        out = bench("score", self.dir / "absent-state.json")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        score = json.loads(out.stdout)["scores"][0]
+        self.assertIn("missing", score["provenance"])
+        self.assertFalse(score["pass"])
+
+    def test_each_state_gets_its_own_record(self):
+        (self.dir / "provenance.json").write_text(json.dumps(self.record()))
+        with_record = self.state("with")
+        without = self.state("without", repo=self.dir / "other-repo")
+        out = bench("score", with_record, without)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        first, second = json.loads(out.stdout)["scores"]
+        self.assertEqual(first["provenance"], self.record())
+        self.assertIn("missing", second["provenance"])

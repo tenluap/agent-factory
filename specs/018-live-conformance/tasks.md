@@ -62,7 +62,7 @@ None. The stub-harness test helper is test code built inside T002's commit unit 
   - Pass: runner green.
   - Done: all cases above pass; SC-003 holds for both modes.
 
-- [ ] T006 [US4] Add `load_provenance(state)` to `tools/bench.py` and the `provenance` key to each `score` entry; tests in `ScoreTests`.
+- [X] T006 [US4] Add `load_provenance(state)` to `tools/bench.py` and the `provenance` key to each `score` entry; tests in `ScoreTests`.
   - Seam: `bench.py score` CLI (plan seam 2). Failure paths: no `provenance.json`; malformed `provenance.json`; record `repo` differs from the state's `repo`; unreadable state.
   - Red: tests first: a state whose `repo` is `<dir>/fixture-greet-001` with a matching `<dir>/provenance.json` gives that record under `provenance` and the same `pass` as before (US4-4); absent file gives `{"missing": ...}` and unchanged `pass`; malformed JSON gives `{"missing": ...}`, exit 0, no traceback; mismatched `repo` gives `{"missing": ...}`; unreadable state gives `{"missing": ...}` alongside the existing failed conditions; scoring two states, one with and one without, gives each its own value; existing `compare` test unchanged (FR-010). Run; fails (no key).
   - Implement: lookup at `Path(state["repo"]).parent / "provenance.json"` (research R6), no ancestor walk; never raises; `pass`, `metrics`, `conditions` untouched.
