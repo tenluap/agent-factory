@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/020-post-pr-feedback",
   "spec_dir": "specs/020-post-pr-feedback",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -51,57 +51,7 @@
       "at": "2026-11-04T00:37:33.811949Z"
     }
   },
-  "relay": {
-    "stage": "grill-with-docs",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q15"
-          },
-          {
-            "id": "Q16"
-          },
-          {
-            "id": "Q17"
-          },
-          {
-            "id": "Q18"
-          },
-          {
-            "id": "Q19"
-          }
-        ],
-        "answers": {
-          "Q15": {
-            "answer": "A",
-            "at": "2026-11-04T00:44:52.681169Z",
-            "auto": true
-          },
-          "Q16": {
-            "answer": "A",
-            "at": "2026-11-04T00:44:52.927479Z",
-            "auto": true
-          },
-          "Q17": {
-            "answer": "A",
-            "at": "2026-11-04T00:44:53.186049Z",
-            "auto": true
-          },
-          "Q18": {
-            "answer": "A",
-            "at": "2026-11-04T00:44:53.444489Z",
-            "auto": true
-          },
-          "Q19": {
-            "answer": "A",
-            "at": "2026-11-04T00:44:53.703739Z",
-            "auto": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:20:29.579782Z",
@@ -263,6 +213,46 @@
       "answer": "A",
       "auto": false,
       "at": "2026-11-04T00:42:46.877501Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q15",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:46:51.063220Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q16",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:46:51.063220Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q17",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:46:51.063220Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q18",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:46:51.063220Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q19",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:46:51.063220Z",
       "kind": "answer"
     }
   ],
@@ -431,6 +421,13 @@
     {
       "at": "2026-11-04T00:42:46.877501Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:46:51.063220Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"

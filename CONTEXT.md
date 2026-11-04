@@ -111,7 +111,7 @@ One append-only record of a single thing that went wrong in a factory run: an ov
 _Avoid_: finding, bug, incident
 
 **Improvement backlog**:
-The factory home's set of `ready` or claimed improvement entries, of two kinds: Run exports and Retro entries.
+The factory home's set of `ready` or claimed improvement entries, of three kinds: Run exports, Retro entries and Feedback entries.
 _Avoid_: issue list, pending improvements
 
 **Run export**:
@@ -138,6 +138,10 @@ _Avoid_: suggestion, recommendation
 An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence, suggested feature and source run.
 _Avoid_: retro export, retro backlog
 
+**Source run**:
+The ended factory run an improvement backlog entry or a PR outcome belongs to.
+_Avoid_: originating run, parent run
+
 **Run folder**:
 The `specs/<branch>/factory/` directory of run artifacts (state, brief, reports, findings and design evidence), committed on the feature branch while the run is in progress.
 _Avoid_: factory dir, run dir
@@ -153,6 +157,32 @@ _Avoid_: cleanup, purge
 **Permanent design evidence**:
 Pen design evidence after the drop, living at `docs/design/<branch>/` and referenced by `docs/design-code-map.json`.
 _Avoid_: design archive, design folder
+
+## Post-PR feedback
+
+**Feedback refresh**:
+The user-started, read-only reading of archived runs' PRs on GitHub that records their PR outcomes; it never writes to GitHub, merges or deploys.
+_Avoid_: sync, poll, PR check
+
+**PR outcome**:
+One meaningful GitHub event on a source run's PR (a failed check, a change request, or the PR merged or closed unmerged), identified by its outcome id.
+_Avoid_: outcome record, PR event, result
+
+**Outcome id**:
+The stable identity of a PR outcome, built from its kind and GitHub's own identity for the event, so a re-seen event is the same PR outcome.
+_Avoid_: outcome key, event id
+
+**Outcome file**:
+The per-run file in the factory home, beside the run archive, holding that run's PR outcomes.
+_Avoid_: outcome store, PR log
+
+**Feedback entry**:
+An improvement backlog entry made from actionable PR outcomes: one per source run and signal key, carrying evidence links and suggested feature text.
+_Avoid_: PR entry, CI entry, feedback candidate
+
+**Refresh gap**:
+A run the feedback refresh could not read or write, with its class (missing, inaccessible or transient) and reason; it is reported, never guessed.
+_Avoid_: error, failure, skipped run
 
 ## Skill routing
 
@@ -301,7 +331,7 @@ The replay of a pre-settled fixture feature against one factory version, stopped
 _Avoid_: perf run, regression suite, test run
 
 **Benchmark score**:
-One run's measured outcome — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
+One run's measured result — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
 _Avoid_: metrics dump, report, summary
 
 ## FACETS
