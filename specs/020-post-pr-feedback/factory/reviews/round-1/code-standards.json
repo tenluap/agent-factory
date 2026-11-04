@@ -1,0 +1,93 @@
+{
+  "reviewer": "code-standards",
+  "round": 1,
+  "summary": "The feedback refresh follows the plan's structure and commit evidence, but two declared behaviours have no asserting test and the malformed-outcome-file and outcomes-lock paths escape as crashes instead of classified gaps.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 241,
+      "summary": "The unlocked terminal check assumes the outcome file is an object of objects, so a file that parses as JSON but has the wrong shape crashes refresh with AttributeError instead of the declared inaccessible gap.",
+      "evidence": "Reproduced on the worktree code: an outcome file containing [] raises AttributeError ('list' object has no attribute 'get'); {\"outcomes\": \"x\"} and {\"outcomes\": [1]} raise the same way. _is_terminal (lines 232-241) catches only OSError and ValueError, then calls body.get and o.get; the shape check in _load_outcomes (lines 278-294) never runs. refresh only catches Gap around _store and _fetch (lines 362-373), and _is_terminal runs outside that try, so later runs are not refreshed and the command ends in a traceback. Plan seam S1 (plan.md line 170) declares 'malformed existing outcome file -> inaccessible', and spec FR-012 (spec.md line 141) requires classification with other runs still refreshing. The only malformed-file tests (test_feedback.py lines 611-613) use non-JSON text. Rule: ENG-17 (expected failures must be classified, not escape).",
+      "fix": "In _is_terminal, return False unless the parsed body is a dict whose outcomes is a list of dicts, or call _load_outcomes and treat a Gap as not terminal so _store reports the file as inaccessible. Add LocalGapTests cases for [] and {\"outcomes\": \"x\"} that assert an inaccessible gap while the healthy run still refreshes."
+    },
+    {
+      "id": "STD-2",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 320,
+      "summary": "The outcomes-lock acquire catches only lock.LockHeld, so an OSError from creating the lock file escapes refresh uncaught instead of becoming a classified gap.",
+      "evidence": "_store (lines 318-322) wraps _acquire_home_lock(directory, 'feedback') in except lock.LockHeld only. lock.acquire creates its file with os.open(O_CREAT|O_EXCL) in lock._create, which raises PermissionError when the factory home is not writable. Reproduced: with the home folder set read-only, refresh raised PermissionError on home/outcomes.lock.json and returned no report. The backlog lock path is classified because add_feedback catches (OSError, lock.LockHeld) into AddError. Spec FR-012 (spec.md line 141) requires local-file problems to be classified as gaps while other runs still refresh. Rule: ENG-17.",
+      "fix": "In _store, catch OSError alongside lock.LockHeld around the outcomes-lock acquire and raise Gap('inaccessible', ...); keep LockHeld as transient. Add a test that makes the factory home unwritable (or plants a failing lock.acquire) and asserts a gap for that run while the healthy run refreshes."
+    },
+    {
+      "id": "STD-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 23,
+      "summary": "The declared check conclusions TIMED_OUT and STARTUP_FAILURE are recorded as outcomes, but no test asserts their capture; reducing the tuple to FAILURE leaves all 43 feedback tests green.",
+      "evidence": "Mutant in a scratch copy: CHECK_FAILURES = ('FAILURE',) and python3 -m unittest tests.test_feedback reports 43 tests OK. The only TIMED_OUT use is test_same_check_on_same_head_keeps_the_first (test_feedback.py lines 203-212), which keeps the first FAILURE and passes whether or not TIMED_OUT is captured; STARTUP_FAILURE appears in no test. FR-004 (spec.md line 133) and T003 (tasks.md line 47) name both conclusions. Rule: ENG-1 (behaviour added with no asserting test).",
+      "fix": "Add CaptureTests cases, one per conclusion, asserting that a TIMED_OUT and a STARTUP_FAILURE check run are stored with kind check, id check:<name>@<head>, detail.conclusion lowercased, and the completedAt and detailsUrl values."
+    },
+    {
+      "id": "STD-4",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 225,
+      "summary": "A run whose outcome file holds state:closed should be skipped without a fetch, but no test covers the closed case; dropping state:closed from TERMINAL_IDS leaves all tests green.",
+      "evidence": "Mutant TERMINAL_IDS = ('state:merged',) in a scratch copy: 43 tests OK. test_terminal_run_is_skipped_and_not_fetched (test_feedback.py lines 323-334) seeds only a MERGED PR. Plan T005 (tasks.md line 66) and FR-002 (spec.md line 131) require both merged and closed terminal states. Rule: ENG-1.",
+      "fix": "Parametrise test_terminal_run_is_skipped_and_not_fetched over MERGED and CLOSED (pr(state='CLOSED', closedAt=...)), asserting gh.calls is empty and the skipped reason is 'terminal outcome recorded'."
+    },
+    {
+      "id": "STD-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 252,
+      "summary": "add_feedback repeats the backlog entry envelope and the own-entry scan that add already implements, so the backlog schema and ownership rule live in two writers that can drift.",
+      "evidence": "add builds its body at lines 176-190 (name, kind, run, signal_key, evidence, suggested_feature, factory_sha, status, exported_at, claimed_at); add_feedback builds the same key set at lines 252-266. Both run the same lock, glob-and-own-scan (add at line 100, add_feedback at line 218), _write_atomic, AddError and release skeleton. The shared meaning (one backlog envelope, a file at a name owned by another run is refused) is the same knowledge in both; only the cap and cover rules truly differ, and the New: line for add_feedback (commit a5ca417) states only that reason. Consequence: a change to the envelope or to the ownership refusal must be made twice, and the copies can drift (factory_sha, claimed_at, status defaults). Rule: ENG-6.",
+      "fix": "Extract a shared entry-body builder (kind, run, key, evidence, suggested_feature, now, extra fields) and an owned-entries scan keyed by kind and run, used by both add and add_feedback; keep the cap and cover logic in add."
+    },
+    {
+      "id": "STD-6",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 15,
+      "summary": "feedback.py imports commands while commands.py imports feedback, an import cycle that the plan's structure was meant to keep feedback out of run-state code.",
+      "evidence": "feedback.py line 15 imports commands, improvements, lock, state; commands.py line 17 imports budget, checks, detect, feedback, improvements, lock, state, totals. feedback uses commands only for main_repo in refresh (line 347). plan.md line 56 says commands.py is run state and line 60 says feedback.py 'keeps gh out of run-state and backlog code'. The cycle works only because a package-level from-import tolerates partially initialised modules, so import order is load-bearing. Rule: ENG-14.",
+      "fix": "Resolve the main repository in commands.cmd_feedback and pass the path into refresh, then remove feedback's import of commands."
+    },
+    {
+      "id": "1f8ef55 (T009)",
+      "severity": "low",
+      "blocking": false,
+      "summary": "T009 now spans two passing commits: ed49088 shipped a wrong empty-list check and the later commit 1f8ef55 reopens the unit with its own valid Red line, without a tasks.md change.",
+      "evidence": "ed49088 (T009) introduced body.get('outcomes') or [None] in _load_outcomes, and tasks.md checks T009 at that point. 1f8ef55 'factory(implement): T009 Accept an empty stored outcome list' changes only feedback.py and test_feedback.py, carries 'Red: LocalGapTests.test_empty_stored_outcome_list_is_not_a_malformed_file failed as expected', and leaves tasks.md alone. This is not a duplicate unit and the red proof is valid, but the unit was reopened after its checkbox was completed. Rule: ENG-3 (complete each commit unit once; preserve existing commits rather than rewriting history).",
+      "fix": "No history change. Record in the verification record that T009 spans ed49088 and 1f8ef55, and route any later fix to a completed unit through a fix commit with its own Red line, as engineering.md 'Commit units' describes."
+    },
+    {
+      "id": "50056bd (T003)",
+      "severity": "low",
+      "blocking": false,
+      "summary": "The T003 commit body has a free-text 'Red observed as ImportError' line beside its valid Red line, which reads like an extra red-proof form.",
+      "evidence": "git log -1 --format=%b 50056bd: line 1 'Red observed as ImportError: factory_cli.feedback did not exist.', line 2 'Red: CaptureTests.test_failed_check_and_change_request_are_recorded failed as expected'. engineering.md 'Red proof' accepts exactly two forms and 'no third form'. The valid Red line stands, so the proof itself is intact. Rule: ENG-2.",
+      "fix": "No history change. Future red-step bodies carry only the two accepted Red forms; any narrative belongs in the task notes."
+    },
+    {
+      "id": "STD-7",
+      "severity": "low",
+      "blocking": false,
+      "file": "CONTEXT.md",
+      "line": 333,
+      "summary": "The grill-with-docs commit rewords an existing unrelated term ('Benchmark score'), while the T002 done condition says existing terms stay unchanged.",
+      "evidence": "CONTEXT.md line 333 now reads 'One run's measured result'; commit 92a456c (grill-with-docs) changed it from 'measured outcome'. tasks.md line 36 (T002) says 'Done when both entries state the evidence type and the existing terms are unchanged.' The rename may be meant to avoid a clash with the new PR outcome term, but no plan entry records that reason.",
+      "fix": "Either restore 'measured outcome' or record the disambiguation reason in plan.md, so the T002 done condition and the glossary change agree."
+    }
+  ]
+}
