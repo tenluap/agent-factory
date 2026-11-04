@@ -1,0 +1,27 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "Scope, cruise-override acceptance, the red proofs and the five-harness render hold against the spec, but the Branch PR lookup's --base scope conflicts with spec.md's Branch PR definition and several spec artifacts still describe superseded text; none is blocking.",
+  "findings": [
+    {"id": "SPEC-1", "severity": "medium", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 159,
+     "summary": "The Branch PR lookup filters by --base <default-branch>, but spec.md defines the Branch PR as the open PR whose head is the run's branch; a same-repository PR for that head with another base is not found, so the run opens a second PR.",
+     "evidence": "spec.md:103 and :90 FR-004 vs SKILL.md:159 and contracts/pr-publication.md:8. Base scope came from fix commit 6f1a837 and is in the accepted same-repo-lookup scope.",
+     "fix": "Amend spec.md Branch PR and FR-004 to include the base, or drop --base everywhere (needs fresh scope confirmation)."},
+    {"id": "SPEC-2", "severity": "low", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 161,
+     "summary": "The reuse paths never state that the lookup's assignees feed the item 4 assignment check.",
+     "evidence": "FR-008, US3 scenario 1; SKILL.md:159, :161, :164, :165; contracts items 3.1/3.3; data-model.md:19. Carried from round 1.",
+     "fix": "On found outcomes of items 3.1 and 3.3 say 'reuse the entry's url and assignees; item 4 checks those assignees'; mirror in contract and data-model."},
+    {"id": "SPEC-3", "severity": "low", "blocking": false, "file": "specs/023-pr-self-assign/data-model.md", "line": 19,
+     "summary": "The lookup outcome table defines found as any non-empty list, contradicting the contract and SKILL.md where fork-only results are none.",
+     "evidence": "data-model.md:19 vs contracts item 3.1 and SKILL.md:159.",
+     "fix": "Change found row to 'exit 0 with an entry whose isCrossRepository is false' and none row to 'exit 0 with [] or fork entries only'."},
+    {"id": "SPEC-4", "severity": "low", "blocking": false, "file": "specs/023-pr-self-assign/spec.md", "line": 16,
+     "summary": "Superseded lookup text remains in spec.md Q2 and checked tasks T001/T003, and contract line 12 still names the literal ASK token the shipped text avoids.",
+     "evidence": "spec.md:16, tasks.md:20, :46, contracts:12, tasks T005 vs SKILL.md:165.",
+     "fix": "Add dated supersession notes and reword contracts:12 to the shipped wording. Documentation only."},
+    {"id": "SPEC-5", "severity": "low", "blocking": false, "file": "DESIGN.md", "line": 380,
+     "summary": "The PR self-assignment validation entry lists six elements with removal-only injection; the contract and test guard eleven with removed-or-reversed copies.",
+     "evidence": "DESIGN.md:380 vs contracts element table and tools/tests/test_pr_publication.py. ENG-7.",
+     "fix": "Update DESIGN.md:380 to list the eleven elements and the removed-or-reversed injection rule."}
+  ]
+}

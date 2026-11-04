@@ -1,0 +1,27 @@
+{
+  "reviewer": "code-standards",
+  "round": 2,
+  "summary": "The commit units, red proofs, exemptions and five-harness render hold, but the found-reuse outcome and the assignment check in step 9 are reversible without any test failing, and the DESIGN.md validation entry and the core text drift from the shipped test and the constitution.",
+  "findings": [
+    {"id": "STD-1", "severity": "high", "blocking": true, "file": "core/skills/factory/SKILL.md", "line": 159,
+     "summary": "The found outcomes of the Branch PR lookup (reuse and skip creation, FR-004 and FR-005) have no asserting test, so reversing them to create a PR leaves all 14 tests green.",
+     "evidence": "ENG-1. SKILL.md:159 'reuse the first such entry's url and skip creation' and :161 'Found: reuse the PR.' asserted by no element of pr_contract_gaps. Probes: ':159 and create anyway' returns []; ':161 Found: create a new PR.' returns []. Declared failure paths cover only presence of the lookup and the after-error sentence.",
+     "fix": "Orchestrator first (ENG-4): declare failure paths for the item 3.1 found outcome and the item 3.3 found outcome, obtain fresh protected confirmation, then add elements with injected reversals and Red lines."},
+    {"id": "STD-2", "severity": "high", "blocking": true, "file": "core/skills/factory/SKILL.md", "line": 165,
+     "summary": "The assignment check (item 4 login comparison and item 3.4 post-creation assignee read) has no asserting test, so deleting it leaves the suite green.",
+     "evidence": "ENG-1 with FR-008. SKILL.md:165 and :164 asserted by no element; assignment-report checks only item 8 contains NOTIFY and 'assignment problem'. Probe: deleting the item 4 comparison returns [].",
+     "fix": "Orchestrator first (ENG-4): declare failure paths for the item 4 comparison (removed, and 'not among' reversed) and the item 3.4 assignee read, obtain fresh protected confirmation, then add elements with injected copies and Red lines."},
+    {"id": "STD-3", "severity": "medium", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 159,
+     "summary": "The same-repository reuse rule is guarded only by the literal '`isCrossRepository` is false', so reversing the fork-reuse meaning while keeping that literal passes all tests.",
+     "evidence": "ENG-18/ENG-26. Probe: 'a fork's PR is reused too.' keeps the literal; result [].",
+     "fix": "Declare a failure path for the fork-reuse outcome, obtain confirmation, add a reversal copy asserting same-repo-lookup."},
+    {"id": "STD-4", "severity": "low", "blocking": false, "file": "DESIGN.md", "line": 380,
+     "summary": "DESIGN.md validation entry names six elements and removal-only injection; the test checks eleven with reversal copies.",
+     "evidence": "ENG-7, constitution Principle I.",
+     "fix": "Update DESIGN.md:380 to list the eleven elements and the removed-or-reversed rule."},
+    {"id": "STD-5", "severity": "low", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 165,
+     "summary": "Core step 9 omits DESIGN.md's rule that an assignment problem is never persisted.",
+     "evidence": "Constitution Principle I; DESIGN.md:233; FR-009.",
+     "fix": "Add to step 9 item 4: 'An assignment problem is never persisted: no state field, issue kind or history event.'"}
+  ]
+}
