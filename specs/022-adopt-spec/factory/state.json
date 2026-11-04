@@ -37,9 +37,19 @@
   "analyze": {
     "pass": 1,
     "loops": 0,
-    "reports": [],
+    "reports": [
+      "factory/analyze-1.md"
+    ],
     "remediations": [],
-    "pending_clarify": []
+    "pending_clarify": [],
+    "result": {
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 4,
+      "report": "factory/analyze-1.md",
+      "at": "2026-11-04T10:37:00.614678Z"
+    }
   },
   "relay": null,
   "timeline": [
