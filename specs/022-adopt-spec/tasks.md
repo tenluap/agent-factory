@@ -96,7 +96,7 @@ description: "Task list for 022-adopt-spec"
 
 - [x] T014 Build and neutrality check: run the build command (five harnesses into a temp `FACTORY_HOME`, `bash -n install.sh`); `git diff --stat origin/main -- tools/render.py install.sh` empty; `test -z "$(git ls-files -- dist/)"` (constitution III; FR-023, SC-006). Exempt: verification only. Done: build exits 0; both checks pass.
 
-- [ ] T015 Final verification: `python3 -m unittest discover -s tools`. Exempt: verification only. Done: all tests pass, or any failure is shown pre-existing on `origin/main` and recorded here; zero new failures (SC-004).
+- [x] T015 Final verification: `python3 -m unittest discover -s tools`. Exempt: verification only. Done: all tests pass, or any failure is shown pre-existing on `origin/main` and recorded here; zero new failures (SC-004).
 
 ## Dependencies
 
