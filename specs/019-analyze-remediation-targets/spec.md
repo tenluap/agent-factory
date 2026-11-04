@@ -8,6 +8,16 @@
 
 **Input**: User description: "Enforce Analyze remediation targets: implement the plan at `docs/superpowers/plans/2026-11-03-factory-analyze-remediation-plan.md` (retain the first analyze report as baseline, remediate in place with approved-only constitution amendments, enforce baseline-relative acceptance targets at the implementation checkpoint, allow up to two automatic repair-and-recheck cycles, pause implementation while any target is unmet)." Settled decisions Q1-Q7 are in `factory/brief.md`.
 
+## Clarifications
+
+### Session 2026-11-04
+
+- Q: Trim T003 to the confirmed test scope, or add an unparsable baseline `at` to `validate_state`? → A: Keep the plan Q1 scope; no test asserts an unparsable `at` or a `write_run` refusal (Edge Cases).
+- Q: How does the orchestrator tell implement-gate refusal causes apart? → A: It reads run state (`factory show`), never the reason text (FR-024).
+- Q: Keep the first report file when a lite run escalates and analysis runs again? → A: Yes; the escalated re-analysis writes `factory/analyze-<n>-full.md` (FR-013).
+- Q: How is "implementation waits while remediation questions are pending" enforced when no writer exists for `analyze.pending_clarify`? → A: Relay routing enforces it; the gate check is defensive only (FR-007).
+- Q: Zero reports: what does the gate say, and what does the orchestrator do? → A: Keep the existing "analyze.reports is empty" refusal; the orchestrator runs analyze unasked (FR-011).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Implementation waits for measurable improvement (Priority: P1)
@@ -44,9 +54,10 @@ The user needs a fixed reference point. The first completed analysis report's se
 1. **Given** a run with no baseline, **When** the first analyze envelope is recorded, **Then** the baseline holds its CRITICAL/HIGH/MEDIUM/LOW counts, report path and record time, and the latest result holds the same.
 2. **Given** a baseline exists, **When** a later analyze envelope is recorded, **Then** only the latest result and the report list change.
 3. **Given** a run with a baseline and consumed repair cycles, **When** the run is resumed (on the same or another harness), **Then** the baseline and the consumed cycle count are unchanged.
-4. **Given** a lite run whose first analysis has CRITICAL or HIGH findings, **When** it escalates to the full chain and analysis runs again, **Then** the baseline is still the first lite report.
+4. **Given** a lite run whose first analysis has CRITICAL or HIGH findings, **When** it escalates to the full chain and analysis runs again into `factory/analyze-<n>-full.md`, **Then** the baseline is still the first lite report, that report file is unchanged, and `analyze.pass` and `analyze.loops` are unchanged.
 5. **Given** a legacy in-progress run without a baseline whose report list has exactly one entry that the latest result names, **When** the gate or the next record needs a baseline, **Then** it is derived from that latest result.
-6. **Given** a legacy run without a baseline and with zero or several reports, or a latest result that names a different report, **When** the run reaches the checkpoint, **Then** the gate refuses with a reason saying no trustworthy baseline exists, and the orchestrator asks the user to re-run analysis as a fresh baseline, record an override, or abort.
+6. **Given** a legacy run without a baseline and with several reports, or with a latest result that names a different report, **When** the run reaches the checkpoint, **Then** the gate refuses with a reason saying no trustworthy baseline exists, and the orchestrator asks the user to re-run analysis as a fresh baseline, record an override, or abort.
+7. **Given** a run with zero reports, **When** it reaches the checkpoint, **Then** the gate keeps its existing "analyze.reports is empty" refusal and the orchestrator runs analyze without asking the user.
 
 ---
 
@@ -98,7 +109,7 @@ When a finding is best fixed by changing the project constitution, the user sees
 - The latest result is the baseline itself (no recheck yet) and the baseline is non-clean: targets are unmet, so a cycle runs.
 - An escalated run whose full-chain analysis already meets every target enters implementation without consuming a cycle.
 - Resume between a remediate and its recheck keeps the consumed cycle count; the recheck runs next and no extra cycle is charged.
-- A malformed baseline (missing or negative count) is rejected by the state writer like any other invalid analyze field.
+- A malformed baseline (a missing, negative or non-integer count, or an empty `report`) is rejected by the state writer like any other invalid analyze field. Tests cover exactly these failure paths.
 - Report markdown is never parsed to recover counts for a legacy run.
 - An amendment draft file that is missing or unreadable when the approved remediate runs: nothing is applied and a fresh approval is requested.
 
@@ -112,13 +123,13 @@ When a finding is best fixed by changing the project constitution, the user sees
 - **FR-004**: The implementation transition gate MUST refuse unless the latest result has CRITICAL == 0 and HIGH == 0.
 - **FR-005**: For each of total (CRITICAL + HIGH + MEDIUM + LOW) and LOW, the gate MUST require: when the baseline count is 0, a latest count of 0; otherwise `2 * latest < baseline`, using integer arithmetic only.
 - **FR-006**: Every finding in the latest report MUST count, including newly discovered and non-blocking findings.
-- **FR-007**: The gate MUST keep refusing while `analyze.pending_clarify` is non-empty or any `requires_user` question for the analyze loop is unanswered, regardless of counts.
+- **FR-007**: The gate MUST keep refusing while `analyze.pending_clarify` is non-empty or any `requires_user` question for the analyze loop is unanswered, regardless of counts. The orchestrator's relay routing enforces the `pending_clarify` clause: a remediate envelope's `pending_clarify` routes to `clarify`. The gate check is defensive and fires only when state carries the field, and no new state writer is added.
 - **FR-008**: Each refusal MUST name every unmet target with its baseline and latest counts, or the protected question or missing baseline that blocks.
 - **FR-009**: A recorded analyze `gate-override` decision MUST let the gate pass and MUST appear on the approver's veto list.
 - **FR-010**: When the baseline is absent, the gate and recorder MUST derive it from `analyze.result` only when `analyze.reports` has exactly one entry and `analyze.result.report` names it.
-- **FR-011**: When the baseline is absent and cannot be derived, the gate MUST refuse with a reason stating that no trustworthy baseline exists; report markdown MUST NOT be parsed for counts.
+- **FR-011**: When the baseline is absent, `analyze.reports` has one or more entries, and the baseline cannot be derived, the gate MUST refuse with a reason stating that no trustworthy baseline exists; report markdown MUST NOT be parsed for counts. With zero reports the gate keeps its existing "analyze.reports is empty" refusal, and the orchestrator runs analyze without a user question.
 - **FR-012**: For an underivable baseline the orchestrator MUST ask the user to re-run analysis as a fresh baseline, record a `gate-override`, or abort; a fresh-baseline choice makes the next recorded report the baseline.
-- **FR-013**: Lite-to-full escalation on CRITICAL or HIGH findings MUST be kept and MUST NOT consume a repair cycle.
+- **FR-013**: Lite-to-full escalation on CRITICAL or HIGH findings MUST be kept and MUST NOT consume a repair cycle. The escalated re-analysis MUST be written to `factory/analyze-<n>-full.md`, so the baseline report file is never overwritten, and it leaves `analyze.pass` and `analyze.loops` untouched. This is a prose rule in `SKILL.md` and `roles/spec-builder.md`.
 - **FR-014**: When any target is unmet and `analyze.loops < 2`, the orchestrator MUST run one repair cycle: `remediate`, increment `analyze.loops` and `analyze.pass`, then recheck (via `clarify` and `grill-with-docs` first when `pending_clarify` is non-empty). This applies on both chains and when only MEDIUM or LOW findings remain, replacing the lite "remediate once, then implement" rule and the full-chain "loops < 2 on CRITICAL/HIGH" rule.
 - **FR-015**: Remediation MUST edit `spec.md`, `plan.md`, `tasks.md` and other spec artifacts in place; it never regenerates them.
 - **FR-016**: When targets are unmet after 2 cycles, the orchestrator MUST show baseline counts, latest counts and the unmet targets, and ask one `requires_user` question with options: one more guided pass, an explicit recorded `gate-override`, or abort. Fast mode MUST NOT auto-answer it.
@@ -129,10 +140,11 @@ When a finding is best fixed by changing the project constitution, the user sees
 - **FR-021**: An applied amendment MUST be followed by the cycle's fresh analysis before the gate is evaluated.
 - **FR-022**: The rule MUST be recorded as ADR 0014 and reflected in `DESIGN.md`, `references/state.md`, `SKILL.md` step 5 and `roles/spec-builder.md`; behaviour changes live in `core/` and render cleanly for all five harnesses.
 - **FR-023**: Automated tests MUST cover every acceptance example in this spec: the 12/6 baseline, exactly-half, odd and zero baselines, new serious findings, resume preserving baseline and cycles, legacy derivation and refusal, declined or missing amendment approval, and an approved amendment followed by fresh analysis.
+- **FR-024**: After an implement-gate refusal, the orchestrator MUST classify the cause from run state (`factory show`), never from the reason text, in this order. (1) An open `pending_clarify` or an unanswered `requires_user` question routes to `clarify` or the relay wait, with no cycle charged. (2) Zero reports runs analyze (FR-011). (3) No stored `analyze.baseline` asks for a fresh baseline, an override or an abort (FR-012); `analyze-record` always stores a derivable baseline first. (4) Otherwise, unmet targets run a repair cycle when `analyze.loops < 2` (FR-014), or ask the exhaustion question (FR-016).
 
 ### Key Entities
 
-- **Baseline**: the first completed analysis of a run; four severity counts, report path, record time. Immutable after it is set, except through an explicit fresh-baseline choice.
+- **Baseline**: the first completed analysis of a run; four severity counts, report path, record time. Its report file is never overwritten. Immutable after it is set, except through an explicit fresh-baseline choice.
 - **Latest result**: the most recent recorded analysis; the same counts, path and time. Compared with the baseline at the gate.
 - **Acceptance targets**: zero CRITICAL, zero HIGH, total below half of baseline total, LOW below half of baseline LOW, and zero stays zero.
 - **Repair cycle**: one remediate plus recheck (including any clarify and grill-with-docs loop pass); counted in `analyze.loops`, capped at 2 automatic cycles per run.
