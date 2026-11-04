@@ -121,7 +121,20 @@
       "kind": "answer"
     }
   ],
-  "ledger": [],
+  "ledger": [
+    {
+      "at": "2026-11-04T17:03:29.713805Z",
+      "stage": "specify",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 6474,
+      "out_est": 3366,
+      "reported": null,
+      "duration_ms": 99000,
+      "started_at": "2026-11-04T17:01:37Z",
+      "ended_at": "2026-11-04T17:03:16Z"
+    }
+  ],
   "issues": [],
   "review": {
     "round": 0,
