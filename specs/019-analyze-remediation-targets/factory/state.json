@@ -566,6 +566,18 @@
       "duration_ms": 356000,
       "started_at": "2026-11-04T07:39:30Z",
       "ended_at": "2026-11-04T07:45:26Z"
+    },
+    {
+      "at": "2026-11-04T07:47:30.333775Z",
+      "stage": "retro",
+      "role": "retro",
+      "harness": "claude-code",
+      "in_est": 12000,
+      "out_est": 400,
+      "reported": null,
+      "duration_ms": 28000,
+      "started_at": "2026-11-04T07:47:00Z",
+      "ended_at": "2026-11-04T07:47:28Z"
     }
   ],
   "issues": [
