@@ -9,7 +9,7 @@
   "branch": "019-analyze-remediation-targets",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/019-analyze-remediation-targets",
   "spec_dir": "specs/019-analyze-remediation-targets",
-  "status": "running",
+  "status": "waiting_user",
   "stage": "clarify",
   "halt_reason": null,
   "stop_at": null,
