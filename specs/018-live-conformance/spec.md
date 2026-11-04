@@ -179,7 +179,7 @@ A maintainer opens the Claude Code and OpenCode golden-run checklists and finds 
 ## Assumptions
 
 - Only Claude Code and OpenCode have headless drivers in the benchmark run; Codex remains a manual fallback for the cross-harness leg and is not added as a driver here.
-- The Claude Code directory grant also covers the run's factory home when it lies outside the fixture, because the seeded pending state and brief live there; this stays within the run's output directory.
+- The Claude Code directory grant also covers the run's output directory, because the seeded pending state and brief (factory home) and the factory's sibling worktree live there outside the fixture; a factory home given outside the output directory is granted explicitly. The grant never reaches beyond the disposable run, apart from the factory skill directory in use.
 - "Factory CLI" means the factory state CLI invoked through Python from the installed or isolated factory; the allow-list scopes shell commands by command prefix.
 - Harness CLI versions are read from each harness executable's version output; reading a version is not a model invocation.
 - The opt-in render reuses the repository's existing render and install tooling rather than a new installer.
