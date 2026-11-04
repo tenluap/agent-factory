@@ -9,7 +9,7 @@
   "branch": "024-orchestrator-gaps",
   "spec_dir": "specs/024-orchestrator-gaps",
   "status": "running",
-  "stage": "analyze",
+  "stage": "remediate",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -215,6 +215,13 @@
     {
       "at": "2026-11-04T22:13:55.748924Z",
       "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T22:15:38.713242Z",
+      "stage": "analyze",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
