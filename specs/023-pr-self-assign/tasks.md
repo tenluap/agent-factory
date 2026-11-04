@@ -68,7 +68,7 @@ None: the test module is created by the first commit unit (T002), and no shared 
 
 ## Phase 6: Polish and verification
 
-- [ ] T006 Reconcile `specs/023-pr-self-assign/quickstart.md` with the final core text (commands, step 9 item references, SC-001..SC-003 checks, cleanup step) and run its "Automated checks" block: `python3 -m unittest tools.tests.test_pr_publication -v`, `python3 -m unittest discover -s tools`, the five-harness render plus `bash -n install.sh`, and `test -z "$(git ls-files -- dist/)"`. Exempt: `specs/023-pr-self-assign/quickstart.md` manual runbook - documentation only (live GitHub check is user-run, FR-013; agents never run it or create repositories). Done: all automated checks pass; the runbook names exactly the commands now in step 9 and state.md.
+- [x] T006 Reconcile `specs/023-pr-self-assign/quickstart.md` with the final core text (commands, step 9 item references, SC-001..SC-003 checks, cleanup step) and run its "Automated checks" block: `python3 -m unittest tools.tests.test_pr_publication -v`, `python3 -m unittest discover -s tools`, the five-harness render plus `bash -n install.sh`, and `test -z "$(git ls-files -- dist/)"`. Exempt: `specs/023-pr-self-assign/quickstart.md` manual runbook - documentation only (live GitHub check is user-run, FR-013; agents never run it or create repositories). Done: all automated checks pass; the runbook names exactly the commands now in step 9 and state.md.
 
 ## Dependencies
 
