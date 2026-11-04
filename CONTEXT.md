@@ -158,6 +158,24 @@ _Avoid_: cleanup, purge
 Pen design evidence after the drop, living at `docs/design/<branch>/` and referenced by `docs/design-code-map.json`.
 _Avoid_: design archive, design folder
 
+## Adoption
+
+**Adopted run**:
+A factory run created from a spec that factory did not start, entering at a stage no later than analyze; once created it behaves as any other run.
+_Avoid_: imported run, migrated run, takeover
+
+**Adoption source**:
+The branch or spec dir a user names for adoption, together with its shape: its own branch, a branch only on the remote, or a spec dir on the default branch.
+_Avoid_: source (also used by source run and design source), origin, input
+
+**Adoption report**:
+The read-only description of an adoption source before anything is written: its shape, uncommitted paths, inferred entry stage and any refusal.
+_Avoid_: preview, scan, dry-run output
+
+**Pre-adoption commit**:
+A commit on an adopted run's branch made before adoption. It is reviewed with the whole change but never held to the factory's own commit rules; tasks already checked at adoption are pre-adoption work in the same way.
+_Avoid_: legacy commit, foreign commit, inherited commit
+
 ## Analyze loop
 
 **Baseline analysis**:

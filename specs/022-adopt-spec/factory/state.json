@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
   "status": "running",
-  "stage": "grill-with-docs",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -52,49 +52,7 @@
       "at": "2026-11-04T10:37:00.614678Z"
     }
   },
-  "relay": {
-    "stage": "grill-with-docs",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q2"
-          },
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          },
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q2": {
-            "answer": "A",
-            "at": "2026-11-04T10:48:07.819806Z",
-            "auto": true
-          },
-          "Q3": {
-            "answer": "A",
-            "at": "2026-11-04T10:48:08.067280Z",
-            "auto": true
-          },
-          "Q4": {
-            "answer": "A",
-            "at": "2026-11-04T10:48:08.305173Z",
-            "auto": true
-          },
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T10:57:11.761407Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T10:18:28.440115Z",
@@ -289,6 +247,38 @@
       "auto": false,
       "at": "2026-11-04T10:57:12.053128Z",
       "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q2",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T11:00:43.691107Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q3",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T11:00:43.691107Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q4",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T11:00:43.691107Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T11:00:43.691107Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -456,6 +446,13 @@
     {
       "at": "2026-11-04T10:45:34.987973Z",
       "stage": "clarify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T11:00:43.691107Z",
+      "stage": "grill-with-docs",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
