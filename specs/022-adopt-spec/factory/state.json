@@ -134,8 +134,8 @@
       "kind": "questions",
       "stage": "remediate",
       "summary": "Remediate: 1 pending_clarify (pre-adoption ENG-1/ENG-3 boundary)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T16:23:12.977794Z",
+      "latency_ms": 18324119
     }
   ],
   "decisions": [
