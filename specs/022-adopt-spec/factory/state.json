@@ -354,6 +354,14 @@
       "auto": false,
       "at": "2026-11-04T16:25:48.582430Z",
       "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q1-test-scope",
+      "answer": "A: accept failure paths (a)-(g) into the confirmed test scope (snapshot plan-Q3.md)",
+      "auto": false,
+      "at": "2026-11-04T18:08:56.720291Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
