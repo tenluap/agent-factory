@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/020-post-pr-feedback",
   "spec_dir": "specs/020-post-pr-feedback",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -51,25 +51,7 @@
       "at": "2026-11-04T00:37:33.811949Z"
     }
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q20"
-          }
-        ],
-        "answers": {
-          "Q20": {
-            "answer": "A",
-            "at": "2026-11-04T00:51:32.233233Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:20:29.579782Z",
@@ -280,6 +262,14 @@
       "auto": true,
       "at": "2026-11-04T00:46:51.063220Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q20",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:52:26.160470Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -478,6 +468,13 @@
     {
       "at": "2026-11-04T00:46:51.063220Z",
       "stage": "grill-with-docs",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:52:26.160470Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
