@@ -132,8 +132,8 @@
       "kind": "questions",
       "stage": "clarify",
       "summary": "Clarify round 1: Q11, Q13, Q14 test-scope decisions (requires_user)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T00:41:04.366291Z",
+      "latency_ms": 42109
     }
   ],
   "decisions": [
