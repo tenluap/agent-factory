@@ -18,7 +18,7 @@ from pathlib import Path
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import lock, totals  # noqa: E402
+from factory_cli import improvements, lock, totals  # noqa: E402
 
 from tests import Sandbox, fixture  # noqa: E402
 
@@ -572,6 +572,143 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         self.assertTrue((self.directory / (written[0] + ".json")).is_file())
         self.assertEqual(existing.read_bytes(), original)
         self.assertEqual(list(self.directory.glob("*.tmp")), [])
+
+
+class FeedbackAddTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "060-feedback"
+        self.run = {
+            "repo": str(self.box.repo),
+            "branch": self.branch,
+            "spec_dir": f"specs/{self.branch}",
+        }
+        self.item = {
+            "signal_key": "ci-failure:lint-test",
+            "evidence": "https://x/checks/1",
+            "suggested_feature": "Prevent CI failure",
+        }
+        self.directory = self.box.home / "improvements"
+        repo_hash = hashlib.sha256(str(self.box.repo).encode()).hexdigest()[:12]
+        self.name = f"{self.box.repo.name}-{self.branch}.{repo_hash}.feedback.ci-failure.lint-test"
+        self.path = self.directory / (self.name + ".json")
+
+    def add(self, items=None, run=None, now="2026-11-04T01:00:00Z"):
+        return improvements.add_feedback(
+            self.box.home, run or self.run, items or [self.item], now=now
+        )
+
+    def test_create_writes_ready_feedback_entry(self):
+        result = self.add()
+        self.assertEqual(result, {"created": [self.name], "updated": [], "claimed": []})
+        self.assertEqual(
+            json.loads(self.path.read_text()),
+            {
+                "name": self.name,
+                "kind": "feedback",
+                "run": self.run,
+                "signal_key": "ci-failure:lint-test",
+                "evidence": ["https://x/checks/1"],
+                "suggested_feature": "Prevent CI failure",
+                "factory_sha": improvements.factory_sha(),
+                "status": "ready",
+                "exported_at": "2026-11-04T01:00:00Z",
+                "claimed_at": None,
+            },
+        )
+
+    def test_repeat_appends_only_new_links_and_keeps_stored_fields(self):
+        self.add()
+        before = json.loads(self.path.read_text())
+        result = self.add(
+            [dict(self.item, evidence="https://x/checks/2")], now="2026-11-04T02:00:00Z"
+        )
+        self.assertEqual(result, {"created": [], "updated": [self.name], "claimed": []})
+        body = json.loads(self.path.read_text())
+        self.assertEqual(body["evidence"], ["https://x/checks/1", "https://x/checks/2"])
+        self.assertEqual(body["exported_at"], before["exported_at"])
+        self.assertEqual(body["suggested_feature"], before["suggested_feature"])
+
+    def test_repeat_with_no_new_link_leaves_file_byte_identical(self):
+        self.add()
+        settled = self.path.read_bytes()
+        result = self.add(
+            [dict(self.item, evidence=""), dict(self.item, evidence="https://x/checks/1")]
+        )
+        self.assertEqual(result, {"created": [], "updated": [], "claimed": []})
+        self.assertEqual(self.path.read_bytes(), settled)
+
+    def test_claimed_entry_is_reported_and_left_byte_identical(self):
+        self.add()
+        improvements.claim(self.box.home, self.name)
+        claimed = self.path.read_bytes()
+        result = self.add([dict(self.item, evidence="https://x/checks/9")])
+        self.assertEqual(result, {"created": [], "updated": [], "claimed": [self.name]})
+        self.assertEqual(self.path.read_bytes(), claimed)
+
+    def test_one_entry_per_run_and_key_and_other_run_gets_its_own(self):
+        self.add()
+        other = dict(self.run, branch="061-other")
+        result = self.add(run=other)
+        self.assertEqual(len(result["created"]), 1)
+        self.assertNotEqual(result["created"][0], self.name)
+        self.assertEqual(len(list(self.directory.glob("*.feedback.*.json"))), 2)
+
+    def test_unreadable_or_foreign_file_at_name_is_refused(self):
+        self.directory.mkdir(parents=True)
+        self.path.write_text("{not json")
+        with self.assertRaises(improvements.AddError):
+            self.add()
+        self.assertEqual(self.path.read_text(), "{not json")
+        foreign = {
+            "name": self.name,
+            "kind": "feedback",
+            "run": {"repo": "/another/repo", "branch": self.branch},
+            "signal_key": "ci-failure:lint-test",
+            "status": "ready",
+        }
+        self.path.write_text(json.dumps(foreign))
+        original = self.path.read_bytes()
+        with self.assertRaises(improvements.AddError):
+            self.add()
+        self.assertEqual(self.path.read_bytes(), original)
+
+    def test_held_backlog_lock_refuses_and_writes_nothing(self):
+        lock_path = self.box.home / "improvements.lock.json"
+        lock_path.write_text(
+            json.dumps(
+                {"owner_pid": 12345, "host": "other-host", "harness": "holder", "at": "now"}
+            )
+        )
+        started = time.monotonic()
+        with self.assertRaises(improvements.AddError):
+            self.add()
+        elapsed = time.monotonic() - started
+        self.assertGreaterEqual(elapsed, 4.5)
+        self.assertLess(elapsed, 7)
+        self.assertFalse(self.path.exists())
+
+    def test_listing_shows_feedback_kind_signal_key_and_suggested_feature(self):
+        self.add()
+        listed = improvements.list_backlogs(self.box.home)["improvements"]
+        self.assertEqual(len(listed), 1)
+        self.assertEqual(listed[0]["kind"], "feedback")
+        self.assertEqual(listed[0]["signal_key"], "ci-failure:lint-test")
+        self.assertEqual(listed[0]["suggested_feature"], "Prevent CI failure")
+
+    def test_retro_add_ignores_feedback_entries_for_cover_and_cap(self):
+        for key in ("ci-failure:a", "ci-failure:b", "ci-failure:c", "ci-failure:d"):
+            self.add([dict(self.item, signal_key=key)])
+        candidate = {
+            "signal_key": "halt-cluster:implement",
+            "rank": 1,
+            "evidence": "two halts",
+            "suggested_feature": "Improve recovery",
+        }
+        result = improvements.add(self.box.home, self.run, [candidate])
+        self.assertEqual(result["dropped"], [])
+        self.assertEqual(len(result["written"]), 1)
 
 
 if __name__ == "__main__":
