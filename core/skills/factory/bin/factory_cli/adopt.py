@@ -399,10 +399,12 @@ def _short_sha(worktree):
 
 
 def _clear_pending(pending):
-    """D7 step 6: delete the pending JSON, brief and profile once the adoption commit has landed."""
-    pending.unlink()
+    """D7 step 6: delete the brief, profile and then the pending JSON once the adoption commit has landed.
+
+    The JSON goes last so any failed delete keeps it (FR-013)."""
     for suffix in (".brief.md", ".profile.md"):
         pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
+    pending.unlink()
 
 
 def _rollback(repo, worktree, created_branch):

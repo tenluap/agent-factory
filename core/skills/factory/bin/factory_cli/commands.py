@@ -253,7 +253,10 @@ def find_matches(repo, name):
                 matches.append((path, loaded, "worktree"))
         elif name_matches(identity["name"], name):
             matches.append((path, loaded, "pending"))
-    return matches
+    # A pending copy of a branch that already has its worktree run is a leftover
+    # (an adoption whose pending cleanup failed after its commit): the worktree wins.
+    started = {loaded.get("branch") for _, loaded, source in matches if source == "worktree"}
+    return [m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started]
 
 
 def one_run(repo, name, hint=None):

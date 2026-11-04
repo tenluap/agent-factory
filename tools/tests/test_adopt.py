@@ -1077,6 +1077,11 @@ class WriteFailureTests(AdoptWriteFixture):
             ["factory: adopt 007-x"],
         )
         self.assertTrue(self.pending.exists())
+        self.assertTrue(self.brief.exists())
+        os.chmod(pending_dir, 0o755)
+        resumed = self.box.cli("resume", "007-x")
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        self.assertIn(str(self.worktree / "specs/007-x/factory/state.json"), resumed.stdout)
 
     def test_rollback_that_leaves_the_worktree_behind_names_it(self):
         hook = self.box.repo / ".git" / "hooks" / "post-checkout"
