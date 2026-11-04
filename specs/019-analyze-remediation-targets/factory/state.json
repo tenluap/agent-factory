@@ -124,8 +124,8 @@
       "kind": "questions",
       "stage": "clarify",
       "summary": "clarify: Q1 test-scope decision (requires_user); Q2-Q5 auto-accepted",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T00:31:13.676446Z",
+      "latency_ms": 262756
     }
   ],
   "decisions": [
