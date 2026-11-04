@@ -226,10 +226,19 @@ def write(repo, src, stage=None):
 
 def _adopt_branch(repo, report, loaded, pending, stage):
     """The `branch` shape: the existing branch gets a worktree, its state and one commit (D7 steps 3-6)."""
-    branch, spec_dir = report["branch"], report["spec_dir"]
     worktree = Path(report["worktree"])
+    commands.git(repo, "worktree", "add", str(worktree), report["branch"])
+    try:
+        return _record_worktree_run(worktree, report, loaded, pending, stage)
+    except (commands.CLIError, state.StateError, OSError) as e:
+        _rollback(repo, worktree)
+        commands.die(1, f"adopt failed and was rolled back: {e}")
+
+
+def _record_worktree_run(worktree, report, loaded, pending, stage):
+    """D7 steps 4-6: the adopted state, the sidecars and the one adoption commit."""
+    branch, spec_dir = report["branch"], report["spec_dir"]
     chosen = stage or report["inferred_stage"]
-    commands.git(repo, "worktree", "add", str(worktree), branch)
     base_commit = commands.git(str(worktree), "rev-parse", "HEAD").strip()
     run = dict(
         loaded,
@@ -268,4 +277,13 @@ def _adopt_branch(repo, report, loaded, pending, stage):
     for suffix in (".brief.md", ".profile.md"):
         pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
     return commands.digest(written, state_path, "worktree")
+
+
+def _rollback(repo, worktree):
+    """Remove the worktree a failed write created; the pending files are the caller's to keep (FR-013)."""
+    subprocess.run(
+        ["git", "-C", repo, "worktree", "remove", "--force", str(worktree)],
+        capture_output=True,
+        text=True,
+    )
 

@@ -664,5 +664,45 @@ class AdoptWriteTests(AdoptWriteFixture):
         self.assertTrue(lock_file.exists())
 
 
+class AdoptRollbackTests(AdoptWriteFixture):
+    """A commit rejected after the worktree exists is rolled back; the pending files stay (T007)."""
+
+    def reject_commits(self):
+        hook = self.box.repo / ".git" / "hooks" / "pre-commit"
+        hook.write_text("#!/bin/sh\necho 'rejected by test hook' >&2\nexit 1\n")
+        hook.chmod(0o755)
+        return hook
+
+    def test_rejecting_pre_commit_hook_rolls_back_and_exits_1(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        worktrees = self.box.git("worktree", "list", "--porcelain")
+        brief, profile = self.brief.read_text(), self.profile.read_text()
+        self.reject_commits()
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("rejected by test hook", combined)
+        self.assertFalse(self.worktree.exists())
+        self.assertEqual(self.box.git("worktree", "list", "--porcelain"), worktrees)
+        self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
+        self.assertEqual(self.box.git("branch", "--format=%(refname:short)").split(), ["007-x", "main"])
+        self.assertTrue(self.pending.exists())
+        self.assertEqual(self.brief.read_text(), brief)
+        self.assertEqual(self.profile.read_text(), profile)
+
+    def test_retry_after_the_hook_is_removed_reuses_the_pending_file(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        hook = self.reject_commits()
+        self.assertEqual(self.write_run().returncode, 1)
+        hook.unlink()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertEqual(
+            self.box.git("log", "--format=%s", f"{head}..007-x").splitlines(),
+            ["factory: adopt 007-x"],
+        )
+        self.assertFalse(self.pending.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

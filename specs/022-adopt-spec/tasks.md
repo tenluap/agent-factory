@@ -59,7 +59,7 @@ description: "Task list for 022-adopt-spec"
   - Pass: runner green.
   - Done: every case asserted and passing.
 
-- [ ] T007 [US1] Roll back a failed adopt write in `core/skills/factory/bin/factory_cli/adopt.py`; tests in `tools/tests/test_adopt.py`.
+- [x] T007 [US1] Roll back a failed adopt write in `core/skills/factory/bin/factory_cli/adopt.py`; tests in `tools/tests/test_adopt.py`.
   - Seam: `bin/factory adopt <src> [--stage <stage>]` (write). Failure paths: a commit rejected by a `pre-commit` hook removes the worktree and any branch adopt created, keeps the pending files, exits 1.
   - Red: write tests first: with a `pre-commit` hook exiting 1, `adopt 007-x` exits 1 naming the cause; worktree path gone (`git worktree list` unchanged), `007-x` kept at its HEAD, no new commit, pending JSON, brief and profile intact (FR-013); hook removed, the retry reuses the same pending file and succeeds with one commit (FR-010 edge case). Run; fail.
   - Implement: `try`/`except` over steps 3-5 catching `CLIError`, `StateError`, `OSError`: `git worktree remove --force <path>`, `git branch -D` only for a branch the write created, lock released on every path, exit 1.
