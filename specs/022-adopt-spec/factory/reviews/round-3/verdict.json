@@ -1,0 +1,177 @@
+{
+  "round": 3,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 254,
+      "summary": "After the R2-Q2 post-commit cleanup failure, the prescribed recovery `resume <branch>` exits 3 'matches several runs': the kept pending file <repo>-adopt-<branch>.json matches the same name as the new worktree run, so the protected contract's only recovery fails.",
+      "evidence": "Judge reproduction in a scratch copy of HEAD: `adopt 007-x` -> exit 1 'committed 23fed23; pending cleanup failed: resume 007-x, do not retry'; then `resume 007-x` -> exit 3 \"'007-x' matches several runs: .../repo-factory/007-x/specs/007-x/factory/state.json, .../home/pending/repo-adopt-007-x.json\". find_matches (commands.py:243-256) matches the pending run through name_matches ('repo-adopt-007-x' ends with '-007-x'), and deduped (221-235) keys pending and worktree copies apart, so one_run (283-284) exits 3. A retry refuses on the existing factory/state.json and points back to resume, so the user must delete the pending file by hand. No test runs resume after the cleanup failure.",
+      "fix": "In find_matches (or one_run), when a pending match's name is <repo-name>-adopt-<branch> and a worktree match for the same branch in the same repo exists, drop the pending match so `resume <branch>` resolves to the worktree run. Add a regression test on `bin/factory resume <run>`: after the cleanup-failure fault, `resume 007-x` exits 0 and names the worktree run. Keep the protected message wording. Consider fixing R3-STD-3's lock release in the same change.",
+      "sources": [
+        "R3-SPEC-1"
+      ]
+    },
+    {
+      "severity": "high",
+      "file": "tools/tests/test_adopt.py",
+      "line": 998,
+      "summary": "Four failure paths in the confirmed plan-Q3 scope have no asserting test: a committed non-directory <spec_dir>/factory, a factory-directory symlink and a profile.md symlink created inside the checkout, and a rollback that leaves a created branch behind.",
+      "evidence": "ENG-1, ENG-4, 'Confirmed test scope'. plan.md:93-94 and plan-Q3.md declare these paths. Guards exist (adopt.py:170-172, the _no_link calls in _record_worktree_run, the branch leg of _rollback), but test_adopt.py has no 'not a directory' case, in-checkout symlink tests cover only state.json (:998) and brief.md (:1015), and the rollback-leftover test (:1081) runs on an existing branch.",
+      "fix": "Through `bin/factory adopt`: commit a regular file at specs/evil/factory (dry-run and write exit 1, nothing changed); parametrise the post-checkout symlink test over factory dir, state.json, brief.md and profile.md; add a remote- or default-branch write whose post-checkout hook locks the worktree, asserting 'rollback left' naming the worktree and created branch. Record red proof per ENG-2 (mutation evidence in the retro for tests passing first run).",
+      "sources": [
+        "R3-STD-1",
+        "R3-SPEC-2",
+        "R3-SPEC-3"
+      ]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 305,
+      "summary": "ENG-1: the moved post-commit short-sha read (SEC-6, as prescribed) has no test, and its no-sha fallback prints 'committed; pending cleanup failed' with no sha, which FR-013/contracts/D7 do not name. Lowered from high: outcome correct, fault unlikely, path not in plan-Q3.",
+      "fix": "Name the fallback in FR-013, contracts/cli.md and D7; add the case at the next scope confirmation and assert the printed sha.",
+      "sources": [
+        "R3-STD-2",
+        "R3-SPEC-6"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/tests/test_adopt.py",
+      "line": 1065,
+      "summary": "ENG-18, ENG-17: the cleanup-failure test passes only because its hook deletes the lock file; without it lock.release raises PermissionError, the decided message appears only inside a traceback, and a stale lock is left.",
+      "fix": "Make write's finally tolerate OSError from lock.release (or release before reporting); drop the rm line from the hook.",
+      "sources": [
+        "R3-STD-3"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 17,
+      "summary": "ENG-6: _no_base, _utf8, _commit_run and _short_sha (9508de4) have no New: line.",
+      "fix": "Record in the retro; no history rewrite.",
+      "sources": [
+        "R3-STD-4"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 387,
+      "summary": "ENG-6: _commit_run/_short_sha repeat commands.commit_worktree; split justified by SEC-6 but unrecorded; plan.md:39 still says the write reuses commit_worktree.",
+      "fix": "Extract a shared helper, or record the reason and correct plan.md:39.",
+      "sources": [
+        "R3-STD-5"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/tests/test_adopt.py",
+      "line": 1057,
+      "summary": "ENG-5: the cleanup-failure test skips under root, an exemption no plan states.",
+      "fix": "Use a root-proof fault and remove the skip, or state the exemption in the plan.",
+      "sources": [
+        "R3-SPEC-4"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/tests/test_adopt.py",
+      "line": 899,
+      "summary": "ENG-4: a write-seam NO_BASE test exists although plan-Q3 declares NO_BASE only for the dry-run seam; behaviour follows R2-Q3, so a scope-record gap.",
+      "fix": "Fold into the dry-run NO_BASE test, or add to the write seam at the next confirmation.",
+      "sources": [
+        "R3-SPEC-5"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "specs/022-adopt-spec/spec.md",
+      "line": 0,
+      "summary": "spec.md is 3082 words against its 3000-word budget (2998 at the delta base).",
+      "fix": "Trim at least 82 words in place.",
+      "sources": [
+        "R3-SPEC-7"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "tools/tests/test_adopt.py",
+      "line": 12,
+      "summary": "ENG-19: unused `mock` and `commands` imports.",
+      "fix": "Drop them.",
+      "sources": [
+        "R3-STD-6"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "9508de4 (STD-1)",
+      "line": 0,
+      "summary": "ENG-2: two Red: lines say 'failed as expected' for guard tests that passed first and were proven only by mutation.",
+      "fix": "Record mutation evidence in the retro.",
+      "sources": [
+        "R3-STD-7"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 301,
+      "summary": "ENG-17: `str(e) or type(e).__name__` drops the exception class for non-CLI failures.",
+      "fix": "Prefix the class name for unexpected exception types.",
+      "sources": [
+        "R3-STD-8"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 53,
+      "summary": "Writing Standards: adoption step 2 still maps three shapes in one sentence.",
+      "fix": "One sentence per shape.",
+      "sources": [
+        "R3-STD-9"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "9508de4 (SPEC-8, STD-5, STD-9)",
+      "line": 0,
+      "summary": "9508de4 changes research.md and SKILL.md without naming them on Adjacent: lines. See escalate.",
+      "fix": "Record in the retro; orchestrator disposes of the escalate.",
+      "sources": [
+        "R3-STD-10"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 299,
+      "summary": "ENG-26: rollback guard catches Exception, so KeyboardInterrupt skips rollback; no data lost; predates this fix.",
+      "fix": "Catch BaseException, roll back, re-raise non-Exception.",
+      "sources": [
+        "SEC-9"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "specs/022-adopt-spec/tasks.md",
+      "line": 56,
+      "summary": "tasks.md not updated for plan-Q3 failure paths; T006/T007 notes name commit_worktree and the old except tuple.",
+      "fix": "Update the owning tasks and notes.",
+      "sources": [
+        "R3-SPEC-8"
+      ]
+    }
+  ],
+  "rejected": [],
+  "escalate": {
+    "reason": "Fix commit 9508de4 modifies specs/022-adopt-spec/research.md and core/skills/factory/SKILL.md; neither is a prior confirmed_blocking file nor on an Adjacent: line (round 2 named them only in advisories). The edits are documentation only, consistent with R2-Q2/R2-Q3, and orchestrator-directed. Orchestrator bookkeeping paths were not counted."
+  }
+}
