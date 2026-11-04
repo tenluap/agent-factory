@@ -1,0 +1,179 @@
+{
+  "version": 5,
+  "started_at": "2026-11-04T00:19:35Z",
+  "harness": "claude-code",
+  "feature": "Collect post-PR feedback: implement the plan at docs/superpowers/plans/2026-11-03-factory-post-pr-feedback-plan.md (read-only refresh of a published run's PR state, checks and review decisions; store outcomes with stable identifiers, timestamps and evidence links, deduplicated across refreshes; feed actionable outcomes into the improvement backlog with the originating run attached; handle missing/inaccessible PRs and transient GitHub errors without inventing results; merge and deployment stay out of scope).",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "020-post-pr-feedback",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/020-post-pr-feedback",
+  "spec_dir": "specs/020-post-pr-feedback",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-11-04T00:20:29.579782Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grill round 1: post-PR feedback entry point, scope, storage, outcomes, errors",
+      "answered_at": "2026-11-04T00:21:52.308969Z",
+      "latency_ms": 82729
+    },
+    {
+      "at": "2026-11-04T00:22:06.126429Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grill round 2: outcome identity, backlog feed, feature text, test seam",
+      "answered_at": "2026-11-04T00:22:22.686637Z",
+      "latency_ms": 16560
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q8",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q9",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:22:55.743699Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-04T00:22:55.743699Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-opus-5-5",
+      "standard": "claude-haiku-5-5"
+    },
+    "source": {
+      "deep": "adapter",
+      "standard": "adapter"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-04T00:19:42.849000Z",
+    "detected_by": "factory detect 017"
+  }
+}
