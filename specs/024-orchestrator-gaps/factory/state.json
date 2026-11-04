@@ -335,7 +335,7 @@
     }
   },
   "review": {
-    "round": 0,
+    "round": 1,
     "fix_rounds": 0,
     "ui_diff": false,
     "ui_reviewer_skipped": false
@@ -435,7 +435,7 @@
       "harness": "opencode"
     },
     {
-      "at": "2026-11-04T23:25:01.645686Z",
+      "at": "2026-11-04T23:25:40.208489Z",
       "stage": "review",
       "event": "complete",
       "commit": null,
