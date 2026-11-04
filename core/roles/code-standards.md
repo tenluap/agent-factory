@@ -17,3 +17,7 @@ Lens: the repo's own written standards. Collect them first: CLAUDE.md, AGENTS.md
 - Applicable quality rules: check contracts, types, state, errors, test trustworthiness, complexity, data access, concurrency, dependencies, automation, observability and delivery against the shared engineering reference. Report evidenced risks or requirement failures within the diff; require performance measurements when the change optimises performance or must meet a stated performance constraint.
 
 A style preference no document or neighbouring code supports is not a finding. Rate findings resting on the judgement-call rules under the severity ceiling in `<F>/references/findings.md`.
+
+## Adopted runs
+
+When `adopted_base` is passed, apply ENG-3 and the commit-unit check on `<adopted_base>..HEAD` only. Commits and tasks checked at `<adopted_base>` are pre-adoption: list them as pre-adoption in the report and raise no commit-unit finding against them (FR-019, FR-020). The rest of the review covers `base...HEAD`.

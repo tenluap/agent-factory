@@ -23,4 +23,6 @@ Read available inputs; skip missing sources instead of inventing evidence. Mine 
 
 Keys have grammar `<kind>:<subject>`, where subject matches `[a-z0-9][a-z0-9-]{0,63}`. Skip covered keys and signals without sufficient source evidence. Rank by impact: halt-cluster, judge-rejection, fixer-recurring, analyze-escalation, in-est-outlier; break ties by descending count. Return at most three candidates, with positive integer ranks, concise concrete evidence, and a single-line `suggested_feature` usable unchanged after `/factory`.
 
+When the state has an `adopted` block, state the adoption in the retro: source shape and branch, chosen stage, and `base_commit` (FR-019, FR-020; pre-adoption commits are `git rev-list <base>..<base_commit>`).
+
 End with the protocol envelope: `status` is `done` (even when candidates are empty) or `failed`, `stage` is `retro`, `files` and `questions` are empty, and `retro.candidates` contains the ranked candidates. On failure include the precise error; never claim missing evidence was checked.

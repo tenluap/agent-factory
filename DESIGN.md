@@ -74,6 +74,8 @@ feature
 
 Lite chain (DESIGN, "Modes"): specify -> plan -> tasks -> analyze, one pass, no loop; any CRITICAL/HIGH escalates to the full chain from clarify.
 
+Adoption: `/factory adopt <branch|spec_dir> [--stage <s>]` continues a spec started outside factory (SpecKit on its own branch, a branch only on `origin`, or a spec dir on the default branch). `factory adopt <src> --dry-run` runs first and prints the adoption report (shape, dirty paths, inferred stage, `needs_clarification`, pending name, refusal); a non-zero exit shows the refusal or candidates and creates nothing. A clean report starts the pending adoption grill under `<repo-name>-adopt-<branch>` (summary, `needs_clarification` first, entry stage with the inferred stage recommended, at most `analyze`). Confirmed, `brief.md` is written and `factory adopt <src> --stage <chosen>` creates the worktree on the existing branch (or a tracking or new branch), a valid `state.json` with the `adopted` block, the `adopted` history entry, and one commit `factory: adopt <branch>` touching only `<spec_dir>/factory/`. A failed write rolls back and keeps the pending run; a pending-cleanup failure after the commit exits 1 as `committed <sha>; pending cleanup failed: resume <branch>, do not retry`, with no rollback; declined sets `aborted`. Adoption never fetches, pulls or pushes, and never stages files it did not author (research.md D1, D7).
+
 ## Skill routing
 
 Agreed 2026-10-25 (`docs/superpowers/specs/2026-10-25-factory-skill-routing-design.md`). Uses the right externally-installed skill at the right point in the run, without weakening stateless roles, saved answers, worktree isolation, independent review or publication approval.
@@ -217,6 +219,7 @@ All reviewers return the same findings shape (`core/skills/factory/references/fi
 
 - Always: security, code-standards, spec-conformance.
 - Only when the diff touches UI files: UI (impeccable) and UX.
+- Adopted runs: reviewers receive `adopted_base` (the `base_commit`). Commits in `<base>..<adopted_base>` are pre-adoption: they are reviewed with the whole change but are not held to ENG-1..ENG-3; spec-conformance and code-standards apply those rules on `<adopted_base>..HEAD` only, and tasks already checked at `<adopted_base>` are skipped for commit evidence. Every reviewer still reviews all of `<base>...HEAD` and lists earlier commits and skipped tasks as pre-adoption (D10).
 - Round 1 reviews the full diff. Every later round is a **delta review**: reviewers see the fix diff since the previous round's checkpoint together with the previous verdict, and check that the fixes landed and added nothing. The fixer declares every file it touches beyond the findings' own files as `Adjacent: <path> - <reason>` in its commit body; the judge checks the fix diff's file list against the findings' files and those lines, and its verdict can carry `escalate`, which re-runs the round once in full review.
 - The judge merges, dedupes and verifies. Confirmed blocking findings go to the fixer; then build + test, then a delta re-review. At most 2 fix rounds. Advisory findings go to the approver untouched.
 
@@ -227,6 +230,8 @@ Shows summary, diff stat, spec link, judge verdict, fixed findings, remaining ad
 - **Approve**: push and open the PR.
 - **Request changes** (free text): fixer, build + test, re-review, back to the approver. No cap; the user drives it.
 - **Abort**: keep the worktree, state `aborted`.
+
+For an adopted run the approver line reads "Adopted from `<shape>` `<branch>` at `<chosen_stage>` (inferred `<inferred_stage>`); commits before `<base_commit>` are pre-adoption." Retro states the same (D11). Tasks checked before adoption are listed as pre-adoption tasks in analyze and the disclosure line.
 
 ### PR
 
@@ -240,6 +245,7 @@ Push the branch, then look up the Branch PR with `gh pr list --head <branch> --b
 - Resume restarts the interrupted stage from its beginning. A relay in progress resumes from the saved Q&A: a fresh spec-builder gets the answered questions and asks only the rest.
 - A run may be resumed on a different harness: the orchestrator re-resolves every skill path.
 - `--stop-at <stage>` (on a new run or a resume) pauses the run cleanly before that stage starts: checkpoint, `status: paused`, notify, end the turn. A `--stop-at` stage the chain never reaches (e.g. `clarify` on a lite run that never escalates) never triggers. `resume <branch>` (with the harness's invoke command, e.g. `/factory` or `$factory`) continues from that stage in any session, on any harness. Flags on a resume update the run before the stage restarts: `--lite` / `--full` rewrite `mode.chain`, `--fast` / `--no-fast` rewrite `mode.fast`.
+- Adopted runs (`adopted` block, `adopted` history event written only by `factory adopt`): `source.shape` is `branch`, `remote-branch` or `default-branch`; the block records `inferred_stage`, `chosen_stage` and `base_commit` (branch HEAD at the write). Resolution order: local branch, then the `origin` branch, then a spec dir on the default branch (D2). Refusals run in a fixed order (D5); a repo may hold one pending adoption, and resolution uses the sole-pending rule (D4). `resume <src>` with no run hints `adopt <branch|spec_dir>` (D9). Adopted runs enter at most at `analyze`; artifacts already present are edited in place.
 - Plain `/factory` lists unfinished runs in the current repo (`bin/factory runs`, scanning `git worktree list` plus `${FACTORY_HOME}/pending/`) and offers to resume one; `/factory <feature>` starts a new run. `resume <branch>` fetches a resume digest (`bin/factory show`) — scalars plus aggregates, never the whole state — and restarts the recorded stage from it.
 
 ### State CLI (v4)
@@ -352,6 +358,10 @@ A real run keeps `analyze.baseline` across a recheck and an escalation (`analyze
 Cruise (ADR 0014), one cruise fixture run of a tiny feature: SC-001 no `questions` timeline entry is left waiting before the approver entry; SC-002 `git ls-remote` shows no branch and no PR exists before the user's Approve; SC-003 every cruise-made override sits in the veto list's cruise-override group. Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR. Repeat for each new adapter; once two adapters exist, start a run on one harness with `--stop-at implement` and resume it on the other.
 
 For the expanded engineering rules, also check that the plan captures applicable quality constraints, automatic fixing leaves guidance-only findings advisory, and concrete defects retain their justified severity. In particular, similar-looking code with different business meanings must not trigger mandatory abstraction; an exposed secret, duplicate consequential retry or violated performance requirement must not be dismissed as a style preference. Source/link checks and canonical renders validate packaging; they do not replace this role-behaviour validation.
+
+### Adoption validation
+
+Machine checks: `python3 -m unittest discover -s tools` covers `tools/tests/test_adopt.py` (the dry-run report, every refusal, the write and its rollback). Agent-driven checks after merge, one fixture adoption per shape (`branch` on a SpecKit branch, `remote-branch` on an `origin`-only branch, `default-branch` from a spec dir on the default branch), per [quickstart.md](specs/022-adopt-spec/quickstart.md): each checks SC-001..SC-005. The grill, the reviewer pre-adoption boundary and the approver disclosure are role prose, verified only by these runs.
 
 ### Skill routing validation
 

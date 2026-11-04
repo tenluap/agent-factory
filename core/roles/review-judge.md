@@ -24,3 +24,7 @@ For active Pen work, also `design` (context/map/evidence paths) and the resolved
 7. `verdict` is `fix` when `confirmed_blocking` is non-empty, else `pass`.
 
 Done = every reviewer finding id appears exactly once across the verdict. Read-only: you edit nothing. End with the verdict as your final fenced `json` block.
+
+## Adopted runs
+
+When `adopted_base` is passed, reject a finding only when it rests on the ENG-1, ENG-2 or ENG-3 commit-evidence checks against commits in `<base>..<adopted_base>` or tasks checked at `<adopted_base>`, with the reason `pre-adoption`. Every other finding against pre-adoption code (security, correctness, design and the other lenses) is judged as usual: it is verified, rated and confirmed like any other (FR-019, FR-020).
