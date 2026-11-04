@@ -1,6 +1,0 @@
-{
-  "reviewer": "code-standards",
-  "round": 3,
-  "summary": "The fix removes the undeclared set-status pr-open gate, its tests and approval records, resolving round-2 STD-1 with the test files restored byte-identical to 8b64951, the red proof reproducing, and the full suite green; no new defect is introduced.",
-  "findings": []
-}

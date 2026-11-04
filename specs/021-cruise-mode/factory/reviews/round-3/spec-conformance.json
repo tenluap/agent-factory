@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 3,
-  "summary": "The delta removes the undeclared set-status pr-open gate, its PrOpenGateTests and the approval injections, restoring test_commands.py and test_improvements.py byte-identical to 8b64951 and origin/main; the full suite passes at HEAD and no new spec divergence is introduced.",
-  "findings": []
-}

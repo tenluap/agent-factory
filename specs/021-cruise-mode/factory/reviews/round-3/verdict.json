@@ -1,9 +1,0 @@
-{
-  "round": 3,
-  "verdict": "pass",
-  "confirmed_blocking": [],
-  "advisory": [],
-  "rejected": [
-    { "id": "SEC-1", "reason": "Already on origin/main; this branch neither introduces nor exposes it. cmd_set_status matches origin/main; neither version calls gate_violation for pr-open, and cmd_drop's pr-open-only check is unchanged. The cruise changes add no route into it: --cruise-override refuses --kind approved, and push and PR creation stay behind checkpoint approver --next pr (SKILL.md line 149) before set-status pr-open (line 162). Restoring the refusal would bring back the round-2 blocking defect; an ungated set-status pr-open on main belongs in a separate change." }
-  ]
-}
