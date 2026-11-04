@@ -468,7 +468,19 @@
       "ended_at": "2026-11-04T01:22:22Z"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-11-04T01:22:30.642770Z",
+      "kind": "retry",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": null,
+      "detail": "partial: pre-deadline fit handoff after T005; T006 full-suite run (~5.5 min) would not fit",
+      "duration_ms": 1150052,
+      "commit": "eeea0ce",
+      "partial_return": true
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
