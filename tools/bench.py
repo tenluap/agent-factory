@@ -238,19 +238,35 @@ def checkout_provenance(path):
 
 
 def tree_digest(path):
-    """sha256 over `<relative path>\\0<sha256 of bytes>\\n` per regular file, sorted, symlinks followed."""
+    """sha256 over `<relative path>\\0<sha256 of bytes>\\n` per regular file, sorted, symlinks followed.
+
+    "unavailable" when the root is missing or not a directory, anything under it cannot be read,
+    or a symlink cycle is found; never the digest of a partial tree.
+    """
     root = Path(path)
     records = []
-    for folder, _, names in os.walk(root, followlinks=True):
-        for name in names:
-            file = Path(folder, name)
-            if file.is_file():
-                content = hashlib.sha256(file.read_bytes()).hexdigest()
-                records.append((file.relative_to(root).as_posix(), content))
+    try:
+        _collect_records(root, root, (os.path.realpath(root),), records)
+    except OSError:
+        return "unavailable"
     digest = hashlib.sha256()
     for relative, content in sorted(records):
         digest.update(f"{relative}\0{content}\n".encode())
     return digest.hexdigest()
+
+
+def _collect_records(root, folder, ancestors, records):
+    """Regular files under folder; a directory already on the path from root is a cycle (OSError)."""
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            if entry.is_dir():
+                real = os.path.realpath(entry.path)
+                if real in ancestors:
+                    raise OSError(f"symlink cycle at {entry.path}")
+                _collect_records(root, entry.path, (*ancestors, real), records)
+            elif entry.is_file():
+                content = hashlib.sha256(Path(entry.path).read_bytes()).hexdigest()
+                records.append((Path(entry.path).relative_to(root).as_posix(), content))
 
 
 def harness_version(executable):
@@ -268,19 +284,12 @@ def harness_version(executable):
     return text if result.returncode == 0 and text else "unavailable"
 
 
-def safe_digest(path):
-    try:
-        return tree_digest(path)
-    except OSError:
-        return "unavailable"
-
-
 def installed_factory(harness):
     """The maintainer's installed factory under the driver's own environment (the baseline)."""
     skill = Path(render.load_adapter(harness)["skill_dir"]).expanduser()
     if not skill.exists():
         return {"skill_dir": "unavailable", "digest": "unavailable"}
-    return {"skill_dir": str(skill.resolve()), "digest": safe_digest(skill)}
+    return {"skill_dir": str(skill.resolve()), "digest": tree_digest(skill)}
 
 
 def write_provenance(out, *, bench_name, harness, model, repo, from_checkout):
@@ -288,7 +297,7 @@ def write_provenance(out, *, bench_name, harness, model, repo, from_checkout):
     if from_checkout:
         render_record = {
             "mode": "checkout",
-            "digest": safe_digest(out / "home" / "dist" / harness),
+            "digest": tree_digest(out / "home" / "dist" / harness),
         }
     else:
         render_record = {"mode": "installed", "digest": "none"}

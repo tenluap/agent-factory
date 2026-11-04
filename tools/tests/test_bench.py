@@ -441,6 +441,31 @@ class ProvenanceTests(unittest.TestCase):
         (tree / "b.txt").write_bytes(b"Bravo")
         self.assertNotEqual(bench_module.tree_digest(tree), expected)
 
+    def test_missing_or_non_directory_root_is_unavailable_not_the_empty_tree(self):
+        afile = self.box.dir / "afile"
+        afile.write_bytes(b"not a directory")
+        for name, root in (("missing", self.box.dir / "absent"), ("file", afile)):
+            with self.subTest(name):
+                self.assertEqual(bench_module.tree_digest(root), "unavailable")
+
+    @unittest.skipIf(os.geteuid() == 0, "root reads unreadable directories")
+    def test_unreadable_subdirectory_is_unavailable_not_silently_skipped(self):
+        tree = self.box.dir / "tree"
+        locked = tree / "locked"
+        locked.mkdir(parents=True)
+        (tree / "a.txt").write_bytes(b"alpha")
+        (locked / "b.txt").write_bytes(b"bravo")
+        locked.chmod(0)
+        self.addCleanup(locked.chmod, 0o755)
+        self.assertEqual(bench_module.tree_digest(tree), "unavailable")
+
+    def test_symlink_cycle_is_bounded_and_unavailable(self):
+        tree = self.box.dir / "tree"
+        (tree / "sub").mkdir(parents=True)
+        (tree / "a.txt").write_bytes(b"alpha")
+        (tree / "sub" / "loop").symlink_to(tree, target_is_directory=True)
+        self.assertEqual(bench_module.tree_digest(tree), "unavailable")
+
 
 class ProvenanceRunTests(unittest.TestCase):
     """Provenance written by `run` before the harness launches."""

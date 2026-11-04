@@ -79,6 +79,10 @@ Declared public seams and required injected failure paths:
    - unreadable state → `{"missing": ...}` alongside the existing failed conditions.
 3. **`bench.checkout_provenance(path)`** (imported from `tools/bench.py`; throwaway git repos via the existing `Sandbox`). Covers FR-007, FR-008 and the untracked-file edge case. Required failure paths:
    - path is not a git repository → `revision`, `changed_paths` and `diff_sha256` recorded `"unavailable"`, no exception.
+4. **`bench.tree_digest(root)`** (imported from `tools/bench.py`; throwaway directory trees under the `Sandbox`). Covers the rendered and installed digests (data-model.md tree digest). Required failure paths:
+   - root missing or not a directory → `"unavailable"`, never the empty-tree sha256;
+   - unreadable subdirectory under root → `"unavailable"`, never silently skipped;
+   - symlink cycle under root → bounded walk, no hang, `"unavailable"`.
 
 Exempt: `conformance/golden-run/claude-code.md` - documentation only (FR-011)
 Exempt: `conformance/golden-run/opencode.md` - documentation only (FR-012)
@@ -87,7 +91,7 @@ Exempt: `DESIGN.md` benchmark bullet - documentation only (constitution I)
 
 Overridden: none
 
-Confirmed: 2026-11-04 - Q1 accepted - seams: `bench.py run` CLI, `bench.py score` CLI, `bench.checkout_provenance(path)`; failure paths: `bench.py run` CLI -> isolated install fails, harness exits non-zero, harness `--version` fails, installed factory absent, selected harness executable missing, `--from-checkout` with `--home`; `bench.py score` CLI -> no `provenance.json`, malformed `provenance.json`, provenance repo mismatch, unreadable state; `bench.checkout_provenance(path)` -> not a git repository. Accepted scope snapshot: `specs/018-live-conformance/factory/relay/plan-Q1.md`.
+Confirmed: 2026-11-04 - Q1 accepted - seams: `bench.py run` CLI, `bench.py score` CLI, `bench.checkout_provenance(path)`; failure paths: `bench.py run` CLI -> isolated install fails, harness exits non-zero, harness `--version` fails, installed factory absent, selected harness executable missing, `--from-checkout` with `--home`; `bench.py score` CLI -> no `provenance.json`, malformed `provenance.json`, provenance repo mismatch, unreadable state; `bench.checkout_provenance(path)` -> not a git repository. Accepted scope snapshot: `specs/018-live-conformance/factory/relay/plan-Q1.md`. Review round 1 relay Q1 (requires_user, accepted explicitly by the user 2026-11-04, option A) adds seam `bench.tree_digest(root)`; failure paths: root missing or not a directory, unreadable subdirectory under root, symlink cycle under root (each `unavailable`). Accepted scope snapshot: `specs/018-live-conformance/factory/relay/review-Q1.md`.
 
 ## Project Structure
 
@@ -122,7 +126,7 @@ conformance/golden-run-results.md      one row per leg; UI deferred; baseline re
 1. DESIGN.md benchmark bullet (exempt).
 2. `--model` and scoped Claude Code launch via `launch_command` (seam 1).
 3. `--from-checkout` isolated install, failure stop and `--home` exclusion (seam 1).
-4. `checkout_provenance` and `tree_digest` (seam 3).
+4. `checkout_provenance` (seam 3) and `tree_digest` (seam 4).
 5. `provenance.json` written before launch, versions and installed digest (seam 1).
 6. Score provenance lookup (seam 2).
 7. Golden-run checklists and results rows (exempt).
