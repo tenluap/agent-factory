@@ -1,0 +1,155 @@
+{
+  "version": 5,
+  "started_at": "2026-11-04T00:30:48Z",
+  "harness": "claude-code",
+  "feature": "Add a cruise mode to the software factory: like YOLO, it auto-approves and auto-accepts everything (relay questions answered with the recommended answer, permissions granted, approver gates passed) with no user input, but the run always stops at the open-PR flow and never opens a PR without the user's explicit approval.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "021-cruise-mode",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
+  "spec_dir": "specs/021-cruise-mode",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-11-04T00:31:50.175600Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Grilling round 1: cruise mode design (7 questions)",
+      "answered_at": "2026-11-04T00:33:50.602568Z",
+      "latency_ms": 120426
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A: --cruise/--no-cruise opt-in flag, stored as mode.cruise; implies fast; --no-fast after --cruise rejected as conflict",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A: orchestrator self-answers grilling with recommendations, recorded auto, listed at gate",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A: auto-accept requires_user and pending_clarify questions, recorded with cruise-override marker, highlighted in veto list",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A: decision halts (analyze exhaustion) auto-proceed; red build, agent failure, stall still halt and notify",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A: existing approver gate is the stop; cruise never auto-approves; nothing pushed or PR opened before Approve",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A: each adapter harness.md documents its no-prompt launch; cruise preflight discloses possible prompts and continues; no rendering change",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A: accept all one-off setup offers with recommended default, each recorded in veto list; ambiguous intake defaults to delivery",
+      "auto": false,
+      "at": "2026-11-04T00:41:26.788573Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-04T00:41:26.788573Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-opus-5-5",
+      "standard": "claude-haiku-5-5"
+    },
+    "source": {
+      "deep": "adapter",
+      "standard": "adapter"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-04T00:31:02.628137Z",
+    "detected_by": "factory detect 017"
+  }
+}
