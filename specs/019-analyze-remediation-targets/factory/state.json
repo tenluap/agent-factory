@@ -110,6 +110,14 @@
       "summary": "plan: test-scope confirmation (requires_user)",
       "answered_at": "2026-11-04T00:17:20.538297Z",
       "latency_ms": 94950
+    },
+    {
+      "at": "2026-11-04T00:26:50.920325Z",
+      "kind": "questions",
+      "stage": "clarify",
+      "summary": "clarify: Q1 test-scope decision (requires_user); Q2-Q5 auto-accepted",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
