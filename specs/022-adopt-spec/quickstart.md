@@ -17,4 +17,4 @@ test -z "$(git ls-files -- dist/)"
 3. `/factory adopt 007-x`: summary of the spec, open gaps, chain (`full` recommended), stage confirmation; accept.
 4. Expect worktree `<repo>/../<repo-name>-factory/007-x` on `007-x`, one commit `factory: adopt 007-x`, and the run continuing at `tasks`.
 5. Decline a second attempt on another spec: nothing exists in the repository afterwards.
-6. Carry the run to the approver: the screen states the adoption; reviewers list pre-adoption commits without ENG-2 blockers; analyze lists checked tasks as pre-adoption (SC-001, SC-005).
+6. Carry the run to the approver: the screen states the adoption; reviewers list pre-adoption commits and tasks without ENG-1, ENG-2 or ENG-3 blockers; analyze lists checked tasks as pre-adoption (SC-001, SC-005).

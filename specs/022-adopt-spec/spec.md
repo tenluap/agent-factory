@@ -28,6 +28,7 @@
 - Q2: Spec dir on the local default branch but not on origin? → A: Refuse with exit 1 and its own reason; nothing written.
 - Q3: What does "never fetches" cover? → A: The `factory adopt` command and the source branch; preflight's default-branch fetch still runs.
 - Q4: What does specify do with an adopted `spec.md`? → A: Edits it in place (FR-024).
+- Q5: ENG-1/ENG-3 for pre-adoption work? → A: Skipped like ENG-2; code reviewed in full (FR-019).
 
 ### Session 2026-11-04 (grill-with-docs)
 
@@ -110,13 +111,13 @@ The inferred stage is a suggestion. The user can start earlier (for example to r
 
 Everyone downstream knows the run was adopted and which commits predate factory, so reviewers judge the whole change without blaming pre-adoption commits for factory-only rules.
 
-**Why this priority**: Otherwise reviewers raise unfixable ENG-2 blockers and the approver cannot tell what factory authored.
+**Why this priority**: Otherwise reviewers raise unfixable commit-rule blockers and the approver cannot tell what factory authored.
 
 **Independent Test**: Adopt a branch carrying pre-existing commits and checked tasks, run analyze, review, approver and retro, and confirm scenarios 1-4.
 
 **Acceptance Scenarios**:
 
-1. **Given** an adopted run, **When** reviewers run, **Then** they review the whole `base...HEAD` diff, apply ENG-2 only to commits after `adopted.base_commit`, and list earlier commits as pre-adoption.
+1. **Given** an adopted run, **When** reviewers run, **Then** they review the whole `base...HEAD` diff, apply ENG-1, ENG-2 and ENG-3 commit checks only after `adopted.base_commit`, and list earlier commits and tasks as pre-adoption.
 2. **Given** an adopted run at the approver gate, **When** the screen is shown, **Then** it states the run was adopted, from which source and at which stage.
 3. **Given** an adopted run, **When** the retro runs, **Then** it records that the run was adopted.
 4. **Given** an adopted `tasks.md` with tasks checked at `adopted.base_commit`, **When** analyze runs, **Then** those tasks are excluded from its blocking test-scope check and listed as pre-adoption, and every unchecked task gets the full check.
@@ -142,12 +143,12 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - The spec dir is committed on the local default branch but not on `base`: refused (FR-007).
 - A retry after a failed write reuses the pending file; after a declined attempt it is replaced (FR-010); never duplicated.
 - Another pending file of the same repository exists: dry-run and write both refuse (FR-007).
-- The default-branch shape when a branch named after the spec dir already exists: treated as the own-branch shape for that branch.
+- Default-branch shape whose spec-dir-named branch already exists: treated as the own-branch shape.
 - `spec.md` still contains `[NEEDS CLARIFICATION]` markers: the dry-run report lists them and the confirmation grill raises them as open gaps.
 - A task checked at `adopted.base_commit` whose ID changes later, or a task added after adoption, is not pre-adoption and gets the full test-scope check.
 - The source branch moves between dry-run and the write: the write re-checks every refusal and records `base_commit` from the branch HEAD at the write.
 - The adoption commit fails (for example a git hook rejects it): rolled back, the run stays pending (FR-013).
-- Older states without an `adopted` block and older history without the `adopted` event remain valid and behave unchanged.
+- Older states and history without `adopted` remain valid and unchanged.
 
 ## Requirements *(mandatory)*
 
@@ -171,11 +172,11 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **FR-016**: State MUST accept an optional `adopted` block holding source (branch and spec dir, and shape), inferred stage, chosen stage and `base_commit` (the adopted branch's HEAD at the write); validation MUST check its shape when present, and states without it MUST stay valid.
 - **FR-017**: Validation MUST accept an adopted run with no `complete` history entries for stages before its chosen stage.
 - **FR-018**: After adoption, the run MUST continue through the existing resume and stage flow unchanged, from the chosen stage to an open PR after the user's Approve.
-- **FR-019**: Reviewers MUST review the whole `base...HEAD` diff of an adopted run, apply ENG-2 only to commits after `adopted.base_commit`, and disclose earlier commits as pre-adoption, never blocking for ENG-2.
+- **FR-019**: Reviewers MUST review the whole `base...HEAD` diff of an adopted run, apply ENG-1, ENG-2 and ENG-3 commit checks only to commits after, and tasks unchecked at, `adopted.base_commit`, and disclose earlier ones as pre-adoption, never blocking for those rules.
 - **FR-020**: The approver screen and the retro MUST state that the run was adopted, with its source and chosen stage.
 - **FR-021**: When `resume` finds no matching run, its error (`no run '<name>' in <repo>`) MUST hint at `adopt <branch|spec_dir>` (the CLI's own verb); resume behaviour is otherwise unchanged.
 - **FR-022**: Adopt MUST respect the run lock like every other writer and MUST refuse under a live lock.
-- **FR-023**: `DESIGN.md`, `references/state.md`, `CONTEXT.md` (the Key Entities terms), a new ADR and the reviewer role files MUST describe the adopt flow, the `adopted` block and event, and the ENG-2 boundary; `dist/` MUST render cleanly for every harness.
+- **FR-023**: `DESIGN.md`, `references/state.md`, `CONTEXT.md` (the Key Entities terms), a new ADR and the reviewer role files MUST describe the adopt flow, the `adopted` block and event, and the pre-adoption boundary; `dist/` MUST render cleanly for every harness.
 - **FR-024**: When state has an `adopted` block, the `specify`, `plan` and `tasks` stages MUST treat an existing `spec.md`, `plan.md` or `tasks.md` respectively as their base and apply targeted edits (brief and grill answers, upstream changes, sections factory requires), never regenerating it.
 - **FR-025**: Analyze MUST exclude tasks checked in `tasks.md` at `adopted.base_commit` (by task ID) from its blocking test-scope check and list them as pre-adoption; every other task gets the full check.
 
@@ -184,7 +185,7 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **Adopted run**: a factory run created from a spec that factory did not start; carries the `adopted` block and an `adopted` history entry, and otherwise behaves as any run.
 - **Adoption source**: what the user named: branch and spec dir, and its shape (`branch`, `remote-branch`, `default-branch`); stored as `adopted.source`.
 - **Adoption report**: the dry-run's read-only description of an adoption source, its inferred stage and any refusal.
-- **Pre-adoption commit**: a commit reachable from `adopted.base_commit` (the adopted branch's HEAD at the adopt write) and not from `base`; reviewed, never blocking for ENG-2. Tasks checked at `base_commit` are pre-adoption tasks.
+- **Pre-adoption commit**: a commit reachable from `adopted.base_commit` (the adopted branch's HEAD at the adopt write) and not from `base`; reviewed, never blocking for ENG-1, ENG-2 or ENG-3. Tasks checked at `base_commit` are pre-adoption tasks.
 
 ## Success Criteria *(mandatory)*
 
@@ -194,7 +195,7 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **SC-002**: 100% of dry-runs and refusals leave the repository's status, refs, worktree list and files unchanged.
 - **SC-003**: Adoption never creates a second branch or spec dir for a spec that already has one (zero duplicate runs in tests of every shape).
 - **SC-004**: Every adopted run passes state validation, and every existing factory-created run's resume behaviour and tests stay unchanged.
-- **SC-005**: Reviewers raise zero blocking ENG-2 findings for pre-adoption commits and analyze zero blocking test-scope findings for pre-adoption tasks, while reviewers still review 100% of the `base...HEAD` diff.
+- **SC-005**: Reviewers raise zero blocking ENG-1, ENG-2 or ENG-3 findings and analyze zero blocking test-scope findings for pre-adoption commits and tasks, while reviewers still review 100% of the `base...HEAD` diff.
 - **SC-006**: The rendered distribution builds for every harness with the change.
 
 ## Assumptions
@@ -203,6 +204,6 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - `factory adopt` never fetches, pulls or pushes, nor fetches the source branch (a stale view is the user's to refresh); the `/factory adopt` route's preflight still fetches the default branch, and the write re-inspects against that fresh `base`.
 - `base` and the default branch are resolved as for a new run.
 - The chain (lite or full) and fast mode are chosen in the confirmation grill, as for a new run.
-- FR-024 (in-place `specify`, `plan`, `tasks`) and FR-025 (pre-adoption tasks in analyze) are prose changes to the spec-builder role only.
+- FR-024 and FR-025 are prose changes to the spec-builder role only.
 - Work already in implementation enters at `analyze` at the latest; later entry is out of scope.
 - Abandoned pending adoption files are cleaned by the existing `prune` path; no new cleanup command is added.

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Add one CLI writer, `factory adopt <src> [--stage <stage>] [--dry-run]`, in a new module `factory_cli/adopt.py`. One read-only inspection resolves the source shape, artifacts, dirty paths, markers, inferred stage and refusal; `--dry-run` prints it; the write selects the fixed pending run `<repo-name>-adopt-<branch>`, re-runs the inspection, creates the run in one commit and rolls back on failure. Validation gains the `adopted` event and block; `resume`'s "no run" error hints at `adopt`. The rest is prose: route and adoption grill, reviewer ENG-2 boundary, spec-builder in-place edits and pre-adoption tasks, approver and retro disclosure, `state.md`, `DESIGN.md`, `README.md`.
+Add one CLI writer, `factory adopt <src> [--stage <stage>] [--dry-run]`, in a new module `factory_cli/adopt.py`. One read-only inspection resolves the source shape, artifacts, dirty paths, markers, inferred stage and refusal; `--dry-run` prints it; the write selects the fixed pending run `<repo-name>-adopt-<branch>`, re-runs the inspection, creates the run in one commit and rolls back on failure. Validation gains the `adopted` event and block; `resume`'s "no run" error hints at `adopt`. The rest is prose: route and adoption grill, reviewer pre-adoption boundary (ENG-1, ENG-2, ENG-3), spec-builder in-place edits and pre-adoption tasks, approver and retro disclosure, `state.md`, `DESIGN.md`, `README.md`.
 
 Detail: [research.md](research.md) (decisions D1-D11), [data-model.md](data-model.md), [contracts/cli.md](contracts/cli.md), [quickstart.md](quickstart.md).
 
@@ -52,7 +52,7 @@ core/skills/factory/bin/factory_cli/
 core/skills/factory/SKILL.md               # argument-hint, route `adopt`, adoption grill, step 7 adopted_base, step 8 line
 core/skills/factory/references/state.md    # adopted block/event, pending adoption name, CLI line
 core/roles/spec-builder.md                 # FR-024 in-place specify/plan/tasks; FR-025 pre-adoption tasks in analyze
-core/roles/spec-conformance.md, core/roles/review-judge.md, core/roles/retro.md
+core/roles/spec-conformance.md, core/roles/code-standards.md, core/roles/review-judge.md, core/roles/retro.md
 DESIGN.md, README.md
 CONTEXT.md, docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md   # written at grill-with-docs; edited only if the design diverges
 tools/tests/test_adopt.py                  # NEW
@@ -69,7 +69,7 @@ tools/tests/test_adopt.py                  # NEW
 - `adopted` block, `adopted` event, `ADOPT_SHAPES`, `ADOPT_STAGES` - abstraction - provenance required by FR-015/FR-016; closed vocabularies as the existing `HISTORY_EVENTS`.
 - `one_run(hint=)` - abstraction - lets only `resume` add the adopt hint (FR-021) without changing other callers.
 - pending name `<repo-name>-adopt-<branch>` - abstraction - the identity the write and retry select (clarify Q1, research D4).
-- `adopted_base` reviewer input - abstraction - the ENG-2 boundary reviewers need (FR-019) without reading state.
+- `adopted_base` reviewer input - abstraction - the pre-adoption boundary reviewers need (FR-019) without reading state.
 - Dependencies: none.
 
 ## Design (orchestrator and role prose)
@@ -77,7 +77,7 @@ tools/tests/test_adopt.py                  # NEW
 - **Route (step 0)**: `adopt <branch|spec_dir> [--stage <s>] [mode flags]` → `SHELL: factory adopt <src> [--stage <s>] --dry-run`. Non-zero: show the refusal or candidates, create nothing, stop. Clean: reuse the report's `pending` file when it exists and has not ended, else create it (ended: replace) with mode as for a new run, plus `branch`, `spec_dir`, `feature` = spec title; then preflight (step 1).
 - **Adoption grill (replaces steps 2-3)**: summarise `spec.md` from the report's branch; ask only open gaps (`needs_clarification` first), the chain (recommend `full` when the entry stage is `tasks` or `analyze`) and the entry stage (inferred recommended; options `specify|plan|tasks|analyze`). Same frontier, presentation, pending storage and cruise rules as step 3. Declined: `set-status aborted`, stop. Confirmed: write `brief.md`, `checkpoint grill --next worktree`, then `SHELL: factory adopt <src> --stage <chosen>` (replaces step 4). Failure: show the error; the pending run stays for a retry. Continue from the chosen stage under "Resume".
 - **Spec-builder**: `specify`/`plan`/`tasks` edit an existing artifact in place when state has `adopted` (FR-024); `analyze` excludes task IDs checked at `base_commit` from the blocking test-scope check and lists them as pre-adoption (FR-025).
-- **Review (step 7)**: pass `adopted_base` when `adopted` exists.
+- **Review (step 7)**: pass `adopted_base` when `adopted` exists. Commits in `<base>..<adopted_base>` and tasks checked at `adopted_base` are pre-adoption: code-standards skips ENG-3 for those commits; spec-conformance skips ENG-2 `Red:` checks for those commits and ENG-1 commit evidence for those tasks; the judge confirms no such finding against them. Each lists them as pre-adoption; every reviewer still reviews all of `<base>...HEAD` (FR-019, research.md D10).
 - **Approver (step 8)**: "Adopted from `<shape>` `<branch>` at `<chosen_stage>` (inferred `<inferred_stage>`); commits before `<base_commit>` are pre-adoption." Retro states the same.
 
 ### Quality constraints
@@ -94,7 +94,7 @@ tools/tests/test_adopt.py                  # NEW
 - Seam: `bin/factory adopt <src> [--stage <stage>]` (write) - per shape: worktree at `<repo>/../<repo-name>-factory/<branch>` on the existing branch (no new branch), a local branch tracking `origin/<branch>`, or a new branch from `base`; valid `state.json` with the `adopted` block (inferred and chosen stages, `base_commit` = branch HEAD at the write, including a commit made after the dry-run) and one `adopted` history entry `{stage: <chosen>, event: adopted, commit: null}`; `brief.md` and `profile.md` moved; pending files deleted; exactly one new commit `factory: adopt <branch>` touching only `<spec_dir>/factory/`; a retry after a rolled-back write reuses the same pending file and succeeds. Failure paths: a refusal arising after the dry-run (dirty file, existing state, another pending file) exits 1 with nothing written; no pending file `<repo-name>-adopt-<branch>` exits 1; an `aborted` adoption pending file exits 1; a live foreign lock exits 1; a commit rejected by a `pre-commit` hook removes the worktree and any branch adopt created, keeps the pending files, exits 1.
 - Seam: `factory_cli.state.validate_state` - an adopted state with no `complete` entries before its chosen stage is valid; states without `adopted` stay valid. Failure paths: non-object `adopted`; `source.shape` off-vocabulary; missing `source.branch` or `source.spec_dir`; `inferred_stage` or `chosen_stage` outside `specify|plan|tasks|analyze`; `base_commit` not 40 lowercase hex; an `adopted` history entry without the `adopted` block.
 - Seam: `bin/factory resume <run>` - a matching run resumes as before. Failure paths: no matching run exits 1 with "no run" and the `adopt <branch|spec_dir>` hint, creating no run, worktree or branch.
-- Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md`, `core/roles/spec-builder.md`, `core/roles/spec-conformance.md`, `core/roles/review-judge.md`, `core/roles/retro.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
+- Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md`, `core/roles/spec-builder.md`, `core/roles/spec-conformance.md`, `core/roles/code-standards.md`, `core/roles/review-judge.md`, `core/roles/retro.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
 - Overridden: none
 
 Confirmed: 2026-11-04 - Q2 accepted - seams: `bin/factory adopt <src> --dry-run`, `bin/factory adopt <src> [--stage <stage>]` (write), `factory_cli.state.validate_state`, `bin/factory resume <run>`; failure paths: each seam's "Failure paths" list exactly as declared above, verbatim snapshot in `factory/relay/plan-Q2.md` (supersedes the stale `plan-Q1.md` acceptance).

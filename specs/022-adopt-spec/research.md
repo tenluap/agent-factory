@@ -63,7 +63,7 @@ Any failure in 3-5 (a `CLIError` from `git`, a `StateError`, an `OSError`): `git
 
 ## D10 Pre-adoption boundary
 
-- **Commits (FR-019)**: SKILL.md step 7 passes `adopted_base` (= `adopted.base_commit`) to `spec-conformance` and `review-judge` when present. Spec-conformance checks `Red:` lines on `<adopted_base>..HEAD` only and lists `<base>..<adopted_base>` commits as pre-adoption; the judge never confirms an ENG-2 finding against one. All reviewers still review `<base>...HEAD`.
+- **Commits and checked tasks (FR-019)**: SKILL.md step 7 passes `adopted_base` (= `adopted.base_commit`) to the reviewers and `review-judge` when present. Code-standards applies the ENG-3 commit-unit check to `<adopted_base>..HEAD` only. Spec-conformance checks `Red:` lines (ENG-2) on `<adopted_base>..HEAD` only and skips the ENG-1 one-passing-test-and-implementation-commit check for tasks checked in `git show <adopted_base>:<spec_dir>/tasks.md`. Both list `<base>..<adopted_base>` commits and those tasks as pre-adoption; the judge never confirms an ENG-1, ENG-2 or ENG-3 commit-evidence finding against them. All reviewers still review `<base>...HEAD` in full (user answer Q5, widening grill Q9).
 - **Tasks (FR-025)**: the spec-builder's `analyze` stage reads `git show <base_commit>:<spec_dir>/tasks.md`, takes the IDs of tasks checked there, excludes those IDs from the blocking test-scope check and lists them under "Pre-adoption tasks". A renumbered or new task gets the full check.
 - **Artifacts (FR-024)**: when state has `adopted`, the spec-builder's `specify`, `plan` and `tasks` stages edit an existing `spec.md`, `plan.md` or `tasks.md` in place.
 - **Rejected**: a CLI helper computing pre-adoption task IDs (one `git show` in agent prose suffices; constitution V).
