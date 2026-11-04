@@ -85,7 +85,7 @@ description: "Task list for 021-cruise-mode"
 
 - [X] T014 Harness-neutrality and build check: `git grep -n -e bypassPermissions -e dangerously-bypass -e allow-all-tools -- core/` is empty; `git diff --stat origin/main -- tools/render.py install.sh` is empty; `test -z "$(git ls-files -- dist/)"` passes (constitution workflow gate: `dist/` untracked); run the build command (render all five harnesses into a temp `FACTORY_HOME`, `bash -n install.sh`) (FR-023, SC-006). Exempt: verification only. Done: build exits 0; all three checks pass.
 
-- [ ] T015 Final verification: `python3 -m unittest discover -s tools`. Exempt: verification only. Done: all tests pass, or any failure is shown to be pre-existing on `origin/main` and recorded here; zero new failures (SC-004).
+- [X] T015 Final verification: `python3 -m unittest discover -s tools`. Exempt: verification only. Done: all tests pass, or any failure is shown to be pre-existing on `origin/main` and recorded here; zero new failures (SC-004).
 
 ## Dependencies
 
