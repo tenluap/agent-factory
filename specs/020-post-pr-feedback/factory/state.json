@@ -158,6 +158,14 @@
       "auto": false,
       "at": "2026-11-04T00:31:38.733392Z",
       "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "ESCALATE",
+      "answer": "lite chain escalated to full after analyze pass 1 (3 HIGH); mode.chain stays lite in state because the writer has no command to change it",
+      "auto": false,
+      "at": "2026-11-04T00:37:47.287503Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
