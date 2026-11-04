@@ -22,13 +22,20 @@
 - Q8: Stage override? → A: `--stage` accepts only `specify`, `plan`, `tasks`, `analyze`.
 - Q9: Pre-adoption commits? → A: Reviewed as part of the whole diff; ENG-2 applies only after `adopted.base_commit`.
 
+### Session 2026-11-04 (clarify)
+
+- Q1: How is an adoption's pending run identified? → A: Fixed name `<repo-name>-adopt-<branch>`, reused on retry and selected by name at the write; any other pending file of the repo refuses with exit 1.
+- Q2: Spec dir on the local default branch but not on origin? → A: Refuse with exit 1 and its own reason; nothing written.
+- Q3: What does "never fetches" cover? → A: The `factory adopt` command and the source branch; preflight's default-branch fetch still runs.
+- Q4: What does specify do with an adopted `spec.md`? → A: Treats it as the base and applies the brief and grill answers as targeted edits.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Continue a SpecKit spec on its own branch (Priority: P1)
 
 A user wrote a spec with plain SpecKit on its feature branch (the SpecKit default) and now wants factory to finish it. They run `/factory adopt <branch>`. Factory reports what it found and the stage it would start at, asks a short confirmation grill, then attaches a worktree to the existing branch, creates the run, and continues from the inferred stage through review and the approver gate to an open PR.
 
-**Why this priority**: The most common shape and the core value: no duplicate branch, no lost work, no manual state editing.
+**Why this priority**: The most common shape: no duplicate branch, lost work or manual state editing.
 
 **Independent Test**: In a fixture repository, create a feature branch holding `spec.md` and `plan.md` with no factory state, switch the main checkout to the default branch, run adopt, and confirm a worktree on that same branch, a valid run state whose stage is `tasks`, an `adopted` history entry and one commit `factory: adopt <branch>`.
 
@@ -65,14 +72,14 @@ Before anything is written, the user sees the source shape, any dirty paths, the
 
 The spec may live on a branch that exists only on `origin`, or directly on the default branch with no branch of its own. Adopt handles both without the user creating branches by hand.
 
-**Why this priority**: Less common than the SpecKit default, but each otherwise forces manual git work or a duplicate run.
+**Why this priority**: Each otherwise forces manual git work or a duplicate run.
 
 **Independent Test**: For each shape, run adopt in a fixture repository and confirm the branch, worktree and recorded `adopted.source` shape.
 
 **Acceptance Scenarios**:
 
 1. **Given** the branch exists only on `origin`, **When** adopted, **Then** a local branch tracking it is created and the worktree is attached to it.
-2. **Given** the spec dir is on the default branch with no branch of its own, **When** adopted, **Then** a new branch named after the spec dir is created from `base` and the worktree is attached to it.
+2. **Given** the spec dir is on `base` (the default branch on `origin`) with no branch of its own, **When** adopted, **Then** a new branch named after the spec dir is created from `base` and the worktree is attached to it.
 3. **Given** a spec dir whose name differs from its branch name, **When** adopted, **Then** `spec_dir` records the spec dir's actual path unchanged.
 
 ---
@@ -96,7 +103,7 @@ The inferred stage is a suggestion. The user can start earlier (for example to r
 
 Everyone downstream knows the run was adopted and which commits predate factory, so reviewers judge the whole change without blaming pre-adoption commits for factory-only rules.
 
-**Why this priority**: Without it, reviewers would raise ENG-2 blockers no one can fix, and the approver could not tell what factory authored.
+**Why this priority**: Otherwise reviewers raise unfixable ENG-2 blockers and the approver cannot tell what factory authored.
 
 **Independent Test**: Adopt a branch carrying pre-existing commits, run through review, and confirm reviewers cover the whole `base...HEAD` diff, report pre-adoption commits as disclosed and non-blocking for ENG-2, and the approver screen and retro both state the run was adopted.
 
@@ -112,8 +119,6 @@ Everyone downstream knows the run was adopted and which commits predate factory,
 
 A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the right command instead of hitting a dead end.
 
-**Why this priority**: Discoverability; small change.
-
 **Independent Test**: Run `factory resume <name>` where no run matches; confirm exit 1 and an error message naming `adopt`; confirm resume of an existing factory run behaves as before.
 
 **Acceptance Scenarios**:
@@ -124,10 +129,12 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 ### Edge Cases
 
 - The source argument matches several spec dirs or branches: exit 3 (ambiguous run name), listing the candidates, nothing written.
-- The source matches neither a local branch, a remote branch nor a spec dir on the default branch: exit 1 with the reason.
-- The branch exists both locally and on `origin`: the local branch is used; adopt does not fetch, pull or push.
+- The source matches neither a local branch, a remote branch nor a spec dir on `base` or the local default branch: exit 1 with the reason.
+- The branch exists both locally and on `origin`: the local branch is used, unfetched.
+- The spec dir is committed on the local default branch but not on `base`: exit 1 with "spec dir is on local `<default>` but not on `<base>`; push it or create its branch first", nothing written.
 - The standard worktree path already exists: exit 1 naming the path, nothing written.
-- A pending file for an adoption of the same source already exists: the existing pending run is reused, never duplicated.
+- A retry (for example after a failed write) reuses the pending file `<repo-name>-adopt-<branch>`; an ended one from a declined attempt is replaced; never duplicated.
+- Another pending file of the same repository exists (not the adoption's own): adopt (dry-run and write) exits 1 naming it, with a hint to resume or prune it, and writes nothing.
 - The default-branch shape when a branch named after the spec dir already exists: treated as the own-branch shape for that branch.
 - `spec.md` still contains `[NEEDS CLARIFICATION]` markers: the dry-run report lists them and the confirmation grill raises them as open gaps.
 - The source branch moves between dry-run and the write: the write re-checks every refusal and records `base_commit` from the branch HEAD at the write.
@@ -141,15 +148,15 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **FR-001**: The factory skill MUST route `/factory adopt <branch|spec_dir>` to the adopt flow, and MUST NOT adopt implicitly from `resume` or from a new-feature request.
 - **FR-002**: The state CLI MUST provide `factory adopt <src> [--stage <stage>] [--dry-run]` as the single writer that creates an adopted run.
 - **FR-003**: `--dry-run` MUST be read-only and MUST print a machine-readable report with: source shape, branch, spec dir, artifacts found, dirty paths, inferred stage, open `[NEEDS CLARIFICATION]` markers, the target worktree path, and the refusal reason when refused.
-- **FR-004**: Adopt MUST recognise three source shapes: spec on its own local branch, branch only on `origin`, and spec dir on the default branch with no own branch; it MUST record the shape in `adopted.source`.
+- **FR-004**: Adopt MUST recognise three source shapes: spec on its own local branch, branch only on `origin`, and spec dir on `base` (the default branch on `origin`) with no own branch; it MUST record the shape in `adopted.source`.
 - **FR-005**: For a local branch adopt MUST attach the worktree to the existing branch without creating a branch; for a remote-only branch it MUST create a local branch tracking it; for the default-branch shape it MUST create a branch named after the spec dir from `base`.
 - **FR-006**: The worktree path MUST be the standard `<repo>/../<repo-name>-factory/<branch>`.
-- **FR-007**: Adopt MUST refuse with exit 1, naming the cause and writing nothing, when: the spec files or source branch have uncommitted changes (every dirty path named); the spec dir already has `factory/state.json` (pointing to `resume`); the spec dir has no `spec.md`; the source branch is checked out in another checkout (with a hint to switch away); or the target worktree path exists.
+- **FR-007**: Adopt MUST refuse with exit 1, naming the cause and writing nothing, when: the spec files or source branch have uncommitted changes (every dirty path named); the spec dir already has `factory/state.json` (pointing to `resume`); the spec dir has no `spec.md`; the source branch is checked out in another checkout (with a hint to switch away); the target worktree path exists; the spec dir is on the local default branch but not on `base` ("push it or create its branch first"); or a pending file of the repository other than the adoption's own exists (named, with a hint to resume or prune it).
 - **FR-008**: Adopt MUST infer the entry stage: `spec.md` only → `plan`; `spec.md` and `plan.md` → `tasks`; `tasks.md` present → `analyze`, regardless of checkbox state.
 - **FR-009**: `--stage` MUST accept only `specify`, `plan`, `tasks` and `analyze`; any other value MUST be a usage error (exit 5) with nothing written.
-- **FR-010**: The orchestrator MUST run the confirmation grill in pending state, using the same pending storage as a new run, seeded from `spec.md`: summarise the spec, ask only open gaps, the chain and confirmation of the entry stage, then write `brief.md`.
+- **FR-010**: The orchestrator MUST run the confirmation grill in pending state, using the same pending storage as a new run under the fixed name `<repo-name>-adopt-<branch>` (reused on retry; an ended one is replaced), seeded from `spec.md`: summarise the spec, ask only open gaps, the chain and confirmation of the entry stage, then write `brief.md`.
 - **FR-011**: A declined adoption MUST leave nothing in the repository and MUST end its pending run the same way a declined new run ends.
-- **FR-012**: The adopt write MUST re-check every refusal, then create or attach the worktree, write `state.json` from the pending state, move `brief.md` (and the pending profile) into `<spec_dir>/factory/`, append one `adopted` history entry, and commit `factory: adopt <branch>` — and nothing else.
+- **FR-012**: The adopt write MUST select its pending run by the name `<repo-name>-adopt-<branch>`, re-check every refusal, then create or attach the worktree, write `state.json` from the pending state, move `brief.md` (and the pending profile) into `<spec_dir>/factory/`, append one `adopted` history entry, and commit `factory: adopt <branch>` — and nothing else.
 - **FR-013**: If any step of the adopt write fails, adopt MUST remove everything it created (worktree, created branch, written files), leave the pending run intact, and exit with the reason.
 - **FR-014**: Adopt MUST never commit, stage or modify files it did not author.
 - **FR-015**: The history-event vocabulary MUST gain `adopted`, written only by the adopt command.
@@ -161,6 +168,7 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **FR-021**: When `resume` finds no matching run, its error MUST hint at `/factory adopt <branch|spec_dir>`; resume behaviour is otherwise unchanged.
 - **FR-022**: Adopt MUST respect the run lock like every other writer and MUST refuse under a live lock.
 - **FR-023**: `DESIGN.md`, `references/state.md`, `CONTEXT.md` (new term **Adopted run**), a new ADR and the reviewer role files MUST describe the adopt flow, the `adopted` block and event, and the ENG-2 boundary; `dist/` MUST render cleanly for every harness.
+- **FR-024**: When state has an `adopted` block and `spec.md` exists, the `specify` stage MUST treat the existing `spec.md` as its base and apply the brief and grill answers as targeted edits, never regenerating it from the brief.
 
 ### Key Entities
 
@@ -183,9 +191,9 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 ## Assumptions
 
 - The user adopts specs in the current repository only; cross-repository adoption is out of scope.
-- Adopt reads git locally and never fetches, pulls or pushes; a stale remote view is the user's to refresh.
+- `factory adopt` never fetches, pulls or pushes, nor fetches the source branch (a stale view is the user's to refresh); the `/factory adopt` route's preflight still fetches the default branch, and the write re-inspects against that fresh `base`.
 - `base` and the default branch are resolved as for a new run.
 - The chain (lite or full) and fast mode are chosen in the confirmation grill, as for a new run.
-- Re-running `specify` on an adopted spec updates the existing `spec.md` in place, as any specify pass does.
+- FR-024 (`specify` edits an adopted `spec.md` in place) is a prose change to the spec-builder role only.
 - Adoption of a run already in implementation (implement or later) is out of scope; such work enters at `analyze` at the latest.
 - Abandoned pending adoption files are cleaned by the existing `prune` path; no new cleanup command is added.
