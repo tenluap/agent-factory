@@ -1,0 +1,18 @@
+{
+  "stage": "grill-with-docs",
+  "round": 1,
+  "questions": {
+    "Q1": "Canonical terms. A = stage-based: 'implement gate', 'baseline analysis', 'recheck', 'repair cycle', 'acceptance targets', 'exhaustion question'; avoid 'implementation checkpoint', 'transition gate', 'fresh analysis'.",
+    "Q2": "Finding scope. A = widen CONTEXT.md 'Finding' to a defect a reviewer or analyze reports, with severity and the rule/artefact it rests on.",
+    "Q3": "Guided-pass authorization past the cap. A = keep plan rule (any non-auto analyze answer newer than latest result) and document in plan and DESIGN.md why other answers cannot misfire; test scope unchanged.",
+    "Q4": "Escalation verification. A = covered by 'later analyze-record keeps baseline' and 'loops unchanged without checkpoint remediate' tests; reword SC-004/FR-003; mode.chain writer gap stays out of scope.",
+    "Q5": "Outdated docs. A = update docs/factory-overview.md (analyze diagram + paragraph) and docs/product-brief.md 'Analysis and remediation policy' with a revision line; documentation-exempt."
+  },
+  "answers": {
+    "Q1": {"answer": "A", "auto": true},
+    "Q2": {"answer": "A", "auto": true},
+    "Q3": {"answer": "A", "auto": true},
+    "Q4": {"answer": "A", "auto": true},
+    "Q5": {"answer": "A", "auto": true}
+  }
+}
