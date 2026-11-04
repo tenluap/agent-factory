@@ -75,8 +75,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approver gate: cruise mode run 021 ready for Approve / Request changes / Abort",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T07:35:01.362186Z",
+      "latency_ms": 16666958
     }
   ],
   "decisions": [
