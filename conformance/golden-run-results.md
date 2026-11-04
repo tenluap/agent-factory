@@ -6,14 +6,27 @@ checklists live in `golden-run/<harness>.md`.
 
 | Harness | Tier | Run date | Result | Steps passed | Notes |
 |---|---|---|---|---|---|
-| claude-code | enforcing | _after merge_ | not yet run | / | |
-| opencode | enforcing | _after merge_ | not yet run | / | |
+| claude-code | enforcing | see per-leg table | not yet run | / | live trials recorded in the per-leg table below |
+| opencode | enforcing | see per-leg table | not yet run | / | live trials recorded in the per-leg table below |
 | copilot | enforcing | _after merge_ | not yet run | / | |
 | zcode | enforcing | _after merge_ | not yet run | / | |
 | codex | disclosing | _after merge_ | not yet run | / | read-only by instruction only |
 
 A result records the fixture commit, both harnesses used, and the kill/resume
 leg. `/` marks a step that does not apply on that adapter.
+
+## Per-leg record: claude-code and opencode live trials
+
+Each leg's evidence is recorded separately in its row. The installed-version baseline (a run without `--from-checkout`) is a separate result from the checkout-mode run of the same leg. Procedures: [claude-code](golden-run/claude-code.md) and [opencode](golden-run/opencode.md) checklists. Provenance: each row names its `<out>/provenance.json`.
+
+| Leg | Harness(es) | Mode (checkout or installed baseline) | Run date | Provenance path | Result | Evidence | Notes |
+|---|---|---|---|---|---|---|---|
+| headless smoke | claude-code, opencode | checkout; installed baseline separate | _not run_ | _pending_ | not yet run | _pending_ | Requires a maintainer-run headless trial; tests spend no tokens. |
+| golden run | claude-code, opencode | checkout; installed baseline separate | _not run_ | _pending_ | not yet run | _pending_ | Full checklist in each golden-run document. |
+| pause/resume | claude-code, opencode | checkout; installed baseline separate | _not run_ | _pending_ | not yet run | _pending_ | Pause at `review`, kill mid-`review`, resume. |
+| cross-harness resume | claude-code, opencode (Codex fallback in `golden-run/codex.md`) | checkout; installed baseline separate | _not run_ | _pending_ | not yet run | _pending_ | Reason for any Codex fallback recorded here. |
+| approval/PR | claude-code, opencode | checkout; installed baseline separate | _not run_ | _pending_ | not yet run | _pending_ | Private `tenluap/factory-golden-run-<date>` created at trial time and kept as evidence. |
+| UI | claude-code, opencode | _deferred_ | _deferred_ | _deferred_ | deferred | _deferred_ | Deferred until `docs/superpowers/plans/2026-11-03-factory-ui-handoffs-plan.md` lands. |
 
 ## Run reliability (012)
 
