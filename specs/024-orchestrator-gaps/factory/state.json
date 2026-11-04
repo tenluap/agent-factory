@@ -1,0 +1,101 @@
+{
+  "version": 5,
+  "started_at": "2026-11-04T21:59:51Z",
+  "harness": "opencode",
+  "feature": "Close orchestrator bookkeeping gaps found in run 018: CLI writers for review.round/fix_rounds and review-stage relay records, correct the overrun excess wording in ledger-add, and raise the round-1 reviewer budget.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "024-orchestrator-gaps",
+  "spec_dir": "specs/024-orchestrator-gaps",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true,
+    "cruise": true
+  },
+  "skills": {},
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "setup-commands",
+      "answer": "commands recorded: build=\"export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh\", test=\"python3 -m unittest discover -s tools\" (CI-documented, win over empty detector profile)",
+      "auto": true,
+      "at": "2026-11-04T22:00:03.312201Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "setup-speckit",
+      "answer": "speckit skills already present in repo .claude/skills/ (seven speckit-* SKILL.md); .specify/ present; nothing to init",
+      "auto": true,
+      "at": "2026-11-04T22:00:03.400275Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "intake",
+      "answer": "delivery",
+      "auto": true,
+      "at": "2026-11-04T22:00:03.490170Z",
+      "kind": "answer",
+      "cruise_override": true
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-04T22:00:10.972170Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-code/claude-opus-5-5",
+      "standard": "openai/gpt-6.1-terra"
+    },
+    "source": {
+      "deep": "user",
+      "standard": "adapter"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-04T21:59:58.260907Z",
+    "detected_by": "factory detect 017"
+  }
+}
