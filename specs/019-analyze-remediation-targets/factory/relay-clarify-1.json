@@ -1,0 +1,18 @@
+{
+  "stage": "clarify",
+  "round": 1,
+  "source": "escalation clarify from analyze-1.md",
+  "questions": [
+    { "id": "Q1", "finding": "T1", "requires_user": true, "title": "Trim T003 to the confirmed test scope, or widen validate_state scope with an unparsable baseline `at`?", "options": { "A": "Keep the confirmed scope, trim T003: drop the unparsable-`at` and write_run checks; plan Q1 confirmation stays current.", "B": "Accept the widened scope: add 'unparsable `at`' to validate_state; fresh acceptance of all seven seams and failure paths.", "C": "Something else" }, "recommended": "A" },
+    { "id": "Q2", "finding": "U1", "title": "How does the orchestrator tell apart implement-gate refusal causes?", "options": { "A": "Read run state, not reason text: after a refusal read `factory show`; open pending_clarify or unanswered requires_user question routes to clarify or the relay wait with no cycle charged; no stored analyze.baseline (analyze-record always stores a derivable one first) asks fresh baseline/override/abort; otherwise unmet targets run a cycle when loops < 2, else the exhaustion question.", "B": "Stable cause tags in the refusal (protected:, baseline:, targets:).", "C": "Something else" }, "recommended": "A" },
+    { "id": "Q3", "finding": "I2", "title": "Keep the first report file when a lite run escalates and analysis runs again?", "options": { "A": "Stored counts are authoritative; reuse the pass number.", "B": "Keep the first report file: the orchestrator names the escalated re-analysis `factory/analyze-<n>-full.md`; prose-only change in SKILL.md and spec-builder.md, pass and loops untouched.", "C": "Something else" }, "recommended": "B" },
+    { "id": "Q4", "finding": "U2", "title": "How is 'implementation waits while remediation questions are pending' enforced with no writer for analyze.pending_clarify?", "options": { "A": "Routing enforces, gate check is defensive: relay routing (remediate envelope -> clarify) enforces FR-007's pending_clarify clause; the gate check fires only when state carries the field; no new writer.", "B": "Persist pending_clarify via checkpoint remediate --envelope (widens scope).", "C": "Something else" }, "recommended": "A" },
+    { "id": "Q5", "finding": "I1", "title": "Zero reports: what does the gate say and the orchestrator do?", "options": { "A": "Keep the existing 'analyze.reports is empty' refusal; the orchestrator runs analyze with no user question; FR-011 and US2 scenario 6 cover one or more reports only.", "B": "Treat as untrustworthy baseline and ask.", "C": "Something else" }, "recommended": "A" }
+  ],
+  "answers": {
+    "Q2": { "answer": "A", "auto": true },
+    "Q3": { "answer": "B", "auto": true },
+    "Q4": { "answer": "A", "auto": true },
+    "Q5": { "answer": "A", "auto": true }
+  }
+}
