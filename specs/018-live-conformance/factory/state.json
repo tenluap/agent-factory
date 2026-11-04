@@ -9,7 +9,7 @@
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -541,6 +541,14 @@
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T08:21:58.976515Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "claude-code",
+      "decision": "approve"
     }
   ],
   "models": {
