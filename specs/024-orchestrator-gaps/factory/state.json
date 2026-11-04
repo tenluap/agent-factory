@@ -70,6 +70,18 @@
       "duration_ms": 174000,
       "started_at": "2026-11-04T22:00:41Z",
       "ended_at": "2026-11-04T22:03:35Z"
+    },
+    {
+      "at": "2026-11-04T22:07:12.895702Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 7600,
+      "out_est": 5400,
+      "reported": null,
+      "duration_ms": 395000,
+      "started_at": "2026-11-04T22:03:45Z",
+      "ended_at": "2026-11-04T22:10:20Z"
     }
   ],
   "issues": [],
