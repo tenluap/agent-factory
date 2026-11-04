@@ -81,7 +81,7 @@ None. The stub-harness test helper is test code built inside T002's commit unit 
 
 ## Phase 7: Polish
 
-- [ ] T010 Final verification (no file change, no commit unit): run the build command (`for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done && bash -n install.sh`), `python3 -m unittest discover -s tools`, and `test -z "$(git ls-files -- dist/)"`. Done: all three succeed (SC-005); record results in the run log.
+- [X] T010 Final verification (no file change, no commit unit): run the build command (`for h in claude-code opencode codex copilot zcode; do python3 tools/render.py "$h"; done && bash -n install.sh`), `python3 -m unittest discover -s tools`, and `test -z "$(git ls-files -- dist/)"`. Done: all three succeed (SC-005); record results in the run log.
 
 ## Dependencies
 
