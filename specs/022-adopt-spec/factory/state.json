@@ -330,6 +330,14 @@
       "auto": false,
       "at": "2026-11-04T11:10:21.044530Z",
       "kind": "answer"
+    },
+    {
+      "stage": "remediate",
+      "question": "Q5-pre-adoption-commit-evidence",
+      "answer": "A: widen the pre-adoption boundary to ENG-1 and ENG-3 (commits before adopted.base_commit and pre-adoption tasks skip commit-unit and commit-evidence checks, disclosed as pre-adoption; all code still reviewed)",
+      "auto": false,
+      "at": "2026-11-04T16:23:12.717498Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
