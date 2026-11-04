@@ -60,12 +60,20 @@
         "questions": [
           {
             "id": "R2-Q1-test-scope"
+          },
+          {
+            "id": "R2-Q2-post-commit-contract"
           }
         ],
         "answers": {
           "R2-Q1-test-scope": {
             "answer": "A: accept failure paths (a)-(g) into the confirmed test scope (snapshot plan-Q3.md)",
             "at": "2026-11-04T18:08:56.461111Z",
+            "auto": false
+          },
+          "R2-Q2-post-commit-contract": {
+            "answer": "A: keep exit 1, amend FR-013/contracts/D7/SKILL.md: committed; pending cleanup failed: resume <branch>, do not retry",
+            "at": "2026-11-04T18:08:56.981707Z",
             "auto": false
           }
         }
