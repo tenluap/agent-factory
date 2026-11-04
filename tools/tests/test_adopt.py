@@ -819,6 +819,20 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
         self.assertEqual(self.remote_refs(), refs)
         self.assertTrue(self.pending.exists())
 
+    def test_rollback_that_leaves_the_created_branch_behind_names_it(self):
+        self.publish_default_branch_spec()
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text('#!/bin/sh\ngit worktree lock "$PWD"\nexit 1\n')
+        hook.chmod(0o755)
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("rollback left worktree ", combined)
+        self.assertIn(str(self.worktree), combined)
+        self.assertIn("; branch 007-x (", combined)
+        self.assertTrue(self.pending.exists())
+        self.assertTrue(self.brief.exists())
+
     def reject_commits(self):
         hook = self.box.repo / ".git" / "hooks" / "pre-commit"
         hook.write_text("#!/bin/sh\necho 'rejected by test hook' >&2\nexit 1\n")
@@ -994,6 +1008,39 @@ class SymlinkWriteTests(DryRunFixture):
         self.box.git("checkout", "-q", "main")
         self.commit_evil("factory/brief.md", self.outside / "brief.md")
         self.assert_refused_and_outside_untouched("symlink")
+
+    def test_committed_non_directory_factory_is_refused(self):
+        self.box.git("checkout", "-q", "evil")
+        (self.box.repo / "specs" / "evil" / "factory").write_text("not a folder\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "factory as a file")
+        self.box.git("checkout", "-q", "main")
+        self.assert_refused_and_outside_untouched("specs/evil/factory is not a directory")
+
+    def assert_checkout_link_not_written_through(self, link, target):
+        """A post-checkout hook plants `link` -> `target`; the write exits 1 and never writes through it."""
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"mkdir -p \"$(dirname 'specs/evil/{link}')\" && ln -s '{target}' 'specs/evil/{link}'\n"
+        )
+        hook.chmod(0o755)
+        before = files_under(self.outside)
+        out = self.box.cli("adopt", "evil")
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("symlink", combined)
+        self.assertEqual(files_under(self.outside), before)
+        self.assertFalse(self.worktree.exists())
+        self.assertTrue(self.pending.exists())
+
+    def test_symlinked_factory_directory_created_in_the_checkout_is_not_written_through(self):
+        self.assert_checkout_link_not_written_through("factory", self.outside)
+
+    def test_symlinked_profile_created_in_the_checkout_is_not_written_through(self):
+        (self.outside / "profile.md").write_text("precious\n")
+        self.pending.with_name("repo-adopt-evil.profile.md").write_text("# Profile from pending\n")
+        self.assert_checkout_link_not_written_through("factory/profile.md", self.outside / "profile.md")
 
     def test_symlinked_state_json_created_in_the_checkout_is_not_written_through(self):
         outside = self.box.dir / "outside-state.json"
