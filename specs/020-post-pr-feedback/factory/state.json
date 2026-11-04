@@ -84,6 +84,14 @@
       "summary": "Clarify round 1: Q11, Q13, Q14 test-scope decisions (requires_user)",
       "answered_at": "2026-11-04T00:41:04.366291Z",
       "latency_ms": 42109
+    },
+    {
+      "at": "2026-11-04T00:49:56.351292Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Re-plan: Q20 updated test-scope confirmation (requires_user)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
