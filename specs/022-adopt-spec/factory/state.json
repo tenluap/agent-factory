@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -52,25 +52,7 @@
       "at": "2026-11-04T10:37:00.614678Z"
     }
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q2"
-          }
-        ],
-        "answers": {
-          "Q2": {
-            "answer": "A",
-            "at": "2026-11-04T11:09:37.103034Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T10:18:28.440115Z",
@@ -313,6 +295,14 @@
       "auto": false,
       "at": "2026-11-04T11:09:37.397858Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T11:10:21.044530Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -511,6 +501,13 @@
     {
       "at": "2026-11-04T11:00:43.691107Z",
       "stage": "grill-with-docs",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T11:10:21.044530Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
