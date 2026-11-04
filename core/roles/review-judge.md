@@ -24,3 +24,7 @@ For active Pen work, also `design` (context/map/evidence paths) and the resolved
 7. `verdict` is `fix` when `confirmed_blocking` is non-empty, else `pass`.
 
 Done = every reviewer finding id appears exactly once across the verdict. Read-only: you edit nothing. End with the verdict as your final fenced `json` block.
+
+## Adopted runs
+
+When `adopted_base` is passed, confirm no finding against pre-adoption work: commits in `<adopted_base>` and tasks checked there. Reject such a finding with the reason `pre-adoption`, and keep the reviewers' other findings as usual (FR-019, FR-020).

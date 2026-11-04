@@ -34,3 +34,7 @@ The diff carries no commit messages, so list the run's commits and their bodies 
 **A user-changes fix round's commit** (subject `factory(fix): user changes`, or its round's verdict carries no `confirmed_blocking` entries): check only the grammar of each `Red:` line it carries and that every behaviour-changing fix its diff shows has one, matching it against neither `tasks.md` nor the verdict; an empty `confirmed_blocking` list is no finding by itself. Raise nothing for a fix confined to documentation, configuration or generated output.
 
 The two kinds of fix round are told apart by the commit subject and named with the glossary's terms, **verdict-driven fix round** and **user-changes fix round**. A commit-level finding has no file and no line: put the commit sha in `file` (followed by the task id or finding id where one applies) and omit `line` or set it to `0`.
+
+## Adopted runs
+
+When the run is adopted (`adopted_base` is passed), run the Red proof check on `<adopted_base>..HEAD` only (ENG-2): commits in `<adopted_base>` predate the adoption and carry no proof this run can check. Skip ENG-1 commit evidence for every task checked at `<adopted_base>` and list those tasks as pre-adoption. Requirements, scenarios and contracts are still checked against the whole `base...HEAD` diff (FR-019, FR-020).
