@@ -147,7 +147,7 @@ Cruise removes decisions, not safety stops. A run that cannot make progress halt
 - **FR-002**: Cruise on MUST set `mode.fast` to true.
 - **FR-003**: When the final flags leave cruise on (from flags or from a resumed run's stored mode) and `--no-fast` is present, the orchestrator MUST name the conflict and ask the user to correct it, changing no state.
 - **FR-004**: A state file with no `mode.cruise` MUST stay valid and be read as cruise off. The new field and the cruise-override marker MUST be additive to the state schema.
-- **FR-005**: Every state write for cruise (mode, answers, decisions, markers) MUST go through the state writer; there is no hand-edit path.
+- **FR-005**: Once run state exists, every cruise state write (mode, answers, decisions, markers) MUST go through the state writer; a new run's initial `mode.cruise` is recorded by today's creation path.
 
 **Answering under cruise**
 
