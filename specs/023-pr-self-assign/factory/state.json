@@ -9,7 +9,7 @@
   "branch": "023-pr-self-assign",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/023-pr-self-assign",
   "spec_dir": "specs/023-pr-self-assign",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -470,8 +470,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-11-04T18:43:31.686456Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/20",
   "history": [
     {
       "at": "2026-11-04T17:01:29.101110Z",
@@ -584,6 +584,13 @@
       "commit": null,
       "harness": "claude-code",
       "decision": "approve"
+    },
+    {
+      "at": "2026-11-04T18:43:31.686456Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
