@@ -1,0 +1,127 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "Cruise flags, state validation, writer guards and the pr gate match the plan, but the orchestrator prose still waits on the user for setup offers, the brainstorm path and ambiguous intake, and two declared assertions (checkpoint migration and FR-011) are untested.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_cruise.py",
+      "line": 309,
+      "summary": "The checkpoint migration of the cruise_override marker into decisions and the show veto-list listing of the marker are not asserted; only commands.settled_answers is called directly.",
+      "evidence": "tasks.md T005 Red (line 49) requires 'checkpoint migrates it into decisions with the marker kept and kind answer; show lists it in the veto list with the marker'. plan.md 'Test seams' answer seam (line 123) lists the same. test_cruise.py AnswerCruiseOverrideTests has no test that runs checkpoint or show; test_settled_answers_carry_the_marker_into_decisions (line 372, call at 386) calls commands.settled_answers directly.",
+      "fix": "Add subprocess tests: on a cruise run, answer Q1 A --cruise-override, then checkpoint the stage, and assert the decisions entry has kind answer, auto true and cruise_override true; then run show and assert the record appears in the decisions list with the marker."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_cruise.py",
+      "line": 425,
+      "summary": "FR-011 is unasserted: no test runs checkpoint analyze --next implement after a marked analyze-exhaustion gate-override.",
+      "evidence": "tasks.md T006 Red (line 56) requires 'checkpoint analyze --next implement then succeeds (FR-011)'. test_marked_analyze_exhaustion_gate_override_is_recorded_and_valid (line 425) stops after decisions-add and validate_state; no checkpoint call.",
+      "fix": "Extend the test: after decisions-add analyze analyze-exhaustion with --kind gate-override --cruise-override, run checkpoint analyze --next implement and assert exit 0, state.stage implement, and a history entry with event gate-override and decision analyze-exhaustion."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 61,
+      "summary": "The brainstorm step (idea path) has no cruise behaviour: the frontier is not self-answered, the direction is not self-confirmed, and the visual companion is still offered.",
+      "evidence": "spec.md FR-006 (line 154) and edge case (line 137). SKILL.md step 2 (lines 61-69) is unchanged in the diff. tasks.md T008 (line 72) requires grill and brainstorm self-answered with --auto.",
+      "fix": "Add a cruise bullet to step 2: under mode.cruise, answer each brainstorm frontier question with its recommendation via answer --auto --stage brainstorm, confirm the recommended direction without asking, skip the visual companion, then continue to step 3."
+    },
+    {
+      "id": "SPEC-4",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 35,
+      "summary": "Under cruise, an ambiguous intake still asks the user one relay question instead of taking the delivery path.",
+      "evidence": "spec.md US5 scenario 4 (line 107) and FR-013 (line 164). SKILL.md line 35 (Ambiguous branch) still says ASK exactly one relay question with no cruise carve-out.",
+      "fix": "In the Ambiguous branch, add: under mode.cruise, take the delivery path with no question and, once the pending state exists after step 1, record factory decisions-add grill intake 'delivery' --cruise-override."
+    },
+    {
+      "id": "SPEC-5",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 52,
+      "summary": "Under cruise, drafting the constitution after specify init still happens with the user.",
+      "evidence": "spec.md US5 scenario 1 (line 104). SKILL.md step 3 (line 52) still reads 'then follow the resolved speckit-constitution file with the user'.",
+      "fix": "Add to step 3: under mode.cruise, draft the constitution from the repository without asking, then record setup-speckit as already specified."
+    },
+    {
+      "id": "SPEC-6",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 54,
+      "summary": "Under cruise, confirming detected build and test commands still asks the user; the setup-commands override is named in the design but has no prose step.",
+      "evidence": "spec.md US5 scenario 2 (line 105) and FR-013 (line 164). SKILL.md step 5 (line 54) still reads 'confirm the proposed commands with the user once'.",
+      "fix": "In step 5, add: under mode.cruise, record the detected proposed commands without a question and run factory decisions-add grill setup-commands '<commands recorded>' --cruise-override."
+    },
+    {
+      "id": "SPEC-7",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 73,
+      "summary": "The grill step keeps 'with the user' and 'initial grilling stays interactive whatever the mode' unqualified, contradicting the cruise self-answer in the same paragraph.",
+      "evidence": "spec.md FR-006 (line 154). protocol.md line 199 was updated for cruise, so the two prose sources disagree.",
+      "fix": "Change 'initial grilling stays interactive whatever the mode' to 'initial grilling stays interactive unless mode.cruise is on', and qualify 'with the user' the same way."
+    },
+    {
+      "id": "SPEC-8",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 112,
+      "summary": "The analyze loop step still says halt and ask the user at exhaustion, with no cruise carve-out at that point.",
+      "evidence": "spec.md FR-011 (line 162). SKILL.md line 112 vs line 182 (Cruise (analyze exhaustion)).",
+      "fix": "Append to line 112: 'under mode.cruise, follow Policies, Cruise (analyze exhaustion) instead'."
+    },
+    {
+      "id": "SPEC-9",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 73,
+      "summary": "The step 3 mode record does not say cruise is kept, so restating mode from chain and fast alone would silently switch cruise off mid-run.",
+      "evidence": "tasks.md T008 (line 72) Done requires 'step 3's mode record keeps cruise'. SKILL.md line 73 still reads 'Record mode (the settled chain and fast) in the pending state'.",
+      "fix": "Change the step 3 wording to 'Record mode (the settled chain, fast, and cruise as created)'."
+    },
+    {
+      "id": "SPEC-10",
+      "severity": "medium",
+      "blocking": false,
+      "file": "tools/tests/test_cruise.py",
+      "line": 372,
+      "summary": "Tests exercise seams not declared in the plan or accepted scope: commands.settled_answers is called directly, and checks.permitting_decision is asserted for pr.",
+      "evidence": "ENG-4. plan.md Test seams (lines 119-126); spec.md Clarifications line 15. test_cruise.py lines 504, 509, 386.",
+      "fix": "Drop the direct permitting_decision and settled_answers assertions, or move the migration check to the CLI checkpoint test (SPEC-1) and keep the pr assertion to gate_violation."
+    },
+    {
+      "id": "SPEC-11",
+      "severity": "medium",
+      "blocking": false,
+      "file": "adapters/zcode/harness.md",
+      "line": 25,
+      "summary": "The ZCode no_prompt_launch bullet states 'none documented' without the documentation check that tasks.md T013 requires.",
+      "evidence": "tasks.md T013 (line 82); implementer self-reported ZCode not docs-verified.",
+      "fix": "Run the ZCode documentation check and record its result in the bullet, or mark the bullet explicitly as unverified."
+    },
+    {
+      "id": "SPEC-12",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 41,
+      "summary": "The mode-flag conflict path names the conflict and stops, but does not tell the orchestrator to ask the user to drop one flag.",
+      "evidence": "spec.md US4 scenarios 4 and 6 (lines 87, 89).",
+      "fix": "Add to line 41 and the resume bullet in step 4: 'and ask the user to drop one of the conflicting flags'."
+    }
+  ]
+}
