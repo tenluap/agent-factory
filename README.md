@@ -119,6 +119,7 @@ Start a run from the repo you want the feature built in. On Claude Code, OpenCod
 /factory <feature> --cruise                   run unattended to the approver; never publishes without your Approve
 /factory <feature> --stop-at review           pause cleanly before the review stage
 /factory resume <branch>                      resume that run from where it stopped (any session, any harness)
+/factory adopt <branch|spec_dir> [--stage <s>]  continue a SpecKit spec started outside factory on its own branch (preview first with `factory adopt <src> --dry-run`)
 /factory resume <branch> --full --no-fast     resume, switching mode before the stage restarts
 /factory resume <branch> --cruise             resume with cruise on: the open relay round is filled, then it runs to the approver
 /factory init                                 seed <repo>/.factory/config.json with effective model defaults + README
@@ -174,6 +175,8 @@ Progress is checkpoint-committed per stage. A checkpoint commits the spec direct
 4. Let the run plan, implement, verify and review. Only **Approve** allows the push and PR.
 
 Pause with `--stop-at <stage>` and continue with `/factory resume <branch>`. After a crash or session change, invoke `/factory` with no arguments to discover unfinished runs (worktree runs and pending runs from `${FACTORY_HOME}/pending/`), then resume one. Resume rechecks models, skills and the stack profile, discloses anything that changed, and restarts the recorded stage from its beginning while keeping committed progress.
+
+`/factory adopt <branch|spec_dir>` takes over a spec that was written outside factory: it previews the source, asks you to confirm the entry stage (at most `analyze`), then creates the worktree and one `factory: adopt <branch>` commit; nothing is written if the preview refuses.
 
 Sharing `${FACTORY_HOME}` alone does not move a run. After moving or copying a worktree, run `python3 <factory-skill>/bin/factory rebind <branch> --worktree <new-path>` to validate the branch and rewrite the run's stored paths.
 
