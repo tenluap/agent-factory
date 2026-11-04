@@ -62,7 +62,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
 
 **Independent test**: a second identical refresh leaves the outcome file bytes unchanged.
 
-- [ ] T005 [US2] Deduplicate across refreshes and skip terminal runs (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T004.
+- [X] T005 [US2] Deduplicate across refreshes and skip terminal runs (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T004.
   1. Failing tests: a second refresh with the same response and a later `now` leaves the outcome file byte-identical and reports no new outcomes; a stored outcome keeps its `recorded_at`; a re-run failing check on the same head adds nothing; the same check failing on a new `headRefOid` adds one outcome; a run whose file holds `state:merged` or `state:closed` is under `skipped` with reason `terminal outcome recorded` and is not fetched; an outcome appended to the outcome file during the fetch (concurrent refresh) is kept beside the new ones. Observe red.
   2. Implement: terminal check on an unlocked read before fetching; after the fetch take the outcomes lock, re-read, compute ids not yet stored, append them and write only when anything changed.
   3. Run the test command; pass.

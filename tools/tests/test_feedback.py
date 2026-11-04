@@ -282,5 +282,71 @@ class NarrowTests(FeedbackTestCase):
         self.assertFalse((self.sb.home / "outcomes").exists())
 
 
+class DedupeTests(FeedbackTestCase):
+    def test_second_identical_refresh_leaves_the_file_unchanged(self):
+        self.archive()
+        gh = FakeGh(pr([check_run("test", "FAILURE")]))
+        self.refresh(gh)
+        path = self.sb.home / "outcomes" / "repo-feature-x.json"
+        before = path.read_bytes()
+
+        report = feedback.refresh(self.sb.home, self.repo, gh=gh, now="2026-11-04T02:00:00Z")
+
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(report["refreshed"][0]["new_outcomes"], [])
+
+    def test_stored_outcome_keeps_its_recorded_at(self):
+        self.archive()
+        gh = FakeGh(pr([check_run("test", "FAILURE")]))
+        self.refresh(gh)
+
+        feedback.refresh(self.sb.home, self.repo, gh=gh, now="2026-11-04T02:00:00Z")
+
+        self.assertEqual(self.outcomes()[f"check:test@{HEAD}"]["recorded_at"], NOW)
+
+    def test_same_check_on_a_new_head_adds_one_outcome(self):
+        self.archive()
+        self.refresh(FakeGh(pr([check_run("test", "FAILURE")])))
+        new_head = "d00d" * 10
+
+        self.refresh(FakeGh(pr([check_run("test", "FAILURE")], headRefOid=new_head)))
+
+        found = self.outcomes()
+        self.assertEqual(len(found), 2)
+        self.assertIn(f"check:test@{new_head}", found)
+
+    def test_terminal_run_is_skipped_and_not_fetched(self):
+        self.archive()
+        self.refresh(FakeGh(pr(state="MERGED", mergedAt="2026-11-04T00:50:00Z")))
+        gh = FakeGh(pr([check_run("test", "FAILURE")]))
+
+        report = self.refresh(gh)
+
+        self.assertEqual(gh.calls, [])
+        self.assertEqual(report["refreshed"], [])
+        self.assertEqual(
+            report["skipped"], [{"run": "feature-x", "reason": "terminal outcome recorded"}]
+        )
+
+    def test_outcome_appended_during_the_fetch_is_kept(self):
+        self.archive()
+        path = self.sb.home / "outcomes" / "repo-feature-x.json"
+
+        class ConcurrentGh(FakeGh):
+            def __call__(self, args):
+                if not path.exists():
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    other = {"id": "review:99", "kind": "review", "event_at": None,
+                             "url": "", "detail": {"reviewer": "Other"}, "recorded_at": NOW}
+                    path.write_text(json.dumps({"run": {}, "outcomes": [other]}))
+                return super().__call__(args)
+
+        self.refresh(ConcurrentGh(pr([check_run("test", "FAILURE")])))
+
+        found = self.outcomes()
+        self.assertIn("review:99", found)
+        self.assertIn(f"check:test@{HEAD}", found)
+
+
 if __name__ == "__main__":
     unittest.main()

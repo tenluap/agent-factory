@@ -143,11 +143,30 @@ def _archived_runs(home, repo):
     return runs, skipped
 
 
+TERMINAL_IDS = ("state:merged", "state:closed")
+
+
+def _outcome_path(home, run):
+    return Path(home) / "outcomes" / improvements.backlog_name(run["repo"], run["branch"])
+
+
+def _is_terminal(home, run):
+    """An unlocked read: a stored merged or closed PR state ends the run's refreshes."""
+    path = _outcome_path(home, run)
+    if not path.exists():
+        return False
+    try:
+        body = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return False
+    return any(o.get("id") in TERMINAL_IDS for o in body.get("outcomes", []))
+
+
 def _store(home, run, candidates, now):
     """Append outcomes whose ids are not stored yet; returns the new ones."""
     directory = Path(home) / "outcomes"
     directory.mkdir(parents=True, exist_ok=True)
-    path = directory / improvements.backlog_name(run["repo"], run["branch"])
+    path = _outcome_path(home, run)
     _acquire_home_lock(directory, "feedback")
     try:
         if path.exists():
@@ -183,6 +202,9 @@ def refresh(home, repo, branch=None, gh=run_gh, now=None):
         runs = named
     report = {"refreshed": [], "skipped": skipped, "gaps": []}
     for run in runs:
+        if _is_terminal(home, run):
+            report["skipped"].append({"run": run["branch"], "reason": "terminal outcome recorded"})
+            continue
         new = _store(home, run, _fetch(run["pr_url"], gh), now)
         report["refreshed"].append(
             {"run": run["branch"], "pr_url": run["pr_url"], "new_outcomes": new}
