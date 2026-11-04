@@ -94,6 +94,14 @@
       "summary": "Re-plan: Q20 updated test-scope confirmation (requires_user)",
       "answered_at": "2026-11-04T00:51:32.546819Z",
       "latency_ms": 96195
+    },
+    {
+      "at": "2026-11-04T02:47:29.739174Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve post-PR feedback run 020 (verdict pass, 8 advisories)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
