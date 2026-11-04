@@ -122,7 +122,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
 
 ## Phase 8: Polish
 
-- [ ] T013 Run the build command and the full test command; confirm `git status` shows no `dist/` files. Manual smoke, when a real archived run has a `pr_url`: `factory feedback <branch>` twice; the second reports nothing new. Depends on T001-T012. Exempt: final verification task - runs the build and test commands, changes no file. Done when both commands pass.
+- [X] T013 Run the build command and the full test command; confirm `git status` shows no `dist/` files. Manual smoke, when a real archived run has a `pr_url`: `factory feedback <branch>` twice; the second reports nothing new. Depends on T001-T012. Exempt: final verification task - runs the build and test commands, changes no file. Done when both commands pass.
 
 ---
 
