@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -53,41 +53,7 @@
       "at": "2026-11-04T11:16:14.833514Z"
     }
   },
-  "relay": {
-    "stage": "review",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "R2-Q1-test-scope"
-          },
-          {
-            "id": "R2-Q2-post-commit-contract"
-          },
-          {
-            "id": "R2-Q3-origin-less-repo"
-          }
-        ],
-        "answers": {
-          "R2-Q1-test-scope": {
-            "answer": "A: accept failure paths (a)-(g) into the confirmed test scope (snapshot plan-Q3.md)",
-            "at": "2026-11-04T18:08:56.461111Z",
-            "auto": false
-          },
-          "R2-Q2-post-commit-contract": {
-            "answer": "A: keep exit 1, amend FR-013/contracts/D7/SKILL.md: committed; pending cleanup failed: resume <branch>, do not retry",
-            "at": "2026-11-04T18:08:56.981707Z",
-            "auto": false
-          },
-          "R2-Q3-origin-less-repo": {
-            "answer": "A: refuse with NO_BASE when no origin remote; fix message; update D3; add test",
-            "at": "2026-11-04T18:08:57.513025Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T10:18:28.440115Z",
@@ -393,6 +359,30 @@
       "answer": "A: refuse with NO_BASE when no origin remote; fix message; update D3; add test",
       "auto": false,
       "at": "2026-11-04T18:08:57.768868Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q1-test-scope",
+      "answer": "A: accept failure paths (a)-(g) into the confirmed test scope (snapshot plan-Q3.md)",
+      "auto": false,
+      "at": "2026-11-04T18:33:07.281434Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q2-post-commit-contract",
+      "answer": "A: keep exit 1, amend FR-013/contracts/D7/SKILL.md: committed; pending cleanup failed: resume <branch>, do not retry",
+      "auto": false,
+      "at": "2026-11-04T18:33:07.281434Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q3-origin-less-repo",
+      "answer": "A: refuse with NO_BASE when no origin remote; fix message; update D3; add test",
+      "auto": false,
+      "at": "2026-11-04T18:33:07.281434Z",
       "kind": "answer"
     }
   ],
@@ -892,7 +882,7 @@
       "harness": "claude-code"
     },
     {
-      "at": "2026-11-04T18:33:06.973136Z",
+      "at": "2026-11-04T18:33:07.281434Z",
       "stage": "fix",
       "event": "verify-pass",
       "commit": null,
