@@ -69,8 +69,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 023-pr-self-assign (cruise run) before push/PR",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T18:43:00.302487Z",
+      "latency_ms": 29045
     }
   ],
   "decisions": [
