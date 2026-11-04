@@ -131,7 +131,7 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 
 **Acceptance Scenarios**:
 
-1. **Given** no matching run, **When** the user runs resume, **Then** it exits 1 with `no run '<name>' in <repo>` and a hint to use `/factory adopt <branch|spec_dir>`.
+1. **Given** no matching run, **When** the user runs resume, **Then** it exits 1 with `no run '<name>' in <repo>` and a hint to use `adopt <branch|spec_dir>`.
 2. **Given** a plain SpecKit spec, **When** the user runs resume, **Then** no run, worktree or branch is created.
 
 ### Edge Cases
@@ -168,12 +168,12 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 - **FR-013**: If any step of the adopt write fails, adopt MUST remove everything it created (worktree, created branch, written files), leave the pending run intact, and exit with the reason.
 - **FR-014**: Adopt MUST never commit, stage or modify files it did not author.
 - **FR-015**: The history-event vocabulary MUST gain `adopted`, written only by the adopt command.
-- **FR-016**: State MUST accept an optional `adopted` block holding source (branch and/or spec dir, and shape), inferred stage, chosen stage and `base_commit` (the adopted branch's HEAD at the write); validation MUST check its shape when present, and states without it MUST stay valid.
+- **FR-016**: State MUST accept an optional `adopted` block holding source (branch and spec dir, and shape), inferred stage, chosen stage and `base_commit` (the adopted branch's HEAD at the write); validation MUST check its shape when present, and states without it MUST stay valid.
 - **FR-017**: Validation MUST accept an adopted run with no `complete` history entries for stages before its chosen stage.
 - **FR-018**: After adoption, the run MUST continue through the existing resume and stage flow unchanged, from the chosen stage to an open PR after the user's Approve.
 - **FR-019**: Reviewers MUST review the whole `base...HEAD` diff of an adopted run, apply ENG-2 only to commits after `adopted.base_commit`, and disclose earlier commits as pre-adoption, never blocking for ENG-2.
 - **FR-020**: The approver screen and the retro MUST state that the run was adopted, with its source and chosen stage.
-- **FR-021**: When `resume` finds no matching run, its error (`no run '<name>' in <repo>`) MUST hint at `/factory adopt <branch|spec_dir>`; resume behaviour is otherwise unchanged.
+- **FR-021**: When `resume` finds no matching run, its error (`no run '<name>' in <repo>`) MUST hint at `adopt <branch|spec_dir>` (the CLI's own verb); resume behaviour is otherwise unchanged.
 - **FR-022**: Adopt MUST respect the run lock like every other writer and MUST refuse under a live lock.
 - **FR-023**: `DESIGN.md`, `references/state.md`, `CONTEXT.md` (the Key Entities terms), a new ADR and the reviewer role files MUST describe the adopt flow, the `adopted` block and event, and the ENG-2 boundary; `dist/` MUST render cleanly for every harness.
 - **FR-024**: When state has an `adopted` block, the `specify`, `plan` and `tasks` stages MUST treat an existing `spec.md`, `plan.md` or `tasks.md` respectively as their base and apply targeted edits (brief and grill answers, upstream changes, sections factory requires), never regenerating it.
@@ -182,7 +182,7 @@ A user who tries `/factory resume <branch>` on a plain SpecKit spec learns the r
 ### Key Entities
 
 - **Adopted run**: a factory run created from a spec that factory did not start; carries the `adopted` block and an `adopted` history entry, and otherwise behaves as any run.
-- **Adoption source**: what the user named: branch and/or spec dir, and its shape (`branch`, `remote-branch`, `default-branch`); stored as `adopted.source`.
+- **Adoption source**: what the user named: branch and spec dir, and its shape (`branch`, `remote-branch`, `default-branch`); stored as `adopted.source`.
 - **Adoption report**: the dry-run's read-only description of an adoption source, its inferred stage and any refusal.
 - **Pre-adoption commit**: a commit reachable from `adopted.base_commit` (the adopted branch's HEAD at the adopt write) and not from `base`; reviewed, never blocking for ENG-2. Tasks checked at `base_commit` are pre-adoption tasks.
 

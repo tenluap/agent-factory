@@ -16,6 +16,8 @@ One function shared by dry-run and write; first match wins:
 2. Else `refs/remotes/origin/<src>` exists → shape `remote-branch`.
 3. Else `<src>` (with or without `specs/`) names a spec dir: a local branch named after it → `branch`; else the dir exists on `base` → `default-branch`, branch = dir name; else the dir exists on local `refs/heads/<default>` only → refusal "spec dir is on local `<default>` but not on `<base>`; push it or create its branch first" (clarify Q2); else no match, exit 1.
 
+Before step 1, a `<src>` failing `git check-ref-format --branch` (for example `../x`, `a..b`) is no match: exit 1, nothing read or written. Spec-dir candidates in step 3 are local branch names plus `specs/*/` names on `base` and on local `<default>`; `<src>` matches one equal to it or ending in `-<src>` (`find_matches`'s rule).
+
 Spec dir on a branch: `specs/<branch>/` when present on the ref, else the single `specs/*/` directory the branch adds over `base` (`git diff --name-only <base>...<ref> -- specs/`), recorded unchanged (US3-3). Several candidates (spec dirs, or a name matching several dirs by `find_matches`'s `NNN-` suffix rule) → exit 3 listing them. A branch present locally and on `origin` resolves to the local branch. Artifacts and `[NEEDS CLARIFICATION]` lines are read from the ref (`git ls-tree`, `git show <ref>:<path>`), never a working tree.
 
 - **Rejected**: resolving from the main checkout's files (misses branch-only specs; reads dirty content).

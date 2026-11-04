@@ -21,7 +21,7 @@ Read-only. Prints one JSON object:
 }
 ```
 
-Exit: 0 clean; 1 refused (report still printed, `refusal` set); 3 ambiguous (candidates listed on stderr); 5 usage (`--stage` outside `specify|plan|tasks|analyze`, missing `<src>`). Never fetches; writes nothing.
+Exit: 0 clean; 1 refused (report still printed, `refusal` set; a `<src>` failing `git check-ref-format --branch` is no match); 3 ambiguous (candidates listed on stderr); 5 usage (`--stage` outside `specify|plan|tasks|analyze`, missing `<src>`). Never fetches; writes nothing.
 
 ## `factory adopt <src> [--stage <stage>]`
 
