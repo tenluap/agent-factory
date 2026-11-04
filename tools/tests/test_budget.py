@@ -130,6 +130,27 @@ class OverrunDetectionTests(unittest.TestCase):
         self.assertEqual(issues[0]["duration_ms"], 200000)
         self.assertIs(issues[0]["partial_return"], False)
 
+    def test_detected_detail_reports_rounded_excess_and_total(self):
+        for end, expected in (
+            ("2026-10-23T10:05:19Z", "19s past its 300s budget (319s total)"),
+            ("2026-10-23T10:05:00.001Z", "1s past its 300s budget (301s total)"),
+        ):
+            out = self.box.cli(
+                "ledger-add",
+                "review",
+                "spec-conformance",
+                "--started-at",
+                "2026-10-23T10:00:00Z",
+                "--ended-at",
+                end,
+                cwd=self.wt,
+            )
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(
+                self.issues()[-1]["detail"],
+                f"spec-conformance ran {expected} without a self-report",
+            )
+
     def test_detection_yields_unreported(self):
         out = self.ledger_add()
         self.assertEqual(out.returncode, 0, out.stderr)

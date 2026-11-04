@@ -70,7 +70,7 @@ None: every unit extends an existing command and test module.
 **Goal**: detected detail names excess, budget and total.
 **Independent test**: `OverrunDetectionTests` in `tools/tests/test_budget.py` pass.
 
-- [ ] T006 [US3] Fix the detected-overrun wording in `commands.py` `overrun_issue`; tests in `tools/tests/test_budget.py` `OverrunDetectionTests`.
+- [x] T006 [US3] Fix the detected-overrun wording in `commands.py` `overrun_issue`; tests in `tools/tests/test_budget.py` `OverrunDetectionTests`.
   - Seam: S4 `factory ledger-add [--round n | --full]` overrun detection. Failure paths: S4(a) duration 1 ms over budget rounds excess up to 1 s; S4(b) self-reported overrun keeps its detail unchanged.
   - Red: tests first: 319000 ms on a 300 s budget gives `spec-conformance ran 19s past its 300s budget (319s total) without a self-report` (SC-004); S4(a) 300001 ms gives `ran 1s past its 300s budget (301s total)`; S4(b) self-report detail stored verbatim. Run; old wording fails.
   - Implement: `excess = ceil((duration_ms - seconds*1000)/1000)`, `total = ceil(duration_ms/1000)` (FR-011, FR-012).

@@ -1313,8 +1313,8 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
             return None
         cause = "unreported"
         detail = (
-            f"{role} ran {duration // 1000}s past its {seconds}s budget "
-            "without a self-report"
+            f"{role} ran {(duration - seconds * 1000 + 999) // 1000}s past its "
+            f"{seconds}s budget ({(duration + 999) // 1000}s total) without a self-report"
         )
     record = {
         "at": now_iso(),
