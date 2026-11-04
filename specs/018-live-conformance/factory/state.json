@@ -259,9 +259,33 @@
       "duration_ms": 1188000,
       "started_at": "2026-11-04T00:33:41Z",
       "ended_at": "2026-11-04T00:53:29Z"
+    },
+    {
+      "at": "2026-11-04T07:37:31.283434Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "claude-code",
+      "in_est": 20000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 319000,
+      "started_at": "2026-11-04T00:59:23Z",
+      "ended_at": "2026-11-04T01:04:42Z"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-11-04T07:37:31.283781Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "spec-conformance",
+      "cause": "unreported",
+      "detail": "spec-conformance ran 319s past its 300s budget without a self-report",
+      "duration_ms": 319000,
+      "commit": "f6f2981",
+      "partial_return": false
+    }
+  ],
   "review": {
     "round": 0,
     "fix_rounds": 0,
@@ -324,7 +348,7 @@
       "at": "2026-11-04T00:59:20.425048Z",
       "stage": "implement",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "46bf5b3",
       "harness": "claude-code",
       "commands": [
         {
