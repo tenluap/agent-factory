@@ -60,7 +60,7 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 5: User Story 2 - Publishing needs the user's Approve (P1)
 
-- [ ] T007 [US2] Make the `pr` approver candidates used by both `gate_violation` and `permitting_decision` in `core/skills/factory/bin/factory_cli/checks.py` ignore records carrying `cruise_override`; tests in `tools/tests/test_cruise.py`.
+- [X] T007 [US2] Make the `pr` approver candidates used by both `gate_violation` and `permitting_decision` in `core/skills/factory/bin/factory_cli/checks.py` ignore records carrying `cruise_override`; tests in `tools/tests/test_cruise.py`.
   - Seam: `factory_cli.checks.gate_violation` into `pr`. Failure paths: a record carrying `cruise_override` at `approver` never permits `pr`.
   - Red: tests first on hand-built state dicts (bypassing `validate_state`, so a forged record is reachable): a user `approved` record (`auto: false`, no marker) permits `pr`; an `approved` or `gate-override` record at `approver` with `cruise_override: true` makes `gate_violation(state, "pr")` return a violation. Assertions go through `gate_violation` into `pr` only (clarify Q1; the implement gate is covered by T006). Run; the forged-record test fails.
   - Implement: filter marked records out of the `approver` candidates once; `gate_violation` and `permitting_decision` for `pr` both use that filtered list.

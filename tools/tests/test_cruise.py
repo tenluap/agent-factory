@@ -14,7 +14,7 @@ from pathlib import Path
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import state  # noqa: E402
+from factory_cli import checks, state  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 
@@ -470,6 +470,50 @@ class DecisionsAddCruiseOverrideTests(unittest.TestCase):
             ("plan", "analyze-exhaustion", "proceed", "--kind", "gate-override", "--cruise-override"),
             True,
         )
+
+
+class PrGateTests(unittest.TestCase):
+    """Seam: `factory_cli.checks.gate_violation` into `pr` (FR-015, FR-016).
+
+    Hand-built dicts bypass validate_state, so a forged record is reachable."""
+
+    def run_with(self, *records):
+        loaded = fixture("state-v5.json")
+        loaded["decisions"] = list(records)
+        return loaded
+
+    def approver(self, kind, **extra):
+        record = {
+            "stage": "approver",
+            "question": "approve",
+            "answer": "yes",
+            "auto": False,
+            "at": "2026-11-04T01:00:00Z",
+            "kind": kind,
+        }
+        record.update(extra)
+        return record
+
+    def test_user_approval_permits_pr(self):
+        s = self.run_with(self.approver("approved"))
+        self.assertIsNone(checks.gate_violation(s, "pr"))
+
+    def test_forged_cruise_approval_never_permits_pr(self):
+        s = self.run_with(self.approver("approved", cruise_override=True, auto=True))
+        self.assertIsNotNone(checks.gate_violation(s, "pr"))
+        self.assertIsNone(checks.permitting_decision(s, "pr"))
+
+    def test_forged_cruise_gate_override_at_approver_never_permits_pr(self):
+        s = self.run_with(self.approver("gate-override", cruise_override=True, auto=True))
+        self.assertIsNotNone(checks.gate_violation(s, "pr"))
+        self.assertIsNone(checks.permitting_decision(s, "pr"))
+
+    def test_marked_record_does_not_hide_a_real_approval(self):
+        s = self.run_with(
+            self.approver("approved", cruise_override=True, auto=True),
+            self.approver("approved"),
+        )
+        self.assertIsNone(checks.gate_violation(s, "pr"))
 
 
 if __name__ == "__main__":
