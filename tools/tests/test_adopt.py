@@ -502,5 +502,167 @@ class OtherShapeTests(DryRunFixture):
             self.box.git("push", "-q", "origin", "main")
 
 
+def pending_state(repo, **extra):
+    """A pending adoption as `factory adopt` leaves it after a clean dry run (T006 fixture)."""
+    run = {
+        "version": 5,
+        "started_at": "2026-11-04T10:00:00Z",
+        "ended_at": None,
+        "harness": "opencode",
+        "feature": "Spec 007",
+        "repo": str(repo),
+        "default_branch": "main",
+        "base": "main",
+        "branch": "007-x",
+        "worktree": None,
+        "spec_dir": "specs/007-x",
+        "status": "running",
+        "stage": "grill",
+        "halt_reason": None,
+        "mode": {"chain": "lite", "fast": True, "cruise": False},
+        "history": [],
+    }
+    run.update(extra)
+    return run
+
+
+class AdoptWriteFixture(DryRunFixture):
+    """SpecKit branch 007-x (spec.md, plan.md) with its pending adoption and brief/profile (T006)."""
+
+    def setUp(self):
+        super().setUp()
+        self.spec_branch("007-x", {"spec.md": "# Spec\n", "plan.md": "# Plan\n"})
+        self.pending = self.box.pending_run("adopt-007-x", pending_state(self.box.repo))
+        self.brief = self.pending.with_name(self.pending.name.replace(".json", ".brief.md"))
+        self.profile = self.pending.with_name(self.pending.name.replace(".json", ".profile.md"))
+        self.brief.write_text("# Brief\n")
+        self.profile.write_text("# Profile\n")
+        self.worktree = self.box.dir / "repo-factory" / "007-x"
+
+    def commit_on(self, branch, files, message):
+        """Commit `files` (relative to specs/<branch>/) on `branch` through a throwaway checkout."""
+        tmp = self.box.dir / f"edit-{branch}"
+        self.box.git("worktree", "add", "-q", str(tmp), branch)
+        for name, text in files.items():
+            (tmp / "specs" / branch / name).parent.mkdir(parents=True, exist_ok=True)
+            (tmp / "specs" / branch / name).write_text(text)
+        self.box.git("add", "-A", cwd=tmp)
+        self.box.git("commit", "-q", "-m", message, cwd=tmp)
+        self.box.git("worktree", "remove", "--force", str(tmp))
+
+    def write_run(self, *args):
+        return self.box.cli("adopt", "007-x", *args)
+
+    def branch_names(self):
+        return self.box.git("branch", "--format=%(refname:short)")
+
+    def refused(self, *fragments):
+        before = self.snapshot()
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        for fragment in fragments:
+            self.assertIn(fragment, combined)
+        self.assertEqual(self.snapshot(), before)
+        self.assertFalse(self.worktree.exists())
+
+
+class AdoptWriteTests(AdoptWriteFixture):
+    """`factory adopt <src>` writes the branch-shape worktree run in one commit (T006)."""
+
+    def test_branch_shape_writes_worktree_state_and_one_commit(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        names = self.branch_names()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertEqual(json.loads(out.stdout)["stage"], "tasks")
+        self.assertEqual(self.branch_names(), names)
+        self.assertEqual(
+            os.path.realpath(self.worktree),
+            os.path.realpath(self.box.dir / "repo-factory" / "007-x"),
+        )
+        folder = self.worktree / "specs" / "007-x" / "factory"
+        run = json.loads((folder / "state.json").read_text())
+        self.assertEqual(state.validate_state(run), [])
+        self.assertEqual(run["stage"], "tasks")
+        self.assertEqual(run["status"], "running")
+        self.assertEqual(
+            run["adopted"],
+            {
+                "source": {"shape": "branch", "branch": "007-x", "spec_dir": "specs/007-x"},
+                "inferred_stage": "tasks",
+                "chosen_stage": "tasks",
+                "base_commit": head,
+            },
+        )
+        self.assertEqual([e["event"] for e in run["history"]], ["adopted"])
+        self.assertEqual(run["history"][0]["stage"], "tasks")
+        self.assertEqual((folder / "brief.md").read_text(), "# Brief\n")
+        self.assertEqual((folder / "profile.md").read_text(), "# Profile\n")
+        self.assertFalse(self.pending.exists())
+        self.assertFalse(self.brief.exists())
+        self.assertFalse(self.profile.exists())
+        commits = self.box.git("log", "--format=%s", f"{head}..007-x").splitlines()
+        self.assertEqual(commits, ["factory: adopt 007-x"])
+        changed = self.box.git("diff", "--name-only", f"{head}..007-x").splitlines()
+        self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
+
+    def test_stage_flag_records_the_chosen_stage(self):
+        out = self.write_run("--stage", "plan")
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
+        self.assertEqual(run["stage"], "plan")
+        self.assertEqual(run["adopted"]["chosen_stage"], "plan")
+        self.assertEqual(run["adopted"]["inferred_stage"], "tasks")
+
+    def test_commit_made_after_the_dry_run_is_the_recorded_base(self):
+        self.commit_on("007-x", {"notes.md": "later\n"}, "spec 007-x follow-up")
+        head = self.box.git("rev-parse", "007-x").strip()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
+        self.assertEqual(run["adopted"]["base_commit"], head)
+
+    def test_file_dirtied_after_the_dry_run_refuses_and_writes_nothing(self):
+        (self.box.repo / "specs" / "007-x").mkdir(parents=True)
+        (self.box.repo / "specs" / "007-x" / "notes.md").write_text("dirty\n")
+        self.refused("uncommitted changes")
+
+    def test_factory_state_committed_after_the_dry_run_refuses(self):
+        self.commit_on("007-x", {"factory/state.json": "{}\n"}, "factory state 007-x")
+        self.refused("already has factory/state.json", "resume")
+
+    def test_other_pending_file_added_after_the_dry_run_refuses(self):
+        self.box.pending_run("other", pending_state(self.box.repo, branch="008-y"))
+        self.refused("another pending run")
+
+    def test_missing_pending_file_refuses(self):
+        self.pending.unlink()
+        self.refused("no pending adoption")
+
+    def test_aborted_pending_adoption_refuses(self):
+        self.pending.write_text(
+            json.dumps(dict(pending_state(self.box.repo), status="aborted"), indent=2)
+        )
+        self.refused("aborted")
+
+    def test_live_foreign_lock_on_the_pending_path_refuses(self):
+        lock_file = self.pending.with_suffix(".lock.json")
+        lock_file.write_text(
+            json.dumps(
+                {
+                    "owner_pid": 1,
+                    "host": "another-host",
+                    "harness": "codex",
+                    "at": "2026-11-04T10:00:00Z",
+                    "taken_over": False,
+                    "previous": None,
+                }
+            )
+        )
+        self.refused("locked")
+        self.assertTrue(lock_file.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

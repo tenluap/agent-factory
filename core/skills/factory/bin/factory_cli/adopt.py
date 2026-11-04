@@ -9,7 +9,7 @@ import posixpath
 import subprocess
 from pathlib import Path
 
-from factory_cli import commands
+from factory_cli import commands, lock, state
 
 NEEDS_CLARIFICATION = "[NEEDS CLARIFICATION"
 
@@ -191,3 +191,81 @@ def inspect(repo, src, base):
     )
     report["refusal"] = _refusal(repo, report, ref)
     return report
+
+
+def write(repo, src, stage=None):
+    """Adopt `src` into a worktree run (D7): the pending adoption's lock is held for the whole write.
+
+    Refusals before the worktree exists exit 1 with nothing written; the pending file,
+    brief and profile are removed only after the adoption commit lands.
+    """
+    probe = inspect(repo, src, default_base(repo))
+    if probe["branch"] is None:
+        commands.die(1, probe["refusal"])
+    name = probe["pending"]
+    pending = commands.factory_home() / "pending" / f"{name}.json"
+    if not pending.exists():
+        commands.die(1, f"no pending adoption '{name}'; run `/factory adopt {src}`")
+    try:
+        lock.acquire(pending, harness="unknown")
+    except lock.LockHeld as e:
+        commands.die(1, str(e))
+    try:
+        loaded, error = state.read_state(pending)
+        if error:
+            commands.die(1, f"pending adoption '{name}' is unreadable: {error}")
+        if loaded.get("status") in ("aborted", "pr-open"):
+            commands.die(1, f"pending adoption '{name}' is {loaded['status']} and has ended")
+        report = inspect(repo, src, loaded.get("base") or probe["base"])
+        if report["refusal"]:
+            commands.die(1, report["refusal"])
+        return _adopt_branch(repo, report, loaded, pending, stage)
+    finally:
+        lock.release(pending)
+
+
+def _adopt_branch(repo, report, loaded, pending, stage):
+    """The `branch` shape: the existing branch gets a worktree, its state and one commit (D7 steps 3-6)."""
+    branch, spec_dir = report["branch"], report["spec_dir"]
+    worktree = Path(report["worktree"])
+    chosen = stage or report["inferred_stage"]
+    commands.git(repo, "worktree", "add", str(worktree), branch)
+    base_commit = commands.git(str(worktree), "rev-parse", "HEAD").strip()
+    run = dict(
+        loaded,
+        worktree=str(worktree),
+        branch=branch,
+        spec_dir=spec_dir,
+        stage=chosen,
+        status="running",
+        adopted={
+            "source": {"shape": report["shape"], "branch": branch, "spec_dir": spec_dir},
+            "inferred_stage": report["inferred_stage"],
+            "chosen_stage": chosen,
+            "base_commit": base_commit,
+        },
+        history=list(loaded.get("history") or [])
+        + [
+            {
+                "at": commands.now_iso(),
+                "stage": chosen,
+                "event": "adopted",
+                "commit": None,
+                "harness": loaded.get("harness"),
+            }
+        ],
+    )
+    folder = worktree / spec_dir / "factory"
+    folder.mkdir(parents=True, exist_ok=True)
+    state_path = folder / "state.json"
+    written = state.write_state(state_path, run)
+    for suffix, target in ((".brief.md", "brief.md"), (".profile.md", "profile.md")):
+        sidecar = pending.with_name(pending.name.replace(".json", suffix))
+        if sidecar.exists():
+            (folder / target).write_text(sidecar.read_text())
+    commands.commit_worktree(str(worktree), f"factory: adopt {branch}", spec_dir=f"{spec_dir}/factory")
+    pending.unlink()
+    for suffix in (".brief.md", ".profile.md"):
+        pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
+    return commands.digest(written, state_path, "worktree")
+
