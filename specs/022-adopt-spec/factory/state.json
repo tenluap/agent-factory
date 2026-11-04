@@ -133,8 +133,8 @@
       "kind": "questions",
       "stage": "clarify",
       "summary": "Clarify: 2 protected questions (pending identity, unpushed spec dir)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T10:44:14.830320Z",
+      "latency_ms": 284574
     }
   ],
   "decisions": [
