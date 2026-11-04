@@ -9,7 +9,7 @@
   "branch": "022-adopt-spec",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -848,8 +848,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-11-04T18:58:12.394414Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/21",
   "history": [
     {
       "at": "2026-11-04T10:22:57.380891Z",
@@ -1014,6 +1014,13 @@
       "commit": null,
       "harness": "claude-code",
       "decision": "approver"
+    },
+    {
+      "at": "2026-11-04T18:58:12.394414Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
