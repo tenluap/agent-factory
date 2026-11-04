@@ -1,0 +1,1 @@
+{"status":"done","stage":"analyze","summary":"Pass 2 recheck: all 6 analyze-1-full findings resolved; new I1 (MEDIUM), C1 (MEDIUM), L1 (LOW).","files":["specs/019-analyze-remediation-targets/factory/analyze-2.md"],"questions":[],"analyze":{"report":"factory/analyze-2.md","critical":0,"high":0,"medium":2,"low":1},"error":null}
