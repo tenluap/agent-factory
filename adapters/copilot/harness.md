@@ -22,6 +22,7 @@
 
 ## Notes
 
+- `no_prompt_launch`: `copilot --allow-all` enables all permissions, tools, paths and URLs (equivalent to `--allow-all-tools --allow-all-paths --allow-all-urls`; Copilot CLI command reference). Launch-time only.
 - Main agent (`mode: primary`): start with `copilot --agent factory-<role>`, or pick it with `/agent`.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are `~/.copilot/agents/factory-<role>.agent.md`. Read-only roles get `tools: [read, search, execute]`.

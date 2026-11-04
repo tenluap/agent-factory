@@ -1,4 +1,4 @@
-"""Post-PR feedback refresh (FR-002..FR-006, FR-012; ADR 0014).
+"""Post-PR feedback refresh (FR-002..FR-006, FR-012; ADR 0015).
 
 `refresh` reads archived runs' pull requests through one injectable `gh`
 runner and appends new PR outcomes to

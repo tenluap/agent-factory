@@ -412,7 +412,7 @@ def cmd_improvements_claim(repo, name):
 
 
 def cmd_feedback(repo, branch=None):
-    """Refresh archived runs' PR outcomes (ADR 0014); a refused `<branch>` exits 1."""
+    """Refresh archived runs' PR outcomes (ADR 0015); a refused `<branch>` exits 1."""
     try:
         return feedback.refresh(factory_home(), repo, branch=branch)
     except ValueError as e:
@@ -807,16 +807,17 @@ def settled_answers(relay, fallback_stage, now):
     for one_round in rounds_of(relay):
         for qid, answer in (one_round.get("answers") or {}).items():
             if isinstance(answer, dict):
-                migrated.append(
-                    {
-                        "stage": fallback_stage,
-                        "question": qid,
-                        "answer": answer.get("answer"),
-                        "auto": bool(answer.get("auto")),
-                        "at": now,
-                        "kind": "answer",
-                    }
-                )
+                record = {
+                    "stage": fallback_stage,
+                    "question": qid,
+                    "answer": answer.get("answer"),
+                    "auto": bool(answer.get("auto")),
+                    "at": now,
+                    "kind": "answer",
+                }
+                if answer.get("cruise_override") is True:
+                    record["cruise_override"] = True
+                migrated.append(record)
             else:  # legacy version 2 string answer
                 migrated.append(
                     {
@@ -1282,9 +1283,12 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
-def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
+def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
     path, loaded, source, worktree = resolve_target(repo, cwd)
+    if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
+        die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
     now = now_iso()
+    auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
     def mutate(s):
         relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
@@ -1296,6 +1300,8 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
         last["questions"] = questions
         answers = dict(last.get("answers") or {})
         answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}
+        if cruise_override:
+            answers[qid]["cruise_override"] = True
         last["answers"] = answers
         s["relay"] = {
             "stage": stage or relay.get("stage") or s.get("stage"),
@@ -1381,26 +1387,32 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     return result
 
 
-def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
+def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer", cruise_override=False):
     if kind not in state.DECISION_KINDS:
         die(
             1,
             f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
+    if cruise_override:  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
+        if (loaded.get("mode") or {}).get("cruise") is not True:
+            die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+        if kind == "approved" or (kind == "gate-override" and stage != "analyze"):
+            die(1, "--cruise-override never records an approval or a gate override outside analyze")
     now = now_iso()
 
     def mutate(s):
-        s["decisions"] = (s.get("decisions") or []) + [
-            {
-                "stage": stage,
-                "question": qid,
-                "answer": answer,
-                "auto": False,
-                "at": now,
-                "kind": kind,
-            }
-        ]
+        record = {
+            "stage": stage,
+            "question": qid,
+            "answer": answer,
+            "auto": cruise_override,
+            "at": now,
+            "kind": kind,
+        }
+        if cruise_override:
+            record["cruise_override"] = True
+        s["decisions"] = (s.get("decisions") or []) + [record]
         return s
 
     write_run(path, loaded, mutate)
@@ -1539,18 +1551,34 @@ def cmd_rebind(repo, cwd, name, worktree):
     }
 
 
-def cmd_resume(repo, name):
+def cmd_mode(flags):
+    """Resolve mode flags into the mode JSON; read-only (spec 021 FR-001..FR-003)."""
+    try:
+        return state.resolve_mode(state.DEFAULT_MODE, flags)
+    except state.ModeError as e:
+        die(5, str(e))
+
+
+def cmd_resume(repo, name, mode_flags=()):
     """Record the `resumed` history entry through the writer and return the
-    resume digest: the recorded stage restarts from its beginning (FR-003)."""
+    resume digest: the recorded stage restarts from its beginning (FR-003).
+
+    Mode flags resolve against the stored mode before any write; a conflict
+    exits 5 and leaves the run untouched (spec 021)."""
     path, loaded, source = one_run(repo, name)
     if loaded.get("status") in ("pr-open", "aborted"):
         die(
             1,
             f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume",
         )
+    try:
+        mode = state.resolve_mode(loaded.get("mode") or {}, mode_flags)
+    except state.ModeError as e:
+        die(5, str(e))
     now = now_iso()
 
     def mutate(s):
+        s["mode"] = mode
         s["status"] = "running"
         s["halt_reason"] = None
         s["history"] = (s.get("history") or []) + [

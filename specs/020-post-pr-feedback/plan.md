@@ -2,7 +2,7 @@
 
 **Branch**: `020-post-pr-feedback` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; decisions Q1-Q19; `CONTEXT.md`; ADR 0014.
+**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; decisions Q1-Q19; `CONTEXT.md`; ADR 0015.
 
 ## Summary
 
@@ -161,7 +161,7 @@ Exit 0 without gaps (zero runs included), 1 with any gap or a refused `<branch>`
 - Errors and limits: 60 s `gh` timeout; no retry (FR-013 over ENG-24).
 - Compatibility: Run exports and Retro entries unchanged; retro `add` filters `kind: retro`.
 - Observability: the JSON report is the record; no logs.
-- Known limitations, recorded in `DESIGN.md`: a reopened PR is missed after `state:closed` (ADR 0014); `ERROR` status contexts are ignored (Q4); moved checkouts' runs are not found.
+- Known limitations, recorded in `DESIGN.md`: a reopened PR is missed after `state:closed` (ADR 0015); `ERROR` status contexts are ignored (Q4); moved checkouts' runs are not found.
 
 ## Test seams
 

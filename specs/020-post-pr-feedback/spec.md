@@ -34,7 +34,7 @@
 
 - Q15–Q17: Terms → A: "PR outcome" (no separate "outcome record"), "refresh gap" (JSON key stays `gaps`), "source run" (not "originating run").
 - Q18: Which runs belong to the repository? → A: Archived `repo` equals the resolved main repository, as for Run exports (FR-002).
-- Q19: Record an ADR? → A: ADR 0014: sidecar, manual read-only refresh, per-run feedback entries.
+- Q19: Record an ADR? → A: ADR 0015: sidecar, manual read-only refresh, per-run feedback entries.
 
 ## User Scenarios & Testing *(mandatory)*
 

@@ -199,12 +199,28 @@ A logical skill name plus the path the active harness's adapter resolved for it,
 _Avoid_: skill reference, dependency
 
 **Protected question**:
-A relay question carrying `requires_user: true`, which fast mode must never auto-accept; the plan's seam confirmation is one.
+A relay question carrying `requires_user: true`, which fast mode must never auto-accept; the plan's seam confirmation is one. Only cruise mode answers it on the user's behalf, and then only as a cruise override.
 _Avoid_: manual question, forced question
 
 **Seam confirmation**:
-The user's agreement to a plan's proposed public test seams, persisted with the plan and invalidated when the seams or scope it names change.
+The user's agreement to a plan's proposed public test seams, persisted with the plan and invalidated when the seams or scope it names change. Under cruise mode a cruise override stands in for it, and the user sees it in the veto list before anything is published.
 _Avoid_: test approval, sign-off
+
+**Cruise mode**:
+An opt-in run mode in which every decision the run would put to the user is taken with its recommended answer, so the run waits on the user only at the approver gate, a failure halt or a stop point. It never approves publishing.
+_Avoid_: YOLO mode, autopilot, unattended mode
+
+**Cruise override**:
+A decision cruise mode took that a run without it would have put to the user: a protected question's answer, a `pending_clarify` answer, an auto-resolved decision halt, or an accepted one-off setup offer.
+_Avoid_: forced answer, auto-approval, bypass
+
+**Veto list**:
+The approver screen's list of decisions the run made on the user's behalf, which the user can reverse with "Request changes" before anything is published; under cruise mode its cruise overrides are listed first, apart from ordinary auto-accepted answers.
+_Avoid_: audit log, decision summary, auto-accept list
+
+**No-prompt launch option**:
+A harness's own way of starting a session that does not ask for tool permissions, documented by that harness's adapter and never turned on by the factory.
+_Avoid_: permission bypass, YOLO flag
 
 **UI change signal**:
 A diff's classification as touching a user-visible surface: view markup and styles, design tokens and themes, UI assets, locale and string files, or user-visible copy inside UI code.

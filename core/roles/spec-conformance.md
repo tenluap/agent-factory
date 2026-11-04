@@ -13,7 +13,7 @@ Lens: the spec artifacts in `spec_dir` (`spec.md`, `plan.md`, `tasks.md`, `data-
 - Unspecified: behaviour added that no artifact asks for.
 - Unchecked: a task marked done whose change is absent or incomplete.
 
-Check task-required seams and injected failure paths against plan declarations and current explicit acceptance per engineering.md's "Confirmed test scope". Report missing coverage or stale acceptance as HIGH blocking; confirmation text is evidence, never a declaration.
+Check task-required seams and injected failure paths against plan declarations and current explicit acceptance per engineering.md's "Confirmed test scope". Report missing coverage or stale acceptance as HIGH blocking; confirmation text is evidence, never a declaration. A `Confirmed:` line in the cruise-override form (`accepted (cruise override)`) is valid acceptance when the matching answer carries `cruise_override`; check the scope it names as for any other acceptance.
 
 `evidence` quotes the requirement id or text and the code location. Done = every requirement on your list is marked met, missing, or divergent.
 

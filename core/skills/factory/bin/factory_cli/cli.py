@@ -18,7 +18,9 @@ read:
   runs [--repo <path>]              unfinished runs of the repo, JSON
   show <run> [--repo <path>]        resume digest for one run, JSON
   validate <run> | validate --all   validation violations; exit 1 when any
-  resume <run>                      record the resumed entry, print the resume digest
+  resume <run> [mode flags]         record the resumed entry, print the resume digest
+  mode [--lite|--full] [--fast|--no-fast] [--cruise|--no-cruise]
+                                    resolve mode flags into mode JSON; writes nothing
   budget <role>                     the role's resolved seconds and deadline, JSON
   models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
@@ -53,6 +55,9 @@ write (the single writer; each stamps its time, validates, writes atomically):
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
 1 no run, refused, or a feedback gap, 2 not a git repository, 3 ambiguous
 name, 4 the run's recorded worktree is gone, 5 usage error."""
+
+
+MODE_FLAGS = ("--lite", "--full", "--fast", "--no-fast", "--cruise", "--no-cruise")
 
 
 def die_usage(message):
@@ -357,7 +362,10 @@ def main(argv):
             )
         elif command == "answer":
             positional, flags = parse_flags(
-                rest, command, value_flags=("--repo", "--stage"), bool_flags=("--auto",)
+                rest,
+                command,
+                value_flags=("--repo", "--stage"),
+                bool_flags=("--auto", "--cruise-override"),
             )
             if len(positional) != 2:
                 die_usage("answer needs <qid> <answer>")
@@ -369,6 +377,7 @@ def main(argv):
                 positional[1],
                 auto=bool(flags.get("--auto")),
                 stage=flags.get("--stage"),
+                cruise_override=bool(flags.get("--cruise-override")),
             )
         elif command == "set-status":
             positional, flags = parse_flags(
@@ -395,12 +404,18 @@ def main(argv):
             if flags.get("--dry-run") and flags.get("--delete"):
                 die_usage("prune takes --dry-run or --delete, not both")
             result = commands.cmd_prune(delete=bool(flags.get("--delete")))
+        elif command == "mode":
+            result = commands.cmd_mode(rest)
         elif command == "resume":
-            positional, flags = parse_flags(rest, command)
+            # mode flags keep argv order (last wins per pair), so they bypass parse_flags
+            mode_flags = [f for f in rest if f in MODE_FLAGS]
+            positional, flags = parse_flags(
+                [f for f in rest if f not in MODE_FLAGS], command
+            )
             if len(positional) != 1:
                 die_usage("resume needs exactly one <run>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
-            result = commands.cmd_resume(repo, positional[0])
+            result = commands.cmd_resume(repo, positional[0], mode_flags=mode_flags)
         elif command == "rebind":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--worktree")
@@ -452,13 +467,20 @@ def main(argv):
             )
         elif command == "decisions-add":
             positional, flags = parse_flags(
-                rest, command, value_flags=("--repo", "--kind")
+                rest,
+                command,
+                value_flags=("--repo", "--kind"),
+                bool_flags=("--cruise-override",),
             )
             if len(positional) != 3:
                 die_usage("decisions-add needs <stage> <qid> <answer>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_decisions_add(
-                repo, Path.cwd(), *positional, kind=flags.get("--kind") or "answer"
+                repo,
+                Path.cwd(),
+                *positional,
+                kind=flags.get("--kind") or "answer",
+                cruise_override=bool(flags.get("--cruise-override")),
             )
         else:
             die_usage(f"unknown command '{command}'")

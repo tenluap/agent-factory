@@ -116,9 +116,11 @@ Start a run from the repo you want the feature built in. On Claude Code, OpenCod
 /factory <feature description>                start a new run — lite chain and fast mode by default
 /factory <feature> --full                     start on the full chain instead
 /factory <feature> --no-fast                  ask every relay question instead of auto-accepting
+/factory <feature> --cruise                   run unattended to the approver; never publishes without your Approve
 /factory <feature> --stop-at review           pause cleanly before the review stage
 /factory resume <branch>                      resume that run from where it stopped (any session, any harness)
 /factory resume <branch> --full --no-fast     resume, switching mode before the stage restarts
+/factory resume <branch> --cruise             resume with cruise on: the open relay round is filled, then it runs to the approver
 /factory init                                 seed <repo>/.factory/config.json with effective model defaults + README
 /factory improve                              list ready improvement backlogs with suggested feature text
 ```
@@ -131,8 +133,10 @@ Flags follow the feature description or `resume <branch>` and may combine; when 
 |---|---|
 | `--lite` | Pin the **lite chain**: specify → plan → tasks → analyze, one pass, no loop. Clarify and grill-with-docs are skipped — the top grilling captures what they would have. Any CRITICAL/HIGH analyze finding escalates to the full chain automatically. **Default.** |
 | `--full` | Pin the **full chain**: specify → clarify → grill-with-docs → plan → tasks → analyze, with the analyze loop (max 2 passes). |
-| `--fast` | Relay rounds auto-accept the agent's recommended answer. Each accept is logged and listed on the approver screen for veto. Never automated: questions a remediation defers to you, protected design decisions, and every halt. Grilling is always with you. **Default.** |
-| `--no-fast` | Every relay round reaches you for an answer. |
+| `--fast` | Relay rounds auto-accept the agent's recommended answer. Each accept is logged and listed on the approver screen for veto. Never automated: questions a remediation defers to you, protected design decisions, and every halt. Grilling is always with you unless `--cruise` is on (see that row; cruise is the only automation of these). **Default.** |
+| `--no-fast` | Every relay round reaches you for an answer. Conflicts with `--cruise` (exit 5). |
+| `--cruise` | Opt-in cruise mode: implies `--fast`; answers relay questions, grilling, setup offers and analyze exhaustion itself, using recorded cruise overrides shown on the approver screen. Stops at the approver and never opens a PR without your Approve. |
+| `--no-cruise` | Turn cruise off again (on resume, or to override a stored cruise). |
 | `--stop-at <stage>` | Pause cleanly before that stage and end the turn. Valid stages: `specify`, `clarify`, `grill-with-docs`, `plan`, `tasks`, `analyze`, `implement`, `review`, `approver`, `pr`. A stage the chain skips never triggers. |
 
 Grilling's closing summary names the chain in effect and recommends `full` when the feature's size calls for it; object once to flip it.

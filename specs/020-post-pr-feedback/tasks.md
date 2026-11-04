@@ -4,7 +4,7 @@ description: "Task list for Post-PR Feedback"
 
 # Tasks: Post-PR Feedback
 
-**Input**: `specs/020-post-pr-feedback/` — plan.md, spec.md; `CONTEXT.md`; ADR 0014
+**Input**: `specs/020-post-pr-feedback/` — plan.md, spec.md; `CONTEXT.md`; ADR 0015
 
 **Tests**: Required (engineering.md, "Commit units"). Each behavior-changing task is one checkbox and commit: failing test, implementation, passing check, and a `Red:` line. Plan-exempt tasks carry their exemption instead.
 
@@ -32,7 +32,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
 
 **Purpose**: Record the design before any core change (constitution I, FR-015).
 
-- [X] T001 Add a "Post-PR feedback" subsection under "Time budget, issues, improvement backlog, benchmark" in `DESIGN.md`, after "Post-run retro", citing ADR 0014. Cover: the `factory feedback [<branch>] [--repo <path>]` command and `/factory feedback` route (no other route refreshes); discovery, terminal skip, unreadable archives `skipped`; two read-only `gh` reads via one injectable runner, 60 s timeout, no retry; outcome ids, outcome fields, `ghost` for a null login; the outcome file; the `feedback` kind, signal keys, slug and templates, one entry per run and key, `ready`/`claimed` rules; `evidence` type per kind; the gap table; nested lock order (outcomes then backlog, outcome write last); the report and exit codes 0/1/2/5; known limitations (reopened PR missed, `ERROR` contexts ignored, moved checkouts' runs not found); merge and deployment out of scope. Exempt: `DESIGN.md` - documentation only. Done when the subsection names every item above.
+- [X] T001 Add a "Post-PR feedback" subsection under "Time budget, issues, improvement backlog, benchmark" in `DESIGN.md`, after "Post-run retro", citing ADR 0015. Cover: the `factory feedback [<branch>] [--repo <path>]` command and `/factory feedback` route (no other route refreshes); discovery, terminal skip, unreadable archives `skipped`; two read-only `gh` reads via one injectable runner, 60 s timeout, no retry; outcome ids, outcome fields, `ghost` for a null login; the outcome file; the `feedback` kind, signal keys, slug and templates, one entry per run and key, `ready`/`claimed` rules; `evidence` type per kind; the gap table; nested lock order (outcomes then backlog, outcome write last); the report and exit codes 0/1/2/5; known limitations (reopened PR missed, `ERROR` contexts ignored, moved checkouts' runs not found); merge and deployment out of scope. Exempt: `DESIGN.md` - documentation only. Done when the subsection names every item above.
 - [X] T002 [P] Update `CONTEXT.md`. grill-with-docs already wrote the Post-PR feedback terms (**Feedback refresh**, **PR outcome**, **Outcome id**, **Outcome file**, **Feedback entry**, **Refresh gap**) and the three-kind **Improvement backlog**; add only that `evidence` is a list of links on a **Feedback entry** and a string on a **Retro entry**. Depends on T001. Exempt: `CONTEXT.md` - documentation only. Done when both entries state the `evidence` type and the existing terms are unchanged.
 
 ---
