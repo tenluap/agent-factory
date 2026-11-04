@@ -166,6 +166,14 @@
       "auto": false,
       "at": "2026-11-04T10:22:57.380891Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1-test-scope",
+      "answer": "A: accepted all four seams and failure paths as declared in plan.md \"Test seams\"",
+      "auto": false,
+      "at": "2026-11-04T10:30:45.653646Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
