@@ -225,6 +225,14 @@
       "auto": false,
       "at": "2026-11-04T10:31:29.839446Z",
       "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q1-pending-identity",
+      "answer": "A: fixed pending name <repo-name>-adopt-<branch>, reused on retry, sole pending run (others refuse exit 1 with resume/prune hint)",
+      "auto": false,
+      "at": "2026-11-04T10:44:14.330329Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
