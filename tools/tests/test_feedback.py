@@ -6,6 +6,7 @@ archive stays byte-identical; a fake runner stands in for GitHub.
 """
 
 import json
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -447,6 +448,122 @@ class BacklogMappingTests(FeedbackTestCase):
         self.assertEqual(
             report["refreshed"][0]["backlog"], {"created": [], "updated": [], "claimed": []}
         )
+
+
+def raising(exc):
+    def run(args):
+        raise exc
+
+    return run
+
+
+def reply(pr_text=None, review_text=None):
+    healthy_pr = json.dumps(pr([check_run("test", "FAILURE")]))
+
+    def run(args):
+        if args[0] == "pr":
+            return 0, pr_text if pr_text is not None else healthy_pr, ""
+        return 0, review_text or "", ""
+
+    return run
+
+
+def exits(code, stderr):
+    return lambda args: (code, "", stderr)
+
+
+class Routed:
+    """Answers PR 7 (feature-x) with `on_x` and PR 8 (feature-y) healthily."""
+
+    def __init__(self, on_x=None):
+        self.on_x = on_x or reply()
+        self.healthy = FakeGh(pr([check_run("lint", "FAILURE", url="https://ci/y")]))
+        self.calls = []
+
+    def __call__(self, args):
+        self.calls.append(list(args))
+        if any("pull/7" in a or "pulls/7/" in a for a in args):
+            return self.on_x(args)
+        return self.healthy(args)
+
+
+class GapTests(FeedbackTestCase):
+    def setUp(self):
+        super().setUp()
+        self.archive(branch="feature-x", pr_url=PR_URL)
+        self.archive(branch="feature-y", pr_url="https://github.com/o/r/pull/8")
+        self.refresh(Routed())
+        self.settled = self.snapshot()
+        self.assertEqual(len(list((self.sb.home / "improvements").glob("*.json"))), 2)
+
+    def snapshot(self):
+        home = self.sb.home
+        return {
+            str(path.relative_to(home)): path.read_bytes()
+            for path in sorted(home.rglob("*"))
+            if path.is_file()
+        }
+
+    def assert_gap(self, on_x, cls, reason=None):
+        gh = Routed(on_x)
+        report = self.refresh(gh)
+        self.assertEqual(len(report["gaps"]), 1, report)
+        gap = report["gaps"][0]
+        self.assertEqual(gap["run"], "feature-x")
+        self.assertEqual(gap["pr_url"], PR_URL)
+        self.assertEqual(gap["class"], cls)
+        if reason is not None:
+            self.assertEqual(gap["reason"], reason)
+        self.assertEqual([r["run"] for r in report["refreshed"]], ["feature-y"])
+        self.assertEqual(self.snapshot(), self.settled)
+        for read in ("pr", "api"):
+            reads = [c for c in gh.calls if c[0] == read and any("pull/7" in a or "pulls/7/" in a for a in c)]
+            self.assertLessEqual(len(reads), 1, read)
+
+    def test_github_access_and_fetch_failures_are_classified(self):
+        cases = [
+            (raising(FileNotFoundError(2, "No such file or directory", "gh")), "inaccessible", None),
+            (exits(4, "To get started, please run: gh auth login\n"), "inaccessible", "To get started, please run: gh auth login"),
+            (exits(1, "HTTP 401: Bad credentials\n"), "inaccessible", "HTTP 401: Bad credentials"),
+            (exits(1, "GraphQL: Could not resolve to a PullRequest with the number of 7.\n"), "missing", None),
+            (exits(1, "HTTP 404: Not Found\n"), "missing", "HTTP 404: Not Found"),
+            (exits(1, "GraphQL: Could not resolve to a Repository with the name 'o/r'.\n"), "inaccessible", None),
+            (exits(1, "HTTP 403: Forbidden\n"), "inaccessible", None),
+            (exits(1, "Resource not accessible by integration\n"), "inaccessible", None),
+            (raising(subprocess.TimeoutExpired(["gh"], 60)), "transient", None),
+            (exits(1, "HTTP 502: Bad Gateway\n"), "transient", "HTTP 502: Bad Gateway"),
+        ]
+        for index, (on_x, cls, reason) in enumerate(cases):
+            with self.subTest(case=index, cls=cls):
+                self.assert_gap(on_x, cls, reason)
+
+    def test_malformed_reads_are_transient_gaps(self):
+        cases = [
+            reply(pr_text="{"),
+            reply(pr_text=json.dumps(pr(state="MERGING"))),
+            reply(pr_text=json.dumps(pr(headRefOid="XYZ"))),
+            reply(pr_text=json.dumps(pr(statusCheckRollup={}))),
+            reply(review_text="[]\n"),
+            reply(review_text=json.dumps({"id": 1}) + "\n"),
+            reply(review_text=json.dumps({"state": "CHANGES_REQUESTED"}) + "\n"),
+        ]
+        for index, on_x in enumerate(cases):
+            with self.subTest(case=index):
+                self.assert_gap(on_x, "transient")
+
+    def test_approved_review_without_id_is_not_a_gap(self):
+        report = self.refresh(Routed(reply(review_text=json.dumps({"state": "APPROVED"}) + "\n")))
+        self.assertEqual(report["gaps"], [])
+        self.assertEqual([r["run"] for r in report["refreshed"]], ["feature-x", "feature-y"])
+
+    def test_unparseable_pr_url_is_missing_and_never_calls_gh(self):
+        self.archive(branch="feature-z", pr_url="https://example.com/not-a-pr")
+        gh = Routed()
+        report = self.refresh(gh)
+        [gap] = [g for g in report["gaps"] if g["run"] == "feature-z"]
+        self.assertEqual(gap["class"], "missing")
+        self.assertEqual(gap["reason"], "unparseable pr_url")
+        self.assertFalse(any("not-a-pr" in a for call in gh.calls for a in call))
 
 
 if __name__ == "__main__":

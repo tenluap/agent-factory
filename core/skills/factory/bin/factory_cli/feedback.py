@@ -72,12 +72,9 @@ def _check_outcomes(pr):
     return found
 
 
-def _review_outcomes(text):
+def _review_outcomes(reviews):
     found = []
-    for line in text.splitlines():
-        if not line.strip():
-            continue
-        review = json.loads(line)
+    for review in reviews:
         if review.get("state") != "CHANGES_REQUESTED":
             continue
         found.append(
@@ -100,23 +97,105 @@ def _state_outcomes(pr):
     return []
 
 
+class Gap(Exception):
+    """A classified fetch problem for one run, listed under `gaps`."""
+
+    def __init__(self, cls, reason):
+        super().__init__(reason)
+        self.cls = cls
+        self.reason = reason
+
+
+def _first_line(text):
+    return next((line.strip() for line in text.splitlines() if line.strip()), "")
+
+
+def _classify(code, stderr):
+    """Gap class of a non-zero `gh` exit: auth and access problems are
+    inaccessible, a PR that does not exist is missing, anything else (5xx,
+    network) is transient."""
+    if code == 4 or "gh auth login" in stderr or "HTTP 401" in stderr:
+        return "inaccessible"
+    if "Could not resolve to a PullRequest" in stderr or "HTTP 404" in stderr:
+        return "missing"
+    if (
+        "Could not resolve to a Repository" in stderr
+        or "HTTP 403" in stderr
+        or "Resource not accessible" in stderr
+    ):
+        return "inaccessible"
+    return "transient"
+
+
+def _gh_read(gh, args):
+    """One GitHub read; every failure becomes a Gap for the run."""
+    try:
+        code, out, err = gh(args)
+    except OSError as e:  # `gh` is not installed or not executable
+        raise Gap("inaccessible", str(e)) from e
+    except subprocess.TimeoutExpired as e:
+        raise Gap("transient", str(e)) from e
+    if code != 0:
+        raise Gap(_classify(code, err), _first_line(err) or f"gh exited {code}")
+    return out
+
+
+def _parse_pr(text):
+    try:
+        pr = json.loads(text)
+    except ValueError as e:
+        raise Gap("transient", f"unparseable pr view JSON: {e}") from e
+    if (
+        not isinstance(pr, dict)
+        or pr.get("state") not in ("OPEN", "CLOSED", "MERGED")
+        or not isinstance(pr.get("headRefOid"), str)
+        or not re.fullmatch(r"[0-9a-f]+", pr["headRefOid"])
+        or not isinstance(pr.get("statusCheckRollup"), list)
+        or not all(isinstance(item, dict) for item in pr["statusCheckRollup"])
+    ):
+        raise Gap("transient", "unexpected pr view shape")
+    return pr
+
+
+def _parse_reviews(text):
+    reviews = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        try:
+            review = json.loads(line)
+        except ValueError as e:
+            raise Gap("transient", f"unparseable review JSON: {e}") from e
+        if not isinstance(review, dict) or not isinstance(review.get("state"), str):
+            raise Gap("transient", "unexpected review shape")
+        if review["state"] == "CHANGES_REQUESTED" and type(review.get("id")) is not int:
+            raise Gap("transient", "changes-requested review without an integer id")
+        reviews.append(review)
+    return reviews
+
+
 def _fetch(pr_url, gh):
     """Two sequential reads; first outcome per id kept, in response order."""
-    host, owner, repo_name, number = PR_URL.fullmatch(pr_url).groups()
-    _, pr_out, _ = gh(["pr", "view", pr_url, "--json", PR_FIELDS])
-    pr = json.loads(pr_out)
-    _, review_out, _ = gh(
-        [
-            "api",
-            "--hostname",
-            host,
-            "--paginate",
-            f"repos/{owner}/{repo_name}/pulls/{number}/reviews",
-            "--jq",
-            REVIEW_JQ,
-        ]
+    match = PR_URL.fullmatch(pr_url)
+    if match is None:
+        raise Gap("missing", "unparseable pr_url")
+    host, owner, repo_name, number = match.groups()
+    pr = _parse_pr(_gh_read(gh, ["pr", "view", pr_url, "--json", PR_FIELDS]))
+    reviews = _parse_reviews(
+        _gh_read(
+            gh,
+            [
+                "api",
+                "--hostname",
+                host,
+                "--paginate",
+                f"repos/{owner}/{repo_name}/pulls/{number}/reviews",
+                "--jq",
+                REVIEW_JQ,
+            ],
+        )
     )
-    candidates = _check_outcomes(pr) + _review_outcomes(review_out) + _state_outcomes(pr)
+    candidates = _check_outcomes(pr) + _review_outcomes(reviews) + _state_outcomes(pr)
     unique = {}
     for candidate in candidates:
         unique.setdefault(candidate["id"], candidate)
@@ -246,7 +325,19 @@ def refresh(home, repo, branch=None, gh=run_gh, now=None):
         if _is_terminal(home, run):
             report["skipped"].append({"run": run["branch"], "reason": "terminal outcome recorded"})
             continue
-        new, backlog = _store(home, run, _fetch(run["pr_url"], gh), now)
+        try:
+            candidates = _fetch(run["pr_url"], gh)
+        except Gap as gap:
+            report["gaps"].append(
+                {
+                    "run": run["branch"],
+                    "pr_url": run["pr_url"],
+                    "class": gap.cls,
+                    "reason": gap.reason,
+                }
+            )
+            continue
+        new, backlog = _store(home, run, candidates, now)
         report["refreshed"].append(
             {
                 "run": run["branch"],

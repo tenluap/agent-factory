@@ -95,7 +95,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
 
 **Independent test**: each injected failure leaves the run's files unchanged and lists it under `gaps`; a healthy run still refreshes.
 
-- [ ] T008 [US4] Classify GitHub failures as gaps (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T007.
+- [X] T008 [US4] Classify GitHub failures as gaps (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T007.
   1. Failing tests, each with a stored outcome and a `ready` feedback entry for the failing run and a second healthy run. Declared S1 failure paths: runner raises `OSError` (`gh` missing) -> `inaccessible`; exit 4, or stderr naming `gh auth login` or `HTTP 401` (unauthenticated) -> `inaccessible`; stderr `Could not resolve to a PullRequest` or `HTTP 404` -> `missing`; stderr `Could not resolve to a Repository`, `HTTP 403` or `Resource not accessible` -> `inaccessible`; `subprocess.TimeoutExpired` or a 5xx/network non-zero exit -> `transient`; unparseable JSON or wrong shape from read 1 (`state` outside `OPEN`/`CLOSED`/`MERGED`, non-hex `headRefOid`, non-list rollup) or read 2 (a review not an object with a string `state`, or a `CHANGES_REQUESTED` review without an integer `id`) -> `transient`; unparseable `pr_url` -> `missing`, reason `unparseable pr_url`, no runner call. Not a gap: an `APPROVED` review without `id`. Each: gap `{run, pr_url, class, reason}` (first stderr line or exception text); files byte-identical; each read called at most once; the healthy run refreshed. Observe red.
   2. Implement `Gap(cls, reason)` and the classification table; catch `Gap` per run.
   3. Run the test command; pass.
