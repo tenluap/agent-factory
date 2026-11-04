@@ -36,6 +36,7 @@ STAGES = (
     "retro",
 )
 TIMELINE_KINDS = ("questions", "notice", "approver", "halt")
+ANALYZE_COUNTS = ("critical", "high", "medium", "low")
 # Closed vocabulary (FR-003); every event has exactly one writer command.
 HISTORY_EVENTS = (
     "complete",
@@ -196,6 +197,7 @@ def validate_state(state):
     _check_timeline(state, bad)
     _check_ledger(state, bad)
     _check_relay(state, bad)
+    _check_baseline(state, bad)
     _check_issues(state, bad)
     return problems
 
@@ -432,6 +434,35 @@ def _check_issues(state, bad):
         at = parse_iso(entry.get("at"))
         if entry.get("at") and not at:
             bad(f"issues[{i}].at", "not an ISO-8601 UTC timestamp")
+
+
+def analyze_record_problems(record):
+    """Fields of an analysis record (`baseline` or `result`) that break its shape (FR-001).
+
+    The four severity counts are non-negative integers (a bool is not one) and
+    `report` is a non-empty string; `at` is not checked here (clarify Q1).
+    """
+    problems = []
+    for field in ANALYZE_COUNTS:
+        value = record.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            problems.append((field, "must be a non-negative integer"))
+    if not (isinstance(record.get("report"), str) and record["report"]):
+        problems.append(("report", "must be a non-empty string"))
+    return problems
+
+
+def _check_baseline(state, bad):
+    """A stored `analyze.baseline` is a well-formed analysis record (ADR 0016)."""
+    analyze = state.get("analyze")
+    if not isinstance(analyze, dict) or "baseline" not in analyze:
+        return
+    baseline = analyze["baseline"]
+    if not isinstance(baseline, dict):
+        bad("analyze.baseline", "not an object")
+        return
+    for field, reason in analyze_record_problems(baseline):
+        bad(f"analyze.baseline.{field}", reason)
 
 
 def _check_relay(state, bad):

@@ -60,13 +60,14 @@ flowchart TD
     Analyze -- "No high or critical" --> Minor{"Medium or low findings remain?"}
     Check1 -- No --> Minor
     Check2 -- No --> Minor
-    Minor -- Yes --> MinorFix["Remediate once"]
-    MinorFix --> Ready["Implementation checkpoint"]
-    Minor -- No --> Ready
+    Minor -- Yes --> Targets{"Acceptance targets met against the baseline?"}
+    Targets -- "No, repair cycles left (cap 2)" --> Repair1
+    Targets -- "No, cap reached" --> Decision
+    Targets -- Yes --> Ready["Implementation checkpoint"]
     Override --> Ready
 ```
 
-The initial Analyze precedes both repair loops. When a repair needs a decision, the main session relays the question and returns to clarification before the recheck. The current loop repairs feature documents in place. The baseline-count thresholds and approval path for changing the constitution are covered in a [separate proposal](superpowers/plans/2026-11-03-factory-analyze-remediation-plan.md). [Current spec chain](../core/skills/factory/SKILL.md#5-spec) · [Spec builder](../core/roles/spec-builder.md)
+The initial Analyze precedes both repair loops and sets the baseline. Implementation waits until CRITICAL and HIGH are zero and the total and LOW counts meet the baseline-relative targets: each must be below half its baseline, and a zero baseline stays zero. Repair runs at most two cycles; after that the run pauses for your decision. When a repair needs a decision, the main session relays the question and returns to clarification before the recheck. The current loop repairs feature documents in place. A constitution change is applied only after you approve its exact draft ([ADR 0016](adr/0016-analyze-acceptance-targets.md)). [Current spec chain](../core/skills/factory/SKILL.md#5-spec) · [Spec builder](../core/roles/spec-builder.md)
 
 ## Independent specialist review
 

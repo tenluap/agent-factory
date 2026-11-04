@@ -15,6 +15,8 @@ from factory_cli import state
 
 ENVELOPE_STATUSES = ("done", "needs_input", "partial", "failed")
 VERDICTS = ("pass", "fix")
+# ADR 0016: automatic repair cycles per run (FR-014)
+REPAIR_CYCLE_CAP = 2
 # the six self-report causes; `unreported` is detected-only (state.py) and
 # never valid in a role's own overrun report
 SELF_REPORT_CAUSES = tuple(c for c in state.OVERRUN_CAUSES if c != "unreported")
@@ -224,6 +226,71 @@ def _decisions(state_dict, stage, kinds):
     ]
 
 
+def analyze_baseline(analyze):
+    """The acceptance baseline: the stored one, else the derived `result`, else None (FR-010).
+
+    The derivation is only safe when `reports` holds exactly one entry and the
+    result names it; report markdown is never read for counts.
+    """
+    stored = analyze.get("baseline")
+    if isinstance(stored, dict) and not state.analyze_record_problems(stored):
+        return stored
+    result = analyze.get("result")
+    reports = analyze.get("reports") or []
+    if (
+        isinstance(result, dict)
+        and not state.analyze_record_problems(result)
+        and len(reports) == 1
+        and result.get("report") == reports[0]
+    ):
+        return result
+    return None
+
+
+def _unanswered_user_questions(relay):
+    """Ids of relay questions flagged `requires_user` that carry no answer."""
+    if not isinstance(relay, dict):
+        return []
+    answered = set()
+    asked = []
+    for one_round in relay.get("rounds") or []:
+        answered.update((one_round.get("answers") or {}).keys())
+        for question in one_round.get("questions") or []:
+            if isinstance(question, dict) and question.get("requires_user") is True:
+                asked.append(question.get("id"))
+    return [qid for qid in asked if qid not in answered]
+
+
+def _target(label, baseline, latest):
+    """One integer half-rule target: None when met, else the named unmet reason."""
+    if baseline == 0:
+        if latest == 0:
+            return None
+        return f"{label} {latest} (baseline 0, must stay 0)"
+    if 2 * latest < baseline:
+        return None
+    return f"{label} {latest} (baseline {baseline}, must be < {baseline / 2:g})"
+
+
+def unmet_targets(baseline, latest):
+    """Every acceptance target the latest counts miss, each named with its counts (FR-004, FR-005)."""
+    if not isinstance(latest, dict) or state.analyze_record_problems(latest):
+        return ["analyze.result is missing or not a valid analysis record"]
+    problems = []
+    for severity in ("critical", "high"):
+        if latest[severity]:
+            problems.append(f"{severity.upper()} {latest[severity]} (must be 0)")
+    total_baseline = sum(baseline[k] for k in state.ANALYZE_COUNTS)
+    total_latest = sum(latest[k] for k in state.ANALYZE_COUNTS)
+    for reason in (
+        _target("total", total_baseline, total_latest),
+        _target("LOW", baseline["low"], latest["low"]),
+    ):
+        if reason:
+            problems.append(reason)
+    return problems
+
+
 def _approver_permits(state_dict):
     """Approver records that may permit `pr`. A record carrying cruise_override
     never does: cruise may not publish, only the user's own Approve (FR-015, FR-016)."""
@@ -260,15 +327,41 @@ def gate_violation(state_dict, into):
                 "no analyze report records the analyze loop's outcome "
                 "(analyze.reports is empty)"
             )
-        result = analyze.get("result") or {}
-        if result.get("critical", 0) or result.get("high", 0):
-            return "latest analysis has unresolved CRITICAL or HIGH findings"
+        problems = []
         if analyze.get("pending_clarify"):
-            return (
+            problems.append(
                 f"analyze.pending_clarify holds {len(analyze['pending_clarify'])} "
                 "unanswered finding(s)"
             )
-        return None
+        for qid in _unanswered_user_questions(state_dict.get("relay")):
+            problems.append(f"relay question {qid} requires the user's answer")
+        baseline = analyze_baseline(analyze)
+        if baseline is None:
+            problems.append(
+                "no trustworthy baseline: re-run analysis as a fresh baseline, "
+                "record a gate-override, or abort"
+            )
+        else:
+            problems.extend(unmet_targets(baseline, analyze.get("result")))
+        return "; ".join(problems) or None
+    if into == "remediate":
+        analyze = state_dict.get("analyze") or {}
+        loops = analyze.get("loops") or 0
+        if loops < REPAIR_CYCLE_CAP:
+            return None
+        result_at = (analyze.get("result") or {}).get("at") or ""
+        guided = [
+            d
+            for d in _decisions(state_dict, "analyze", ("answer",))
+            if not d.get("auto") and (d.get("at") or "") > result_at
+        ]
+        if guided:
+            return None
+        return (
+            f"analyze.loops is {loops}: the repair cycles are exhausted; record a "
+            "guided pass after the latest analysis (`decisions-add analyze <qid> "
+            "'<guidance>'`), a gate-override, or abort"
+        )
     if into == "pr":
         if _approver_permits(state_dict):
             return None
