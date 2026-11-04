@@ -1,0 +1,25 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 159,
+      "summary": "ENG-1: step 9's consequential failure-path rules (failed lookup halts and never creates, FR-007; one bounded creation retry and no URL recorded on halt, FR-006; assignment problem is non-blocking, FR-008) have no asserting test, so reversing any of them leaves the suite green.",
+      "evidence": "ENG-1; engineering.md 'Confirmed test scope'. Judge reproduced: pr_contract_gaps returns [] on copies where SKILL.md:159 'never create' becomes 'continue and create anyway', :161 'retry creation once' becomes 'retry creation until it succeeds', :161 'No URL is recorded on any halt' becomes 'Record the URL on any halt', and :163 'Continue: never halt,' becomes 'Halt the run;'. Declared failure paths (plan.md:84) remove only six presence markers.",
+      "fix": "Orchestrator first: declare the added failure paths for seam pr_contract_gaps in plan.md 'Test seams' (lookup-failure-never-creates, bounded-retry, no-url-on-halt, assignment-non-blocking) and obtain fresh protected scope confirmation. After confirmation: add each element to contracts/pr-publication.md's element table and to pr_contract_gaps in contract order, with an injected copy that reverses the clause and returns exactly that element. Red proof per ENG-2. Resume-skips-lookup covered by tightening resume-rule (STD-2) under the same confirmation.",
+      "sources": ["STD-1"]
+    }
+  ],
+  "advisory": [
+    {"severity": "medium", "file": "core/skills/factory/SKILL.md", "line": 159, "summary": "ENG-26: the Branch PR lookup filters by bare head-branch name with no --base or same-repository filter and reuses the first entry, so a same-named open fork PR could be recorded as the run's PR.", "fix": "Scope the lookup with --base <default-branch> and request isCrossRepository; reuse only entries with isCrossRepository false; in item 3.4/item 4 take assignees from the entry whose url matches the created PR's URL. New test element needs scope confirmation.", "sources": ["SEC-1"]},
+    {"severity": "medium", "file": "tools/tests/test_pr_publication.py", "line": 54, "summary": "ENG-18: resume-rule and lookup-after-error check only that literals are present, so reversed-meaning text still passes.", "fix": "Tighten the two element checks to assert the rule's clauses and update the contract element table, keeping element names and order.", "sources": ["STD-2"]},
+    {"severity": "low", "file": "core/skills/factory/SKILL.md", "line": 163, "summary": "Core step 9 omits the DESIGN.md:233 / FR-009 rule that an assignment problem is never persisted.", "fix": "Add to step 9 item 4: 'Nothing is persisted for an assignment problem: no state field, issue kind or history event.'", "sources": ["STD-3"]},
+    {"severity": "low", "file": "CONTEXT.md", "line": 5, "summary": "ENG-7: the new domain term 'Branch PR' has no entry in the CONTEXT.md glossary.", "fix": "Add a 'Branch PR' entry to CONTEXT.md '## Language'.", "sources": ["STD-4"]},
+    {"severity": "low", "file": "DESIGN.md", "line": 380, "summary": "End-to-end validation of the changed PR flow (SC-001..SC-003) is deferred to the user-run quickstart.md runbook, so the flow is unvalidated at approval.", "fix": "Disclose on the approver screen that the live runbook has not been run.", "sources": ["STD-5"]},
+    {"severity": "low", "file": "core/skills/factory/SKILL.md", "line": 159, "summary": "On the reuse paths (items 3.1 and 3.3) step 9 does not say explicitly that the lookup's assignees feed the item 4 check. Severity lowered from medium.", "fix": "Item 3.1: 'reuse the first entry's url and assignees for item 4'; item 3.3: 'Found: reuse the PR and its assignees for item 4'; mirror in contracts and data-model.", "sources": ["SPEC-1"]},
+    {"severity": "low", "file": "specs/023-pr-self-assign/contracts/pr-publication.md", "line": 12, "summary": "The contract and tasks.md T005 still prescribe the literal 'never `ASK`', while shipped SKILL.md:163 says 'never asks the user for a GitHub username'.", "fix": "Reword contracts line 12 and tasks.md T005 Implement to the shipped wording.", "sources": ["SPEC-2"]}
+  ],
+  "rejected": []
+}
