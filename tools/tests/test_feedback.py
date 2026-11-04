@@ -348,5 +348,106 @@ class DedupeTests(FeedbackTestCase):
         self.assertIn(f"check:test@{HEAD}", found)
 
 
+class BacklogMappingTests(FeedbackTestCase):
+    def feedback_entries(self):
+        return [
+            json.loads(path.read_text())
+            for path in sorted((self.sb.home / "improvements").glob("*.feedback.*.json"))
+        ]
+
+    def backlog_bytes(self):
+        directory = self.sb.home / "improvements"
+        if not directory.exists():
+            return {}
+        return {path.name: path.read_bytes() for path in sorted(directory.glob("*.json"))}
+
+    def test_failed_check_maps_to_ci_failure_entry(self):
+        self.archive()
+        report = self.refresh(FakeGh(pr([check_run("Lint / test", "FAILURE")])))
+
+        [entry] = self.feedback_entries()
+        self.assertEqual(entry["kind"], "feedback")
+        self.assertEqual(entry["signal_key"], "ci-failure:lint-test")
+        self.assertEqual(
+            entry["suggested_feature"],
+            "Prevent factory PRs failing CI check 'Lint / test' (seen on run feature-x)",
+        )
+        self.assertEqual(entry["evidence"], ["https://ci/1"])
+        self.assertEqual(
+            entry["run"],
+            {"repo": self.repo, "branch": "feature-x", "spec_dir": "specs/feature-x"},
+        )
+        self.assertEqual(entry["status"], "ready")
+        self.assertEqual(report["refreshed"][0]["backlog"]["created"], [entry["name"]])
+
+    def test_change_request_maps_to_changes_requested_entry(self):
+        self.archive()
+        self.refresh(FakeGh(pr(), [review(11, "CHANGES_REQUESTED")]))
+
+        [entry] = self.feedback_entries()
+        self.assertEqual(entry["signal_key"], "changes-requested:some-user")
+        self.assertEqual(
+            entry["suggested_feature"],
+            "Address the changes Some.User requests on factory PRs (seen on run feature-x)",
+        )
+        self.assertEqual(entry["evidence"], ["https://github.com/o/r/pull/7#review"])
+
+    def test_unmerged_close_maps_and_merged_maps_to_nothing(self):
+        self.archive()
+        self.refresh(FakeGh(pr(state="CLOSED", closedAt="2026-11-04T00:50:00Z")))
+
+        [entry] = self.feedback_entries()
+        self.assertEqual(entry["signal_key"], "pr-closed:unmerged")
+        self.assertEqual(
+            entry["suggested_feature"],
+            "Find why factory PRs are closed without merging (seen on run feature-x)",
+        )
+
+        self.archive(branch="feature-y")
+        self.refresh_branch(
+            FakeGh(pr(state="MERGED", mergedAt="2026-11-04T00:50:00Z")), "feature-y"
+        )
+        self.assertEqual(
+            [e["run"]["branch"] for e in self.feedback_entries()], ["feature-x"]
+        )
+
+    def test_slug_and_feature_name_are_bounded(self):
+        self.archive()
+        long_name = "x" * 150 + "\n" + "y" * 149
+        checks = [
+            check_run("  Weird!!  Name  ", "FAILURE", url="https://ci/a"),
+            check_run("!!!", "FAILURE", url="https://ci/b"),
+            check_run("a" * 80, "FAILURE", url="https://ci/c"),
+            check_run(long_name, "FAILURE", url="https://ci/d"),
+        ]
+        self.refresh(FakeGh(pr(checks)))
+
+        by_key = {e["signal_key"]: e for e in self.feedback_entries()}
+        self.assertIn("ci-failure:weird-name", by_key)
+        self.assertIn("ci-failure:unnamed", by_key)
+        self.assertIn("ci-failure:" + "a" * 64, by_key)
+        feature = by_key["ci-failure:" + "x" * 64]["suggested_feature"]
+        prefix = "Prevent factory PRs failing CI check '"
+        self.assertTrue(feature.startswith(prefix))
+        self.assertNotIn("\n", feature)
+        shown = feature[len(prefix) : feature.index("' (seen")]
+        self.assertEqual(shown, "x" * 100)
+
+    def test_second_refresh_changes_no_backlog_file(self):
+        self.archive()
+        gh = FakeGh(pr([check_run("test", "FAILURE")]), [review(11, "CHANGES_REQUESTED")])
+        self.refresh(gh)
+        settled = self.backlog_bytes()
+        self.assertEqual(len(settled), 2)
+
+        report = self.refresh(gh)
+
+        self.assertEqual(self.backlog_bytes(), settled)
+        self.assertEqual(report["refreshed"][0]["new_outcomes"], [])
+        self.assertEqual(
+            report["refreshed"][0]["backlog"], {"created": [], "updated": [], "claimed": []}
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

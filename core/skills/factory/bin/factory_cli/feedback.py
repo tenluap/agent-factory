@@ -162,12 +162,49 @@ def _is_terminal(home, run):
     return any(o.get("id") in TERMINAL_IDS for o in body.get("outcomes", []))
 
 
+def _slug(text):
+    """Signal-key slug: lowercase, each run outside `[a-z0-9-]` one `-`, at most
+    64 characters, `unnamed` when nothing is left."""
+    slug = re.sub(r"[^a-z0-9]+", "-", str(text).lower()).strip("-")[:64].rstrip("-")
+    return slug or "unnamed"
+
+
+def _line(text, limit=100):
+    """Feature-text display: one printable line of at most `limit` characters."""
+    flat = " ".join("".join(c if c.isprintable() else " " for c in str(text)).split())
+    return flat[:limit]
+
+
+def _feedback_item(run, outcome):
+    """The feedback entry an actionable new outcome maps to, or None (merged
+    PRs and other states are not actionable)."""
+    seen = f"(seen on run {run['branch']})"
+    detail = outcome["detail"]
+    if outcome["kind"] == "check":
+        name = detail.get("name") or ""
+        key = f"ci-failure:{_slug(name)}"
+        feature = f"Prevent factory PRs failing CI check '{_line(name)}' {seen}"
+    elif outcome["kind"] == "review":
+        reviewer = detail.get("reviewer") or "ghost"
+        key = f"changes-requested:{_slug(reviewer)}"
+        feature = f"Address the changes {_line(reviewer)} requests on factory PRs {seen}"
+    elif outcome["id"] == "state:closed":
+        key = "pr-closed:unmerged"
+        feature = f"Find why factory PRs are closed without merging {seen}"
+    else:
+        return None
+    return {"signal_key": key, "evidence": outcome["url"], "suggested_feature": feature}
+
+
 def _store(home, run, candidates, now):
-    """Append outcomes whose ids are not stored yet; returns the new ones."""
+    """Append outcomes whose ids are not stored yet, and their feedback entries,
+    under the outcomes lock (outcomes, then backlog); the outcome write comes
+    last. Returns the new outcomes and the backlog result."""
     directory = Path(home) / "outcomes"
     directory.mkdir(parents=True, exist_ok=True)
     path = _outcome_path(home, run)
     _acquire_home_lock(directory, "feedback")
+    backlog = {"created": [], "updated": [], "claimed": []}
     try:
         if path.exists():
             body = json.loads(path.read_text())
@@ -179,11 +216,15 @@ def _store(home, run, candidates, now):
         stored = {outcome["id"] for outcome in body["outcomes"]}
         new = [dict(c, recorded_at=now) for c in candidates if c["id"] not in stored]
         if new:
+            items = [_feedback_item(run, outcome) for outcome in new]
+            items = [item for item in items if item]
+            if items:
+                backlog = improvements.add_feedback(home, run, items, now=now)
             body["outcomes"].extend(new)
             _write_atomic(path, body)
     finally:
         lock.release(directory)
-    return new
+    return new, backlog
 
 
 def refresh(home, repo, branch=None, gh=run_gh, now=None):
@@ -205,8 +246,13 @@ def refresh(home, repo, branch=None, gh=run_gh, now=None):
         if _is_terminal(home, run):
             report["skipped"].append({"run": run["branch"], "reason": "terminal outcome recorded"})
             continue
-        new = _store(home, run, _fetch(run["pr_url"], gh), now)
+        new, backlog = _store(home, run, _fetch(run["pr_url"], gh), now)
         report["refreshed"].append(
-            {"run": run["branch"], "pr_url": run["pr_url"], "new_outcomes": new}
+            {
+                "run": run["branch"],
+                "pr_url": run["pr_url"],
+                "new_outcomes": new,
+                "backlog": backlog,
+            }
         )
     return report
