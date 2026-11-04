@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
   "spec_dir": "specs/021-cruise-mode",
   "status": "running",
-  "stage": "fix",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -649,7 +649,7 @@
       "harness": "claude-code"
     },
     {
-      "at": "2026-11-04T02:43:51.228583Z",
+      "at": "2026-11-04T02:43:51.513509Z",
       "stage": "fix",
       "event": "verify-pass",
       "commit": null,
