@@ -135,7 +135,7 @@ A proposed improvement the retro returns: signal key, evidence, impact rank and 
 _Avoid_: suggestion, recommendation
 
 **Retro entry**:
-An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence, suggested feature and source run.
+An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence (a string), suggested feature and source run.
 _Avoid_: retro export, retro backlog
 
 **Source run**:
@@ -177,7 +177,7 @@ The per-run file in the factory home, beside the run archive, holding that run's
 _Avoid_: outcome store, PR log
 
 **Feedback entry**:
-An improvement backlog entry made from actionable PR outcomes: one per source run and signal key, carrying evidence links and suggested feature text.
+An improvement backlog entry made from actionable PR outcomes: one per source run and signal key, carrying evidence (a list of links) and suggested feature text.
 _Avoid_: PR entry, CI entry, feedback candidate
 
 **Refresh gap**:
