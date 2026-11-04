@@ -1,0 +1,17 @@
+{
+  "reviewer": "security",
+  "round": 3,
+  "summary": "Removing the set-status pr-open gate leaves push and PR creation gated by SKILL.md step 8 and checkpoint approver --next pr, but opens a new unapproved local path from pr-open to drop.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1358,
+      "summary": "Removing the pr-open gate in cmd_set_status lets set-status pr-open with any --pr-url succeed on a run with no approved record, and drop then archives that run, so a run can be ended and archived without the user's Approve. No push or PR is reachable through this path.",
+      "evidence": "ENG-25, ENG-26. cmd_set_status (lines 1358-1359) has no checks.gate_violation(s, 'pr') call. cmd_drop (lines 574-575) requires only status == 'pr-open'. Probe at 03871d2 refuses set-status pr-open (rc 1); at HEAD rc 0, and drop rc 0. Push and gh pr create remain after checkpoint approver --next pr (SKILL.md line 149), which still refuses without an approval.",
+      "fix": "Either record in plan.md and the ADR that set-status pr-open is intentionally ungated and that the approver checkpoint is the sole publication gate, or restore the pr-open refusal with a test after declaring set-status as a seam with fresh Confirmed acceptance under ENG-4."
+    }
+  ]
+}
