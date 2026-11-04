@@ -95,6 +95,9 @@ class FeedbackTestCase(unittest.TestCase):
     def refresh(self, gh):
         return feedback.refresh(self.sb.home, self.repo, gh=gh, now=NOW)
 
+    def refresh_branch(self, gh, branch):
+        return feedback.refresh(self.sb.home, self.repo, branch=branch, gh=gh, now=NOW)
+
     def outcomes(self, branch="feature-x"):
         path = self.sb.home / "outcomes" / f"repo-{branch}.json"
         if not path.exists():
@@ -240,6 +243,43 @@ class CaptureTests(FeedbackTestCase):
         self.refresh(FakeGh(pr([check_run("test", "FAILURE")])))
 
         self.assertEqual(path.read_bytes(), before)
+
+
+class NarrowTests(FeedbackTestCase):
+    def test_branch_narrows_the_refresh_to_one_run(self):
+        self.archive("feature-x")
+        self.archive("feature-y", pr_url="https://github.com/o/r/pull/9")
+        gh = FakeGh(pr([check_run("test", "FAILURE")]))
+
+        report = self.refresh_branch(gh, "feature-y")
+
+        self.assertEqual([r["run"] for r in report["refreshed"]], ["feature-y"])
+        self.assertEqual(gh.calls[0][2], "https://github.com/o/r/pull/9")
+        self.assertTrue(all(c[2] == "https://github.com/o/r/pull/9" for c in gh.calls if c[0] == "pr"))
+        self.assertTrue((self.sb.home / "outcomes" / "repo-feature-y.json").exists())
+        self.assertFalse((self.sb.home / "outcomes" / "repo-feature-x.json").exists())
+
+    def test_branch_naming_no_archived_run_is_refused(self):
+        self.archive("feature-x")
+        gh = FakeGh(pr())
+
+        with self.assertRaises(ValueError) as caught:
+            self.refresh_branch(gh, "missing-run")
+
+        self.assertIn("missing-run", str(caught.exception))
+        self.assertEqual(gh.calls, [])
+        self.assertFalse((self.sb.home / "outcomes").exists())
+
+    def test_branch_of_a_run_without_pr_url_is_refused(self):
+        self.archive("feature-x", pr_url=None)
+        gh = FakeGh(pr())
+
+        with self.assertRaises(ValueError) as caught:
+            self.refresh_branch(gh, "feature-x")
+
+        self.assertIn("pr_url", str(caught.exception))
+        self.assertEqual(gh.calls, [])
+        self.assertFalse((self.sb.home / "outcomes").exists())
 
 
 if __name__ == "__main__":

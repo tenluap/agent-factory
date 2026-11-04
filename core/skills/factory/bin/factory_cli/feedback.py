@@ -123,7 +123,12 @@ def _fetch(pr_url, gh):
     return list(unique.values())
 
 
+def _has_pr(run):
+    return isinstance(run.get("pr_url"), str) and bool(run["pr_url"])
+
+
 def _archived_runs(home, repo):
+    """Every readable archived run of `repo`; unreadable archive state is skipped."""
     runs, skipped = [], []
     for path in sorted((Path(home) / "archive").glob("*/state.json")):
         try:
@@ -133,9 +138,7 @@ def _archived_runs(home, repo):
         except (OSError, ValueError):
             skipped.append({"run": path.parent.name, "reason": "unreadable archive state"})
             continue
-        if run.get("repo") != repo:
-            continue
-        if isinstance(run.get("pr_url"), str) and run["pr_url"]:
+        if run.get("repo") == repo:
             runs.append(run)
     return runs, skipped
 
@@ -164,10 +167,20 @@ def _store(home, run, candidates, now):
     return new
 
 
-def refresh(home, repo, gh=run_gh, now=None):
-    """Record new PR outcomes for the repository's archived runs with a `pr_url`."""
+def refresh(home, repo, branch=None, gh=run_gh, now=None):
+    """Record new PR outcomes for the repository's archived runs with a `pr_url`,
+    or only `branch`'s run. Refusals raise ValueError before any GitHub read."""
     now = now or state.iso(datetime.now(timezone.utc))
     runs, skipped = _archived_runs(home, str(commands.main_repo(repo)))
+    if branch is None:
+        runs = [run for run in runs if _has_pr(run)]
+    else:
+        named = [run for run in runs if run.get("branch") == branch]
+        if not named:
+            raise ValueError(f"no archived run for branch '{branch}'")
+        if not _has_pr(named[0]):
+            raise ValueError(f"archived run '{branch}' has no pr_url")
+        runs = named
     report = {"refreshed": [], "skipped": skipped, "gaps": []}
     for run in runs:
         new = _store(home, run, _fetch(run["pr_url"], gh), now)
