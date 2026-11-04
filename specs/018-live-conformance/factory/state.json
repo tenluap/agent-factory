@@ -97,8 +97,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approver: review round 2 pass, 14 advisories",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T08:21:57.479705Z",
+      "latency_ms": 938835
     }
   ],
   "decisions": [
