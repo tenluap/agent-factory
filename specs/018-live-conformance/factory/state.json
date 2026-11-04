@@ -107,8 +107,8 @@
       "kind": "questions",
       "stage": "fix",
       "summary": "Review round 1 Q1: tree_digest test seam (requires_user)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T07:41:35.434720Z",
+      "latency_ms": 122624
     }
   ],
   "decisions": [
