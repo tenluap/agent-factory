@@ -199,6 +199,14 @@
       "auto": true,
       "at": "2026-11-04T01:03:50.596691Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "APPROVE",
+      "answer": "Approve",
+      "auto": false,
+      "at": "2026-11-04T07:35:02.875908Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
