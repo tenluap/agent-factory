@@ -118,6 +118,14 @@
       "summary": "Remediate: 1 pending_clarify (pre-adoption ENG-1/ENG-3 boundary)",
       "answered_at": "2026-11-04T16:23:12.977794Z",
       "latency_ms": 18324119
+    },
+    {
+      "at": "2026-11-04T18:08:19.335455Z",
+      "kind": "questions",
+      "stage": "review",
+      "summary": "Review round 2: protected test-scope confirmation + 2 contract decisions",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
