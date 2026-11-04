@@ -85,3 +85,5 @@ tools/tests/test_pr_publication.py          # new: text-contract test
 - Exempt: `DESIGN.md` - documentation only (design record; validated by its validation plan and the manual runbook).
 - Exempt: `specs/023-pr-self-assign/quickstart.md` manual runbook - documentation only; live GitHub behaviour is user-run (FR-013), never by agents.
 - Overridden: none
+
+Confirmed: 2026-11-04 - Q1 accepted (cruise override) - seams: `pr_contract_gaps(skill_text, state_text)` in `tools/tests/test_pr_publication.py`; failure paths: `pr_contract_gaps` -> `self-assign`, `lookup-before-create`, `lookup-after-error`, `assignment-report`, `no-ask`, `resume-rule`
