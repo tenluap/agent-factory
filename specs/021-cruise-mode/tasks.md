@@ -21,8 +21,8 @@ description: "Task list for 021-cruise-mode"
 
 - [ ] T002 [US4][US1] Validate `mode.cruise` and `cruise_override` in `core/skills/factory/bin/factory_cli/state.py` (`validate_state`, `_check_decisions`, `_check_round`); tests in new `tools/tests/test_cruise.py`.
   - Seam: `factory_cli.state.validate_state`. Failure paths: non-boolean `mode.cruise`; `cruise: true` with `fast: false`; non-boolean `cruise_override` on a decision or relay answer; marker with `auto: false`; marker on kind `approved` or at stage `approver`.
-  - Red: write tests first: a pre-feature state (no `cruise`, no marker) and the existing fixtures validate clean (FR-004, SC-004); `mode.cruise: true, fast: true` valid; decision `{kind: answer, auto: true, cruise_override: true}` valid; decision `{kind: gate-override, stage: analyze, auto: true, cruise_override: true}` valid; relay answer with `auto: true, cruise_override: true` valid; each failure path above yields a problem naming its location; `gate-override` with `auto: true` and no marker still fails "a gate decision is never auto". Run; the failure-path tests fail.
-  - Implement: boolean check on `mode.cruise`; `cruise` requires `fast`; marker boolean when present, `true` requires `auto: true`, allowed with kind `answer` or with `gate-override` only at stage `analyze`; that is the only exception to "a gate decision is never auto". No version bump.
+  - Red: write tests first: a pre-feature state (no `cruise`, no marker) and the existing fixtures validate clean (FR-004, SC-004); `mode.cruise: true, fast: true` valid; decision `{kind: answer, auto: true, cruise_override: true}` valid; decision `{kind: gate-override, stage: analyze, auto: true, cruise_override: true}` valid; relay answer with `auto: true, cruise_override: true` valid; each failure path above yields a problem naming its location (only these; the existing "a gate decision is never auto" coverage stays in `tools/tests/test_state.py`). Run; the failure-path tests fail.
+  - Implement: boolean check on `mode.cruise`; `cruise` requires `fast`; marker boolean when present, `true` requires `auto: true`, rejected on kind `approved` or at stage `approver`; a marked `gate-override` is exempt from "a gate decision is never auto" (the `analyze`-only rule is T006's `decisions-add` guard, clarify Q1). No version bump.
   - Pass: runner green.
   - Done: every listed case asserted and passing; existing state tests unchanged.
 
@@ -60,10 +60,10 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 5: User Story 2 - Publishing needs the user's Approve (P1)
 
-- [ ] T007 [US2] Make `gate_violation` and `permitting_decision` for `pr` in `core/skills/factory/bin/factory_cli/checks.py` ignore records carrying `cruise_override`; tests in `tools/tests/test_cruise.py`.
+- [ ] T007 [US2] Make the `pr` approver candidates used by both `gate_violation` and `permitting_decision` in `core/skills/factory/bin/factory_cli/checks.py` ignore records carrying `cruise_override`; tests in `tools/tests/test_cruise.py`.
   - Seam: `factory_cli.checks.gate_violation` into `pr`. Failure paths: a record carrying `cruise_override` at `approver` never permits `pr`.
-  - Red: tests first on hand-built state dicts (bypassing `validate_state`, so a forged record is reachable): a user `approved` record (`auto: false`, no marker) permits `pr`; an `approved` or `gate-override` record at `approver` with `cruise_override: true` returns a violation and `permitting_decision` returns none; the analyze-into-implement gate still accepts a marked `gate-override` at `analyze`. Run; the forged-record test fails.
-  - Implement: filter marked records out of the `approver` candidates only.
+  - Red: tests first on hand-built state dicts (bypassing `validate_state`, so a forged record is reachable): a user `approved` record (`auto: false`, no marker) permits `pr`; an `approved` or `gate-override` record at `approver` with `cruise_override: true` makes `gate_violation(state, "pr")` return a violation. Assertions go through `gate_violation` into `pr` only (clarify Q1; the implement gate is covered by T006). Run; the forged-record test fails.
+  - Implement: filter marked records out of the `approver` candidates once; `gate_violation` and `permitting_decision` for `pr` both use that filtered list.
   - Pass: runner green.
   - Done: every listed case asserted and passing; `tools/tests/test_gates.py` unchanged and green (FR-015, FR-016, SC-002).
 

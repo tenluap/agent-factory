@@ -8,6 +8,12 @@
 
 **Input**: User description: "Add a cruise mode to the software factory: like YOLO, it auto-approves and auto-accepts everything (relay questions answered with the recommended answer, permissions granted, approver gates passed) with no user input, but the run always stops at the open-PR flow and never opens a PR without the user's explicit approval." (settled decisions Q1-Q7 and confirmed defaults in `factory/brief.md`)
 
+## Clarifications
+
+### Session 2026-11-04
+
+- Q: Narrow T002/T007 to the confirmed test scope? → A: Yes. `validate_state` rejects only declared marker paths; `decisions-add` enforces the `analyze`-only marked `gate-override`; the `pr` gate is tested through `gate_violation` only.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Unattended run up to the approver gate (Priority: P1)
