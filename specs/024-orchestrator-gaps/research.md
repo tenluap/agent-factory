@@ -10,8 +10,8 @@ No NEEDS CLARIFICATION remained in the Technical Context. Each entry records one
 
 ## R2. Interaction with the design-run reservation
 
-- **Decision**: skip the increment when `review.pending_design_fix.attempt == review.fix_rounds`. SKILL.md step 7 tells active design runs to checkpoint `fix` before clearing the reservation.
-- **Rationale**: design-code-mapping.md §5 increments the counter before spawning; counting again at checkpoint would double-count. Ordering the checkpoint before the clear keeps the guard observable.
+- **Decision** (revised in remediation 1, analyze-1 F2): keep §5's clear-before-re-review order. The reservation stores `attempt` = counter + 1 and no longer increments; the orchestrator clears it after the attempt, then `checkpoint fix --next review` increments once. The guard still skips when `review.pending_design_fix.attempt == review.fix_rounds` (a legacy reservation that already counted the attempt).
+- **Rationale**: §5 clears the marker before verification/re-review; a checkpoint after the clear sees no reservation, so the reservation must not have counted the attempt, or it would be counted twice. One writer of the counter (the checkpoint) is simpler than two.
 - **Alternatives considered**: always skip for design runs (breaks when no reservation exists); move the reservation increment into the CLI (out of scope; reservation writer unchanged).
 
 ## R3. How a verdict-raised question reaches the writer
@@ -46,7 +46,7 @@ No NEEDS CLARIFICATION remained in the Technical Context. Each entry records one
 
 ## R5. File-name safety
 
-- **Decision**: refuse `<stage>` or `<qid>` outside `[A-Za-z0-9_-]+` with exit 1 before any write.
+- **Decision**: when a record is due, refuse `<stage>` or `<qid>` outside `[A-Za-z0-9_-]+` with exit 1 before any write; answers with no record due are unchecked (FR-009).
 - **Rationale**: both values form a path; stages are vocabulary words and qids are `Q7` / `R2-Q1`, so the rule rejects nothing legitimate.
 
 ## R6. Overrun excess rounding
