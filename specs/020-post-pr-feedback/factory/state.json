@@ -622,6 +622,18 @@
       "duration_ms": 98000,
       "started_at": "2026-11-04T02:31:15Z",
       "ended_at": "2026-11-04T02:32:53Z"
+    },
+    {
+      "at": "2026-11-04T02:43:37.331892Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "claude-code",
+      "in_est": 12000,
+      "out_est": 500,
+      "reported": null,
+      "duration_ms": 700000,
+      "started_at": "2026-11-04T02:31:15Z",
+      "ended_at": "2026-11-04T02:42:55Z"
     }
   ],
   "issues": [
@@ -645,6 +657,17 @@
       "detail": "code-standards ran 459s past its 300s budget without a self-report",
       "duration_ms": 459000,
       "commit": "f6a74d5",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-04T02:43:37.332407Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "spec-conformance",
+      "cause": "unreported",
+      "detail": "spec-conformance ran 700s past its 300s budget without a self-report",
+      "duration_ms": 700000,
+      "commit": "84bdbec",
       "partial_return": false
     }
   ],
