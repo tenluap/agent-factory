@@ -176,9 +176,33 @@
       "duration_ms": 100000,
       "started_at": "2026-11-04T22:30:00Z",
       "ended_at": "2026-11-04T22:31:40Z"
+    },
+    {
+      "at": "2026-11-04T22:43:17.210441Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "opencode",
+      "in_est": 12000,
+      "out_est": 9000,
+      "reported": null,
+      "duration_ms": 855000,
+      "started_at": "2026-11-04T22:21:35Z",
+      "ended_at": "2026-11-04T22:35:50Z"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-11-04T22:43:17.210649Z",
+      "kind": "overrun",
+      "stage": "implement",
+      "role": "code-build",
+      "cause": "large-input",
+      "detail": "deadline 22:51:30Z not crossed at return; partial per verification handoff: full build+suite (515s) could not fit remaining time after T010; pending: full build, full unittest suite, dist check, quickstart walk",
+      "duration_ms": 855000,
+      "commit": "e86c7d5",
+      "partial_return": true
+    }
+  ],
   "analyze": {
     "pass": 3,
     "loops": 2,
