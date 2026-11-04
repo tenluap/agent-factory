@@ -78,6 +78,14 @@
       "summary": "clarify: Q1 test-scope decision (requires_user); Q2-Q5 auto-accepted",
       "answered_at": "2026-11-04T00:31:13.676446Z",
       "latency_ms": 262756
+    },
+    {
+      "at": "2026-11-04T07:45:29.647618Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "approve/request changes/abort for 019-analyze-remediation-targets",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
