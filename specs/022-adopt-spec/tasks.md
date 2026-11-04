@@ -75,7 +75,7 @@ description: "Task list for 022-adopt-spec"
 
 ## Phase 6: User Story 6 - Resume points to adopt (P3)
 
-- [ ] T009 [US6] Add an optional `hint` to `one_run` in `core/skills/factory/bin/factory_cli/commands.py`, passed only by `cmd_resume`; tests in `tools/tests/test_adopt.py`.
+- [x] T009 [US6] Add an optional `hint` to `one_run` in `core/skills/factory/bin/factory_cli/commands.py`, passed only by `cmd_resume`; tests in `tools/tests/test_adopt.py`.
   - Seam: `bin/factory resume <run>`. Failure paths: no matching run exits 1 with "no run" and the `adopt <branch|spec_dir>` hint, creating no run, worktree or branch.
   - Red: write tests first: plain SpecKit branch `007-x`, no state: `resume 007-x` exits 1, stderr has `no run '007-x'` and `use adopt <branch|spec_dir>`, repo unchanged; `show nope` (another `one_run` caller) has no hint; a pending run still resumes (one `resumed` entry). Run; hint test fails.
   - Implement: `hint=None` keyword appended to the no-run message (D9).

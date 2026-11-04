@@ -251,8 +251,10 @@ def find_matches(repo, name):
     return matches
 
 
-def one_run(repo, name):
-    """The single run matching `<name>`, refusing none/ambiguous/gone homes."""
+def one_run(repo, name, hint=None):
+    """The single run matching `<name>`, refusing none/ambiguous/gone homes.
+
+    `hint` is appended to the no-run error; only `resume` passes one (D9)."""
     matches = find_matches(repo, name)
     if not matches:
         known = (
@@ -270,7 +272,8 @@ def one_run(repo, name):
             )
             or "none found"
         )
-        die(1, f"no run '{name}' in {repo} (runs: {known})")
+        message = f"no run '{name}' in {repo} (runs: {known})"
+        die(1, f"{message}; {hint}" if hint else message)
     if len(matches) > 1:
         listed = ", ".join(str(p) for p, _, _ in matches)
         die(3, f"'{name}' matches several runs: {listed}")
@@ -1610,7 +1613,11 @@ def cmd_resume(repo, name, mode_flags=()):
 
     Mode flags resolve against the stored mode before any write; a conflict
     exits 5 and leaves the run untouched (spec 021)."""
-    path, loaded, source = one_run(repo, name)
+    path, loaded, source = one_run(
+        repo,
+        name,
+        hint="use adopt <branch|spec_dir> for a spec factory did not start",
+    )
     if loaded.get("status") in ("pr-open", "aborted"):
         die(
             1,

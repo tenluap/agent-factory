@@ -12,7 +12,7 @@ CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" /
 sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli import state  # noqa: E402
-from tests import fixture  # noqa: E402
+from tests import Sandbox, fixture  # noqa: E402
 
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
 
@@ -132,6 +132,48 @@ class AdoptedStateTests(unittest.TestCase):
         self.assertEqual(
             state.ADOPT_STAGES, ("specify", "plan", "tasks", "analyze")
         )
+
+
+class ResumeHintTests(unittest.TestCase):
+    """`resume` with no matching run points at `adopt` (D9); other callers do not."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        base = self.box.git("rev-parse", "--abbrev-ref", "HEAD").strip()
+        self.box.git("checkout", "-q", "-b", "007-x")
+        spec = self.box.repo / "specs" / "007-x"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# Spec\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec 007-x")
+        self.box.git("checkout", "-q", base)
+
+    def snapshot(self):
+        return (
+            self.box.git("status", "--porcelain"),
+            self.box.git("branch", "--list"),
+            self.box.git("worktree", "list", "--porcelain"),
+        )
+
+    def test_resume_without_run_hints_adopt_and_creates_nothing(self):
+        before = self.snapshot()
+        out = self.box.cli("resume", "007-x")
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn("no run '007-x'", out.stderr)
+        self.assertIn("use adopt <branch|spec_dir>", out.stderr)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_show_without_run_has_no_adopt_hint(self):
+        out = self.box.cli("show", "nope")
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("no run 'nope'", out.stderr)
+        self.assertNotIn("adopt", out.stderr)
+
+    def test_pending_run_still_resumes(self):
+        self.box.pending_run("007-x", fixture("state-v1.json"))
+        out = self.box.cli("resume", "007-x")
+        self.assertEqual(out.returncode, 0, out.stderr)
 
 
 if __name__ == "__main__":
