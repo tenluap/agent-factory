@@ -155,7 +155,10 @@ Active design work publishes only after `design-code-mapping.md`'s publication r
 
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include the handoff facts `design-code-mapping.md` §6 accounts.
-3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file> --assignee @me`, ready for review.
+3. Publish by lookup, then create (the lookup never creates):
+   1. Branch PR lookup: `gh pr list --head <branch> --state open --json url,assignees`. Exit 0 with entries: found; reuse the first entry's `url` and skip creation. Exit 0 with `[]`: none. Non-zero: failed; halt per Policies (Halt) with the lookup error as the reason, and never create. Only open PRs are reused.
+   2. None: `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file> --assignee @me`, ready for review.
+   3. After a `gh pr create` error, repeat the Branch PR lookup before any retry. Found: reuse the PR. Failed: halt with the lookup error. None: retry creation once; after a second error with a lookup still finding none, halt with the creation error. No URL is recorded on any halt. At most 2 creation requests and 3 Branch PR lookups run per attempt.
 4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`.
 5. **Retro** (entry marker checked only here, not during an in-turn retry):
    1. `SHELL: python3 <F>/bin/factory show <branch>`. Read the run's `state.json` at the returned `state_path`; if its `ledger` already has an entry with stage `retro`, skip to item 4.

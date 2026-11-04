@@ -20,15 +20,27 @@ def pr_section(skill_text):
     return match.group(1) if match else ""
 
 
+LOOKUP = "gh pr list --head <branch> --state open --json url,assignees"
+AFTER_ERROR_LITERALS = ("gh pr create", "error", "Branch PR lookup", "retry")
+
+
 def pr_contract_gaps(skill_text, state_text):
     """Names of missing PR publication elements, in contract order."""
     section = pr_section(skill_text)
+    lines = section.splitlines()
     gaps = []
     if not any(
-        "gh pr create" in line and "--assignee @me" in line
-        for line in section.splitlines()
+        "gh pr create" in line and "--assignee @me" in line for line in lines
     ):
         gaps.append("self-assign")
+    create_at = section.find("gh pr create")
+    lookup_at = section.find(LOOKUP)
+    if not 0 <= lookup_at < create_at:
+        gaps.append("lookup-before-create")
+    if not any(
+        all(literal in line for literal in AFTER_ERROR_LITERALS) for line in lines
+    ):
+        gaps.append("lookup-after-error")
     if re.search(r"\bASK\b", section):
         gaps.append("no-ask")
     return gaps
@@ -51,6 +63,23 @@ class PrPublicationContractTests(unittest.TestCase):
     def test_creation_without_self_assign_reports_self_assign(self):
         mutated = with_section(self.skill, lambda s: s.replace(" --assignee @me", ""))
         self.assertEqual(pr_contract_gaps(mutated, self.state), ["self-assign"])
+
+    def test_lookup_command_removed_reports_lookup_before_create(self):
+        mutated = with_section(self.skill, lambda s: s.replace(LOOKUP, ""))
+        self.assertEqual(
+            pr_contract_gaps(mutated, self.state), ["lookup-before-create"]
+        )
+
+    def test_after_error_sentence_removed_reports_lookup_after_error(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: "".join(
+                line
+                for line in s.splitlines(keepends=True)
+                if "After a `gh pr create` error" not in line
+            ),
+        )
+        self.assertEqual(pr_contract_gaps(mutated, self.state), ["lookup-after-error"])
 
     def test_ask_line_in_section_reports_no_ask(self):
         mutated = with_section(
