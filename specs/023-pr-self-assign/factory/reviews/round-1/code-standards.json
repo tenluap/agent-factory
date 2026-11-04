@@ -1,0 +1,27 @@
+{
+  "reviewer": "code-standards",
+  "round": 1,
+  "summary": "Commit units, red proofs, documentation exemptions, the CI suite and the five-harness render hold, but the step 9 lookup, retry, non-blocking assignment and resume rules have no asserting test, and the text-contract checker accepts reversed-meaning text.",
+  "findings": [
+    {"id": "STD-1", "severity": "high", "blocking": true, "file": "core/skills/factory/SKILL.md", "line": 159,
+     "summary": "Behaviour added to step 9 (failed lookup halts and never creates, one bounded creation retry, no URL recorded on halt, non-blocking assignment check, resume without a duplicate PR) has no asserting test.",
+     "evidence": "ENG-1. Rules at SKILL.md:159, :161, :163 and state.md:216 are asserted by no test. pr_contract_gaps (tools/tests/test_pr_publication.py:28) returned [] on copies where each rule was reversed: lookup failure continues and creates anyway; retry creation until it succeeds; record the URL on any halt; a mismatch halts the run; resume skips the lookup. The declared failure paths in plan.md 'Test seams' cover only six marker removals.",
+     "fix": "Through the orchestrator (ENG-4; engineering.md 'Confirmed test scope'), declare these clauses as failure paths in plan.md 'Test seams' and obtain fresh scope confirmation. Then add injected copies that reverse each clause (lookup-failure-creates, unbounded-retry, url-on-halt, assignment-halts, resume-skips-lookup), each asserting exactly one new element name, and add those elements to contracts/pr-publication.md's element table."},
+    {"id": "STD-2", "severity": "medium", "blocking": false, "file": "tools/tests/test_pr_publication.py", "line": 54,
+     "summary": "The existing text-contract elements check literal presence, so resume-rule and lookup-after-error still pass when the rule they name is reversed.",
+     "evidence": "ENG-18. Line 54 accepts any line containing 'step 9' and 'Branch PR lookup' without 'gh pr view'; line 42 accepts any section line containing the four literals whatever it instructs. Reproduced on mutated copies.",
+     "fix": "Tighten the two element checks to assert the rule's clauses, updating the contract element table; keep element names and order."},
+    {"id": "STD-3", "severity": "low", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 163,
+     "summary": "Core step 9 omits DESIGN.md's rule that an assignment problem is never persisted.",
+     "evidence": "Constitution Principle I; DESIGN.md:233 says 'never persisted (no state field, issue kind or history event)'; SKILL.md items 4 and 8 state no such prohibition.",
+     "fix": "Add to step 9 item 4: 'Nothing is persisted for an assignment problem: no state field, issue kind or history event.'"},
+    {"id": "STD-4", "severity": "low", "blocking": false, "file": "CONTEXT.md", "line": 5,
+     "summary": "The new domain term 'Branch PR' is used in core, state.md and DESIGN.md but is not defined in the glossary.",
+     "evidence": "ENG-7. CONTEXT.md '## Language' has no 'Branch PR' entry.",
+     "fix": "Add a glossary entry or reword the uses to an existing term."},
+    {"id": "STD-5", "severity": "low", "blocking": false, "file": "DESIGN.md", "line": 380,
+     "summary": "No end-to-end validation of the changed PR publication flow is recorded; live checks are deferred to a user-run runbook.",
+     "evidence": "Constitution Development Workflow (.specify/memory/constitution.md:56); DESIGN.md:380 defers SC-001..SC-003 to quickstart.md.",
+     "fix": "Run quickstart.md manual steps 2-4 and record results, or have the approver accept the unvalidated state."}
+  ]
+}
