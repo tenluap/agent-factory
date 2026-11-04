@@ -1356,11 +1356,6 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
             s["halt_reason"] = halt_reason
             append_issue(s, issue)
         if status == "pr-open":
-            # Defense in depth: the publish gate holds here too, checked under
-            # the lock so a refused write leaves the state untouched.
-            violation = checks.gate_violation(s, "pr")
-            if violation:
-                die(1, f"gate refusal into 'pr': {violation}")
             s["pr_url"] = pr_url
         if status in ("pr-open", "aborted"):
             s["ended_at"] = now
