@@ -97,7 +97,7 @@ tools/tests/test_adopt.py                  # NEW
 - Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md`, `core/roles/spec-builder.md`, `core/roles/spec-conformance.md`, `core/roles/review-judge.md`, `core/roles/retro.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
 - Overridden: none
 
-Confirmation: pending. The earlier acceptance (`factory/relay/plan-Q1.md`) covered a narrower dry-run and write failure scope and is stale; fresh explicit acceptance is requested as plan Q2.
+Confirmed: 2026-11-04 - Q2 accepted - seams: `bin/factory adopt <src> --dry-run`, `bin/factory adopt <src> [--stage <stage>]` (write), `factory_cli.state.validate_state`, `bin/factory resume <run>`; failure paths: each seam's "Failure paths" list exactly as declared above, verbatim snapshot in `factory/relay/plan-Q2.md` (supersedes the stale `plan-Q1.md` acceptance).
 
 ## Complexity Tracking
 
