@@ -53,7 +53,7 @@ The single fenced JSON block a role ends every turn with, carrying its status, f
 _Avoid_: result, payload, response
 
 **Finding**:
-One reviewable defect a reviewer reports, with a severity and the rule or artefact it rests on.
+One reviewable defect a reviewer or analyze reports, with a severity and the rule or artefact it rests on.
 _Avoid_: issue, comment, violation
 
 **Verdict**:
@@ -153,6 +153,32 @@ _Avoid_: cleanup, purge
 **Permanent design evidence**:
 Pen design evidence after the drop, living at `docs/design/<branch>/` and referenced by `docs/design-code-map.json`.
 _Avoid_: design archive, design folder
+
+## Analyze loop
+
+**Baseline analysis**:
+A run's first completed analysis, whose severity counts every later recheck is measured against; it changes only when the user explicitly chooses a fresh baseline.
+_Avoid_: first pass, original report, initial analysis
+
+**Recheck**:
+Any analysis after the baseline analysis, run against the artifacts as remediation left them; the most recent one is what the implement gate judges.
+_Avoid_: fresh analysis, re-analysis, verification loop
+
+**Acceptance targets**:
+The baseline-relative conditions a recheck must meet before implementation: no CRITICAL or HIGH findings, and the total and LOW counts each strictly below half their baseline counts, with a zero baseline count staying zero.
+_Avoid_: thresholds, exit criteria, quality bar
+
+**Repair cycle**:
+One remediation of the spec artifacts in place followed by its recheck; at most two run automatically per run, and lite-to-full escalation is not one.
+_Avoid_: loop, remediation pass, retry
+
+**Implement gate**:
+The check before implementation that refuses while any acceptance target is unmet, a protected question is open or no trustworthy baseline analysis exists, unless the user recorded a gate override.
+_Avoid_: implementation checkpoint, transition gate, analyze gate
+
+**Exhaustion question**:
+The protected question asked when acceptance targets are still unmet after the automatic repair cycles: one more guided pass, a recorded gate override, or abort.
+_Avoid_: halt question, escalation question, cap prompt
 
 ## Skill routing
 
