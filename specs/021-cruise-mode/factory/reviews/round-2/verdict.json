@@ -1,0 +1,20 @@
+{
+  "round": 2,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1361,
+      "summary": "The fix adds a set-status pr-open refusal on the pr gate for every run, tested through an undeclared seam with stale confirmation, and edits existing tests to inject approvals, breaking SC-004.",
+      "evidence": "ENG-4 and engineering.md 'Confirmed test scope'. commands.py lines 1359-1363 add checks.gate_violation(s, 'pr') to cmd_set_status for all runs. plan.md Test seams (lines 119-126) and Confirmed line (131) declare the pr gate only as factory_cli.checks.gate_violation; spec.md Clarifications line 15. test_cruise.py PrOpenGateTests (from line 532) drives set-status pr-open. spec.md SC-004 (line 199): existing tests pass unchanged, but test_commands.py lines 669-682 and test_improvements.py approved() (lines 46, 96, 120, 195, 264) were edited. SKILL.md step 8 ordering (line 149) already closes round-1 SEC-1 before any push.",
+      "fix": "Remove the cmd_set_status pr-open gate hunk (commands.py 1359-1363), the PrOpenGateTests class in tools/tests/test_cruise.py, the approved() helper and its call sites in tools/tests/test_improvements.py, and the inline approval record in tools/tests/test_commands.py test_set_status_records_history_and_end, so those existing tests are byte-identical to 8b64951. Keep the SKILL.md step 8 ordering and the other round-1 fixes. Name tools/tests/test_cruise.py, tools/tests/test_commands.py and tools/tests/test_improvements.py in the fix commit's Adjacent: lines.",
+      "sources": ["STD-1", "SPEC-13", "SPEC-14"]
+    }
+  ],
+  "advisory": [
+    { "severity": "medium", "file": "core/skills/factory/bin/factory_cli/commands.py", "line": 1361, "summary": "ENG-6: the pr-open refusal repeats cmd_checkpoint's refusal block and the approval record is copied across test files; resolved by removing the gate.", "fix": "No separate action once the set-status gate is removed.", "sources": ["STD-2"] },
+    { "severity": "low", "file": "core/skills/factory/SKILL.md", "line": 65, "summary": "ENG-25: the brainstorm cruise bullet composes '<recommended>' into a single-quoted shell argument, same class as round-1 advisory SEC-2.", "fix": "Optionally add `answer <qid> --recommended` reading the recommendation from state, or pass answers via stdin/file.", "sources": ["SEC-6"] }
+  ],
+  "rejected": []
+}
