@@ -286,8 +286,9 @@ def _load_outcomes(path, run):
         body = json.loads(path.read_text())
     except (OSError, ValueError) as e:
         raise Gap("inaccessible", f"unreadable outcome file {path}: {e}") from e
-    if not isinstance(body, dict) or not all(
-        isinstance(o, dict) and "id" in o for o in body.get("outcomes") or [None]
+    outcomes = body.get("outcomes") if isinstance(body, dict) else None
+    if not isinstance(outcomes, list) or not all(
+        isinstance(o, dict) and "id" in o for o in outcomes
     ):
         raise Gap("inaccessible", f"malformed outcome file {path}")
     return body

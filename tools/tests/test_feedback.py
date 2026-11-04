@@ -612,6 +612,14 @@ class LocalGapTests(FeedbackTestCase):
         self.outcome_file.write_text("{not json")
         self.assert_gap_leaves_files("inaccessible")
 
+    def test_empty_stored_outcome_list_is_not_a_malformed_file(self):
+        body = json.loads(self.outcome_file.read_text())
+        body["outcomes"] = []
+        self.outcome_file.write_text(json.dumps(body))
+        report = self.refresh(self.new_failure())
+        self.assertEqual(report["gaps"], [])
+        self.assertIn(f"check:new@{HEAD}", self.outcomes())
+
     def test_foreign_backlog_file_at_entry_name_is_inaccessible(self):
         self.entry_file.write_text(
             json.dumps(
