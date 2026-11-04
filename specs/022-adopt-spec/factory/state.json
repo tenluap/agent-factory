@@ -101,6 +101,14 @@
       "summary": "Grill-with-docs: 1 protected question (pre-adoption checked tasks)",
       "answered_at": "2026-11-04T10:57:12.305161Z",
       "latency_ms": 543761
+    },
+    {
+      "at": "2026-11-04T11:04:12.725432Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Plan re-run: confirm updated test seams (protected)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
