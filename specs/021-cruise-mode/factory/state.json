@@ -51,7 +51,25 @@
       "at": "2026-11-04T00:56:52.423205Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "clarify",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A",
+            "at": "2026-11-04T00:58:08.973193Z",
+            "auto": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-11-04T00:31:50.175600Z",
