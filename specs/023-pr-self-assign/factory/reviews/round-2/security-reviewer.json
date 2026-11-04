@@ -1,0 +1,18 @@
+{
+  "reviewer": "security",
+  "round": 2,
+  "summary": "The fix scopes the step 9 Branch PR lookup to the default base and same-repository entries, which closes fork PR reuse, but the filter runs after gh's default 30-entry window, so a same-repository PR can drop out of view.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 159,
+      "summary": "The Branch PR lookup sets no --limit and applies the isCrossRepository filter after gh has truncated the list, so a same-repository PR can fall outside the window and the run can halt on a creation error or misreport the assignees.",
+      "evidence": "Item 3.1 reads `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository` with no --limit; `gh pr list --help` reports default limit 30, newest first. 30+ newer same-named fork PRs push the same-repository PR out of the window; creation then fails as a duplicate and the run halts (fails closed: no duplicate, no wrong reuse). The post-creation lookup can also miss the created PR and raise a false assignment problem. ENG-24.",
+      "fix": "Pass an explicit bound, e.g. `--limit 100`, in item 3.1 and item 4 and the matching contract and data-model lines; keep the isCrossRepository filter."
+    }
+  ],
+  "escalate_note": "tools/tests/test_pr_publication.py is named by no confirmed_blocking[].file and no fix-commit Adjacent: line; judge to decide on escalate."
+}

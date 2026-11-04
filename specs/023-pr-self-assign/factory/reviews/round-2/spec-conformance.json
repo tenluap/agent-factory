@@ -1,0 +1,24 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "The fix meets the STD-1 requirement: all four judge-reproduced reversals and the widened seam scope now have exact-element tests matching the cruise-override Q1 acceptance, but the new --base narrowing of the Branch PR lookup diverges from FR-004 and the validation and task docs are stale.",
+  "findings": [
+    {"id": "SPEC-3", "severity": "medium", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 159,
+     "summary": "The Branch PR lookup now adds `--base <default-branch>`, so an open same-repository PR whose head is the run's branch but whose base differs is not found and item 3.2 creates a second PR.",
+     "evidence": "spec.md Key Entities 'Branch PR: the pull request whose head is the run's branch'; FR-004; SC-002. SKILL.md:159 filters by --base. The fork case is handled by isCrossRepository alone. Same narrowing in contracts:8, data-model:7, DESIGN.md:233, plan Summary.",
+     "fix": "Drop `--base <default-branch>` and keep isCrossRepository false as the same-repository filter across all artifacts; needs fresh protected scope confirmation since --base is part of accepted same-repo-lookup scope. Or amend FR-004 and the Branch PR definition."},
+    {"id": "SPEC-4", "severity": "low", "blocking": false, "file": "core/skills/factory/SKILL.md", "line": 162,
+     "summary": "Item 3.3 does not say what happens when the lookup after the second creation error finds a PR.",
+     "evidence": "FR-005, FR-006. SKILL.md:162 'None: retry creation once; after a second error with a lookup still finding none, halt with the creation error.' has no found/failed outcome for the post-retry lookup.",
+     "fix": "State post-retry outcomes explicitly: found reuses, failed halts with lookup error, none halts with creation error; mirror in contract and DESIGN.md."},
+    {"id": "SPEC-5", "severity": "low", "blocking": false, "file": "DESIGN.md", "line": 380,
+     "summary": "DESIGN.md validation entry names six elements and the removal-only rule; test and contract now guard eleven elements with removed-or-reversed copies.",
+     "evidence": "DESIGN.md:380 vs contracts/pr-publication.md:20-34 and tools/tests/test_pr_publication.py:29-65.",
+     "fix": "Update DESIGN.md:380 to list the eleven elements and the removed-or-reversed injection rule."},
+    {"id": "SPEC-6", "severity": "low", "blocking": false, "file": "specs/023-pr-self-assign/tasks.md", "line": 20,
+     "summary": "Checked tasks T001 and T003 still prescribe the superseded lookup command and element set.",
+     "evidence": "tasks.md:20 and :45-46 give the old lookup; shipped SKILL.md:159, contract:23 and test:23 use --base and isCrossRepository.",
+     "fix": "Reconcile T001/T003 text with the contract or add a dated supersession note. Documentation only."}
+  ],
+  "escalate_note": "fix diff touches tools/tests/test_pr_publication.py, named by no confirmed_blocking file and no fix-commit Adjacent: line."
+}
