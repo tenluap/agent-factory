@@ -1,0 +1,90 @@
+{
+  "round": 3,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 329,
+      "summary": "ENG-17 (carried from round 1): an OSError while acquiring the outcomes lock escapes refresh as a traceback instead of a classified gap; _store catches only lock.LockHeld. Practical impact is limited to an unwritable factory home.",
+      "fix": "Catch OSError alongside lock.LockHeld around _acquire_home_lock and raise Gap('inaccessible', ...); add a test planting a failing lock.acquire.",
+      "sources": [
+        "round-1:STD-2",
+        "round-1:SEC-3",
+        "round-1:SPEC-3"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 259,
+      "summary": "(carried from round 1) _slug uses [^a-z0-9]+ while plan.md line 130, DESIGN.md line 310 and its own docstring specify runs outside [a-z0-9-], so 'build--test' collapses and 'Lint - test' collides with 'Lint / test'.",
+      "fix": "Use [^a-z0-9-]+ as documented (or amend the documented rule) and add the distinguishing slug cases.",
+      "sources": [
+        "round-1:SPEC-4"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 252,
+      "summary": "ENG-6 (carried from round 1): add_feedback repeats add's backlog entry envelope and own-entry glob scan, so the entry schema and ownership refusal live in two writers that can drift.",
+      "fix": "Optionally extract a shared entry-body builder and owned-entries scan used by add and add_feedback.",
+      "sources": [
+        "round-1:STD-5"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 342,
+      "summary": "ENG-24 (carried from round 1): outcomes per run and evidence links per feedback entry grow without a cap, and gh output is read unbounded; growth tracks real PR review volume, so practical risk is low.",
+      "fix": "Optionally cap stored evidence links per entry and bound the gh read, reporting overflow as a gap.",
+      "sources": [
+        "round-1:SEC-1"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 229,
+      "summary": "ENG-25 (carried from round 1): a branch containing '/' is joined into the outcome and feedback-entry file names, so that run is a reported gap on every refresh (classified, not a traversal).",
+      "fix": "Derive the file-name component from a slug or hash of the branch, or reject separators up front as a classified gap.",
+      "sources": [
+        "round-1:SEC-2"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 15,
+      "summary": "ENG-14 (carried from round 1): feedback imports commands (only for main_repo) while commands imports feedback, an import cycle that works only through partial-module tolerance.",
+      "fix": "Resolve the main repository in commands.cmd_feedback and pass it into refresh, then drop feedback's import of commands.",
+      "sources": [
+        "round-1:STD-6"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 337,
+      "summary": "(carried from round 1) A successful refresh with no new outcomes never creates the run's outcome file, while spec.md line 119 says a missing file is created on the first successful refresh.",
+      "fix": "Write the (possibly empty) outcome file on the first successful refresh, or amend the spec edge case to 'created on the first stored outcome'.",
+      "sources": [
+        "round-1:SPEC-5"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "1f8ef55 (T009)",
+      "line": 0,
+      "summary": "ENG-3 (carried from round 1): unit T009 spans ed49088 and 1f8ef55; the later commit reopens the checked unit with its own valid Red line and no tasks.md change.",
+      "fix": "No history change; record in the verification record that T009 spans both commits.",
+      "sources": [
+        "round-1:1f8ef55 (T009)"
+      ]
+    }
+  ],
+  "rejected": []
+}
