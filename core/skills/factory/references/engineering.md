@@ -67,7 +67,7 @@ Generation, analysis, execution, fixing and review use this same definition. A f
 
 The plan's declarations list each public test seam and its required injected failure paths (`none` when no injection is needed). Task requirements map to those declarations. Confirmation is separate evidence of explicit acceptance of that exact seam-to-failure-path scope; it never declares a seam. Store the accepted scope with the `Confirmed:` line or a referenced immutable snapshot. Reuse legacy name-only confirmation only when separate explicit acceptance evidence proves the complete current scope.
 
-Adding, removing, renaming or expanding a declared seam or failure path invalidates prior confirmation. Missing coverage or absent/stale scope acceptance blocks implementation with a HIGH finding; obtain fresh protected confirmation through the orchestrator. Valid documentation/configuration exemptions remain exempt. Later-discovered gaps stop implementation/fixing under ENG-4.
+A cruise-override answer (`cruise_override: true`, spec 021) counts as recorded acceptance of that exact scope and is listed in the approver's cruise-override group; a scope change still invalidates it. Adding, removing, renaming or expanding a declared seam or failure path invalidates prior confirmation. Missing coverage or absent/stale scope acceptance blocks implementation with a HIGH finding; obtain fresh protected confirmation through the orchestrator. Valid documentation/configuration exemptions remain exempt. Later-discovered gaps stop implementation/fixing under ENG-4.
 
 ## Red proof
 

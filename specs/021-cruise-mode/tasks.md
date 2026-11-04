@@ -75,7 +75,7 @@ description: "Task list for 021-cruise-mode"
 
 - [X] T010 [P] [US4] Edit `core/skills/factory/references/state.md`: `mode.cruise` (absent = off, requires `fast`), `cruise_override` on relay answers and decisions with its invariants, `pr` gate exclusion, CLI surface `mode [flags]`, `resume <run> [mode flags]`, `answer ... --cruise-override`, `decisions-add ... --cruise-override`. Exempt: `state.md` - documentation only. Done: schema and commands documented.
 
-- [ ] T011 [P] [US1] Edit `core/skills/factory/references/engineering.md` ("Confirmed test scope") and `core/skills/factory/references/design-code-mapping.md`: a cruise-override answer counts as recorded acceptance of that exact scope or exception and is listed at the approver; scope changes still invalidate it. Exempt: both files - documentation only. Done: both sections state the rule.
+- [X] T011 [P] [US1] Edit `core/skills/factory/references/engineering.md` ("Confirmed test scope") and `core/skills/factory/references/design-code-mapping.md`: a cruise-override answer counts as recorded acceptance of that exact scope or exception and is listed at the approver; scope changes still invalidate it. Exempt: both files - documentation only. Done: both sections state the rule.
 
 - [ ] T012 [P] [US1] Edit `core/roles/spec-builder.md` and `core/roles/spec-conformance.md`: Confirmed line form `Confirmed: <date> - <Qid> accepted (cruise override) - seams: ...; failure paths: ...` is valid acceptance when the answer carries `cruise_override`. Exempt: both files - documentation only. Done: both roles accept and name the form.
 
