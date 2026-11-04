@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
   "status": "running",
-  "stage": "clarify",
+  "stage": "grill-with-docs",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -52,49 +52,7 @@
       "at": "2026-11-04T10:37:00.614678Z"
     }
   },
-  "relay": {
-    "stage": "clarify",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          },
-          {
-            "id": "Q1"
-          },
-          {
-            "id": "Q2"
-          }
-        ],
-        "answers": {
-          "Q3": {
-            "answer": "A",
-            "at": "2026-11-04T10:39:29.685208Z",
-            "auto": true
-          },
-          "Q4": {
-            "answer": "A",
-            "at": "2026-11-04T10:39:29.957854Z",
-            "auto": true
-          },
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T10:44:13.780401Z",
-            "auto": false
-          },
-          "Q2": {
-            "answer": "A",
-            "at": "2026-11-04T10:44:14.079657Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T10:18:28.440115Z",
@@ -241,6 +199,38 @@
       "auto": false,
       "at": "2026-11-04T10:44:14.577200Z",
       "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q3",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T10:45:34.987973Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q4",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T10:45:34.987973Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T10:45:34.987973Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T10:45:34.987973Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -379,6 +369,13 @@
       "stage": "analyze",
       "event": "resumed",
       "commit": "c120e57",
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T10:45:34.987973Z",
+      "stage": "clarify",
+      "event": "complete",
+      "commit": null,
       "harness": "claude-code"
     }
   ],
