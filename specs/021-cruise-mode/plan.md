@@ -124,6 +124,8 @@ tools/tests/test_cruise.py                           # NEW
 - Exempt: `adapters/*/harness.md` - documentation only.
 - Overridden: none
 
+Confirmed: 2026-11-04 - Q1 accepted - seams: `bin/factory mode`, `bin/factory resume` mode flags, `bin/factory answer --cruise-override`, `bin/factory decisions-add --cruise-override`, `factory_cli.state.validate_state`, `factory_cli.checks.gate_violation` (`pr`); failure paths: `mode` -> `--cruise` with `--no-fast` in either order exits 5 naming the conflict, unknown flag exits 5; `resume` -> `--no-fast` with cruise on from a flag exits 5 with state and HEAD unchanged and no `resumed` entry, `--no-fast` with cruise stored on and no `--no-cruise` exits 5 likewise; `answer` -> run without `mode.cruise: true` refused with exit 1, state unchanged; `decisions-add` -> run without `mode.cruise: true` refused, `--kind approved` with the marker refused, `--kind gate-override` with the marker at a stage other than `analyze` refused; `validate_state` -> non-boolean `mode.cruise`, `cruise: true` with `fast: false`, non-boolean `cruise_override` on a decision or relay answer, marker with `auto: false`, marker on `approved` or at stage `approver`; `gate_violation` -> a record carrying `cruise_override` at `approver` never permits `pr`.
+
 ## Complexity Tracking
 
 None.

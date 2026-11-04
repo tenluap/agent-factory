@@ -168,6 +168,18 @@
       "duration_ms": 244000,
       "started_at": "2026-11-04T00:44:12Z",
       "ended_at": "2026-11-04T00:48:16Z"
+    },
+    {
+      "at": "2026-11-04T00:51:47.723283Z",
+      "stage": "plan",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 6000,
+      "out_est": 2600,
+      "reported": null,
+      "duration_ms": 30000,
+      "started_at": "2026-11-04T00:51:08Z",
+      "ended_at": "2026-11-04T00:51:38Z"
     }
   ],
   "issues": [],
