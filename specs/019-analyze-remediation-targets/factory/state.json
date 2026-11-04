@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/019-analyze-remediation-targets",
   "spec_dir": "specs/019-analyze-remediation-targets",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -41,25 +41,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T00:17:20.264771Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:04:11.754674Z",
@@ -134,6 +116,14 @@
       "auto": false,
       "at": "2026-11-04T00:06:55.496569Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:18:00.586800Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -201,6 +191,13 @@
     {
       "at": "2026-11-04T00:09:25.361675Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:18:00.586800Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
