@@ -126,6 +126,14 @@
       "summary": "Review round 2: protected test-scope confirmation + 2 contract decisions",
       "answered_at": "2026-11-04T18:08:58.038613Z",
       "latency_ms": 38703
+    },
+    {
+      "at": "2026-11-04T18:56:39.570803Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 022-adopt-spec",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
