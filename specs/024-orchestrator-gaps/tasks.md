@@ -39,7 +39,7 @@ None: every unit extends an existing command and test module.
   - Pass: runner green.
   - Done: tests pass; a fixture with no `reviews/` folder keeps every existing checkpoint test green.
 
-- [ ] T003 [US1] `checkpoint fix` increments `review.fix_rounds` with stage-guard idempotency, in `commands.py` `cmd_checkpoint`; tests in `ReviewCounterTests` (depends on T002).
+- [x] T003 [US1] `checkpoint fix` increments `review.fix_rounds` with stage-guard idempotency, in `commands.py` `cmd_checkpoint`; tests in `ReviewCounterTests` (depends on T002).
   - Seam: S1. Failure paths: S1(a) commit failure after the state write, then retry, increments once; S1(c) `review.pending_design_fix` `{attempt: n}` equal to the counter skips the increment; S1(d) repeated `checkpoint fix` after the stage moved on skips the increment.
   - Red: tests first: run at stage `fix`, `checkpoint fix` gives `fix_rounds` 1 and result `review.fix_rounds == 1`; S1(a) reuse the `CheckpointCommitFailureTests` commit-failure injection, then retry: still 1; S1(c) reservation with `attempt == fix_rounds` leaves it unchanged; S1(d) second `checkpoint fix` with stage `review` leaves it unchanged; two review rounds plus two fix rounds end at round 2 / fix_rounds 2 (SC-001; the value the SC-002 cap reads). Run; increments are missing.
   - Implement: inside `mutate`, beside the `remediate` guard: when `stage == "fix" and s["stage"] == "fix"`, increment unless `pending_design_fix` is a dict whose `attempt` equals the current counter (FR-002, FR-003).

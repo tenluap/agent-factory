@@ -849,6 +849,54 @@ class CheckpointStagingTests(unittest.TestCase):
 
 
 class ReviewCounterTests(unittest.TestCase):
+    def test_fix_counts_once_and_respects_legacy_reservation(self):
+        for reservation, expected in ((None, 1), ({"attempt": 0}, 0)):
+            with self.subTest(reservation=reservation):
+                box = Sandbox()
+                self.addCleanup(box.close)
+                run = v4_state(stage="fix")
+                run["review"]["fix_rounds"] = 0
+                if reservation:
+                    run["review"]["pending_design_fix"] = reservation
+                wt = box.worktree_run("072-fix", run)
+                gitdir = box.repo / ".git/worktrees/wt-072-fix"
+                (gitdir / "index.lock").write_text("")
+                first = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+                self.assertEqual(first.returncode, 1, first.stderr)
+                self.assertEqual(
+                    json.loads(first.stdout)["review"]["fix_rounds"], expected
+                )
+                (gitdir / "index.lock").unlink()
+                second = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+                self.assertEqual(second.returncode, 0, second.stderr)
+                self.assertEqual(
+                    json.loads(second.stdout)["review"]["fix_rounds"], expected
+                )
+                third = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+                self.assertEqual(third.returncode, 0, third.stderr)
+                self.assertEqual(
+                    json.loads(third.stdout)["review"]["fix_rounds"], expected
+                )
+
+    def test_two_review_and_fix_rounds(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        run = v4_state(stage="review")
+        run["review"]["round"] = 0
+        wt = box.worktree_run("073-rounds", run)
+        root = wt / "specs/073-rounds/factory/reviews"
+        for n in (1, 2):
+            verdict = root / f"round-{n}" / "verdict.json"
+            verdict.parent.mkdir(parents=True)
+            verdict.write_text("{}")
+            review = box.cli("checkpoint", "review", "--next", "fix", cwd=wt)
+            self.assertEqual(review.returncode, 0, review.stderr)
+            fix = box.cli("checkpoint", "fix", "--next", "review", cwd=wt)
+            self.assertEqual(fix.returncode, 0, fix.stderr)
+            self.assertEqual(
+                json.loads(fix.stdout)["review"], {"round": n, "fix_rounds": n}
+            )
+
     def test_review_round_uses_highest_verdict_without_decreasing(self):
         for current, folders, expected in (
             (0, ("1", "2", "x"), 2),

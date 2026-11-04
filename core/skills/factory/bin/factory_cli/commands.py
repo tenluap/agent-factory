@@ -920,6 +920,13 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
                 if number.isascii() and number.isdigit() and verdict.is_file():
                     review["round"] = max(review.get("round", 0), int(number))
             s["review"] = review
+        if stage == "fix" and s.get("stage") == "fix":
+            review = dict(s.get("review") or {})
+            count = review.get("fix_rounds", 0)
+            reservation = review.get("pending_design_fix")
+            if not isinstance(reservation, dict) or reservation.get("attempt") != count:
+                review["fix_rounds"] = count + 1
+            s["review"] = review
         if stage == "remediate" and s.get("stage") == "remediate":
             # ADR 0006 / FR-014: the only writer of the repair-cycle counters; a
             # repeated checkpoint after the stage advanced sees a different stage
