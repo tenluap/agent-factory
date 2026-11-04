@@ -1,0 +1,18 @@
+{
+  "reviewer": "code-standards",
+  "round": 2,
+  "summary": "The delta fixes the verdict's test-gap and terminal-check findings, but the shape check still admits outcomes whose id is an unhashable list or dict, so the round-1 SPEC-1 whole-refresh abort remains reachable.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 236,
+      "summary": "_outcome_list only requires each stored outcome to be a dict with an 'id' key, so an outcome file with a list or dict id passes validation, and the set comprehension in _store raises TypeError outside the Gap handler, aborting the whole refresh; this is the round-1 SPEC-1 defect, not fully removed.",
+      "evidence": "Scratch probe on the HEAD code (copy of core/ and tools/): '{\"outcomes\": [{\"id\": []}]}' and '{\"outcomes\": [{\"id\": {}}]}' make refresh raise TypeError ('cannot use list/dict as a set element'), while '{\"outcomes\": [{\"id\": null}]}' is accepted as a stored outcome. Line 236 checks only `\"id\" in o`; _load_outcomes accepts the body; line 335 `stored = {outcome[\"id\"] for outcome in body[\"outcomes\"]}` raises; the Gap handler in refresh (lines 373-382) catches only Gap, so the TypeError escapes. The same consequence was rated HIGH in round 1 (verdict SPEC-1), and the spec requires a malformed outcome file to be an inaccessible gap with other runs still refreshing (spec.md line 120; FR-012 line 141; plan.md lines 170 and 177, confirmed failure path 'malformed existing outcome file -> inaccessible'). Commit c6b03b6 claims the wrong-shape file 'now yields an inaccessible gap', which is untrue for these shapes. ENG-17 applies: a stored malformed file is an expected failure that must be classified, not a crash. ENG-16 applies: the writer only ever stores string ids, and the validator does not express that valid state. ENG-1 applies: test_wrong_shape_outcome_file_is_inaccessible (tools/tests/test_feedback.py lines 643-647) covers only three shapes, not an id-type case, so the declared failure path is not covered for id types.",
+      "fix": "Tighten the predicate in _outcome_list to `isinstance(o, dict) and isinstance(o.get(\"id\"), str)` (the writer in _fetch only stores str ids), so null, list and dict ids become inaccessible gaps. Add '{\"outcomes\": [{\"id\": []}]}', '{\"outcomes\": [{\"id\": {}}]}' and '{\"outcomes\": [{\"id\": null}]}' to the cases in test_wrong_shape_outcome_file_is_inaccessible; these fail on the current code with TypeError or wrong acceptance, so they are a valid red. Correct the commit claim accordingly.",
+      "sources": ["STD-1"]
+    }
+  ]
+}

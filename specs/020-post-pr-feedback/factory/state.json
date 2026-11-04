@@ -538,6 +538,18 @@
       "duration_ms": 519000,
       "started_at": "2026-11-04T01:56:35Z",
       "ended_at": "2026-11-04T02:05:14Z"
+    },
+    {
+      "at": "2026-11-04T02:15:08.802369Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "claude-code",
+      "in_est": 15000,
+      "out_est": 700,
+      "reported": null,
+      "duration_ms": 233000,
+      "started_at": "2026-11-04T02:11:03Z",
+      "ended_at": "2026-11-04T02:14:56Z"
     }
   ],
   "issues": [
@@ -692,7 +704,7 @@
       "at": "2026-11-04T02:10:59.180111Z",
       "stage": "fix",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "2d0c657",
       "harness": "claude-code",
       "commands": [
         {
