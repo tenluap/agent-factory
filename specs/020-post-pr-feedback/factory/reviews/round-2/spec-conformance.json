@@ -1,0 +1,18 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "The fix commit c6b03b6 clears the TIMED_OUT/STARTUP_FAILURE, closed-state and non-JSON review findings and its Red proofs are present, but the wrong-shape outcome-file fix still lets a non-string stored id abort the whole refresh, so the SPEC-1/STD-1 finding is only partly removed.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 235,
+      "summary": "The reworked outcome-shape check accepts an outcome whose id is a list or dict, so a stored outcome file of that shape still raises an uncaught TypeError and aborts the whole refresh instead of yielding an inaccessible gap for that run while other runs refresh.",
+      "evidence": "Prior verdict confirmed_blocking[0] (sources SPEC-1, STD-1) requires that a wrong-shape outcome file become an inaccessible gap while other runs still refresh; spec.md FR-012 says a malformed outcome file is inaccessible and other runs MUST still refresh, and plan.md line 170 declares 'malformed existing outcome file -> inaccessible' as a confirmed failure path (plan.md line 177). The fix's _outcome_list (lines 232-239) checks only that each entry is a dict with an 'id' key, not that the id is a string, so {\"outcomes\": [{\"id\": []}]} and {\"outcomes\": [{\"id\": {}}]} pass it. _store line 335 builds `stored = {outcome[\"id\"] ...}` outside any Gap handler. Probe on a copy of commit c6b03b6 in the scratchpad (direct feedback.refresh, one archived run with a PR plus a healthy second run): '[]', '{\"outcomes\": null}', '{\"outcomes\": [1]}' -> inaccessible gap, healthy run refreshed; '{\"outcomes\": [{\"id\": []}]}' -> TypeError \"cannot use 'list' as a set element (unhashable type: 'list')\" with no report; '{\"outcomes\": [{\"id\": {}}]}' -> TypeError. test_wrong_shape_outcome_file_is_inaccessible (tools/tests/test_feedback.py 643-647) covers only the three listed texts, so no test catches this. ENG-17 requires expected failures to be classified rather than escaping as a crash.",
+      "fix": "Tighten _outcome_list so each outcome requires a string id (for example isinstance(o, dict) and isinstance(o.get(\"id\"), str)), so _is_terminal and _load_outcomes both classify such a file as malformed. Add '{\"outcomes\": [{\"id\": []}]}' and '{\"outcomes\": [{\"id\": {}}]}' to test_wrong_shape_outcome_file_is_inaccessible, asserting the inaccessible gap, an unchanged outcome file and a refreshed healthy run.",
+      "sources": ["SPEC-1"]
+    }
+  ]
+}
