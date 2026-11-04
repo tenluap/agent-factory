@@ -1,0 +1,166 @@
+{
+  "version": 5,
+  "started_at": "2026-11-04T17:00:33Z",
+  "harness": "claude-code",
+  "feature": "Assign each newly opened factory PR to the authenticated GitHub CLI account that opens it (plan: docs/superpowers/plans/2026-11-03-factory-pr-self-assignment-plan.md). Add `--assignee @me` to the PR creation step, keeping the human approval before push/PR. When creation or assignment reports an error, look up the branch's existing PR before retrying; if a PR exists but assignment failed, preserve its URL and report the assignment problem separately. Verify with a disposable GitHub repository: actual assignee, and resuming interrupted publication does not create a duplicate PR. Acceptance: new PR lists the authenticated gh account as assignee; a failed assignment is visible; a retry reuses an existing PR; approval flow never asks for a GitHub username.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "023-pr-self-assign",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/023-pr-self-assign",
+  "spec_dir": "specs/023-pr-self-assign",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true,
+    "cruise": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "speckit-constitution": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-constitution/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "intake",
+      "answer": "delivery",
+      "auto": true,
+      "at": "2026-11-04T17:01:19.872619Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "setup-commands",
+      "answer": "build: render five harnesses + bash -n install.sh; test: python3 -m unittest discover -s tools (README CI line)",
+      "auto": true,
+      "at": "2026-11-04T17:01:19.939148Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A: add --assignee @me to the single gh pr create call in step 9 (no separate gh pr edit); human Approve gate before push/PR unchanged; no GitHub username is ever asked",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A: make PR creation idempotent: before gh pr create and again after any non-zero exit, look up the branch's PR with gh pr view <branch> --json url,assignees; an existing PR is reused (URL recorded via set-status pr-open), never recreated",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A: assignment failure is non-blocking: when the PR exists but the authenticated account is not among its assignees, keep the URL, continue the run, and report the assignment problem separately in the final notice; no new state schema or issue kind",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A: resume of the pr stage (state.md Resume) follows the same lookup-then-create path, so interrupted publication never creates a duplicate PR",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A: automated verification = a text-contract test under tools/tests asserting step 9 carries --assignee @me, the existing-PR lookup and the separate assignment report; the disposable-GitHub-repo live check is written as a manual runbook in the spec's quickstart for the user, not executed by agents (creating GitHub repos is outward-facing)",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A: edit core only (core/skills/factory/SKILL.md step 9, core references/state.md Resume pr) and re-render dist for all five harnesses; no ADR, no CONTEXT.md term",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A: lite chain",
+      "auto": true,
+      "at": "2026-11-04T17:01:29.101110Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-04T17:01:29.101110Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-opus-5-5",
+      "standard": "claude-haiku-5-5"
+    },
+    "source": {
+      "deep": "adapter",
+      "standard": "adapter"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-04T17:00:44.222659Z",
+    "detected_by": "factory detect 017"
+  }
+}
