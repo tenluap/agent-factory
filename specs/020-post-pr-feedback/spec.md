@@ -151,8 +151,8 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 
 - Gap classes map as: PR not found → `missing`; `gh` missing, unauthenticated or no access → `inaccessible`; network or server error and malformed response → `transient`.
 - An outcome without an evidence link in the GitHub response is stored with an empty `url`; no link is invented.
-- A slug lowercases a name and replaces each run of characters outside letters, digits and hyphens with one hyphen.
+- A slug lowercases a name, replaces each run of characters outside `a-z`, `0-9` and `-` with one hyphen, trims leading and trailing hyphens, keeps at most 64 characters, and is `unnamed` when nothing remains.
 - The refresh reads only the head commit's checks as GitHub reports them for the PR; earlier commits' checks are seen only if an earlier refresh caught them.
-- The refresh is bounded by the number of archived runs with a `pr_url`; each run costs a small, fixed number of GitHub reads.
+- The refresh is bounded by the number of archived runs with a `pr_url`; each run costs two `gh` calls, and the reviews call pages through every review.
 - The `<repo-name>` in the outcome file name matches the run archive's naming.
 - Merging, deployment and any write to GitHub are out of scope.
