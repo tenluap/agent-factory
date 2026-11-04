@@ -59,11 +59,11 @@ def _write_atomic(path, body):
         raise
 
 
-def _acquire_backlog_lock(directory):
+def _acquire_home_lock(directory, harness):
     deadline = time.monotonic() + 5
     while True:
         try:
-            lock.acquire(directory, harness="improvements")
+            lock.acquire(directory, harness=harness)
             return
         except lock.LockHeld:
             remaining = deadline - time.monotonic()
@@ -78,7 +78,7 @@ def add(home, run_state, candidates, now=None):
     result = {"written": [], "skipped": [], "dropped": []}
     acquired = False
     try:
-        _acquire_backlog_lock(directory)
+        _acquire_home_lock(directory, "improvements")
         acquired = True
         directory.mkdir(parents=True, exist_ok=True)
         own = {}
@@ -276,7 +276,7 @@ def claim(home, name, source_runs=()):
         raise ClaimError(f"invalid improvement backlog name '{name}'")
     acquired = False
     try:
-        _acquire_backlog_lock(directory)
+        _acquire_home_lock(directory, "improvements")
         acquired = True
         if not path.is_file():
             raise ClaimError(f"no improvement backlog named '{name}'")
