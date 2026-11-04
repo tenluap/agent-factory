@@ -35,7 +35,7 @@ description: "Task list for 021-cruise-mode"
   - Pass: runner green.
   - Done: output and exit codes match the tests; nothing written.
 
-- [ ] T004 [US4] Accept mode flags on `resume` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_resume` in `core/skills/factory/bin/factory_cli/commands.py`, through `state.resolve_mode`; tests in `tools/tests/test_cruise.py`.
+- [X] T004 [US4] Accept mode flags on `resume` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_resume` in `core/skills/factory/bin/factory_cli/commands.py`, through `state.resolve_mode`; tests in `tools/tests/test_cruise.py`.
   - Seam: `bin/factory resume <run> [mode flags]`. Failure paths: `--no-fast` with cruise on from a flag exits 5, state and HEAD unchanged, no `resumed` entry; `--no-fast` with cruise stored on and no `--no-cruise` exits 5 likewise.
   - Red: tests first on a halted run fixture: `resume <run> --cruise` stores `mode.cruise: true, fast: true` and appends one `resumed` entry in the same commit; a stored state without `cruise` resumed with no flags reads as off and stays valid (US4 scenario 7); `--no-cruise` on a cruise run sets `cruise: false`, keeps `fast`; `--no-cruise --no-fast` on a cruise run sets both off; `--cruise --no-fast` exits 5; a cruise-stored run resumed with `--no-fast` exits 5; for both failures `state.json` bytes, `git rev-parse HEAD` and the `history` length are unchanged. Run; fails (resume rejects flags).
   - Implement: parse `--lite|--full|--fast|--no-fast|--cruise|--no-cruise` after `<run>`; base = stored mode with absent `cruise` read as false; resolve before any write; mode and `resumed` entry in one `write_run` mutation.

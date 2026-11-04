@@ -18,7 +18,7 @@ read:
   runs [--repo <path>]              unfinished runs of the repo, JSON
   show <run> [--repo <path>]        resume digest for one run, JSON
   validate <run> | validate --all   validation violations; exit 1 when any
-  resume <run>                      record the resumed entry, print the resume digest
+  resume <run> [mode flags]         record the resumed entry, print the resume digest
   mode [--lite|--full] [--fast|--no-fast] [--cruise|--no-cruise]
                                     resolve mode flags into mode JSON; writes nothing
   budget <role>                     the role's resolved seconds and deadline, JSON
@@ -54,6 +54,9 @@ write (the single writer; each stamps its time, validates, writes atomically):
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
 1 no run or refused, 2 not a git repository, 3 ambiguous name, 4 the run's
 recorded worktree is gone, 5 usage error."""
+
+
+MODE_FLAGS = ("--lite", "--full", "--fast", "--no-fast", "--cruise", "--no-cruise")
 
 
 def die_usage(message):
@@ -393,11 +396,15 @@ def main(argv):
         elif command == "mode":
             result = commands.cmd_mode(rest)
         elif command == "resume":
-            positional, flags = parse_flags(rest, command)
+            # mode flags keep argv order (last wins per pair), so they bypass parse_flags
+            mode_flags = [f for f in rest if f in MODE_FLAGS]
+            positional, flags = parse_flags(
+                [f for f in rest if f not in MODE_FLAGS], command
+            )
             if len(positional) != 1:
                 die_usage("resume needs exactly one <run>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
-            result = commands.cmd_resume(repo, positional[0])
+            result = commands.cmd_resume(repo, positional[0], mode_flags=mode_flags)
         elif command == "rebind":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--worktree")

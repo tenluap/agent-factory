@@ -225,5 +225,86 @@ class ModeCommandTests(unittest.TestCase):
         self.assertEqual(sorted((self.sb.home / "pending").iterdir()), pending)
 
 
+class ResumeModeTests(unittest.TestCase):
+    """Seam: `bin/factory resume <run> [mode flags]` (FR-004, FR-005, US4)."""
+
+    BRANCH = "021-resume-run"
+
+    def setUp(self):
+        self.box = Sandbox()
+        halted = fixture("state-v5.json")
+        halted.update(status="halted", halt_reason="stopped for test", stage="implement")
+        halted["mode"] = {"chain": "full", "fast": True}
+        self.wt = self.box.worktree_run(self.BRANCH, halted)
+
+    def tearDown(self):
+        self.box.close()
+
+    def state(self):
+        return json.loads((self.wt / "specs" / self.BRANCH / "factory" / "state.json").read_text())
+
+    def store(self, mode):
+        def mutate(s):
+            s["mode"] = mode
+
+        path = self.wt / "specs" / self.BRANCH / "factory" / "state.json"
+        loaded = json.loads(path.read_text())
+        mutate(loaded)
+        path.write_text(json.dumps(loaded, indent=2) + "\n")
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-q", "-m", "test: stored mode", cwd=self.wt)
+
+    def snapshot(self):
+        path = self.wt / "specs" / self.BRANCH / "factory" / "state.json"
+        return (
+            path.read_bytes(),
+            self.box.git("rev-parse", "HEAD", cwd=self.wt).strip(),
+            len(self.state()["history"]),
+        )
+
+    def test_resume_with_cruise_stores_mode_and_one_resumed_entry(self):
+        before = len(self.state()["history"])
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt).strip()
+        out = self.box.cli("resume", self.BRANCH, "--cruise")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        loaded = self.state()
+        self.assertEqual(loaded["mode"], {"chain": "full", "fast": True, "cruise": True})
+        self.assertEqual(len(loaded["history"]), before + 1)
+        self.assertEqual(loaded["history"][-1]["event"], "resumed")
+        self.assertNotEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt).strip(), head)
+
+    def test_state_without_cruise_resumes_as_off_and_stays_valid(self):
+        out = self.box.cli("resume", self.BRANCH)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        loaded = self.state()
+        self.assertFalse(loaded["mode"].get("cruise", False))
+        self.assertEqual(state.validate_state(loaded), [])
+
+    def test_no_cruise_on_a_cruise_run_keeps_fast(self):
+        self.store({"chain": "full", "fast": True, "cruise": True})
+        out = self.box.cli("resume", self.BRANCH, "--no-cruise")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.state()["mode"], {"chain": "full", "fast": True, "cruise": False})
+
+    def test_no_cruise_and_no_fast_on_a_cruise_run_turns_both_off(self):
+        self.store({"chain": "full", "fast": True, "cruise": True})
+        out = self.box.cli("resume", self.BRANCH, "--no-cruise", "--no-fast")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.state()["mode"], {"chain": "full", "fast": False, "cruise": False})
+
+    def test_cruise_with_no_fast_is_refused_and_writes_nothing(self):
+        before = self.snapshot()
+        out = self.box.cli("resume", self.BRANCH, "--cruise", "--no-fast")
+        self.assertEqual(out.returncode, 5, out.stderr)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_no_fast_on_a_stored_cruise_run_is_refused_and_writes_nothing(self):
+        self.store({"chain": "full", "fast": True, "cruise": True})
+        before = self.snapshot()
+        out = self.box.cli("resume", self.BRANCH, "--no-fast")
+        self.assertEqual(out.returncode, 5, out.stderr)
+        self.assertEqual(self.snapshot(), before)
+
+
 if __name__ == "__main__":
     unittest.main()

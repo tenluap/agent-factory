@@ -1539,18 +1539,26 @@ def cmd_mode(flags):
         die(5, str(e))
 
 
-def cmd_resume(repo, name):
+def cmd_resume(repo, name, mode_flags=()):
     """Record the `resumed` history entry through the writer and return the
-    resume digest: the recorded stage restarts from its beginning (FR-003)."""
+    resume digest: the recorded stage restarts from its beginning (FR-003).
+
+    Mode flags resolve against the stored mode before any write; a conflict
+    exits 5 and leaves the run untouched (spec 021)."""
     path, loaded, source = one_run(repo, name)
     if loaded.get("status") in ("pr-open", "aborted"):
         die(
             1,
             f"run '{name}' is {loaded.get('status')} and has ended; there is nothing to resume",
         )
+    try:
+        mode = state.resolve_mode(loaded.get("mode") or {}, mode_flags)
+    except state.ModeError as e:
+        die(5, str(e))
     now = now_iso()
 
     def mutate(s):
+        s["mode"] = mode
         s["status"] = "running"
         s["halt_reason"] = None
         s["history"] = (s.get("history") or []) + [
