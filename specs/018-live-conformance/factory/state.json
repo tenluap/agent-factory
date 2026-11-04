@@ -9,7 +9,7 @@
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -40,25 +40,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T00:26:31.101994Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:11:07.764485Z",
@@ -173,6 +155,14 @@
       "auto": false,
       "at": "2026-11-04T00:17:39.752117Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:27:04.072642Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -240,6 +230,13 @@
     {
       "at": "2026-11-04T00:20:01.146141Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:27:04.072642Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
