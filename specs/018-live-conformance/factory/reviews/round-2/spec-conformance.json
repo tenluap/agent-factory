@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 2,
-  "summary": "The fix diff 664b412...HEAD resolves SPEC-1: seam 4 bench.tree_digest(root) is declared in plan.md with its three failure paths, the user's acceptance is recorded in review-Q1.md, each declared path has a test, and the fix commit carries valid Red lines.",
-  "findings": []
-}
