@@ -91,7 +91,7 @@ description: "Task list for 019-analyze-remediation-targets"
 
 ## Phase 8: Verification
 
-- [ ] T013 Run the test command (`python3 -m unittest discover -s tools`) and the build command (five-harness render, `dist/` untracked, `bash -n install.sh`). The end-to-end "Analyze acceptance targets validation" run is out of this task's scope (DESIGN.md records it). Not behaviour-changing: runs the test and build commands only. Done: both pass with zero new failures (SC-006); any pre-existing failure named with its origin commit.
+- [X] T013 Run the test command (`python3 -m unittest discover -s tools`) and the build command (five-harness render, `dist/` untracked, `bash -n install.sh`). The end-to-end "Analyze acceptance targets validation" run is out of this task's scope (DESIGN.md records it). Not behaviour-changing: runs the test and build commands only. Done: both pass with zero new failures (SC-006); any pre-existing failure named with its origin commit.
 
 ## Dependencies
 
