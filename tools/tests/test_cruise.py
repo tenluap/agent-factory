@@ -369,25 +369,25 @@ class AnswerCruiseOverrideTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), before)
             self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=wt).strip(), head)
 
-    def test_settled_answers_carry_the_marker_into_decisions(self):
-        from factory_cli import commands
-
-        relay = {
-            "rounds": [
-                {
-                    "questions": [{"id": "Q1"}, {"id": "Q2"}],
-                    "answers": {
-                        "Q1": {"answer": "A", "at": "t", "auto": True, "cruise_override": True},
-                        "Q2": {"answer": "B", "at": "t", "auto": True},
-                    },
-                }
-            ]
-        }
-        migrated = commands.settled_answers(relay, "grill", "2026-11-04T01:00:00Z")
-        by_question = {m["question"]: m for m in migrated}
-        self.assertIs(by_question["Q1"]["cruise_override"], True)
-        self.assertEqual(by_question["Q1"]["kind"], "answer")
-        self.assertNotIn("cruise_override", by_question["Q2"])
+    def test_checkpoint_migrates_marked_answer_and_show_lists_it(self):
+        wt = self.box.worktree_run(self.BRANCH, self.relay_state(cruise=True))
+        out = self.box.cli("answer", "Q1", "A", "--cruise-override", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        out = self.box.cli("checkpoint", "grill", "--next", "plan", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        migrated = [d for d in self.stored(wt)["decisions"] if "cruise_override" in d]
+        self.assertEqual(len(migrated), 1, migrated)
+        self.assertEqual(migrated[0]["question"], "Q1")
+        self.assertEqual(migrated[0]["kind"], "answer")
+        self.assertIs(migrated[0]["auto"], True)
+        self.assertIs(migrated[0]["cruise_override"], True)
+        out = self.box.cli("show", self.BRANCH, cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        veto = json.loads(out.stdout)["decisions"]
+        self.assertIn(
+            ("Q1", True),
+            [(d.get("question"), d.get("cruise_override")) for d in veto],
+        )
 
 
 class DecisionsAddCruiseOverrideTests(unittest.TestCase):
@@ -434,6 +434,21 @@ class DecisionsAddCruiseOverrideTests(unittest.TestCase):
         self.assertEqual(record["kind"], "gate-override")
         self.assertIs(record["cruise_override"], True)
         self.assertEqual(state.validate_state(loaded), [])
+
+    def test_marked_analyze_exhaustion_lets_checkpoint_enter_implement(self):
+        loaded = self.run_state(cruise=True)
+        loaded["stage"] = "analyze"
+        wt = self.box.worktree_run(self.BRANCH, loaded)
+        out = self.box.cli(
+            "decisions-add", "analyze", "analyze-exhaustion", "proceed to implement",
+            "--kind", "gate-override", "--cruise-override", cwd=wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        out = self.box.cli("checkpoint", "analyze", "--next", "implement", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        stored = json.loads(self.paths(wt, self.BRANCH).read_text())
+        self.assertEqual(stored["stage"], "implement")
+        self.assertEqual(stored["history"][-1]["event"], "gate-override")
 
     def test_without_the_flag_decisions_add_is_unchanged(self):
         wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
@@ -501,12 +516,10 @@ class PrGateTests(unittest.TestCase):
     def test_forged_cruise_approval_never_permits_pr(self):
         s = self.run_with(self.approver("approved", cruise_override=True, auto=True))
         self.assertIsNotNone(checks.gate_violation(s, "pr"))
-        self.assertIsNone(checks.permitting_decision(s, "pr"))
 
     def test_forged_cruise_gate_override_at_approver_never_permits_pr(self):
         s = self.run_with(self.approver("gate-override", cruise_override=True, auto=True))
         self.assertIsNotNone(checks.gate_violation(s, "pr"))
-        self.assertIsNone(checks.permitting_decision(s, "pr"))
 
     def test_marked_record_does_not_hide_a_real_approval(self):
         s = self.run_with(
@@ -514,6 +527,66 @@ class PrGateTests(unittest.TestCase):
             self.approver("approved"),
         )
         self.assertIsNone(checks.gate_violation(s, "pr"))
+
+
+class PrOpenGateTests(unittest.TestCase):
+    """Defense in depth: `set-status pr-open` refuses unless the `pr` gate
+    permits it (FR-015, FR-016). The writer refuses before any write."""
+
+    BRANCH = "021-pr-open-run"
+
+    def setUp(self):
+        self.box = Sandbox()
+
+    def tearDown(self):
+        self.box.close()
+
+    def approver_state(self, *records):
+        loaded = fixture("state-v5.json")
+        loaded.update(status="running", stage="approver")
+        loaded["mode"] = {"chain": "full", "fast": True, "cruise": True}
+        loaded["decisions"] = list(records)
+        return loaded
+
+    def approval(self, **extra):
+        record = {
+            "stage": "approver",
+            "question": "approve",
+            "answer": "yes",
+            "auto": False,
+            "at": "2026-11-04T01:00:00Z",
+            "kind": "approved",
+        }
+        record.update(extra)
+        return record
+
+    def assert_refused(self, wt):
+        path = wt / "specs" / self.BRANCH / "factory" / "state.json"
+        before = path.read_bytes()
+        head = self.box.git("rev-parse", "HEAD", cwd=wt).strip()
+        out = self.box.cli("set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=wt)
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("gate refusal into 'pr'", out.stderr)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=wt).strip(), head)
+
+    def test_refuses_without_an_approved_record(self):
+        wt = self.box.worktree_run(self.BRANCH, self.approver_state())
+        self.assert_refused(wt)
+
+    def test_refuses_with_only_a_marked_record(self):
+        wt = self.box.worktree_run(
+            self.BRANCH,
+            self.approver_state(self.approval(auto=True, cruise_override=True)),
+        )
+        self.assert_refused(wt)
+
+    def test_user_approval_permits_pr_open(self):
+        wt = self.box.worktree_run(self.BRANCH, self.approver_state(self.approval()))
+        out = self.box.cli("set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        stored = json.loads((wt / "specs" / self.BRANCH / "factory" / "state.json").read_text())
+        self.assertEqual(stored["status"], "pr-open")
 
 
 if __name__ == "__main__":

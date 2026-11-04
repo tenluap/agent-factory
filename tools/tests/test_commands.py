@@ -666,6 +666,20 @@ class WriterTests(unittest.TestCase):
         self.assertTrue(self.load()["relay"]["rounds"][0]["answers"]["Q7"]["auto"])
 
     def test_set_status_records_history_and_end(self):
+        # the user's own Approve: `set-status pr-open` refuses without the `pr` gate
+        self.box.corrupt_worktree_state(
+            "040-writer",
+            lambda s: s.setdefault("decisions", []).append(
+                {
+                    "stage": "approver",
+                    "question": "approve",
+                    "answer": "yes",
+                    "auto": False,
+                    "at": "2026-11-04T01:00:00Z",
+                    "kind": "approved",
+                }
+            ),
+        )
         out = self.box.cli(
             "set-status", "pr-open", "--pr-url", "https://x/pr/9", cwd=self.wt
         )

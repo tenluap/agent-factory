@@ -23,12 +23,27 @@ from factory_cli import lock, totals  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 
+def approved(state):
+    """The user's own Approve at `approver`: `set-status pr-open` refuses without it (the `pr` gate)."""
+    state["decisions"] = list(state.get("decisions") or []) + [
+        {
+            "stage": "approver",
+            "question": "approve",
+            "answer": "yes",
+            "auto": False,
+            "at": "2026-11-04T01:00:00Z",
+            "kind": "approved",
+        }
+    ]
+    return state
+
+
 class ExportTests(unittest.TestCase):
     def setUp(self):
         self.box = Sandbox()
         self.addCleanup(self.box.close)
         self.branch = "050-backlogs"
-        self.wt = self.box.worktree_run(self.branch, fixture("state-v5.json"))
+        self.wt = self.box.worktree_run(self.branch, approved(fixture("state-v5.json")))
         self.state_path = self.wt / "specs" / self.branch / "factory" / "state.json"
         self.improvements = self.box.home / "improvements"
         self.backlog = self.improvements / f"{self.box.repo.name}-{self.branch}.json"
@@ -78,7 +93,7 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(body["status"], "ready")
 
     def test_zero_issue_run_exports_too(self):
-        wt = self.box.worktree_run("051-empty", fixture("state-v4.json"))
+        wt = self.box.worktree_run("051-empty", approved(fixture("state-v4.json")))
         out = self.box.cli("set-status", "aborted", cwd=wt)
         self.assertEqual(out.returncode, 0, out.stderr)
         empty = self.improvements / f"{self.box.repo.name}-051-empty.json"
@@ -102,7 +117,7 @@ class SurfaceTests(unittest.TestCase):
         self.box = Sandbox()
         self.addCleanup(self.box.close)
         self.branch = "050-backlogs"
-        self.wt = self.box.worktree_run(self.branch, fixture("state-v5.json"))
+        self.wt = self.box.worktree_run(self.branch, approved(fixture("state-v5.json")))
         out = self.box.cli("set-status", "aborted", cwd=self.wt)
         self.assertEqual(out.returncode, 0, out.stderr)
         self.name = f"{self.box.repo.name}-{self.branch}"
@@ -177,7 +192,7 @@ class RetroAddTests(unittest.TestCase):
         self.box = Sandbox()
         self.addCleanup(self.box.close)
         self.branch = "053-retro"
-        self.wt = self.box.worktree_run(self.branch, fixture("state-v5.json"))
+        self.wt = self.box.worktree_run(self.branch, approved(fixture("state-v5.json")))
         self.candidate = {
             "signal_key": "halt-cluster:implement",
             "rank": 1,
@@ -246,7 +261,7 @@ class RetroAddTests(unittest.TestCase):
         other = Sandbox()
         self.addCleanup(other.close)
         other.home = self.box.home
-        other_wt = other.worktree_run(self.branch, fixture("state-v5.json"))
+        other_wt = other.worktree_run(self.branch, approved(fixture("state-v5.json")))
         for box, wt in ((self.box, self.wt), (other, other_wt)):
             out = box.cli("set-status", "pr-open", "--pr-url", "https://x/pr/1", cwd=wt)
             self.assertEqual(out.returncode, 0, out.stderr)
