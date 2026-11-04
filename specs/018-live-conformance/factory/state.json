@@ -9,7 +9,7 @@
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
   "status": "waiting_user",
-  "stage": "worktree",
+  "stage": "specify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -166,6 +166,13 @@
       "event": "resumed",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T00:17:54.313610Z",
+      "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
