@@ -211,6 +211,27 @@ class CaptureTests(FeedbackTestCase):
         self.assertEqual(list(found), [f"check:test@{HEAD}"])
         self.assertEqual(found[f"check:test@{HEAD}"]["event_at"], "2026-11-04T00:30:00Z")
 
+    def test_timed_out_and_startup_failure_checks_are_recorded(self):
+        self.archive()
+        checks = [
+            check_run("slow", "TIMED_OUT", completed="2026-11-04T00:31:00Z", url="https://ci/slow"),
+            check_run("boot", "STARTUP_FAILURE", completed="2026-11-04T00:32:00Z", url="https://ci/boot"),
+        ]
+
+        self.refresh(FakeGh(pr(checks)))
+
+        found = self.outcomes()
+        for name, lowered, completed, url in [
+            ("slow", "timed_out", "2026-11-04T00:31:00Z", "https://ci/slow"),
+            ("boot", "startup_failure", "2026-11-04T00:32:00Z", "https://ci/boot"),
+        ]:
+            with self.subTest(name=name):
+                outcome = found[f"check:{name}@{HEAD}"]
+                self.assertEqual(outcome["kind"], "check")
+                self.assertEqual(outcome["event_at"], completed)
+                self.assertEqual(outcome["url"], url)
+                self.assertEqual(outcome["detail"], {"name": name, "conclusion": lowered})
+
     def test_runs_without_pr_url_or_of_other_repos_are_not_fetched(self):
         self.archive("no-pr", pr_url=None)
         other = self.archive("elsewhere")
@@ -321,17 +342,23 @@ class DedupeTests(FeedbackTestCase):
         self.assertIn(f"check:test@{new_head}", found)
 
     def test_terminal_run_is_skipped_and_not_fetched(self):
-        self.archive()
-        self.refresh(FakeGh(pr(state="MERGED", mergedAt="2026-11-04T00:50:00Z")))
-        gh = FakeGh(pr([check_run("test", "FAILURE")]))
+        cases = [
+            ("merged-run", pr(state="MERGED", mergedAt="2026-11-04T00:50:00Z")),
+            ("closed-run", pr(state="CLOSED", closedAt="2026-11-04T00:55:00Z")),
+        ]
+        for branch, terminal in cases:
+            with self.subTest(state=terminal["state"]):
+                self.archive(branch)
+                self.refresh_branch(FakeGh(terminal), branch)
+                gh = FakeGh(pr([check_run("test", "FAILURE")]))
 
-        report = self.refresh(gh)
+                report = self.refresh_branch(gh, branch)
 
-        self.assertEqual(gh.calls, [])
-        self.assertEqual(report["refreshed"], [])
-        self.assertEqual(
-            report["skipped"], [{"run": "feature-x", "reason": "terminal outcome recorded"}]
-        )
+                self.assertEqual(gh.calls, [])
+                self.assertEqual(report["refreshed"], [])
+                self.assertEqual(
+                    report["skipped"], [{"run": branch, "reason": "terminal outcome recorded"}]
+                )
 
     def test_outcome_appended_during_the_fetch_is_kept(self):
         self.archive()
@@ -550,6 +577,7 @@ class GapTests(FeedbackTestCase):
             reply(review_text="[]\n"),
             reply(review_text=json.dumps({"id": 1}) + "\n"),
             reply(review_text=json.dumps({"state": "CHANGES_REQUESTED"}) + "\n"),
+            reply(review_text="{\n"),
         ]
         for index, on_x in enumerate(cases):
             with self.subTest(case=index):
@@ -611,6 +639,12 @@ class LocalGapTests(FeedbackTestCase):
     def test_malformed_outcome_file_is_inaccessible(self):
         self.outcome_file.write_text("{not json")
         self.assert_gap_leaves_files("inaccessible")
+
+    def test_wrong_shape_outcome_file_is_inaccessible(self):
+        for text in ("[]", '{"outcomes": null}', '{"outcomes": [1]}'):
+            with self.subTest(text=text):
+                self.outcome_file.write_text(text)
+                self.assert_gap_leaves_files("inaccessible")
 
     def test_empty_stored_outcome_list_is_not_a_malformed_file(self):
         body = json.loads(self.outcome_file.read_text())

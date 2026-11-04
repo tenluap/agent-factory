@@ -229,8 +229,19 @@ def _outcome_path(home, run):
     return Path(home) / "outcomes" / improvements.backlog_name(run["repo"], run["branch"])
 
 
+def _outcome_list(body):
+    """The stored outcomes of a well-formed outcome file, or None."""
+    outcomes = body.get("outcomes") if isinstance(body, dict) else None
+    if isinstance(outcomes, list) and all(
+        isinstance(o, dict) and "id" in o for o in outcomes
+    ):
+        return outcomes
+    return None
+
+
 def _is_terminal(home, run):
-    """An unlocked read: a stored merged or closed PR state ends the run's refreshes."""
+    """An unlocked read: a stored merged or closed PR state ends the run's refreshes.
+    A malformed file is not terminal here; `_load_outcomes` reports it as a gap."""
     path = _outcome_path(home, run)
     if not path.exists():
         return False
@@ -238,7 +249,8 @@ def _is_terminal(home, run):
         body = json.loads(path.read_text())
     except (OSError, ValueError):
         return False
-    return any(o.get("id") in TERMINAL_IDS for o in body.get("outcomes", []))
+    outcomes = _outcome_list(body)
+    return outcomes is not None and any(o["id"] in TERMINAL_IDS for o in outcomes)
 
 
 def _slug(text):
@@ -286,10 +298,7 @@ def _load_outcomes(path, run):
         body = json.loads(path.read_text())
     except (OSError, ValueError) as e:
         raise Gap("inaccessible", f"unreadable outcome file {path}: {e}") from e
-    outcomes = body.get("outcomes") if isinstance(body, dict) else None
-    if not isinstance(outcomes, list) or not all(
-        isinstance(o, dict) and "id" in o for o in outcomes
-    ):
+    if _outcome_list(body) is None:
         raise Gap("inaccessible", f"malformed outcome file {path}")
     return body
 
