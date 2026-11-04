@@ -58,6 +58,14 @@
       "summary": "Grill round 2: outcome identity, backlog feed, feature text, test seam",
       "answered_at": "2026-11-04T00:22:22.686637Z",
       "latency_ms": 16560
+    },
+    {
+      "at": "2026-11-04T00:29:17.749071Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Plan test-scope confirmation (requires_user)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
