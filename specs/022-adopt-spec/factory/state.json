@@ -90,8 +90,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Plan: confirm test seams and failure paths (protected)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T10:30:45.898613Z",
+      "latency_ms": 77216
     }
   ],
   "decisions": [
