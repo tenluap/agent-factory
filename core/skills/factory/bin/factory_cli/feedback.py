@@ -275,32 +275,65 @@ def _feedback_item(run, outcome):
     return {"signal_key": key, "evidence": outcome["url"], "suggested_feature": feature}
 
 
+def _load_outcomes(path, run):
+    """The run's stored outcome file, or a fresh body; a malformed file is a gap."""
+    if not path.exists():
+        return {
+            "run": {k: run.get(k) for k in ("repo", "branch", "spec_dir", "pr_url")},
+            "outcomes": [],
+        }
+    try:
+        body = json.loads(path.read_text())
+    except (OSError, ValueError) as e:
+        raise Gap("inaccessible", f"unreadable outcome file {path}: {e}") from e
+    if not isinstance(body, dict) or not all(
+        isinstance(o, dict) and "id" in o for o in body.get("outcomes") or [None]
+    ):
+        raise Gap("inaccessible", f"malformed outcome file {path}")
+    return body
+
+
+def _add_backlog(home, run, items, now):
+    """Feedback entries for the new outcomes; a held lock is transient, any
+    other refused entry file (its written links kept) is inaccessible."""
+    try:
+        return improvements.add_feedback(home, run, items, now=now)
+    except improvements.AddError as e:
+        if isinstance(e.__cause__, lock.LockHeld):
+            raise Gap("transient", f"backlog lock held: {e.__cause__}") from e
+        raise Gap("inaccessible", str(e)) from e
+
+
 def _store(home, run, candidates, now):
     """Append outcomes whose ids are not stored yet, and their feedback entries,
     under the outcomes lock (outcomes, then backlog); the outcome write comes
-    last. Returns the new outcomes and the backlog result."""
+    last, so a failed write is retried without duplicate links. Returns the new
+    outcomes and the backlog result; local failures raise Gap."""
     directory = Path(home) / "outcomes"
-    directory.mkdir(parents=True, exist_ok=True)
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise Gap("inaccessible", f"cannot create {directory}: {e}") from e
     path = _outcome_path(home, run)
-    _acquire_home_lock(directory, "feedback")
+    try:
+        _acquire_home_lock(directory, "feedback")
+    except lock.LockHeld as e:
+        raise Gap("transient", f"outcomes lock held: {e}") from e
     backlog = {"created": [], "updated": [], "claimed": []}
     try:
-        if path.exists():
-            body = json.loads(path.read_text())
-        else:
-            body = {
-                "run": {k: run.get(k) for k in ("repo", "branch", "spec_dir", "pr_url")},
-                "outcomes": [],
-            }
+        body = _load_outcomes(path, run)
         stored = {outcome["id"] for outcome in body["outcomes"]}
         new = [dict(c, recorded_at=now) for c in candidates if c["id"] not in stored]
         if new:
             items = [_feedback_item(run, outcome) for outcome in new]
             items = [item for item in items if item]
             if items:
-                backlog = improvements.add_feedback(home, run, items, now=now)
+                backlog = _add_backlog(home, run, items, now)
             body["outcomes"].extend(new)
-            _write_atomic(path, body)
+            try:
+                _write_atomic(path, body)
+            except OSError as e:
+                raise Gap("transient", f"outcome write failed: {e}") from e
     finally:
         lock.release(directory)
     return new, backlog
@@ -326,7 +359,7 @@ def refresh(home, repo, branch=None, gh=run_gh, now=None):
             report["skipped"].append({"run": run["branch"], "reason": "terminal outcome recorded"})
             continue
         try:
-            candidates = _fetch(run["pr_url"], gh)
+            new, backlog = _store(home, run, _fetch(run["pr_url"], gh), now)
         except Gap as gap:
             report["gaps"].append(
                 {
@@ -337,7 +370,6 @@ def refresh(home, repo, branch=None, gh=run_gh, now=None):
                 }
             )
             continue
-        new, backlog = _store(home, run, candidates, now)
         report["refreshed"].append(
             {
                 "run": run["branch"],

@@ -100,7 +100,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
   2. Implement `Gap(cls, reason)` and the classification table; catch `Gap` per run.
   3. Run the test command; pass.
   Red proof: `Red: <gh missing inaccessible test name> failed as expected`. Done when every GitHub failure path passes (SC-003).
-- [ ] T009 [US4] Classify local-file failures as gaps (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T008.
+- [X] T009 [US4] Classify local-file failures as gaps (seam S1). Files: `core/skills/factory/bin/factory_cli/feedback.py`, `tools/tests/test_feedback.py`. Depends on T008.
   1. Failing tests, each with a stored outcome, a `ready` feedback entry and a second healthy run that still refreshes. Declared S1 failure paths, each writing nothing for that run and keeping earlier outcomes and entries byte-identical: a malformed existing outcome file -> `inaccessible`; a foreign or unreadable backlog file at the entry name -> `inaccessible`; the outcomes lock (`lock.acquire` planted on `<home>/outcomes`) held past the 5 s wait -> `transient`; the backlog lock planted on `<home>/improvements` held past the wait -> `transient`, outcome file unchanged. Then: `factory_cli.feedback._write_atomic` patched to raise `OSError` for the outcome write after the backlog write -> `transient`, the new backlog links kept; an unpatched second refresh stores the outcomes and adds no duplicate link. Observe red.
   2. Implement: map `lock.LockHeld` (direct, or as the cause of `AddError`) and a failed outcome write to `transient`; unreadable or malformed outcome files and other `AddError` refusals (written links stay) to `inaccessible`; keep the plan's nested lock order.
   3. Run the test command; pass.

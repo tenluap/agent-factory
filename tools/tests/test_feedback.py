@@ -5,11 +5,14 @@
 archive stays byte-identical; a fake runner stands in for GitHub.
 """
 
+import hashlib
 import json
 import subprocess
 import sys
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
@@ -564,6 +567,102 @@ class GapTests(FeedbackTestCase):
         self.assertEqual(gap["class"], "missing")
         self.assertEqual(gap["reason"], "unparseable pr_url")
         self.assertFalse(any("not-a-pr" in a for call in gh.calls for a in call))
+
+
+class LocalGapTests(FeedbackTestCase):
+    def setUp(self):
+        super().setUp()
+        self.archive(branch="feature-x", pr_url=PR_URL)
+        self.archive(branch="feature-y", pr_url="https://github.com/o/r/pull/8")
+        self.refresh(Routed())
+        repo_hash = hashlib.sha256(self.repo.encode()).hexdigest()[:12]
+        self.outcome_file = self.sb.home / "outcomes" / f"{self.sb.repo.name}-feature-x.json"
+        self.entry_file = (
+            self.sb.home / "improvements"
+            / f"{self.sb.repo.name}-feature-x.{repo_hash}.feedback.ci-failure.new.json"
+        )
+
+    def snapshot(self):
+        home = self.sb.home
+        return {
+            str(path.relative_to(home)): path.read_bytes()
+            for path in sorted(home.rglob("*"))
+            if path.is_file()
+        }
+
+    def new_failure(self):
+        return Routed(reply(pr_text=json.dumps(pr([check_run("new", "FAILURE", url="https://ci/new")]))))
+
+    def hold_lock(self, name):
+        (self.sb.home / f"{name}.lock.json").write_text(
+            json.dumps({"owner_pid": 12345, "host": "other-host", "harness": "holder", "at": "now"})
+        )
+
+    def assert_gap_leaves_files(self, cls):
+        before = self.snapshot()
+        report = self.refresh(self.new_failure())
+        self.assertEqual(
+            [(g["run"], g["class"]) for g in report["gaps"]], [("feature-x", cls)], report
+        )
+        self.assertEqual([r["run"] for r in report["refreshed"]], ["feature-y"])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_malformed_outcome_file_is_inaccessible(self):
+        self.outcome_file.write_text("{not json")
+        self.assert_gap_leaves_files("inaccessible")
+
+    def test_foreign_backlog_file_at_entry_name_is_inaccessible(self):
+        self.entry_file.write_text(
+            json.dumps(
+                {
+                    "kind": "feedback",
+                    "run": {"repo": "/another/repo", "branch": "feature-x"},
+                    "signal_key": "ci-failure:new",
+                    "status": "ready",
+                    "evidence": [],
+                }
+            )
+        )
+        self.assert_gap_leaves_files("inaccessible")
+
+    def test_unreadable_backlog_file_at_entry_name_is_inaccessible(self):
+        self.entry_file.write_text("{not json")
+        self.assert_gap_leaves_files("inaccessible")
+
+    def test_held_outcomes_lock_waits_then_is_transient(self):
+        # The outcomes lock is home-wide, so every run waits and is transient.
+        self.hold_lock("outcomes")
+        before = self.snapshot()
+        started = time.monotonic()
+        report = self.refresh(self.new_failure())
+        self.assertGreaterEqual(time.monotonic() - started, 4.5)
+        self.assertEqual(
+            [(g["run"], g["class"]) for g in report["gaps"]],
+            [("feature-x", "transient"), ("feature-y", "transient")],
+        )
+        self.assertEqual(report["refreshed"], [])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_held_backlog_lock_is_transient_and_outcome_file_unchanged(self):
+        self.hold_lock("improvements")
+        self.assert_gap_leaves_files("transient")
+        self.assertFalse(self.entry_file.exists())
+
+    def test_outcome_write_failing_after_backlog_write_keeps_links_once(self):
+        with mock.patch("factory_cli.feedback._write_atomic", side_effect=OSError("disk full")):
+            report = self.refresh(self.new_failure())
+        self.assertEqual([(g["run"], g["class"]) for g in report["gaps"]], [("feature-x", "transient")])
+        self.assertEqual(json.loads(self.entry_file.read_text())["evidence"], ["https://ci/new"])
+        self.assertNotIn(f"check:new@{HEAD}", self.outcomes())
+
+        report = self.refresh(self.new_failure())
+
+        self.assertEqual(report["gaps"], [])
+        self.assertIn(f"check:new@{HEAD}", self.outcomes())
+        self.assertEqual(json.loads(self.entry_file.read_text())["evidence"], ["https://ci/new"])
+        self.assertEqual(
+            report["refreshed"][0]["backlog"], {"created": [], "updated": [], "claimed": []}
+        )
 
 
 if __name__ == "__main__":
