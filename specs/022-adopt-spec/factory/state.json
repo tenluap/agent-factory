@@ -392,6 +392,14 @@
       "auto": false,
       "at": "2026-11-04T18:33:07.281434Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "approver",
+      "answer": "Approve (two unresolved blockers disclosed in the PR)",
+      "auto": false,
+      "at": "2026-11-04T18:57:42.115849Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
