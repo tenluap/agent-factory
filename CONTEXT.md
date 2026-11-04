@@ -181,7 +181,7 @@ An opt-in run mode in which every decision the run would put to the user is take
 _Avoid_: YOLO mode, autopilot, unattended mode
 
 **Cruise override**:
-A decision cruise mode took that a run without it would have put to the user: a protected question's answer, an auto-resolved decision halt, or an accepted one-off setup offer.
+A decision cruise mode took that a run without it would have put to the user: a protected question's answer, a `pending_clarify` answer, an auto-resolved decision halt, or an accepted one-off setup offer.
 _Avoid_: forced answer, auto-approval, bypass
 
 **Veto list**:
