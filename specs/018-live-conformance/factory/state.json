@@ -8,7 +8,7 @@
   "base": "origin/main",
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
-  "status": "waiting_user",
+  "status": "running",
   "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
