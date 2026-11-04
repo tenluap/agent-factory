@@ -182,6 +182,39 @@ def launch_command(harness, prompt, *, model, out, home, skill_dir):
     return ["claude", "-p", prompt, *model_args, *add_dirs, "--allowedTools", *allowed]
 
 
+def adapter_template(harness):
+    return json.loads((render.ADAPTERS / harness / "adapter.json").read_text())
+
+
+def checkout_env(harness, config):
+    """Launch variables pointing the harness at the isolated config directory."""
+    if harness == "claude-code":
+        return {"CLAUDE_CONFIG_DIR": str(config), "CLAUDE_HOME": str(config)}
+    return {"XDG_CONFIG_HOME": str(config)}
+
+
+def isolated_install(harness, out):
+    """Render this checkout under `out`; the maintainer's factory home and config stay untouched."""
+    home, config = out / "home", out / "harness-config"
+    home.mkdir()
+    config.mkdir()
+    env = dict(
+        os.environ,
+        FACTORY_HOME=str(home),
+        HOME=str(out),
+        **checkout_env(harness, config),
+    )
+    result = subprocess.run(
+        ["bash", str(ROOT / "install.sh"), "--harness", harness],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        tail = "\n".join((result.stdout + result.stderr).splitlines()[-8:])
+        raise ValueError(f"checkout render failed (exit {result.returncode}): {tail}")
+
+
 def run(args):
     """Prepare a disposable repository; only the selected headless CLI spends tokens."""
     if args.harness not in EXECUTABLES:
@@ -200,7 +233,11 @@ def run(args):
     else:
         out = Path(tempfile.mkdtemp(prefix="factory-bench-"))
     repo = out / f"fixture-{args.bench}"
-    home = Path(args.home).expanduser().resolve() if args.home else out / "home"
+    if args.from_checkout:
+        isolated_install(args.harness, out)
+        home = out / "home"
+    else:
+        home = Path(args.home).expanduser().resolve() if args.home else out / "home"
     shutil.copytree(
         ROOT / config["fixture_repo"],
         repo,
@@ -262,7 +299,13 @@ def run(args):
         "Stop before approver; do not approve or open a PR."
     )
     log = out / "harness.log"
-    skill_dir = Path(render.load_adapter(args.harness)["skill_dir"]).expanduser()
+    env = dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness)
+    if args.from_checkout:
+        config_dir = out / "harness-config"
+        env.update(checkout_env(args.harness, config_dir))
+        skill_dir = adapter_template(args.harness)["skill_dir"].format(home=config_dir)
+    else:
+        skill_dir = Path(render.load_adapter(args.harness)["skill_dir"]).expanduser()
     launch = launch_command(
         args.harness,
         prompt,
@@ -275,7 +318,7 @@ def run(args):
         process = subprocess.run(
             launch,
             cwd=repo,
-            env=dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness),
+            env=env,
             stdout=stream,
             stderr=subprocess.STDOUT,
         )
@@ -309,7 +352,9 @@ def main(argv=None):
     running.add_argument("--harness", required=True)
     running.add_argument("--bench", default="greet-001")
     running.add_argument("--model")
-    running.add_argument("--home")
+    source = running.add_mutually_exclusive_group()
+    source.add_argument("--home")
+    source.add_argument("--from-checkout", action="store_true")
     running.add_argument("--out")
     args = parser.parse_args(argv)
     if args.command == "compare":

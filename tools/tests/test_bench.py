@@ -1,5 +1,6 @@
 """Benchmark score/compare public CLI seams; no live harness or token cost."""
 
+import hashlib
 import json
 import os
 import shutil
@@ -286,3 +287,96 @@ class RunTests(unittest.TestCase):
         self.assertEqual(out.returncode, 1)
         self.assertIn("use the manual benchmark fallback", out.stderr)
         self.assertFalse(self.out.exists())
+
+    def test_checkout_renders_under_output_and_launches_against_it(self):
+        out = self.run_bench("claude-code", "--from-checkout")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        root = self.out.resolve()
+        config = root / "harness-config"
+        self.assertTrue((root / "home" / "dist" / "claude-code").is_dir())
+        self.assertTrue((config / "skills" / "factory").exists())
+        (call,) = self.stub.calls()
+        self.assertEqual(call["env"]["CLAUDE_CONFIG_DIR"], str(config))
+        self.assertEqual(call["env"]["CLAUDE_HOME"], str(config))
+        self.assertEqual(call["env"]["FACTORY_HOME"], str(root / "home"))
+        argv = call["argv"]
+        self.assertEqual(add_dirs(argv), [str(root)])
+        i = argv.index("--allowedTools")
+        self.assertEqual(argv[-1], f"Bash({config}/skills/factory/bin/factory:*)")
+        self.assertEqual(argv[i + 1 :][:-1], CLAUDE_TOOLS)
+
+    def test_checkout_model_option_keeps_isolated_environment(self):
+        out = self.run_bench("claude-code", "--from-checkout", "--model", "sonnet")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        (call,) = self.stub.calls()
+        argv = call["argv"]
+        self.assertEqual(argv[argv.index("--model") + 1], "sonnet")
+        config = self.out.resolve() / "harness-config"
+        self.assertEqual(call["env"]["CLAUDE_CONFIG_DIR"], str(config))
+
+    def test_opencode_checkout_renders_and_isolates_config(self):
+        out = self.run_bench("opencode", "--from-checkout")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        root = self.out.resolve()
+        self.assertTrue((root / "home" / "dist" / "opencode").is_dir())
+        (call,) = self.stub.calls()
+        self.assertEqual(call["env"]["XDG_CONFIG_HOME"], str(root / "harness-config"))
+
+    def test_without_checkout_flag_nothing_is_rendered_under_output(self):
+        out = self.run_bench("claude-code", "--home", self.home)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertFalse((self.out / "home" / "dist").exists())
+        self.assertFalse((self.out / "harness-config").exists())
+        (call,) = self.stub.calls()
+        self.assertNotIn("CLAUDE_CONFIG_DIR", call["env"])
+        self.assertEqual(call["env"]["CLAUDE_HOME"], self.stub.env["CLAUDE_HOME"])
+
+    def test_checkout_run_leaves_sandboxed_homes_unchanged(self):
+        roots = [
+            Path(self.stub.env[key])
+            for key in ("HOME", "CLAUDE_HOME", "XDG_CONFIG_HOME")
+        ]
+        for root in roots:
+            (root / "marker.txt").parent.mkdir(parents=True, exist_ok=True)
+            (root / "marker.txt").write_text("keep\n")
+        before = snapshot(roots)
+        out = self.run_bench("claude-code", "--from-checkout")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(snapshot(roots), before)
+
+    def test_failed_render_stops_before_launch(self):
+        bash_dir = self.box.dir / "bash-bin"
+        bash_dir.mkdir()
+        fake = bash_dir / "bash"
+        fake.write_text(
+            f"#!{sys.executable}\nimport sys\nprint('render boom: missing dependency')\nsys.exit(7)\n"
+        )
+        fake.chmod(0o755)
+        path = f"{bash_dir}{os.pathsep}{self.stub.bin}{os.pathsep}{os.environ['PATH']}"
+        out = self.run_bench("claude-code", "--from-checkout", path=path)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("benchmark run: checkout render failed (exit 7):", out.stderr)
+        self.assertIn("render boom: missing dependency", out.stderr)
+        self.assertEqual(self.stub.calls(), [])
+
+    def test_from_checkout_with_home_is_rejected_before_any_effect(self):
+        home = self.box.dir / "explicit-home"
+        out = self.run_bench("claude-code", "--from-checkout", "--home", home)
+        self.assertEqual(out.returncode, 2)
+        self.assertFalse(self.out.exists())
+        self.assertFalse(home.exists())
+
+
+def snapshot(roots):
+    """Content hashes and symlink targets under each root (absent roots are empty)."""
+    entries = {}
+    for root in roots:
+        for dirpath, dirnames, filenames in os.walk(root):
+            for name in dirnames + filenames:
+                full = os.path.join(dirpath, name)
+                if os.path.islink(full):
+                    entries[full] = ("link", os.readlink(full))
+                elif os.path.isfile(full):
+                    digest = hashlib.sha256(Path(full).read_bytes()).hexdigest()
+                    entries[full] = ("file", digest)
+    return entries
