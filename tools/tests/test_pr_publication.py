@@ -42,6 +42,9 @@ def pr_contract_gaps(skill_text, state_text):
         all(literal in line for literal in AFTER_ERROR_LITERALS) for line in lines
     ):
         gaps.append("lookup-after-error")
+    item8 = next((line for line in lines if re.match(r"^\s*8\.\s", line)), "")
+    if not ("NOTIFY" in item8 and "assignment problem" in item8):
+        gaps.append("assignment-report")
     if re.search(r"\bASK\b", section):
         gaps.append("no-ask")
     resume = next(
@@ -87,6 +90,19 @@ class PrPublicationContractTests(unittest.TestCase):
             ),
         )
         self.assertEqual(pr_contract_gaps(mutated, self.state), ["lookup-after-error"])
+
+    def test_item8_without_assignment_problem_reports_assignment_report(self):
+        mutated = with_section(
+            self.skill,
+            lambda s: re.sub(
+                r"(?m)^(\s*8\.\s.*)$",
+                lambda m: m.group(1).replace("assignment problem", "assignment note"),
+                s,
+            ),
+        )
+        self.assertEqual(
+            pr_contract_gaps(mutated, self.state), ["assignment-report"]
+        )
 
     def test_ask_line_in_section_reports_no_ask(self):
         mutated = with_section(
