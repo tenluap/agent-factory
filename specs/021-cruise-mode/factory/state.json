@@ -134,6 +134,14 @@
       "auto": false,
       "at": "2026-11-04T00:41:26.788573Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "CRUISE",
+      "answer": "User instructed (2026-11-04): run this run in cruise behaviour from plan onward; auto-accept every relay incl. protected questions, auto-resolve decision halts, stop at approver; never push or open PR without explicit Approve",
+      "auto": false,
+      "at": "2026-11-04T00:51:07.868161Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
