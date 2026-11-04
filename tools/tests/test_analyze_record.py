@@ -350,3 +350,106 @@ class AnalyzeBaselineRecordTests(unittest.TestCase):
         self.assertEqual(after["baseline"], before["baseline"])
         self.assertEqual((after["loops"], after["pass"]), (0, 1))
         self.assertEqual(after["result"]["report"], "factory/analyze-1-full.md")
+
+
+class RepairCycleCheckpointTests(unittest.TestCase):
+    """`checkpoint remediate` is the only writer of loops and pass (FR-003, FR-014, FR-021)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "097-cycles"
+        state = fixture("state-v4.json")
+        state.update(stage="analyze", relay=None)
+        state["analyze"] = {
+            "pass": 1,
+            "loops": 0,
+            "reports": [],
+            "remediations": [],
+            "pending_clarify": [],
+        }
+        self.wt = self.box.worktree_run(self.branch, state)
+        self.spec = self.wt / "specs" / self.branch
+        self.state_path = self.spec / "factory" / "state.json"
+        for name in ("analyze-1.md", "analyze-1-full.md", "analyze-2.md"):
+            (self.spec / "factory" / name).write_text("# Analysis\n")
+
+    def load(self):
+        return json.loads(self.state_path.read_text())
+
+    def analyze(self):
+        return self.load()["analyze"]
+
+    def record(self, report, **counts):
+        block = {
+            "status": "done",
+            "stage": "analyze",
+            "summary": "Analysis",
+            "files": [],
+            "questions": [],
+            "error": None,
+            "analyze": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                **counts,
+                "report": report,
+            },
+        }
+        path = self.box.write_temp(f"analysis-{report.replace('/', '_')}.json", json.dumps(block))
+        return self.box.cli("analyze-record", path, cwd=self.wt)
+
+    def checkpoint(self, stage, nxt):
+        return self.box.cli("checkpoint", stage, "--next", nxt, cwd=self.wt)
+
+    def run_one_cycle(self):
+        self.assertEqual(self.record("factory/analyze-1.md", medium=2).returncode, 0)
+        self.assertEqual(self.checkpoint("analyze", "remediate").returncode, 0)
+        out = self.checkpoint("remediate", "analyze")
+        self.assertEqual(out.returncode, 0, out.stderr)
+
+    def test_a_cycle_increments_loops_and_pass_once(self):
+        self.run_one_cycle()
+        self.assertEqual((self.analyze()["loops"], self.analyze()["pass"]), (1, 2))
+
+    def test_repeated_checkpoint_remediate_after_the_stage_advanced_does_not_increment(self):
+        self.run_one_cycle()
+        self.assertEqual(self.checkpoint("remediate", "analyze").returncode, 0)
+        self.assertEqual((self.analyze()["loops"], self.analyze()["pass"]), (1, 2))
+
+    def test_stale_result_refuses_implement_until_a_fresh_analysis_is_recorded(self):
+        self.run_one_cycle()
+        refused = self.checkpoint("analyze", "implement")
+        self.assertEqual(refused.returncode, 1, refused.stderr)
+        self.assertEqual(self.load()["stage"], "analyze")
+        self.assertEqual(self.record("factory/analyze-2.md").returncode, 0)
+        out = self.checkpoint("analyze", "implement")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.load()["stage"], "implement")
+
+    def test_escalation_consumes_no_cycle(self):
+        self.assertEqual(self.record("factory/analyze-1.md", high=1).returncode, 0)
+        self.assertEqual(self.record("factory/analyze-1-full.md", high=1).returncode, 0)
+        self.assertEqual(self.checkpoint("analyze", "implement").returncode, 1)
+        self.assertEqual((self.analyze()["loops"], self.analyze()["pass"]), (0, 1))
+
+    def test_the_cap_refuses_a_checkpoint_into_remediate_without_writing(self):
+        self.box.corrupt_worktree_state(self.branch, lambda s: s["analyze"].update(loops=2))
+        self.assertEqual(self.record("factory/analyze-1.md", medium=2).returncode, 0)
+        before = self.state_path.read_bytes()
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        out = self.checkpoint("analyze", "remediate")
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(self.state_path.read_bytes(), before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_resume_on_another_harness_keeps_baseline_and_loops(self):
+        self.run_one_cycle()
+        before = self.analyze()
+        self.box.corrupt_worktree_state(self.branch, lambda s: s.update(harness="opencode"))
+        out = self.box.cli("resume", self.branch)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        after = self.analyze()
+        self.assertEqual(after["baseline"], before["baseline"])
+        self.assertEqual(after["loops"], before["loops"])

@@ -878,6 +878,13 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             violation = checks.gate_violation(s, target)
             if violation:
                 die(1, f"gate refusal into '{target}': {violation}")
+        if stage == "remediate" and s.get("stage") == "remediate":
+            # ADR 0006 / FR-014: the only writer of the repair-cycle counters; a
+            # repeated checkpoint after the stage advanced sees a different stage
+            analyze = dict(s.get("analyze") or {})
+            analyze["loops"] = (analyze.get("loops") or 0) + 1
+            analyze["pass"] = (analyze.get("pass") or 0) + 1
+            s["analyze"] = analyze
         permitted = checks.permitting_decision(s, target) if target else None
         relay = s.get("relay")
         relay_stage = (
