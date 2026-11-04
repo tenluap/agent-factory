@@ -22,6 +22,14 @@
 - Q8: Who writes the suggested feature text? → A: A deterministic one-line template in the CLI, usable unchanged as `/factory <feature>`. No agent is spawned.
 - Q9: What is the test seam? → A: One injectable GitHub runner in the new module; tests inject fakes returning fixtures or failing. Injected failure paths: `gh` missing, unauthenticated, PR not found, no access, transient error, malformed JSON. Formal seam confirmation happens at plan.
 
+### Session 2026-11-04
+
+- Q10: In what order are the outcome file and backlog written? → A: Outcomes lock first, re-read and compute new ids, backlog under the nested backlog lock, then the outcome file; a timeout on either lock writes nothing (FR-010, FR-012).
+- Q11: Which extra failure paths does the refresh cover? → A: `<branch>` with no archived run or no `pr_url` (refused); foreign or unreadable backlog file (gap, both files untouched); outcome-file write failing after the backlog write (gap, links stay, no duplicate next time).
+- Q12: How are local failures classified and reported? → A: As in FR-012; a refused `<branch>` exits 1 but is not a gap; the report gains a `skipped` list (FR-013).
+- Q13: Which review responses are malformed? → A: A review that is not an object with a string `state`, or a `CHANGES_REQUESTED` review without an integer `id`; a null login is stored as `ghost` (FR-004).
+- Q14: Does `factory feedback` take a repository path? → A: Yes, `--repo <path>`, defaulting to the current directory (FR-001).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See CI failures and change requests against the original run (Priority: P1)
@@ -86,7 +94,7 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 
 **Why this priority**: A wrong outcome would mislead the improvement loop; the plan requires gaps to be reported, not guessed.
 
-**Independent Test**: Inject each failure path in turn and confirm the run's outcome file and backlog are unchanged, the run is listed under `gaps` with its class, other runs still refresh, and the exit code is 1.
+**Independent Test**: Inject each failure path in turn and confirm the run's outcome file and backlog are unchanged (a failed outcome-file write keeps backlog links already written), the run is listed under `gaps` with its class, other runs still refresh, and the exit code is 1.
 
 **Acceptance Scenarios**:
 
@@ -96,13 +104,17 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 4. **Given** one run fails and another succeeds, **When** the refresh runs, **Then** the successful run's outcomes are stored and the command exits 1.
 5. **Given** no gaps, **When** the refresh finishes, **Then** the command exits 0.
 6. **Given** any failure, **When** the refresh runs, **Then** it does not retry automatically.
+7. **Given** the outcome-file write fails after the backlog write, **Then** the run is a `transient` gap, the backlog links stay, and the next refresh stores the outcomes without a duplicate link.
+8. **Given** a review from a deleted account, or a non-`CHANGES_REQUESTED` review without an integer id, **Then** it is not a gap; a deleted account's change request names reviewer `ghost`.
 
 ### Edge Cases
 
 - No archived run of the current repository has a `pr_url`: the refresh reports zero runs and exits 0.
-- A `<branch>` names no archived run, or a run without a `pr_url`: the command reports it and writes nothing.
+- A `<branch>` names no archived run, or a run without a `pr_url`: refused as in FR-013.
 - An archived run's outcome file is missing: it is created on the first successful refresh.
-- An existing outcome file is unreadable or malformed: the run is reported as a gap and the file is not overwritten.
+- An existing outcome file is unreadable or malformed: the run is an `inaccessible` gap and the file is not overwritten.
+- A foreign or unreadable backlog file at the entry's name: `inaccessible` gap; both files untouched.
+- An archived run's `state.json` is unreadable: the run is listed under `skipped` with its reason.
 - A check has no evidence link in the response: the record stores no link rather than an invented one (assumption; see Assumptions).
 - Two refreshes run at once: the lock serialises writes to each outcome file and to the backlog; neither loses records.
 - A refresh is interrupted mid-write: atomic writes leave each file either fully old or fully new.
@@ -113,19 +125,19 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 
 ### Functional Requirements
 
-- **FR-001**: The factory MUST provide a `factory feedback [<branch>]` CLI command and a `/factory feedback` route that runs it and shows its result. Other routes MUST NOT trigger a refresh.
+- **FR-001**: The factory MUST provide a `factory feedback [<branch>] [--repo <path>]` CLI command (`--repo` defaults to the current directory) and a `/factory feedback` route that runs it and shows its result. Other routes MUST NOT trigger a refresh.
 - **FR-002**: A refresh MUST cover every archived run of the current repository that has a `pr_url`, or only the named run when `<branch>` is given, and MUST skip runs whose `state:merged` or `state:closed` outcome is already recorded.
 - **FR-003**: The refresh MUST read PR state, check outcomes (check runs and status contexts) and review decisions through the configured GitHub account, read-only. It MUST NOT write to GitHub, merge or deploy.
-- **FR-004**: The refresh MUST record checks concluding `failure`, `timed_out` or `startup_failure`, reviews in state `CHANGES_REQUESTED`, and PR terminal states `MERGED` and `CLOSED` (unmerged), and MUST ignore every other check conclusion, review state and comment.
+- **FR-004**: The refresh MUST record checks concluding `failure`, `timed_out` or `startup_failure`, reviews in state `CHANGES_REQUESTED`, and PR terminal states `MERGED` and `CLOSED` (unmerged), and MUST ignore every other check conclusion, review state and comment. A review response is malformed only when a review is not an object with a string `state`, or a `CHANGES_REQUESTED` review lacks an integer `id`; a null reviewer login MUST be stored as `ghost`.
 - **FR-005**: Each outcome MUST carry a stable `id` (`check:<check-name>@<head-sha>`, `review:<github-review-id>`, `state:merged` or `state:closed`), `kind`, `event_at` (GitHub time), `recorded_at` (first sighting), `url` (evidence link) and `detail` (check name and conclusion, or reviewer).
 - **FR-006**: Outcomes MUST be stored in `${FACTORY_HOME}/outcomes/<repo-name>-<branch>.json`, written atomically under a lock. The run archive MUST stay byte-identical.
 - **FR-007**: A refresh that sees an outcome whose `id` is already stored MUST leave that record unchanged.
 - **FR-008**: Each new actionable outcome MUST map to a `feedback` improvement backlog entry for its run with signal key `ci-failure:<check-slug>`, `changes-requested:<reviewer-slug>` or `pr-closed:unmerged`. A `state:merged` outcome MUST NOT produce an entry.
 - **FR-009**: Each run MUST have at most one `feedback` entry per signal key. A new outcome mapping to a `ready` entry MUST append its evidence link to that entry; one mapping to a `claimed` entry MUST leave it untouched. The refresh MUST NOT cap entries per run or skip a signal key another run's entry already covers.
-- **FR-010**: A `feedback` entry MUST carry `kind: feedback`, its `signal_key`, its originating run, its evidence links and a deterministic one-line `suggested_feature` usable unchanged as `/factory <feature>`. Backlog writes MUST be atomic and under the backlog lock.
+- **FR-010**: A `feedback` entry MUST carry `kind: feedback`, its `signal_key`, its originating run, its evidence links and a deterministic one-line `suggested_feature` usable unchanged as `/factory <feature>`. Backlog writes MUST be atomic and under the backlog lock. Per run, the refresh MUST take the outcomes lock first, re-read the outcome file and compute new ids, write the backlog under the nested backlog lock, then write the outcome file; the lock order MUST always be outcomes then backlog.
 - **FR-011**: The existing improvement listing and claim flow MUST handle `feedback` entries; Run exports and Retro entries MUST behave as before.
-- **FR-012**: Fetch problems MUST be classified as `missing` (PR not found), `inaccessible` (`gh` missing, unauthenticated or no access) or `transient` (network or server error, malformed response). For an affected run nothing MUST be written; the run MUST be listed under `gaps` with its class and a reason; other runs MUST still refresh.
-- **FR-013**: The command MUST print JSON naming each refreshed run with its new outcomes and backlog changes, and the `gaps`. It MUST exit 1 when any gap exists and 0 otherwise. It MUST NOT retry automatically.
+- **FR-012**: Problems MUST be classified as `missing` (PR not found, unparseable `pr_url`), `inaccessible` (`gh` missing, unauthenticated or no access; unreadable or malformed outcome file; foreign or unreadable backlog file) or `transient` (network or server error, malformed response, a lock held past 5 s, a failed outcome-file write). For an affected run nothing MUST be written, except that a failed outcome-file write keeps the backlog links already written and the next refresh MUST NOT duplicate them; the run MUST be listed under `gaps` with its class and a reason; other runs MUST still refresh.
+- **FR-013**: The command MUST print JSON naming each refreshed run with its new outcomes and backlog changes, the `gaps`, and the `skipped` runs (terminal outcome already recorded, or unreadable archive state) each with a reason. It MUST exit 1 when any gap exists or a `<branch>` is refused (no such archived run, or no `pr_url`; not a gap, GitHub never called, nothing written), and 0 otherwise. It MUST NOT retry automatically.
 - **FR-014**: All GitHub access MUST go through one injectable runner so tests replace it with fakes; the command MUST store no credential.
 - **FR-015**: `DESIGN.md` MUST record the feedback refresh before core and adapter files change; the new route MUST stay harness-neutral in `core/` and render for every harness.
 
@@ -135,7 +147,8 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 - **PR outcome**: One meaningful GitHub event for a run's PR (failed check, change request, terminal state), with stable `id`, `kind`, `event_at`, `recorded_at`, `url` and `detail`.
 - **Outcome file**: The per-run sidecar in the factory home holding that run's PR outcomes.
 - **Feedback entry**: A new improvement backlog entry kind: one per run and signal key, carrying evidence links, the originating run and suggested feature text.
-- **Gap**: A run the refresh could not read, with its class (`missing`, `inaccessible`, `transient`) and reason.
+- **Gap**: A run the refresh could not read or write, with its class (`missing`, `inaccessible`, `transient`) and reason.
+- **Skipped run**: A run the refresh did not fetch (terminal outcome recorded, or unreadable archive state), with its reason; not a gap.
 
 ## Success Criteria *(mandatory)*
 
@@ -149,7 +162,6 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 
 ## Assumptions
 
-- Gap classes map as: PR not found → `missing`; `gh` missing, unauthenticated or no access → `inaccessible`; network or server error and malformed response → `transient`.
 - An outcome without an evidence link in the GitHub response is stored with an empty `url`; no link is invented.
 - A slug lowercases a name, replaces each run of characters outside `a-z`, `0-9` and `-` with one hyphen, trims leading and trailing hyphens, keeps at most 64 characters, and is `unnamed` when nothing remains.
 - The refresh reads only the head commit's checks as GitHub reports them for the PR; earlier commits' checks are seen only if an earlier refresh caught them.
