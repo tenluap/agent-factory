@@ -63,6 +63,9 @@
           },
           {
             "id": "R2-Q2-post-commit-contract"
+          },
+          {
+            "id": "R2-Q3-origin-less-repo"
           }
         ],
         "answers": {
@@ -74,6 +77,11 @@
           "R2-Q2-post-commit-contract": {
             "answer": "A: keep exit 1, amend FR-013/contracts/D7/SKILL.md: committed; pending cleanup failed: resume <branch>, do not retry",
             "at": "2026-11-04T18:08:56.981707Z",
+            "auto": false
+          },
+          "R2-Q3-origin-less-repo": {
+            "answer": "A: refuse with NO_BASE when no origin remote; fix message; update D3; add test",
+            "at": "2026-11-04T18:08:57.513025Z",
             "auto": false
           }
         }
