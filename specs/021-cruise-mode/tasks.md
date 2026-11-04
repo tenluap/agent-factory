@@ -51,7 +51,7 @@ description: "Task list for 021-cruise-mode"
   - Pass: runner green.
   - Done: every listed case asserted and passing.
 
-- [ ] T006 [US1][US5] Add `--cruise-override` to `decisions-add` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_decisions_add` in `core/skills/factory/bin/factory_cli/commands.py`; tests in `tools/tests/test_cruise.py`.
+- [X] T006 [US1][US5] Add `--cruise-override` to `decisions-add` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_decisions_add` in `core/skills/factory/bin/factory_cli/commands.py`; tests in `tools/tests/test_cruise.py`.
   - Seam: `bin/factory decisions-add ... --cruise-override`. Failure paths: run without `mode.cruise: true` refused; `--kind approved` with the marker refused; `--kind gate-override` with the marker at a stage other than `analyze` refused.
   - Red: tests first on a cruise run: `decisions-add grill intake delivery --cruise-override` records kind `answer`, `auto: true`, `cruise_override: true`; `decisions-add analyze analyze-exhaustion 'proceed to implement' --kind gate-override --cruise-override` records it and `checkpoint analyze --next implement` then succeeds (FR-011); each failure path exits 1 with a message naming the reason and leaves `state.json` bytes and HEAD unchanged; without the flag `decisions-add` behaves as today. Run; fails (unknown flag).
   - Implement: the same two-line cruise guard as T005, inline in `cmd_decisions_add` (no shared helper, plan "Writer guard"); refuse marker with `approved` and with `gate-override` outside `analyze` before writing; marked records get `auto: true`.

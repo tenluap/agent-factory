@@ -460,13 +460,20 @@ def main(argv):
             )
         elif command == "decisions-add":
             positional, flags = parse_flags(
-                rest, command, value_flags=("--repo", "--kind")
+                rest,
+                command,
+                value_flags=("--repo", "--kind"),
+                bool_flags=("--cruise-override",),
             )
             if len(positional) != 3:
                 die_usage("decisions-add needs <stage> <qid> <answer>")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_decisions_add(
-                repo, Path.cwd(), *positional, kind=flags.get("--kind") or "answer"
+                repo,
+                Path.cwd(),
+                *positional,
+                kind=flags.get("--kind") or "answer",
+                cruise_override=bool(flags.get("--cruise-override")),
             )
         else:
             die_usage(f"unknown command '{command}'")

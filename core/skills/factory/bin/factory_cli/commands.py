@@ -1379,26 +1379,32 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     return result
 
 
-def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer"):
+def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer", cruise_override=False):
     if kind not in state.DECISION_KINDS:
         die(
             1,
             f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
+    if cruise_override:  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
+        if (loaded.get("mode") or {}).get("cruise") is not True:
+            die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+        if kind == "approved" or (kind == "gate-override" and stage != "analyze"):
+            die(1, "--cruise-override never records an approval or a gate override outside analyze")
     now = now_iso()
 
     def mutate(s):
-        s["decisions"] = (s.get("decisions") or []) + [
-            {
-                "stage": stage,
-                "question": qid,
-                "answer": answer,
-                "auto": False,
-                "at": now,
-                "kind": kind,
-            }
-        ]
+        record = {
+            "stage": stage,
+            "question": qid,
+            "answer": answer,
+            "auto": cruise_override,
+            "at": now,
+            "kind": kind,
+        }
+        if cruise_override:
+            record["cruise_override"] = True
+        s["decisions"] = (s.get("decisions") or []) + [record]
         return s
 
     write_run(path, loaded, mutate)

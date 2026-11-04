@@ -390,5 +390,87 @@ class AnswerCruiseOverrideTests(unittest.TestCase):
         self.assertNotIn("cruise_override", by_question["Q2"])
 
 
+class DecisionsAddCruiseOverrideTests(unittest.TestCase):
+    """Seam: `bin/factory decisions-add ... --cruise-override` (FR-010, FR-011)."""
+
+    BRANCH = "021-decisions-run"
+
+    def setUp(self):
+        self.box = Sandbox()
+
+    def tearDown(self):
+        self.box.close()
+
+    def run_state(self, cruise):
+        loaded = fixture("state-v5.json")
+        loaded.update(status="running", stage="grill")
+        loaded["mode"] = {"chain": "full", "fast": True, "cruise": cruise}
+        return loaded
+
+    def paths(self, wt, branch):
+        return wt / "specs" / branch / "factory" / "state.json"
+
+    def test_marked_answer_is_recorded_as_auto_with_marker(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
+        out = self.box.cli(
+            "decisions-add", "grill", "intake", "delivery", "--cruise-override", cwd=wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        record = json.loads(self.paths(wt, self.BRANCH).read_text())["decisions"][-1]
+        self.assertEqual(record["kind"], "answer")
+        self.assertIs(record["auto"], True)
+        self.assertIs(record["cruise_override"], True)
+        self.assertEqual(state.validate_state(json.loads(self.paths(wt, self.BRANCH).read_text())), [])
+
+    def test_marked_analyze_exhaustion_gate_override_is_recorded_and_valid(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
+        out = self.box.cli(
+            "decisions-add", "analyze", "analyze-exhaustion", "proceed to implement",
+            "--kind", "gate-override", "--cruise-override", cwd=wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        loaded = json.loads(self.paths(wt, self.BRANCH).read_text())
+        record = loaded["decisions"][-1]
+        self.assertEqual(record["kind"], "gate-override")
+        self.assertIs(record["cruise_override"], True)
+        self.assertEqual(state.validate_state(loaded), [])
+
+    def test_without_the_flag_decisions_add_is_unchanged(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
+        out = self.box.cli("decisions-add", "grill", "intake", "delivery", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        record = json.loads(self.paths(wt, self.BRANCH).read_text())["decisions"][-1]
+        self.assertIs(record["auto"], False)
+        self.assertNotIn("cruise_override", record)
+
+    def assert_refused(self, wt, args, cruise_state):
+        path = self.paths(wt, self.BRANCH)
+        before = path.read_bytes()
+        head = self.box.git("rev-parse", "HEAD", cwd=wt).strip()
+        out = self.box.cli("decisions-add", *args, cwd=wt)
+        self.assertEqual(out.returncode, 1, (args, out.stderr))
+        self.assertTrue(out.stderr.strip(), args)
+        self.assertEqual(path.read_bytes(), before, args)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=wt).strip(), head, args)
+
+    def test_marker_without_cruise_mode_is_refused(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=False))
+        self.assert_refused(wt, ("grill", "intake", "delivery", "--cruise-override"), False)
+
+    def test_marker_with_approved_kind_is_refused(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
+        self.assert_refused(
+            wt, ("approver", "approve", "approved", "--kind", "approved", "--cruise-override"), True
+        )
+
+    def test_marked_gate_override_outside_analyze_is_refused(self):
+        wt = self.box.worktree_run(self.BRANCH, self.run_state(cruise=True))
+        self.assert_refused(
+            wt,
+            ("plan", "analyze-exhaustion", "proceed", "--kind", "gate-override", "--cruise-override"),
+            True,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
