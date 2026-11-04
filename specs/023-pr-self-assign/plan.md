@@ -75,7 +75,7 @@ tools/tests/test_pr_publication.py          # new: text-contract test
 
 ## New code reasons
 
-- `tools/tests/test_pr_publication.py` - file - no existing test reads core instruction text; one module keeps the publication contract and its injected failure checks together.
+- `tools/tests/test_pr_publication.py` - file - the existing core-text checks in `tools/tests/test_render_models.py` cover harness neutrality and rendering of role files; the publication contract is a separate concept with its own injected-failure fixtures, so one new module keeps it and its failure checks together.
 - `pr_contract_gaps(skill_text, state_text)` - abstraction - one function checked against both the real core text and each mutated copy, so the injected failure paths exercise the same check the real-text test uses.
 - dependency - none.
 

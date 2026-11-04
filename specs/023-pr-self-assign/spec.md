@@ -13,7 +13,7 @@
 ### Session 2026-11-04 (grill, settled under cruise)
 
 - Q1: How is the PR assigned? → A: The single PR-creation request in the PR step asks GitHub to assign the PR to the signed-in account (`--assignee @me`); there is no separate assignment request. The approver gate before push/PR is unchanged, and no GitHub username is ever asked.
-- Q2: How is a duplicate PR prevented? → A: Publication is idempotent. The branch's PR is looked up before creation and again after any creation error; an existing PR is reused and its URL recorded, never recreated.
+- Q2: How is a duplicate PR prevented? → A: Publication is idempotent. The branch's PR is looked up before creation and again after any creation error; an existing PR is reused and its URL recorded, never recreated. (The grill answer named `gh pr view <branch>`; the lookup command is `gh pr list --head <branch> --state open` per research R2, which separates found, none and failed and returns open PRs only. The intent is unchanged.)
 - Q3: What happens when assignment fails? → A: Non-blocking. The URL is kept, the run continues, and the assignment problem is reported separately in the final notice. No new state field and no new issue kind.
 - Q4: What does resume of the `pr` stage do? → A: It follows the same lookup-then-create path.
 - Q5: How is it verified? → A: An automated text-contract test of the factory skill's PR step and resume rule; the disposable-repository live check is a manual runbook in `quickstart.md`, run by the user, never by agents.
@@ -121,5 +121,5 @@ Sometimes the PR opens but the assignment does not take (for example, the accoun
 - One in-turn creation retry mirrors the step's existing "retry once" rule for the final push; repeated failures go to the existing halt policy, from which resume repeats lookup-then-create.
 - Only an open PR is reused. A closed or merged PR for the branch is rare for factory branches and is not resurrected; a new PR is opened instead.
 - Determining the signed-in account's login, for the assignee check, uses the already-signed-in GitHub CLI; nothing reads or stores credentials.
-- The automated verification is a text-contract test in the existing `tools` test suite, matching how other core instruction changes are tested; live GitHub behaviour is verified only through the manual runbook because creating repositories and PRs is outward-facing.
+- The automated verification is a text-contract test in the existing `tools` test suite, like the existing core role-text checks in `tools/tests/test_render_models.py`; live GitHub behaviour is verified only through the manual runbook because creating repositories and PRs is outward-facing.
 - The `pr` skill keeps writing the PR body; this feature changes only the creation, lookup and reporting around it.

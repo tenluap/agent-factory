@@ -12,7 +12,7 @@ The open pull request whose head is the run's branch, read from `gh pr list --he
 
 ## Lookup outcome
 
-Each Branch PR lookup yields exactly one of:
+Each Branch PR lookup yields exactly one of the outcomes below. The actions apply to the lookups before creation and after a creation error (contract item 3 sub-steps 1 and 3). The lookup after a successful creation (sub-step 4) only reads assignees: found supplies them; none or failed keeps the URL `gh pr create` printed and counts as an assignment problem, and never creates, retries or halts.
 
 | Outcome | Signal | Step 9 action |
 |---------|--------|---------------|

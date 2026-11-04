@@ -32,4 +32,4 @@ No `NEEDS CLARIFICATION` remained after grilling (Q1-Q7). The decisions below fi
 ## R6 - Verification
 
 - **Decision**: A text-contract unittest module `tools/tests/test_pr_publication.py` reads the core files; live GitHub behaviour is a manual runbook in `quickstart.md` (Q5).
-- **Rationale**: No existing test reads core instruction text; the suite already runs under `python3 -m unittest discover -s tools` with no new dependency.
+- **Rationale**: `tools/tests/test_render_models.py` already reads core role text (`core/roles/design-to-code.md`, `core/roles/facets-advisor.md`), but those checks cover harness neutrality and rendering of role files. The publication contract is a separate concept with its own injected-failure fixtures, so it gets its own module. The suite already runs under `python3 -m unittest discover -s tools` with no new dependency.
