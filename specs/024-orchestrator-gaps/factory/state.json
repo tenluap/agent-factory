@@ -134,7 +134,8 @@
     "pass": 2,
     "loops": 1,
     "reports": [
-      "factory/analyze-1.md"
+      "factory/analyze-1.md",
+      "factory/analyze-2.md"
     ],
     "remediations": [],
     "pending_clarify": [],
@@ -148,11 +149,11 @@
     },
     "result": {
       "critical": 0,
-      "high": 2,
-      "medium": 2,
-      "low": 4,
-      "report": "factory/analyze-1.md",
-      "at": "2026-11-04T22:10:43.253566Z"
+      "high": 1,
+      "medium": 1,
+      "low": 1,
+      "report": "factory/analyze-2.md",
+      "at": "2026-11-04T22:15:35.259811Z"
     }
   },
   "review": {
