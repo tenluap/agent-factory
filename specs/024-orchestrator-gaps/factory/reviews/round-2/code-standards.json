@@ -1,0 +1,37 @@
+{
+  "reviewer": "code-standards",
+  "round": 2,
+  "summary": "The fixes address the prior review's documented flows, but the new answer retry can commit modified immutable records and bypass a live run lock; the new reservation flag's refusal behavior lacks tests.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1488,
+      "summary": "Identical-answer retry commits modifications to an already committed immutable relay record.",
+      "evidence": "ENG-26; spec.md FR-008 requires an existing record not be overwritten. The retry compares only the Answer JSON, and when git status reports a dirty record it calls commit_worktree, staging the modified record. Reproduced by answering Q1, changing its recorded title from Original to Tampered, and answering Q1 with the same value: the command succeeds and HEAD contains Tampered. This can silently alter protected decision evidence.",
+      "fix": "When the record exists in HEAD, compare its complete contents to the committed version and refuse modifications; only complete a pending commit for a new record or an unchanged committed record with pending state. Add an asserting regression test."
+    },
+    {
+      "id": "STD-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1488,
+      "summary": "The new retry commit bypasses the run lock and can commit another writer's in-progress state.",
+      "evidence": "ENG-23 and ENG-26; state.md CLI requires write commands to refuse under a live lock, and ADR 0006 requires state writes through the locked CLI writer. Unlike the normal answer path, this branch calls commit_worktree without write_run or acquiring the lock. Reproduced after a failed answer commit by placing a live lock.json beside state.json: identical retry returned success and committed the record, state, and live lock.json while its owner was alive.",
+      "fix": "Acquire and hold the run lock while checking the retry state and completing its commit, refusing a live owner, and exclude lock artifacts from commits. Add a live-lock retry regression test."
+    },
+    {
+      "id": "STD-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 904,
+      "summary": "New design-reservation flag refusal paths have no asserting tests.",
+      "evidence": "ENG-1 requires tests for added behavior and important failure boundaries. The new guard refuses --design-fix for a non-review checkpoint, a target other than fix, or a pending run without a worktree. The only --design-fix invocation in tools/tests is the successful case in test_design_reservation_set_and_cleared_by_checkpoints; none asserts any refusal or that state and history remain unchanged.",
+      "fix": "Add CLI tests covering each invalid flag context and assert exit 1 with no state, history, reservation, or commit changes; obtain any required failure-path scope confirmation."
+    }
+  ]
+}
