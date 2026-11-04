@@ -9,7 +9,7 @@
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
   "status": "waiting_user",
-  "stage": "specify",
+  "stage": "plan",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -183,6 +183,13 @@
     {
       "at": "2026-11-04T00:17:54.313610Z",
       "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:20:01.146141Z",
+      "stage": "specify",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
