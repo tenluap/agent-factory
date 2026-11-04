@@ -762,6 +762,22 @@
       "duration_ms": 360000,
       "started_at": "2026-11-04T18:42:00Z",
       "ended_at": "2026-11-04T18:48:00Z"
+    },
+    {
+      "at": "2026-11-04T18:56:30.911852Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "claude-code",
+      "in_est": 79062,
+      "out_est": 4000,
+      "reported": {
+        "total_tokens": 79062,
+        "tool_uses": 10,
+        "duration_ms": 146613
+      },
+      "duration_ms": 150000,
+      "started_at": "2026-11-04T18:48:30Z",
+      "ended_at": "2026-11-04T18:51:00Z"
     }
   ],
   "issues": [
