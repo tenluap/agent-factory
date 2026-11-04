@@ -9,6 +9,7 @@ import sys
 import unittest
 from pathlib import Path
 
+import bench as bench_module
 from tests import FIXTURES, REPO_ROOT, Sandbox
 
 
@@ -380,3 +381,61 @@ def snapshot(roots):
                     digest = hashlib.sha256(Path(full).read_bytes()).hexdigest()
                     entries[full] = ("file", digest)
     return entries
+
+
+def git_bytes(path, *args):
+    return subprocess.run(
+        ["git", "-C", str(path), *args], capture_output=True, check=True
+    ).stdout
+
+
+class ProvenanceTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.repo = self.box.repo
+
+    def test_clean_checkout_has_revision_and_no_changes(self):
+        head = git_bytes(self.repo, "rev-parse", "HEAD").decode().strip()
+        record = bench_module.checkout_provenance(self.repo)
+        self.assertEqual(record["revision"], head)
+        self.assertEqual(record["changed_paths"], [])
+        self.assertIsNone(record["diff_sha256"])
+
+    def test_tracked_edit_and_untracked_file_are_both_reported(self):
+        (self.repo / "README.md").write_text("changed\n")
+        (self.repo / "new-file.txt").write_text("new\n")
+        record = bench_module.checkout_provenance(self.repo)
+        self.assertEqual(record["changed_paths"], ["README.md", "new-file.txt"])
+        expected = hashlib.sha256(git_bytes(self.repo, "diff", "HEAD", "--binary")).hexdigest()
+        self.assertEqual(record["diff_sha256"], expected)
+
+    def test_untracked_only_change_has_no_tracked_diff_digest(self):
+        (self.repo / "new-file.txt").write_text("new\n")
+        record = bench_module.checkout_provenance(self.repo)
+        self.assertEqual(record["changed_paths"], ["new-file.txt"])
+        self.assertIsNone(record["diff_sha256"])
+
+    def test_plain_directory_is_unavailable_without_raising(self):
+        plain = self.box.dir / "plain"
+        plain.mkdir()
+        record = bench_module.checkout_provenance(plain)
+        self.assertEqual(
+            record,
+            {"revision": "unavailable", "changed_paths": "unavailable", "diff_sha256": "unavailable"},
+        )
+
+    def test_tree_digest_follows_the_recorded_formula_and_detects_one_byte(self):
+        tree = self.box.dir / "tree"
+        (tree / "sub").mkdir(parents=True)
+        (tree / "b.txt").write_bytes(b"bravo")
+        (tree / "sub" / "a.txt").write_bytes(b"alpha")
+        records = "".join(
+            f"{rel}\0{hashlib.sha256(data).hexdigest()}\n"
+            for rel, data in (("b.txt", b"bravo"), ("sub/a.txt", b"alpha"))
+        )
+        # The record stream is hashed as one sha256 over sorted relative paths.
+        expected = hashlib.sha256(records.encode()).hexdigest()
+        self.assertEqual(bench_module.tree_digest(tree), expected)
+        (tree / "b.txt").write_bytes(b"Bravo")
+        self.assertNotEqual(bench_module.tree_digest(tree), expected)

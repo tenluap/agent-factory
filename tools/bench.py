@@ -2,6 +2,7 @@
 """Replay a fixture manually/headlessly, score recorded runs offline, compare scores."""
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -180,6 +181,59 @@ def launch_command(harness, prompt, *, model, out, home, skill_dir):
     add_dirs = [arg for grant in grants for arg in ("--add-dir", grant)]
     allowed = [*CLAUDE_TOOLS, f"Bash({skill}/bin/factory:*)"]
     return ["claude", "-p", prompt, *model_args, *add_dirs, "--allowedTools", *allowed]
+
+
+GIT_TIMEOUT = 10
+
+
+def git_bytes(path, *args):
+    return subprocess.run(
+        ["git", "-C", str(path), *args],
+        capture_output=True,
+        timeout=GIT_TIMEOUT,
+        check=True,
+    ).stdout
+
+
+def checkout_provenance(path):
+    """Revision and working-tree changes; a checkout git cannot report gives "unavailable"."""
+    try:
+        revision = git_bytes(path, "rev-parse", "HEAD").decode().strip()
+        tracked = git_bytes(path, "diff", "HEAD", "--name-only").decode().splitlines()
+        untracked = (
+            git_bytes(path, "ls-files", "--others", "--exclude-standard")
+            .decode()
+            .splitlines()
+        )
+        # Bytes, not text: the digest must match `git diff` output exactly.
+        diff = git_bytes(path, "diff", "HEAD", "--binary")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return {
+            "revision": "unavailable",
+            "changed_paths": "unavailable",
+            "diff_sha256": "unavailable",
+        }
+    return {
+        "revision": revision,
+        "changed_paths": sorted(set(tracked + untracked)),
+        "diff_sha256": hashlib.sha256(diff).hexdigest() if diff else None,
+    }
+
+
+def tree_digest(path):
+    """sha256 over `<relative path>\\0<sha256 of bytes>\\n` per regular file, sorted, symlinks followed."""
+    root = Path(path)
+    records = []
+    for folder, _, names in os.walk(root, followlinks=True):
+        for name in names:
+            file = Path(folder, name)
+            if file.is_file():
+                content = hashlib.sha256(file.read_bytes()).hexdigest()
+                records.append((file.relative_to(root).as_posix(), content))
+    digest = hashlib.sha256()
+    for relative, content in sorted(records):
+        digest.update(f"{relative}\0{content}\n".encode())
+    return digest.hexdigest()
 
 
 def adapter_template(harness):
