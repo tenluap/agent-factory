@@ -746,6 +746,22 @@
       "duration_ms": 230000,
       "started_at": "2026-11-04T18:37:30Z",
       "ended_at": "2026-11-04T18:41:20Z"
+    },
+    {
+      "at": "2026-11-04T18:53:26.681656Z",
+      "stage": "review",
+      "role": "reviewers",
+      "harness": "claude-code",
+      "in_est": 467844,
+      "out_est": 6000,
+      "reported": {
+        "security-full": 145264,
+        "code-standards-full": 107384,
+        "spec-conformance-full": 215196
+      },
+      "duration_ms": 360000,
+      "started_at": "2026-11-04T18:42:00Z",
+      "ended_at": "2026-11-04T18:48:00Z"
     }
   ],
   "issues": [
@@ -779,6 +795,17 @@
       "cause": "unreported",
       "detail": "reviewers ran 530s past its 300s budget without a self-report",
       "duration_ms": 530000,
+      "commit": "9508de4",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-04T18:53:26.682046Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "reviewers",
+      "cause": "unreported",
+      "detail": "reviewers ran 360s past its 300s budget without a self-report",
+      "duration_ms": 360000,
       "commit": "9508de4",
       "partial_return": false
     }
