@@ -2,21 +2,21 @@
 
 **Branch**: `020-post-pr-feedback` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; settled decisions Q1-Q19 (grill, clarify, grill-with-docs); terms in `CONTEXT.md`; ADR 0014.
+**Input**: Feature specification from `specs/020-post-pr-feedback/spec.md`; decisions Q1-Q19; `CONTEXT.md`; ADR 0014.
 
 ## Summary
 
-Add `factory feedback [<branch>] [--repo <path>]` and a `/factory feedback` route: a manual, read-only feedback refresh of the repository's archived runs with a `pr_url`, through one injectable `gh` runner. New PR outcomes go into a per-run outcome file `${FACTORY_HOME}/outcomes/<repo-name>-<branch>.json`; actionable ones become feedback entries for their source run. Problems become classified refresh gaps (`gaps`); exit 1. Phase 0/1 outputs live here (016/017 precedent).
+Add `factory feedback [<branch>] [--repo <path>]` and a `/factory feedback` route: a manual, read-only feedback refresh of the repository's archived runs with a `pr_url`, through one injectable `gh` runner. New PR outcomes go into a per-run outcome file `${FACTORY_HOME}/outcomes/<repo-name>-<branch>.json`; actionable ones become feedback entries for their source run. Problems become classified refresh gaps (`gaps`); exit 1.
 
 ## Technical Context
 
 **Language/Version**: Python 3 standard library; Markdown skill prose.
 
-**Primary Dependencies**: none new; `gh` (already used by the PR step) as an external process.
+**Primary Dependencies**: none new; `gh` (used by the PR step).
 
 **Storage**: factory-home JSON: `outcomes/` (new), `improvements/` (new `feedback` kind); archive read only.
 
-**Testing**: `python3 -m unittest discover -s tools` (existing runner, `tools/tests/`).
+**Testing**: existing `unittest` runner, `tools/tests/`.
 
 **Target Platform**: macOS/Linux shells under the five harnesses.
 
@@ -24,17 +24,17 @@ Add `factory feedback [<branch>] [--repo <path>]` and a `/factory feedback` rout
 
 **Performance Goals**: two sequential `gh` reads per non-terminal run.
 
-**Constraints**: read-only toward GitHub and the archive; no automatic retries; harness-neutral core.
+**Constraints**: read-only toward GitHub and archive; harness-neutral core.
 
-**Scale/Scope**: tens of archived runs per repository.
+**Scale/Scope**: tens of archived runs.
 
 ## Constitution Check
 
-- **I. Design First**: PASS. `DESIGN.md` gains the feedback refresh in the first task, before core edits.
-- **II. Harness-Neutral Core**: PASS. The route uses `SHELL` only; `gh` is called by the CLI, as `factory_sha` calls `git`.
+- **I. Design First**: PASS. `DESIGN.md` updated first.
+- **II. Harness-Neutral Core**: PASS. The route uses `SHELL`; the CLI calls `gh`.
 - **III. Generated Dist**: PASS. No `render.py` change; the build re-renders all harnesses.
 - **IV. Stateless Agents**: PASS. No agent spawned.
-- **V. Simplicity and Reuse**: PASS. Reuses `_write_atomic`, `backlog_name`, `factory_sha`, the lock wait, `main_repo`/`factory_home`, `parse_iso`/`iso`; new code is reasoned below.
+- **V. Simplicity and Reuse**: PASS. Reuses `_write_atomic`, `backlog_name`, `factory_sha`, the lock wait, `main_repo`, `parse_iso`/`iso`.
 
 Post-design re-check: PASS, no violations.
 
@@ -53,7 +53,7 @@ tools/tests/test_feedback.py             # NEW
 tools/tests/test_improvements.py         # feedback entry tests
 ```
 
-**Structure Decision**: a new `feedback.py`, not `commands.py` (1500+ lines of run-state commands) or `improvements.py` (backlog only, still the single owner of backlog writes; ENG-6, ENG-13).
+**Structure Decision**: new `feedback.py`; `commands.py` is run state, `improvements.py` stays sole backlog writer (ENG-6, ENG-13).
 
 ### New files, abstractions, dependencies
 
@@ -157,8 +157,8 @@ Exit 0 without gaps (zero runs included), 1 with any gap or a refused `<branch>`
 
 ### Quality constraints
 
-- Security: untrusted GitHub text is validated, slugged for keys and file names, one-lined for feature text, never executed; `gh` gets argument lists. No credentials stored or logged.
-- Errors and limits: 60 s timeout per `gh` call; a failed run never stops the others. No retry (FR-013 over ENG-24): the user re-runs.
+- Security: untrusted GitHub text is validated, slugged, one-lined, never executed; no credentials stored.
+- Errors and limits: 60 s `gh` timeout; no retry (FR-013 over ENG-24).
 - Compatibility: Run exports and Retro entries unchanged; retro `add` filters `kind: retro`.
 - Observability: the JSON report is the record; no logs.
 - Known limitations, recorded in `DESIGN.md`: a reopened PR is missed after `state:closed` (ADR 0014); `ERROR` status contexts are ignored (Q4); moved checkouts' runs are not found.
@@ -174,12 +174,12 @@ Injection: a fake runner passed as `gh`; bad files, foreign entries and held loc
 - Exempt: final verification task - runs the build and test commands, changes no file.
 - Overridden: none
 
-Confirmation: pending. The plan-Q1 acceptance (2026-11-04) is stale: clarify Q11, Q13 and Q14 changed the declared scope. Fresh acceptance is requested as Q20.
+Confirmed: 2026-11-04 - Q20 accepted - seams: `factory_cli.feedback.refresh`, `factory_cli.improvements` feedback entries, `bin/factory feedback` CLI; failure paths: refresh -> `gh` missing, unauthenticated, no access, malformed outcome file, foreign or unreadable backlog file (inaccessible); PR not found, unparseable `pr_url` (missing); transient error, malformed JSON or shape from either read incl. review shape and `CHANGES_REQUESTED` without integer `id`, outcomes lock held, backlog lock held, patched `_write_atomic` outcome write failing after the backlog write (transient); unknown `<branch>`, `<branch>` without `pr_url` (`ValueError`); unreadable archive state (skipped); improvements -> unreadable or foreign entry file, backlog lock held (refused); CLI -> unknown `<branch>`, `<branch>` without `pr_url` (exit 1), `--repo` not git (exit 2), `gh` not on `PATH` (inaccessible, exit 1), server error (transient, exit 1); exempt: `DESIGN.md`, `CONTEXT.md`, `SKILL.md`, `state.md`, final verification task; overridden: none.
 
 ## Verification
 
-- `python3 -m unittest discover -s tools` and the build command (all five harnesses render, `dist/` untracked, `bash -n install.sh`).
-- Manual read-only smoke: `factory feedback <branch>` twice on a real archived run; the second reports nothing new and changes no files.
+- The test and build commands.
+- Manual smoke: `factory feedback <branch>` twice on a real run; the second reports nothing new.
 
 ## Complexity Tracking
 
