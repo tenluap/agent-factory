@@ -305,6 +305,14 @@
       "auto": false,
       "at": "2026-11-04T11:00:43.691107Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q2-test-scope",
+      "answer": "A: accepted updated four seams and failure paths as declared in re-derived plan.md \"Test seams\" (supersedes Q1-test-scope)",
+      "auto": false,
+      "at": "2026-11-04T11:09:37.397858Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
