@@ -13,6 +13,8 @@
 ### Session 2026-11-04
 
 - Q: Narrow T002/T007 to the confirmed test scope? → A: Yes. `validate_state` rejects only declared marker paths; `decisions-add` enforces the `analyze`-only marked `gate-override`; the `pr` gate is tested through `gate_violation` only.
+- Q (grill): Missing or stale test seam at implement or fix under cruise? → A: Halt and notify (ENG-4).
+- Q (grill): Which stage records setup offers? → A: `grill` for `specify init`, detected commands and intake; `review` for the `impeccable` install. The stage list is unchanged.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -131,7 +133,7 @@ Cruise removes decisions, not safety stops. A run that cannot make progress halt
 - Cruise turned off by resume (`--no-cruise`): later protected questions, decision halts and setup offers go back to today's behaviour; decisions already recorded with the cruise-override marker stay in the veto list. `mode.fast` keeps its current value.
 - Lite-to-full escalation under cruise happens as today; the added clarify and grill-with-docs rounds are auto-answered.
 - A design gate exception auto-accepted under cruise: it is recorded with the cruise-override marker in the run's decisions and in the design context like any accepted exception; the approver gate still applies the design approval rule.
-- Hard stops that are not decisions stay stops under cruise: a missing harness capability, an unavailable model selection, a missing required skill (including `ponytail` or `tdd` at implement), an unsupported UI framework at plan, a state-writer failure, and an unknown flag.
+- Hard stops that are not decisions stay stops under cruise: a missing harness capability, an unavailable model selection, a missing required skill (including `ponytail` or `tdd` at implement), an unsupported UI framework at plan, a missing or stale test seam at implement or fix (ENG-4), a state-writer failure, and an unknown flag.
 - Brainstorm path (exploration wording): the orchestrator answers its own brainstorm frontier and confirms its recommended direction, as for grilling; the optional visual companion is not offered.
 - A setup command accepted under cruise fails (for example `specify init` or the `impeccable` install): it is handled as a failure, halting and notifying, not retried with another choice.
 
@@ -158,7 +160,7 @@ Cruise removes decisions, not safety stops. A run that cannot make progress halt
 **Halts and setup offers**
 
 - **FR-011**: Under cruise, analyze-loop exhaustion MUST resolve to "proceed to implement" with no wait, recorded with the cruise-override marker, and the unresolved findings MUST be shown at the approver gate.
-- **FR-012**: Under cruise, failure halts MUST still halt and notify: a red build after the retry, a second failure of the same agent, and the stall cap. Hard stops listed in Edge Cases MUST still stop.
+- **FR-012**: Under cruise, failure halts MUST still halt and notify: a red build after the retry, a second failure of the same agent, the stall cap, and a missing or stale test seam at implement or fix. Hard stops listed in Edge Cases MUST still stop.
 - **FR-013**: Under cruise, each one-off setup offer MUST be accepted with its recommended default and recorded with the cruise-override marker: `specify init` plus a constitution drafted from the repository, confirmation of detected build and test commands, the global `impeccable` install, and the ambiguous-intake question (answered delivery).
 - **FR-014**: `--stop-at` MUST keep pausing the run under cruise.
 
@@ -177,15 +179,15 @@ Cruise removes decisions, not safety stops. A run that cannot make progress halt
 
 **Documentation and build**
 
-- **FR-022**: `DESIGN.md` MUST record cruise mode before `core/` and `adapters/` change; `CONTEXT.md` MUST define cruise mode and the cruise override; the `/factory` argument hint MUST list the new flags.
+- **FR-022**: `DESIGN.md` MUST record cruise mode before `core/` and `adapters/` change; `CONTEXT.md` MUST define cruise mode, cruise override, veto list and no-prompt launch option, and ADR 0014 records the decision; the `/factory` argument hint MUST list the new flags.
 - **FR-023**: Every harness MUST still render cleanly, and existing tests MUST stay green.
 
 ### Key Entities
 
 - **Cruise mode** (`mode.cruise`): the run-level switch. On means no user input until the approver gate except real waits. Implies fast mode.
-- **Cruise override**: a decision cruise made that a normal run would have put to the user: a protected or `pending_clarify` answer, an auto-resolved decision halt, or an accepted setup offer. It is recorded in `decisions` with a marker that tells it apart from an ordinary auto-accepted answer (exact shape is a plan decision).
+- **Cruise override**: a decision a normal run would have put to the user (protected or `pending_clarify` answer, decision halt, setup offer), recorded in `decisions` with a marker distinct from ordinary auto-accept.
 - **Veto list**: the approver screen's list of decisions made on the user's behalf, grouped under cruise into cruise overrides and ordinary auto-accepted answers.
-- **No-prompt launch option**: a harness's own way to start a session that does not ask for tool permissions, documented per adapter and never set by the factory.
+- **No-prompt launch option**: a harness's own permission-free session start, documented per adapter, never set by the factory.
 
 ## Success Criteria *(mandatory)*
 
@@ -200,9 +202,7 @@ Cruise removes decisions, not safety stops. A run that cannot make progress halt
 
 ## Assumptions
 
-- The cruise-override marker's exact shape (a field on answers and decisions, or a new decision `kind`) is settled at plan, as long as it is additive and written through the state writer.
+- The cruise-override marker is additive and written through the state writer; its shape is a plan decision.
 - Turning cruise off on resume leaves `mode.fast` at its current value; the user can pass `--no-fast` with `--no-cruise` to turn both off.
 - Harness permission prompts are outside the factory's control; cruise only discloses them. Changing a harness's permission mode programmatically, auto-merging and auto-approving the PR gate are out of scope.
-- The constitution drafted under cruise is derived from the repository's files and listed in the veto list.
-- Brainstorming under cruise follows the general rule (every question answered with its recommendation); the visual companion needs its own consent and is skipped.
 - Validation uses the existing build and test commands; agent-driven flow checks go in `DESIGN.md`'s validation plan.

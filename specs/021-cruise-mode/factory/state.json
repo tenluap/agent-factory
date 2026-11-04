@@ -298,6 +298,18 @@
       "duration_ms": 116000,
       "started_at": "2026-11-04T00:59:21Z",
       "ended_at": "2026-11-04T01:01:17Z"
+    },
+    {
+      "at": "2026-11-04T01:03:50.352464Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "claude-code",
+      "in_est": 16000,
+      "out_est": 4000,
+      "reported": null,
+      "duration_ms": 131000,
+      "started_at": "2026-11-04T01:01:26Z",
+      "ended_at": "2026-11-04T01:03:37Z"
     }
   ],
   "issues": [],

@@ -40,12 +40,12 @@ Add `mode.cruise` and a `cruise_override` marker to run state, both additive and
 - **Conflict exit code**: 5 (usage), like `prune --dry-run --delete`; the message names both flags.
 - **Mode validation**: `mode.cruise` is boolean when present; `cruise: true` requires `fast: true`.
 - **Veto list**: `veto_list` is unchanged (cruise overrides already carry `auto: true`); entries keep `cruise_override`, and the approver prose groups by it. No new digest field.
-- **Non-question overrides** use fixed question ids with `decisions-add <stage> <id> '<answer>' --cruise-override`: `setup-speckit`, `setup-commands`, `setup-impeccable`, `intake`, and `analyze-exhaustion` (with `--kind gate-override`).
+- **Non-question overrides** use fixed question ids with `decisions-add <stage> <id> '<answer>' --cruise-override`: at stage `grill`: `setup-speckit`, `setup-commands`, `intake`; at `review`: `setup-impeccable`; at `analyze`: `analyze-exhaustion` (with `--kind gate-override`). `STAGES` is unchanged (grill Q2).
 - **No-prompt launch**: one bullet `no_prompt_launch` per `adapters/*/harness.md`, verified against each harness's docs (`WEB_FETCH`) when written; an unverifiable option is written as "none documented". Known candidates: Claude Code `--permission-mode bypassPermissions`; Codex `--dangerously-bypass-approvals-and-sandbox`; Copilot CLI `--allow-all-tools`; OpenCode an `allow` permission config; ZCode unknown.
 
 ## Constitution Check
 
-- **I. Design First**: PASS. Task 1 records cruise in `DESIGN.md` ("Modes", "Interactive steps", "Approver", "Validation plan") and `CONTEXT.md` before core/adapter edits.
+- **I. Design First**: PASS. Task 1 records cruise in `DESIGN.md` ("Modes", "Interactive steps", "Approver", "Validation plan") before core/adapter edits; `CONTEXT.md` terms and ADR 0014 were written at grill-with-docs.
 - **II. Harness-Neutral Core**: PASS. Core names "the adapter's no-prompt launch option"; concrete options live only in `adapters/*/harness.md`.
 - **III. Generated Dist**: PASS. No `render.py` change; build renders all five harnesses.
 - **IV. Stateless Agents**: PASS. Mode and markers live in `state.json`; roles read them from state.
@@ -79,7 +79,8 @@ core/skills/factory/references/engineering.md        # cruise-override acceptanc
 core/skills/factory/references/design-code-mapping.md # cruise-override exception acceptance
 core/roles/spec-builder.md, core/roles/spec-conformance.md # Confirmed line marks cruise override
 adapters/*/harness.md                                # no_prompt_launch bullet
-DESIGN.md, CONTEXT.md
+DESIGN.md
+CONTEXT.md, docs/adr/0014-cruise-mode-overrides-protections-but-never-publishes.md  # written at grill-with-docs
 tools/tests/test_cruise.py                           # NEW
 ```
 
@@ -87,6 +88,7 @@ tools/tests/test_cruise.py                           # NEW
 
 ### New files, abstractions, dependencies
 
+- `docs/adr/0014-cruise-mode-overrides-protections-but-never-publishes.md` - file - records the protection-override and publish-boundary trade-off (grill Q4).
 - `tools/tests/test_cruise.py` - file - groups this feature's CLI seams in one suite, as `test_models.py` does for 017.
 - `state.resolve_mode(base, flags)` - abstraction - single source of the last-wins and conflict rules for both new runs and resume (DRY, FR-001..FR-003).
 - `factory mode [flags...]` - abstraction - read-only CLI entry so the orchestrator checks flags through the same rule before any state exists.
@@ -95,11 +97,11 @@ tools/tests/test_cruise.py                           # NEW
 ## Design (orchestrator prose)
 
 - **Route (step 0)**: parse `--cruise/--no-cruise`; call `factory mode <mode flags in order>`; exit 5 names the conflict, create nothing. Ambiguous intake under cruise: delivery, `decisions-add grill intake 'delivery' --cruise-override`.
-- **Preflight (step 1)**: under cruise, once per start/resume, print a plain message (no `NOTIFY`, no wait) that harness prompts may still appear unless launched with the adapter's `no_prompt_launch`. Setup offers (`.specify/` or speckit skill missing; detected commands; later the `impeccable` install) run their recommended default without a question and record their fixed id with `--cruise-override`. A failing setup command halts.
+- **Preflight (step 1)**: under cruise, once per start/resume, print a plain message (no `NOTIFY`, no wait) that harness prompts may still appear unless launched with the adapter's `no_prompt_launch`. Setup offers (`.specify/` or speckit skill missing; detected commands; later the `impeccable` install) run their recommended default without a question and record their fixed id with `--cruise-override` at the stage named in "Non-question overrides". A failing setup command halts.
 - **Brainstorm/grill (steps 2-3)**: under cruise the orchestrator answers its own frontier with recommendations (`answer <qid> '<rec>' --auto --stage grill|brainstorm`), confirms its recommended chain and direction, skips the visual companion, writes `brief.md`, continues.
 - **Relay (protocol.md step 2)**: under cruise fill every unanswered question that has a usable recommendation: `requires_user` or `pending_clarify` origin with `answer --cruise-override`, the rest with `--auto`. A question with no usable recommendation is shown and waited on (`wait-open`, `NOTIFY`). The batch notice is a log line only. Cruise turned on by resume fills the open round the same way, preserving existing answers.
 - **Analyze exhaustion (step 5)**: under cruise `decisions-add analyze analyze-exhaustion 'proceed to implement' --kind gate-override --cruise-override`, checkpoint into implement, carry `analyze.result.report` to the approver.
-- **Halts and stop points**: unchanged: red build, second agent failure, stall cap, hard stops, `--stop-at` still stop and notify.
+- **Halts and stop points**: unchanged: red build, second agent failure, stall cap, hard stops, a missing or stale test seam at implement or fix (ENG-4, grill Q1), `--stop-at` still stop and notify.
 - **Approver (step 8)**: under cruise show the veto list in two groups: `cruise_override: true` entries (each with stage, question, answer), then the rest; an empty group says "none". When `analyze-exhaustion` exists, show the unresolved report. The `ASK` is never auto-answered; `approved` is recorded only from the user's Approve. Request changes runs the fix loop under cruise and returns here.
 - **Notify**: under cruise `NOTIFY` only for real waits (approver, failure halts, stop points, a question without a recommendation).
 - **Protected acceptance**: a cruise-override answer to the seam confirmation or a design exception counts as recorded acceptance of that exact scope; the Confirmed line reads `Confirmed: <date> - <Qid> accepted (cruise override) - seams: ...; failure paths: ...`. Scope changes still invalidate it.
