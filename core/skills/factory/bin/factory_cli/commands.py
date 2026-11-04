@@ -799,16 +799,17 @@ def settled_answers(relay, fallback_stage, now):
     for one_round in rounds_of(relay):
         for qid, answer in (one_round.get("answers") or {}).items():
             if isinstance(answer, dict):
-                migrated.append(
-                    {
-                        "stage": fallback_stage,
-                        "question": qid,
-                        "answer": answer.get("answer"),
-                        "auto": bool(answer.get("auto")),
-                        "at": now,
-                        "kind": "answer",
-                    }
-                )
+                record = {
+                    "stage": fallback_stage,
+                    "question": qid,
+                    "answer": answer.get("answer"),
+                    "auto": bool(answer.get("auto")),
+                    "at": now,
+                    "kind": "answer",
+                }
+                if answer.get("cruise_override") is True:
+                    record["cruise_override"] = True
+                migrated.append(record)
             else:  # legacy version 2 string answer
                 migrated.append(
                     {
@@ -1274,9 +1275,12 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
-def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
+def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
     path, loaded, source, worktree = resolve_target(repo, cwd)
+    if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
+        die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
     now = now_iso()
+    auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
     def mutate(s):
         relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
@@ -1288,6 +1292,8 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None):
         last["questions"] = questions
         answers = dict(last.get("answers") or {})
         answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}
+        if cruise_override:
+            answers[qid]["cruise_override"] = True
         last["answers"] = answers
         s["relay"] = {
             "stage": stage or relay.get("stage") or s.get("stage"),

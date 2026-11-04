@@ -355,7 +355,10 @@ def main(argv):
             )
         elif command == "answer":
             positional, flags = parse_flags(
-                rest, command, value_flags=("--repo", "--stage"), bool_flags=("--auto",)
+                rest,
+                command,
+                value_flags=("--repo", "--stage"),
+                bool_flags=("--auto", "--cruise-override"),
             )
             if len(positional) != 2:
                 die_usage("answer needs <qid> <answer>")
@@ -367,6 +370,7 @@ def main(argv):
                 positional[1],
                 auto=bool(flags.get("--auto")),
                 stage=flags.get("--stage"),
+                cruise_override=bool(flags.get("--cruise-override")),
             )
         elif command == "set-status":
             positional, flags = parse_flags(

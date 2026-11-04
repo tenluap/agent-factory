@@ -306,5 +306,89 @@ class ResumeModeTests(unittest.TestCase):
         self.assertEqual(self.snapshot(), before)
 
 
+class AnswerCruiseOverrideTests(unittest.TestCase):
+    """Seam: `bin/factory answer <qid> <answer> --cruise-override` (FR-008, FR-009)."""
+
+    BRANCH = "021-answer-run"
+
+    def relay_state(self, cruise):
+        loaded = fixture("state-v5.json")
+        loaded.update(status="running", stage="grill")
+        loaded["mode"] = {"chain": "full", "fast": True, "cruise": cruise}
+        loaded["relay"] = {
+            "stage": "grill",
+            "rounds": [
+                {
+                    "questions": [
+                        {"id": "Q1", "text": "Pick", "requires_user": True, "recommended": "A"}
+                    ],
+                    "answers": {},
+                }
+            ],
+        }
+        return loaded
+
+    def setUp(self):
+        self.box = Sandbox()
+
+    def tearDown(self):
+        self.box.close()
+
+    def stored(self, wt):
+        return json.loads((wt / "specs" / self.BRANCH / "factory" / "state.json").read_text())
+
+    def test_marked_answer_is_stored_with_auto_and_marker(self):
+        wt = self.box.worktree_run(self.BRANCH, self.relay_state(cruise=True))
+        out = self.box.cli("answer", "Q1", "A", "--cruise-override", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        answer = self.stored(wt)["relay"]["rounds"][-1]["answers"]["Q1"]
+        self.assertEqual(answer["answer"], "A")
+        self.assertIs(answer["auto"], True)
+        self.assertIs(answer["cruise_override"], True)
+
+    def test_ordinary_auto_answer_carries_no_marker(self):
+        wt = self.box.worktree_run(self.BRANCH, self.relay_state(cruise=True))
+        out = self.box.cli("answer", "Q1", "A", "--auto", cwd=wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        answer = self.stored(wt)["relay"]["rounds"][-1]["answers"]["Q1"]
+        self.assertNotIn("cruise_override", answer)
+
+    def test_marker_on_a_run_without_cruise_is_refused_and_writes_nothing(self):
+        for cruise in (False, None):
+            loaded = self.relay_state(cruise=False)
+            if cruise is None:
+                loaded["mode"].pop("cruise")
+            branch = f"{self.BRANCH}-{cruise}"
+            wt = self.box.worktree_run(branch, loaded)
+            path = wt / "specs" / branch / "factory" / "state.json"
+            before = path.read_bytes()
+            head = self.box.git("rev-parse", "HEAD", cwd=wt).strip()
+            out = self.box.cli("answer", "Q1", "A", "--cruise-override", cwd=wt)
+            self.assertEqual(out.returncode, 1, (cruise, out.stderr))
+            self.assertIn("cruise", out.stderr)
+            self.assertEqual(path.read_bytes(), before)
+            self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=wt).strip(), head)
+
+    def test_settled_answers_carry_the_marker_into_decisions(self):
+        from factory_cli import commands
+
+        relay = {
+            "rounds": [
+                {
+                    "questions": [{"id": "Q1"}, {"id": "Q2"}],
+                    "answers": {
+                        "Q1": {"answer": "A", "at": "t", "auto": True, "cruise_override": True},
+                        "Q2": {"answer": "B", "at": "t", "auto": True},
+                    },
+                }
+            ]
+        }
+        migrated = commands.settled_answers(relay, "grill", "2026-11-04T01:00:00Z")
+        by_question = {m["question"]: m for m in migrated}
+        self.assertIs(by_question["Q1"]["cruise_override"], True)
+        self.assertEqual(by_question["Q1"]["kind"], "answer")
+        self.assertNotIn("cruise_override", by_question["Q2"])
+
+
 if __name__ == "__main__":
     unittest.main()

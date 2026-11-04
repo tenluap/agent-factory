@@ -44,7 +44,7 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 4: User Stories 1, 3, 5 - Recording cruise overrides (P1)
 
-- [ ] T005 [US1][US3] Add `--cruise-override` to `answer` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_answer` in `core/skills/factory/bin/factory_cli/commands.py`; `settled_answers` carries the marker into `decisions`; tests in `tools/tests/test_cruise.py`.
+- [X] T005 [US1][US3] Add `--cruise-override` to `answer` in `core/skills/factory/bin/factory_cli/cli.py` and `cmd_answer` in `core/skills/factory/bin/factory_cli/commands.py`; `settled_answers` carries the marker into `decisions`; tests in `tools/tests/test_cruise.py`.
   - Seam: `bin/factory answer <qid> <answer> --cruise-override`. Failure paths: run without `mode.cruise: true` refused with exit 1, state unchanged.
   - Red: tests first: on a cruise run with an open round holding a `requires_user` question, `answer Q1 A --cruise-override` stores `{auto: true, cruise_override: true}`; `checkpoint` migrates it into `decisions` with the marker kept and kind `answer`; `show` lists it in the veto list with the marker; an ordinary `--auto` answer carries no marker; on a run with `mode.cruise` false or absent the command exits 1, stderr names cruise mode, `state.json` bytes and HEAD unchanged. Run; fails (unknown flag).
   - Implement: guard reads the target run's `mode.cruise` before `write_run`; the marker implies `auto`; `settled_answers` copies `cruise_override` when true.
