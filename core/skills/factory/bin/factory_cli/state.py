@@ -85,6 +85,43 @@ class StateError(Exception):
     """A refused write, with the reason."""
 
 
+class ModeError(ValueError):
+    """Mode flags that cannot be combined, or an unknown mode flag."""
+
+
+DEFAULT_MODE = {"chain": "lite", "fast": True, "cruise": False}
+
+
+def resolve_mode(base, flags):
+    """Apply mode flags to `base` and return {chain, fast, cruise} (spec 021).
+
+    Pairs are last-wins in argv order. Cruise on forces fast on, so `--no-fast`
+    anywhere in the flags conflicts with cruise on (FR-003), whether cruise came
+    from a flag or from the stored base. `--no-cruise` keeps fast as it was.
+    """
+    chain = base.get("chain", "lite")
+    fast = bool(base.get("fast", True))
+    cruise = base.get("cruise") is True
+    no_fast = False
+    for flag in flags:
+        if flag in ("--lite", "--full"):
+            chain = flag[2:]
+        elif flag in ("--fast", "--no-fast"):
+            fast = flag == "--fast"
+            no_fast = no_fast or flag == "--no-fast"
+        elif flag in ("--cruise", "--no-cruise"):
+            cruise = flag == "--cruise"
+        else:
+            raise ModeError(f"unknown mode flag '{flag}'")
+    if cruise:
+        if no_fast:
+            raise ModeError(
+                "--cruise conflicts with --no-fast: cruise mode needs fast mode"
+            )
+        fast = True
+    return {"chain": chain, "fast": fast, "cruise": cruise}
+
+
 def parse_iso(value):
     """Parse an ISO-8601 UTC timestamp; None when missing or malformed."""
     if not isinstance(value, str) or not value:

@@ -19,6 +19,8 @@ read:
   show <run> [--repo <path>]        resume digest for one run, JSON
   validate <run> | validate --all   validation violations; exit 1 when any
   resume <run>                      record the resumed entry, print the resume digest
+  mode [--lite|--full] [--fast|--no-fast] [--cruise|--no-cruise]
+                                    resolve mode flags into mode JSON; writes nothing
   budget <role>                     the role's resolved seconds and deadline, JSON
   models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
@@ -388,6 +390,8 @@ def main(argv):
             if flags.get("--dry-run") and flags.get("--delete"):
                 die_usage("prune takes --dry-run or --delete, not both")
             result = commands.cmd_prune(delete=bool(flags.get("--delete")))
+        elif command == "mode":
+            result = commands.cmd_mode(rest)
         elif command == "resume":
             positional, flags = parse_flags(rest, command)
             if len(positional) != 1:

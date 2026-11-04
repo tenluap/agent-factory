@@ -1531,6 +1531,14 @@ def cmd_rebind(repo, cwd, name, worktree):
     }
 
 
+def cmd_mode(flags):
+    """Resolve mode flags into the mode JSON; read-only (spec 021 FR-001..FR-003)."""
+    try:
+        return state.resolve_mode(state.DEFAULT_MODE, flags)
+    except state.ModeError as e:
+        die(5, str(e))
+
+
 def cmd_resume(repo, name):
     """Record the `resumed` history entry through the writer and return the
     resume digest: the recorded stage restarts from its beginning (FR-003)."""

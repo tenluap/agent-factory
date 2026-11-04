@@ -15,7 +15,7 @@ CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" /
 sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli import state  # noqa: E402
-from tests import fixture  # noqa: E402
+from tests import Sandbox, fixture  # noqa: E402
 
 
 def cruise_base():
@@ -162,6 +162,67 @@ class CruiseStateValidationTests(unittest.TestCase):
             )
 
         self.assertIn("decisions[1].cruise_override", self.locations(mutate, cruise_base()))
+
+
+class ModeCommandTests(unittest.TestCase):
+    """Seam: `bin/factory mode [flags...]` (FR-001..FR-003). Read-only."""
+
+    def setUp(self):
+        self.sb = Sandbox()
+
+    def tearDown(self):
+        self.sb.close()
+
+    def mode(self, *flags):
+        return self.sb.cli("mode", *flags)
+
+    def test_no_flags_prints_the_default_mode(self):
+        out = self.mode()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout), {"chain": "lite", "fast": True, "cruise": False})
+
+    def test_cruise_gives_fast_and_cruise(self):
+        out = self.mode("--cruise")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout), {"chain": "lite", "fast": True, "cruise": True})
+
+    def test_pairs_resolve_last_wins(self):
+        cases = {
+            ("--no-fast", "--cruise", "--no-cruise"): {"chain": "lite", "fast": False, "cruise": False},
+            ("--cruise", "--no-cruise"): {"chain": "lite", "fast": True, "cruise": False},
+            ("--no-cruise", "--cruise"): {"chain": "lite", "fast": True, "cruise": True},
+            ("--no-cruise",): {"chain": "lite", "fast": True, "cruise": False},
+        }
+        for flags, expected in cases.items():
+            out = self.mode(*flags)
+            self.assertEqual(out.returncode, 0, (flags, out.stderr))
+            self.assertEqual(json.loads(out.stdout), expected, flags)
+
+    def test_chain_flags_set_the_chain(self):
+        self.assertEqual(json.loads(self.mode("--full").stdout)["chain"], "full")
+        self.assertEqual(json.loads(self.mode("--full", "--lite").stdout)["chain"], "lite")
+
+    def test_cruise_with_no_fast_conflicts_in_either_order(self):
+        for flags in (
+            ("--cruise", "--no-fast"),
+            ("--no-fast", "--cruise"),
+            ("--no-fast", "--fast", "--cruise"),
+        ):
+            out = self.mode(*flags)
+            self.assertEqual(out.returncode, 5, flags)
+            self.assertIn("--cruise", out.stderr, flags)
+            self.assertIn("--no-fast", out.stderr, flags)
+
+    def test_unknown_flag_exits_five(self):
+        self.assertEqual(self.mode("--bogus").returncode, 5)
+
+    def test_mode_writes_nothing(self):
+        head = self.sb.git("rev-parse", "HEAD").strip()
+        pending = sorted((self.sb.home / "pending").iterdir())
+        self.mode("--cruise")
+        self.mode("--cruise", "--no-fast")
+        self.assertEqual(self.sb.git("rev-parse", "HEAD").strip(), head)
+        self.assertEqual(sorted((self.sb.home / "pending").iterdir()), pending)
 
 
 if __name__ == "__main__":
