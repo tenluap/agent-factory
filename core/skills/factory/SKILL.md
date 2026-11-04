@@ -155,7 +155,7 @@ Active design work publishes only after `design-code-mapping.md`'s publication r
 
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include the handoff facts `design-code-mapping.md` §6 accounts.
-3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
+3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file> --assignee @me`, ready for review.
 4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`.
 5. **Retro** (entry marker checked only here, not during an in-turn retry):
    1. `SHELL: python3 <F>/bin/factory show <branch>`. Read the run's `state.json` at the returned `state_path`; if its `ledger` already has an entry with stage `retro`, skip to item 4.
