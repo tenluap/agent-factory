@@ -1,0 +1,87 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 3,
+  "summary": "The fix commit 9508de4 maps its Red lines to round-2 blocking findings and plan.md Test seams matches plan-Q3 verbatim, but after a post-commit cleanup failure `resume <branch>` exits ambiguous (exit 3), two declared symlink and non-directory sub-cases have no test, and spec.md is over budget.",
+  "findings": [
+    {
+      "id": "R3-SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 254,
+      "summary": "After the R2-Q2 post-commit cleanup failure, `resume <branch>` (the recovery the decision prescribes) exits 3 'matches several runs', because the kept pending file repo-adopt-<branch>.json matches the same name as the worktree run.",
+      "evidence": "R2-Q2 / FR-013, contracts/cli.md:28, research.md:52 and SKILL.md:55 keep the pending files and tell the user to run `resume <branch>`. Reproduced in a scratch Sandbox: `adopt 007-x` exits 1 with 'committed 1d8fcac; pending cleanup failed: resume 007-x, do not retry' and repo-adopt-007-x.json survives; `resume 007-x` exits 3 with \"'007-x' matches several runs: .../repo-factory/007-x/specs/007-x/factory/state.json, .../home/pending/repo-adopt-007-x.json\". Cause: find_matches (commands.py:243-256) matches a pending run via name_matches at line 254, and deduped (221-235) keys pending and worktree copies apart. Dry-run and retry then refuse with 'already has factory/state.json; resume it', so the user can only recover by deleting the pending file by hand. No test runs resume after the cleanup failure.",
+      "fix": "In find_matches, drop a pending match whose recorded branch equals the branch of a worktree match in the same repo, so `resume <branch>` resolves to the worktree run. Add a regression test: after the cleanup failure, `resume 007-x` exits 0 and names the worktree run. Keep the protected message wording unchanged."
+    },
+    {
+      "id": "R3-SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_adopt.py",
+      "line": 944,
+      "summary": "The declared dry-run failure path 'a committed symlink or non-directory <spec_dir>/factory' has no test for the non-directory case.",
+      "evidence": "plan.md:93 and plan-Q3.md seam 1 declare it. The non-directory branch exists at adopt.py:170-172 (`entry[1] != \"tree\"`), but no test commits a regular file at <spec_dir>/factory (ENG-1, ENG-4).",
+      "fix": "Add a SymlinkWriteTests case committing a regular file at specs/evil/factory; assert dry-run and write exit 1 with a 'not a directory' refusal, nothing changed. Record its Red proof."
+    },
+    {
+      "id": "R3-SPEC-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_adopt.py",
+      "line": 998,
+      "summary": "The declared write failure path 'a symlink created inside the checkout (factory dir, state.json, brief.md, profile.md)' is tested only for state.json and brief.md; the factory-directory and profile.md targets have no test.",
+      "evidence": "plan.md:94 and plan-Q3.md seam 2 list the four targets. Tests exist at test_adopt.py:998 (state.json) and :1015 (brief.md) only. The guards at adopt.py:365 and :374 have no test that would fail without them (ENG-1, ENG-4).",
+      "fix": "Parametrise the post-checkout symlink test over the four targets. Each asserts exit 1, the outside target unchanged, no worktree, and the pending files kept."
+    },
+    {
+      "id": "R3-SPEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "tools/tests/test_adopt.py",
+      "line": 1057,
+      "summary": "The post-commit cleanup test skips under root, a skip no plan declares.",
+      "evidence": "test_adopt.py:1057-1058 skips when euid is 0. ENG-5 allows a skip only where the plan states the exemption.",
+      "fix": "Use a root-proof fault: the post-commit hook replaces the pending JSON with a directory so unlink fails for root too; remove the skip."
+    },
+    {
+      "id": "R3-SPEC-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "tools/tests/test_adopt.py",
+      "line": 899,
+      "summary": "test_write_without_origin_refuses_and_writes_nothing asserts a no-base refusal on the write seam, which plan-Q3 declares only for the dry-run seam.",
+      "evidence": "plan.md:94 declares no NO_BASE path for the write seam; plan.md:93 declares it for the dry-run seam (ENG-4).",
+      "fix": "Move the write-side assertion into the dry-run NO_BASE test, or obtain fresh protected confirmation adding it to the write seam."
+    },
+    {
+      "id": "R3-SPEC-6",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 309,
+      "summary": "The post-commit message drops the sha when it cannot be read, so the output reads 'committed; pending cleanup failed' rather than the decided `committed <sha>; ...`; the test never checks the sha.",
+      "evidence": "adopt.py:309 `label = f\"committed {sha}\" if sha else \"committed\"`; test_adopt.py:1071 asserts only 'committed'.",
+      "fix": "Name the no-sha fallback in FR-013, contracts/cli.md and D7, or always provide the sha; assert the printed sha equals `git rev-parse --short 007-x`."
+    },
+    {
+      "id": "R3-SPEC-7",
+      "severity": "medium",
+      "blocking": false,
+      "file": "specs/022-adopt-spec/spec.md",
+      "line": 0,
+      "summary": "spec.md is 3082 words against its 3000-word budget.",
+      "evidence": "`wc -w` = 3082; plan.md 1698/2000, tasks.md 2485/2500.",
+      "fix": "Trim at least 82 words from spec.md in place."
+    },
+    {
+      "id": "R3-SPEC-8",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/022-adopt-spec/tasks.md",
+      "line": 56,
+      "summary": "tasks.md was not updated for plan-Q3: no task lists the new declared failure paths, and the T006/T007 implement notes describe the replaced commit helper and exception list.",
+      "evidence": "tasks.md:38, :56, :63, :70 list pre-Q3 failure paths; tasks.md:58 names commit_worktree (now _commit_run); tasks.md:65 names the old except tuple (now except Exception).",
+      "fix": "Add the plan-Q3 paths to the owning tasks' Failure paths lines and update the implement notes."
+    }
+  ]
+}
