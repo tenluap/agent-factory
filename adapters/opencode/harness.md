@@ -23,6 +23,7 @@
 
 ## Notes
 
+- `no_prompt_launch`: an `opencode.json` `permission` object with `"*": "allow"` removes the per-tool prompts (OpenCode permissions docs). Config-time, not a launch flag; applies to the project or user config the run uses.
 - Main agent (`mode: primary`): rendered `mode: all`; select it with Tab or the agent picker. Other agents can still call it.
 - Figma capability discovery: search the session's available tool catalog for Figma MCP inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents live in `~/.config/opencode/agents/` with `mode: subagent` and ordered V2 `permissions` rules. Read-only roles deny `edit`; every role denies `subagent`, so only the orchestrator launches roles. Other permissions follow the user's OpenCode configuration.

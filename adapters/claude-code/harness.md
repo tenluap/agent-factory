@@ -22,6 +22,7 @@
 
 ## Notes
 
+- `no_prompt_launch`: `claude --permission-mode bypassPermissions` starts the session in bypass mode (Claude Code CLI reference, `--permission-mode`; `--dangerously-skip-permissions` is the documented alias). Launch-time only; cruise runs prompt-free only when started this way.
 - An empty (inherit) selection from any source, including `adapter`, `project` or `user`, cannot override a pinned agent by omission, so disclose the limitation and stop before spawning; nonempty project/user selections are passed as the spawn model only when supported (the Agent tool accepts aliases, not full IDs), otherwise disclose the exact selection and limitation and stop without substituting a model.
 - Main agent (`mode: primary`): start with `claude --agent factory-<role>`, or set the `agent` setting.
 - Figma capability discovery: use `ToolSearch` to discover available Figma MCP inspection tools; pass their exact identities and schemas to the role. If unavailable, report the gap.
