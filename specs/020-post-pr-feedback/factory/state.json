@@ -610,6 +610,18 @@
       "duration_ms": 90000,
       "started_at": "2026-11-04T02:31:15Z",
       "ended_at": "2026-11-04T02:32:45Z"
+    },
+    {
+      "at": "2026-11-04T02:32:59.805131Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "claude-code",
+      "in_est": 10000,
+      "out_est": 400,
+      "reported": null,
+      "duration_ms": 98000,
+      "started_at": "2026-11-04T02:31:15Z",
+      "ended_at": "2026-11-04T02:32:53Z"
     }
   ],
   "issues": [
