@@ -125,8 +125,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Plan re-run: confirm updated test seams (protected)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T11:09:37.688719Z",
+      "latency_ms": 324963
     }
   ],
   "decisions": [
