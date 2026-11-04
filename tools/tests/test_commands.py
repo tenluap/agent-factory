@@ -982,6 +982,100 @@ class RelayRecordTests(unittest.TestCase):
         )
         self.assertEqual(out.returncode, 0, out.stderr)
 
+    def test_protected_answer_record_is_immutable_and_committed(self):
+        question = {
+            "id": "R2-Q1",
+            "requires_user": True,
+            "title": "Choose",
+            "text": "Context",
+            "options": [
+                {"id": "A", "label": "Allow", "description": "Proceed"},
+                {"id": "B", "label": "Block", "description": "Stop"},
+            ],
+        }
+        out = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", json.dumps(question), cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        name = "specs/074-relay/factory/relay/review-R2-Q1.md"
+        self.assertEqual(json.loads(out.stdout)["record"], name)
+        record = self.wt / name
+        text = record.read_text()
+        for item in (
+            "review",
+            "R2-Q1",
+            "Choose",
+            "Context",
+            "Allow",
+            "Proceed",
+            "Block",
+            "Stop",
+            "- Answer: A",
+            "- Origin: explicit",
+            "- Answered at:",
+        ):
+            self.assertIn(item, text)
+        committed = self.box.git(
+            "show", "--format=", "--name-only", "HEAD", cwd=self.wt
+        )
+        self.assertIn(name, committed)
+        self.assertIn("specs/074-relay/factory/state.json", committed)
+        before, head = (
+            self.path.read_bytes(),
+            self.box.git("rev-parse", "HEAD", cwd=self.wt),
+        )
+        again = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", json.dumps(question), cwd=self.wt
+        )
+        self.assertEqual(
+            json.loads(again.stdout), {"answered": "R2-Q1", "unchanged": True}
+        )
+        refused = self.box.cli(
+            "answer", "R2-Q1", "B", "--question", json.dumps(question), cwd=self.wt
+        )
+        self.assertEqual(refused.returncode, 1)
+        self.assertIn(name, refused.stderr)
+        self.assertEqual(record.read_text(), text)
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_record_origins_and_pending_run(self):
+        self.box.corrupt_worktree_state(
+            "074-relay", lambda s: s["mode"].__setitem__("cruise", True)
+        )
+        for qid, flags, origin in (
+            ("R2-Q2", ("--auto",), "auto"),
+            ("R2-Q3", ("--cruise-override",), "cruise_override"),
+        ):
+            q = json.dumps({"id": qid, "requires_user": True})
+            out = self.box.cli("answer", qid, "A", "--question", q, *flags, cwd=self.wt)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertIn(
+                f"- Origin: {origin}",
+                (self.wt / json.loads(out.stdout)["record"]).read_text(),
+            )
+        box = Sandbox()
+        self.addCleanup(box.close)
+        run = v4_state(stage="review", worktree=None)
+        pending = box.pending_run("075-pending", run)
+        out = box.cli(
+            "answer",
+            "Q1",
+            "A",
+            "--question",
+            '{"id":"Q1","requires_user":true}',
+            cwd=box.repo,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertNotIn("record", json.loads(out.stdout))
+        self.assertEqual(
+            json.loads(pending.read_text())["relay"]["rounds"][-1]["answers"]["Q1"][
+                "answer"
+            ],
+            "A",
+        )
+        self.assertFalse((box.repo / "specs/075-pending/factory/relay").exists())
+
 
 class CheckpointCommitFailureTests(unittest.TestCase):
     """FR-011: a checkpoint whose git commit fails after the state write

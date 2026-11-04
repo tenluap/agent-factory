@@ -58,7 +58,7 @@ None: every unit extends an existing command and test module.
   - Pass: runner green.
   - Done: tests pass; `answer` without `--question` tests unchanged and green.
 
-- [ ] T005 [US2] Render the relay record for `requires_user` answers, in `commands.py` (new `render_relay_record`, called only by `cmd_answer`); tests in `RelayRecordTests` (depends on T004).
+- [x] T005 [US2] Render the relay record for `requires_user` answers, in `commands.py` (new `render_relay_record`, called only by `cmd_answer`); tests in `RelayRecordTests` (depends on T004).
   - Seam: S2. Failure paths: S2(a) existing record with a different answer exits 1 naming the path, state and files unchanged; S2(d) pending run without worktree stores the answer and writes no record.
   - Red: tests first: worktree run, `requires_user: true` question answered explicitly writes `<spec_dir>/factory/relay/<stage>-<qid>.md` with stage, qid, title, text, every option (id, label, description), answer, time and origin (`explicit`; `auto`; `cruise_override` under cruise), the result's `record` field equals that path, and the latest commit contains both `state.json` and the record (FR-007); identical re-answer returns `{"answered": qid, "unchanged": true}` with no new commit; S2(a) different answer exits 1, stderr names the path, record bytes and `state.json` unchanged; S2(d) pending run stores the answer, no `relay/` dir; question without `requires_user` writes no record (FR-009). Run; no record.
   - Implement: existence/answer check before the state write; render after the state write and before `commit_worktree` (which stages `spec_dir`); never overwrite (FR-006, FR-008).

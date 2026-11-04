@@ -1380,6 +1380,34 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
+def render_relay_record(stage, qid, question, answer, origin, now):
+    title = question.get("title") or question.get("text") or qid
+    lines = [
+        f"# {stage}-{qid} (requires_user)",
+        "",
+        f"- Stage: {stage}",
+        f"- Question: {qid}",
+        f"- Answer: {answer}",
+        f"- Origin: {origin}",
+        f"- Answered at: {now}",
+        "",
+        f"## {title}",
+    ]
+    if question.get("title") and question.get("text"):
+        lines.extend(["", question["text"]])
+    if question.get("options"):
+        lines.extend(["", "### Options"])
+        for option in question["options"]:
+            if isinstance(option, dict):
+                line = f"- **{option.get('id', '')}** · {option.get('label', '')}"
+                if option.get("description"):
+                    line += f" - {option['description']}"
+                lines.append(line)
+            else:
+                lines.append(f"- {option}")
+    return "\n".join(lines) + "\n"
+
+
 def cmd_answer(
     repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False, question=None
 ):
@@ -1404,6 +1432,7 @@ def cmd_answer(
     )
     resolved = question if existing is None or set(existing) == {"id"} else existing
     record_stage = stage or relay.get("stage") or loaded.get("stage")
+    record = None
     if (
         worktree
         and isinstance(resolved, dict)
@@ -1413,6 +1442,16 @@ def cmd_answer(
             r"[A-Za-z0-9_-]+", record_stage
         ):
             die(1, "relay record stage and question id must match [A-Za-z0-9_-]+")
+        record = (
+            Path(loaded["spec_dir"]) / "factory" / "relay" / f"{record_stage}-{qid}.md"
+        )
+        record_path = Path(worktree) / record
+        if record_path.exists():
+            content = record_path.read_text()
+            previous = content.partition("\n- Answer: ")[2].partition("\n- Origin: ")[0]
+            if previous == answer:
+                return {"answered": qid, "unchanged": True}
+            die(1, f"relay record {record} already holds a different answer")
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
@@ -1446,8 +1485,20 @@ def cmd_answer(
         return s
 
     write_run(path, loaded, mutate)
+    if record is not None:
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        origin = (
+            "cruise_override" if cruise_override else "auto" if auto else "explicit"
+        )
+        with record_path.open("x") as stream:
+            stream.write(
+                render_relay_record(record_stage, qid, resolved, answer, origin, now)
+            )
     commit_worktree(worktree, f"factory: answer {qid}", loaded.get("spec_dir"))
-    return {"answered": qid, "auto": bool(auto)}
+    result = {"answered": qid, "auto": bool(auto)}
+    if record is not None:
+        result["record"] = str(record)
+    return result
 
 
 def worktree_work_commit(worktree):
