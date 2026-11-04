@@ -16,6 +16,9 @@ sys.path.insert(0, str(ROOT / "core" / "skills" / "factory" / "bin"))
 
 from factory_cli import checks, state, totals  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "tools"))
+import render  # noqa: E402
+
 CONDITIONS = (
     "reached-approver",
     "last-verify-green",
@@ -153,17 +156,42 @@ def compare(a_path, b_path):
         print(f"cannot compare scores: {error}", file=sys.stderr)
 
 
+EXECUTABLES = {"claude-code": "claude", "opencode": "opencode"}
+
+
+CLAUDE_TOOLS = ["Read", "Edit", "Write", "Agent", "Skill", "Bash(git:*)", "Bash(python3:*)"]
+
+
+def launch_command(harness, prompt, *, model, out, home, skill_dir):
+    """Headless argv per contracts/bench-cli.md; Claude Code gets a scoped grant, never a bypass."""
+    if harness == "opencode":
+        return ["opencode", "run", *(["-m", model] if model else []), prompt]
+    model_args = ["--model", model] if model else []
+    out, skill = Path(out), Path(skill_dir)
+    candidates = [out]
+    if skill.exists():
+        candidates += [skill, skill.resolve()]
+    candidates.append(Path(home))
+    # The output directory already covers anything inside it; each path is granted once.
+    grants = []
+    for path in candidates:
+        if (path == out or out not in path.parents) and str(path) not in grants:
+            grants.append(str(path))
+    add_dirs = [arg for grant in grants for arg in ("--add-dir", grant)]
+    allowed = [*CLAUDE_TOOLS, f"Bash({skill}/bin/factory:*)"]
+    return ["claude", "-p", prompt, *model_args, *add_dirs, "--allowedTools", *allowed]
+
+
 def run(args):
     """Prepare a disposable repository; only the selected headless CLI spends tokens."""
-    drivers = {"claude-code": ["claude", "-p"], "opencode": ["opencode", "run"]}
-    if args.harness not in drivers:
+    if args.harness not in EXECUTABLES:
         raise ValueError(
             f"unsupported headless harness '{args.harness}'; use the manual benchmark fallback"
         )
-    driver = drivers[args.harness]
-    if not shutil.which(driver[0]):
+    executable = EXECUTABLES[args.harness]
+    if not shutil.which(executable):
         raise ValueError(
-            f"harness '{args.harness}' command '{driver[0]}' is unavailable; use the manual benchmark fallback"
+            f"harness '{args.harness}' command '{executable}' is unavailable; use the manual benchmark fallback"
         )
     folder, config = load_bench(args.bench)
     if args.out:
@@ -234,9 +262,18 @@ def run(args):
         "Stop before approver; do not approve or open a PR."
     )
     log = out / "harness.log"
+    skill_dir = Path(render.load_adapter(args.harness)["skill_dir"]).expanduser()
+    launch = launch_command(
+        args.harness,
+        prompt,
+        model=args.model,
+        out=out,
+        home=home,
+        skill_dir=skill_dir,
+    )
     with log.open("w") as stream:
         process = subprocess.run(
-            [*driver, prompt],
+            launch,
             cwd=repo,
             env=dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness),
             stdout=stream,
@@ -271,6 +308,7 @@ def main(argv=None):
     running = commands.add_parser("run")
     running.add_argument("--harness", required=True)
     running.add_argument("--bench", default="greet-001")
+    running.add_argument("--model")
     running.add_argument("--home")
     running.add_argument("--out")
     args = parser.parse_args(argv)
