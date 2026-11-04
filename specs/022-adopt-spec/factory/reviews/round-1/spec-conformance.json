@@ -1,0 +1,67 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "Test-first red proof and commit pairing hold for all four seams and the contract JSON shape matches, but one declared dry-run failure path has no test, the judge's pre-adoption rule overreaches FR-019, and the adoption grill omits the FR-010 spec summary.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_adopt.py",
+      "line": 390,
+      "summary": "The declared dry-run failure path 'several matching spec dirs exit 3 listing them' has no test; the only exit-3 test covers two branches.",
+      "evidence": "plan.md:93 (Test seams, dry-run seam) and tasks.md:38 (T004) and factory/relay/plan-Q2.md declare 'several matching spec dirs exit 3 listing them' under the confirmed test scope (ENG-1, Confirmed test scope). tools/tests/test_adopt.py:390-397 test_ambiguous_source_exits_3_listing_both_branches creates local branches 007-x and 008-x only; no test commits two specs/<name> dirs on the default branch. The code path exists at core/skills/factory/bin/factory_cli/adopt.py:69-71 and behaves as declared: a probe with specs/007-y and specs/008-y on main, run as 'adopt y --dry-run', exits 3 naming both dirs. The declared path is untested.",
+      "fix": "Add a DryRunRefusalTests case that commits specs/007-y and specs/008-y on main, runs 'adopt y --dry-run', and asserts exit 3, both candidate names on stderr, and the repo snapshot unchanged."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/roles/review-judge.md",
+      "line": 30,
+      "summary": "The judge's pre-adoption rule rejects every finding against pre-adoption work, not only ENG-1/ENG-2/ENG-3 commit-evidence findings, so real security or correctness defects in adopted code can be dropped.",
+      "evidence": "review-judge.md:30 says 'confirm no finding against pre-adoption work: commits in <adopted_base> and tasks checked there. Reject such a finding with the reason pre-adoption'. FR-019 waives only the ENG-1, ENG-2 and ENG-3 commit checks ('never blocking for those rules'). spec.md clarify Q5 answers 'Skipped like ENG-2; code reviewed in full (FR-019)'. ADR 0017 says 'only the factory-only process rules are waived'. research.md D10 says the judge 'never confirms an ENG-1, ENG-2 or ENG-3 commit-evidence finding against them'. The prose as written extends the waiver to all reviewer findings.",
+      "fix": "Limit the rejection to findings resting on the ENG-1, ENG-2 or ENG-3 commit-evidence checks against commits in <adopted_base> or tasks checked there, with reason pre-adoption. State that every other finding against pre-adoption code (security, correctness, design) stands."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "medium",
+      "blocking": true,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 53,
+      "summary": "The adoption grill never summarises spec.md, which FR-010 requires for the grill's seed.",
+      "evidence": "FR-010 (spec.md): the grill is 'seeded from spec.md: summarise the spec, ask only open gaps, the chain ... and confirmation of the entry stage'. SKILL.md:53 says 'show the dry-run summary (source shape, branch, spec_dir, artifacts, inferred_stage)' and then the needs_clarification lines. Nothing tells the orchestrator to read or summarise the spec's content. plan.md 'Design' says 'summarise spec.md from the report's branch'.",
+      "fix": "In step 2, add: read <spec_dir>/spec.md from the report's branch (git -C <repo> show <branch>:<spec_dir>/spec.md) and summarise it for the user before asking the open gaps, the chain and the entry stage."
+    },
+    {
+      "id": "SPEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 235,
+      "summary": "A failing 'git worktree add' in the write exits 2 instead of the contract's exit 1, because it runs outside the try block that rolls back and exits 1.",
+      "evidence": "contracts/cli.md (write) lists exit 1 for 'a failed step (rolled back, pending kept)'; research.md D7 says any failure in steps 3-5 exits 1. adopt.py:235-239 runs the three 'worktree add' calls outside the try at adopt.py:241-245. Probe: with a regular file where the worktree's parent directory should be, 'adopt 007-x' exits 2 with 'fatal: could not create leading directories'.",
+      "fix": "Bring the worktree-add step inside the guarded block so a CLIError or OSError there exits 1 with the cause and the pending run kept. Keep the created-branch tracking so only a branch this write created is removed."
+    },
+    {
+      "id": "SPEC-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 297,
+      "summary": "The rollback ignores the exit status of its git removal commands, yet the write reports that it was rolled back, so a leftover worktree or branch goes unreported.",
+      "evidence": "FR-013: adopt MUST remove everything it created. adopt.py:297-305 runs 'git worktree remove --force' and 'git branch -D' without checking the return code, then dies with 'adopt failed and was rolled back'. ENG-17.",
+      "fix": "Check the return codes of both removal commands. On failure, name the leftover worktree path and branch in the error and do not claim the write was rolled back."
+    },
+    {
+      "id": "SPEC-6",
+      "severity": "low",
+      "blocking": false,
+      "file": "factory/relay/plan-Q2.md",
+      "line": 9,
+      "summary": "The Q2 acceptance snapshot is not verbatim: plan.md's doc-only Exempt line now also lists core/roles/code-standards.md, which the snapshot omits, while plan.md's Confirmed line calls the snapshot verbatim.",
+      "evidence": "Only the Exempt line differs, by the added core/roles/code-standards.md (plan.md:97), from the user's Q5 answer. The seam and failure-path scope is unchanged, so acceptance still holds.",
+      "fix": "Refresh the Q2 snapshot to match plan.md, or record a new immutable snapshot, so the Confirmed line's 'verbatim' claim is accurate."
+    }
+  ]
+}
