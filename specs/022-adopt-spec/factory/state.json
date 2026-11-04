@@ -14,8 +14,9 @@
   "halt_reason": null,
   "stop_at": null,
   "mode": {
-    "chain": "lite",
-    "fast": true
+    "chain": "full",
+    "fast": true,
+    "cruise": false
   },
   "skills": {
     "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
@@ -280,6 +281,13 @@
       "at": "2026-11-04T10:33:21.672836Z",
       "stage": "tasks",
       "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T10:37:12.280449Z",
+      "stage": "analyze",
+      "event": "resumed",
       "commit": null,
       "harness": "claude-code"
     }
