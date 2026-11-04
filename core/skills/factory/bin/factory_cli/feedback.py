@@ -233,7 +233,7 @@ def _outcome_list(body):
     """The stored outcomes of a well-formed outcome file, or None."""
     outcomes = body.get("outcomes") if isinstance(body, dict) else None
     if isinstance(outcomes, list) and all(
-        isinstance(o, dict) and "id" in o for o in outcomes
+        isinstance(o, dict) and isinstance(o.get("id"), str) for o in outcomes
     ):
         return outcomes
     return None

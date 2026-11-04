@@ -641,7 +641,14 @@ class LocalGapTests(FeedbackTestCase):
         self.assert_gap_leaves_files("inaccessible")
 
     def test_wrong_shape_outcome_file_is_inaccessible(self):
-        for text in ("[]", '{"outcomes": null}', '{"outcomes": [1]}'):
+        for text in (
+            "[]",
+            '{"outcomes": null}',
+            '{"outcomes": [1]}',
+            '{"outcomes": [{"id": []}]}',
+            '{"outcomes": [{"id": {}}]}',
+            '{"outcomes": [{"id": null}]}',
+        ):
             with self.subTest(text=text):
                 self.outcome_file.write_text(text)
                 self.assert_gap_leaves_files("inaccessible")
