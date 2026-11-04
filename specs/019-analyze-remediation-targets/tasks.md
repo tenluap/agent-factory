@@ -54,7 +54,7 @@ description: "Task list for 019-analyze-remediation-targets"
 
 **Goal**: at most 2 automatic cycles; loops written by the CLI. **Independent test**: gate and checkpoint over states at `loops` 0, 1, 2.
 
-- [ ] T006 [US3] Add the `into == "remediate"` branch of `gate_violation` in `core/skills/factory/bin/factory_cli/checks.py`; tests in `tools/tests/test_gates.py` (new `RemediateGateTests`).
+- [X] T006 [US3] Add the `into == "remediate"` branch of `gate_violation` in `core/skills/factory/bin/factory_cli/checks.py`; tests in `tools/tests/test_gates.py` (new `RemediateGateTests`).
   - Seam: `factory_cli.checks.gate_violation(state, "remediate")`. Failure paths: `loops == 2` with no decision; an `auto: true` analyze decision; a guided decision older than `analyze.result.at`.
   - Red: tests first: `loops` 0 and 1 allow; `loops == 2` with no analyze decision refuses naming the loop count and the three choices (guided pass, gate-override, abort); an `auto: true` analyze answer newer than `result.at` refuses; a non-auto analyze `answer` older than `result.at` refuses; a non-auto analyze `answer` newer than `result.at` allows; `loops == 3` behaves like 2. Run; fails (ungated today).
   - Implement: reuse `_decisions(state, "analyze", ("answer",))`, filter `auto` and compare `at` with `result.at`; any newer non-auto answer qualifies (grill Q3).

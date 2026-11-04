@@ -280,6 +280,62 @@ class AcceptanceTargetTests(unittest.TestCase):
         self.assertIn("analyze.reports is empty", checks.gate_violation(s, "implement"))
 
 
+class RemediateGateTests(unittest.TestCase):
+    """The repair-cycle cap (FR-014, FR-016): a gate into `remediate` at two loops."""
+
+    RESULT_AT = "2026-11-04T00:30:00Z"
+
+    def state_at(self, loops, *answers):
+        s = base(
+            stage="analyze",
+            analyze=analysis(
+                baseline=counts(medium=6, low=6),
+                result=counts(medium=4, at=self.RESULT_AT),
+                loops=loops,
+            ),
+        )
+        s["decisions"] = list(answers)
+        return s
+
+    def answer(self, at, auto=False):
+        return {
+            "stage": "analyze",
+            "question": "Q9",
+            "answer": "guided pass",
+            "auto": auto,
+            "at": at,
+            "kind": "answer",
+        }
+
+    def test_loops_below_the_cap_allow_a_repair_cycle(self):
+        self.assertIsNone(checks.gate_violation(self.state_at(0), "remediate"))
+        self.assertIsNone(checks.gate_violation(self.state_at(1), "remediate"))
+
+    def test_the_cap_refuses_without_a_decision_and_names_the_three_choices(self):
+        reason = checks.gate_violation(self.state_at(2), "remediate")
+        self.assertIsNotNone(reason)
+        self.assertIn("2", reason)
+        for choice in ("guided pass", "gate-override", "abort"):
+            self.assertIn(choice, reason)
+
+    def test_an_auto_answer_newer_than_the_result_refuses(self):
+        s = self.state_at(2, self.answer("2026-11-04T00:40:00Z", auto=True))
+        self.assertIsNotNone(checks.gate_violation(s, "remediate"))
+
+    def test_a_non_auto_answer_older_than_the_result_refuses(self):
+        s = self.state_at(2, self.answer("2026-11-04T00:10:00Z"))
+        self.assertIsNotNone(checks.gate_violation(s, "remediate"))
+
+    def test_a_non_auto_answer_newer_than_the_result_allows(self):
+        s = self.state_at(2, self.answer("2026-11-04T00:40:00Z"))
+        self.assertIsNone(checks.gate_violation(s, "remediate"))
+
+    def test_three_loops_behave_like_two(self):
+        self.assertIsNotNone(checks.gate_violation(self.state_at(3), "remediate"))
+        s = self.state_at(3, self.answer("2026-11-04T00:40:00Z"))
+        self.assertIsNone(checks.gate_violation(s, "remediate"))
+
+
 class PrGateTests(unittest.TestCase):
     def test_refuses_without_a_recorded_approval(self):
         reason = checks.gate_violation(base(stage="approver"), "pr")

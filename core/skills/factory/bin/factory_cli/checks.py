@@ -15,6 +15,8 @@ from factory_cli import state
 
 ENVELOPE_STATUSES = ("done", "needs_input", "partial", "failed")
 VERDICTS = ("pass", "fix")
+# ADR 0014: automatic repair cycles per run (FR-014)
+REPAIR_CYCLE_CAP = 2
 # the six self-report causes; `unreported` is detected-only (state.py) and
 # never valid in a role's own overrun report
 SELF_REPORT_CAUSES = tuple(c for c in state.OVERRUN_CAUSES if c != "unreported")
@@ -332,6 +334,24 @@ def gate_violation(state_dict, into):
         else:
             problems.extend(unmet_targets(baseline, analyze.get("result")))
         return "; ".join(problems) or None
+    if into == "remediate":
+        analyze = state_dict.get("analyze") or {}
+        loops = analyze.get("loops") or 0
+        if loops < REPAIR_CYCLE_CAP:
+            return None
+        result_at = (analyze.get("result") or {}).get("at") or ""
+        guided = [
+            d
+            for d in _decisions(state_dict, "analyze", ("answer",))
+            if not d.get("auto") and (d.get("at") or "") > result_at
+        ]
+        if guided:
+            return None
+        return (
+            f"analyze.loops is {loops}: the repair cycles are exhausted; record a "
+            "guided pass after the latest analysis (`decisions-add analyze <qid> "
+            "'<guidance>'`), a gate-override, or abort"
+        )
     if into == "pr":
         if _decisions(state_dict, "approver", ("approved", "gate-override")):
             return None
