@@ -8,6 +8,7 @@ replace the file atomically (temp file + `os.replace` in the same directory).
 
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -47,7 +48,12 @@ HISTORY_EVENTS = (
     "aborted",
     "pr-open",
     "resumed",
+    "adopted",
 )
+# `factory adopt` vocabularies: the source shapes and the stages an adoption can enter at
+ADOPT_SHAPES = ("branch", "remote-branch", "default-branch")
+ADOPT_STAGES = ("specify", "plan", "tasks", "analyze")
+BASE_COMMIT = re.compile(r"[0-9a-f]{40}")
 DECISION_KINDS = ("answer", "approved", "gate-override")
 ISSUE_KINDS = ("overrun", "agent-failure", "retry", "halt", "verify-fail")
 # the six self-report causes plus `unreported` (detected only, never self-reported)
@@ -194,6 +200,7 @@ def validate_state(state):
     _check_mode(state, bad)
     decisions = _check_decisions(state, bad)
     _check_history(state, decisions, bad)
+    _check_adopted(state, bad)
     _check_timeline(state, bad)
     _check_ledger(state, bad)
     _check_relay(state, bad)
@@ -308,6 +315,8 @@ def _check_history(state, decisions, bad):
                     f"history[{i}].commands",
                     "a verify record carries its commands and exit statuses",
                 )
+        if entry.get("event") == "adopted" and state.get("adopted") is None:
+            bad(f"history[{i}].event", "an adopted entry requires the adopted block")
         if entry.get("decision") is not None:
             named = [
                 d
@@ -321,6 +330,39 @@ def _check_history(state, decisions, bad):
                     f"no decision entry names '{entry.get('decision')}' "
                     f"at stage '{entry.get('stage')}'",
                 )
+
+
+def _check_adopted(state, bad):
+    """The `adopted` block written only by `factory adopt` (data-model.md)."""
+    adopted = state.get("adopted")
+    if adopted is None:
+        return
+    if not isinstance(adopted, dict):
+        bad("adopted", "not an object")
+        return
+    source = adopted.get("source")
+    if not isinstance(source, dict):
+        bad("adopted.source", "missing or not an object")
+    else:
+        if source.get("shape") not in ADOPT_SHAPES:
+            bad(
+                "adopted.source.shape",
+                f"{source.get('shape')!r} is off-vocabulary; "
+                f"expected one of: {', '.join(ADOPT_SHAPES)}",
+            )
+        for field in ("branch", "spec_dir"):
+            if not isinstance(source.get(field), str) or not source.get(field):
+                bad(f"adopted.source.{field}", "missing or empty")
+    for field in ("inferred_stage", "chosen_stage"):
+        if adopted.get(field) not in ADOPT_STAGES:
+            bad(
+                f"adopted.{field}",
+                f"{adopted.get(field)!r} is outside the adoptable stages; "
+                f"expected one of: {', '.join(ADOPT_STAGES)}",
+            )
+    base = adopted.get("base_commit")
+    if not isinstance(base, str) or not BASE_COMMIT.fullmatch(base):
+        bad("adopted.base_commit", "not a 40-character lowercase hex sha")
 
 
 def _check_timeline(state, bad):

@@ -18,7 +18,7 @@ description: "Task list for 022-adopt-spec"
 
 ## Phase 2: Foundational - state schema (blocks the write)
 
-- [ ] T002 [US1][US5] Validate the `adopted` block and event in `core/skills/factory/bin/factory_cli/state.py`; tests in `tools/tests/test_adopt.py`.
+- [x] T002 [US1][US5] Validate the `adopted` block and event in `core/skills/factory/bin/factory_cli/state.py`; tests in `tools/tests/test_adopt.py`.
   - Seam: `factory_cli.state.validate_state`. Failure paths: non-object `adopted`; `source.shape` off-vocabulary; missing `source.branch` or `source.spec_dir`; `inferred_stage` or `chosen_stage` outside `specify|plan|tasks|analyze`; `base_commit` not 40 lowercase hex; an `adopted` history entry without the `adopted` block.
   - Red: write tests first: an adopted state at stage `analyze` with one `{stage: analyze, event: adopted, commit: null}` entry and no `complete` entries validates clean (FR-017); a state without `adopted` and the existing fixtures validate clean (FR-016, SC-004); each failure path yields one problem naming its location (uppercase hex and a 39-character sha both rejected). Run; adopted-state and failure-path tests fail.
   - Implement: `ADOPT_SHAPES = ("branch", "remote-branch", "default-branch")`, `ADOPT_STAGES = ("specify", "plan", "tasks", "analyze")`, `adopted` appended to `HISTORY_EVENTS`, `_check_adopted` called from `validate_state` per data-model.md; no version bump; no rule on `complete` entries before the chosen stage.
