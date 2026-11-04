@@ -422,6 +422,18 @@
       "duration_ms": 75000,
       "started_at": "2026-11-04T00:52:30Z",
       "ended_at": "2026-11-04T00:53:45Z"
+    },
+    {
+      "at": "2026-11-04T01:17:28.866276Z",
+      "stage": "implement",
+      "role": "code-build",
+      "harness": "claude-code",
+      "in_est": 30000,
+      "out_est": 12000,
+      "reported": null,
+      "duration_ms": 1407000,
+      "started_at": "2026-11-04T00:53:55Z",
+      "ended_at": "2026-11-04T01:17:22Z"
     }
   ],
   "issues": [],
