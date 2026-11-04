@@ -155,8 +155,14 @@ Active design work publishes only after `design-code-mapping.md`'s publication r
 
 1. `git push -u origin <branch>`.
 2. Follow the `pr` skill to write the body: link `spec.md`, summarise the change, include the judge verdict and advisory findings; for active design work include the handoff facts `design-code-mapping.md` §6 accounts.
-3. `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file>`, ready for review.
-4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`.
+3. Publish by lookup, then create (the lookup never creates):
+   1. Branch PR lookup: `gh pr list --head <branch> --base <default-branch> --state open --json url,assignees,isCrossRepository`. Exit 0 with an entry whose `isCrossRepository` is false: found; reuse the first such entry's `url` and skip creation. Exit 0 with no such entry (`[]` or fork entries only): none. Non-zero: failed; halt per Policies (Halt) with the lookup error as the reason, and never create. Only open PRs of this repository are reused; a fork's PR is never reused.
+   2. None: `gh pr create --base <default-branch> --head <branch> --title "<title>" --body-file <file> --assignee @me`, ready for review.
+   3. After a `gh pr create` error, repeat the Branch PR lookup before any retry. Found: reuse the PR. Failed: halt with the lookup error. Then:
+      - None: retry creation once; after a second error with a lookup still finding none, halt with the creation error.
+      - No URL is recorded on any halt. At most 2 creation requests and 3 Branch PR lookups run per attempt.
+   4. After a successful creation, repeat the Branch PR lookup once to read the PR's assignees. Found: use its assignees for item 4. None or failed: keep the URL `gh pr create` printed and count an assignment problem for item 8. This lookup never creates, retries or halts.
+4. `SHELL: python3 <F>/bin/factory set-status pr-open --pr-url <url>`. Then read the signed-in login with `gh api user --jq .login`. When it is not among the Branch PR's `assignees[].login`, or either read failed, note an assignment problem for item 8. Continue: never halt, never asks the user for a GitHub username, and never issue a separate assignment request. Nothing reads, stores or logs credentials.
 5. **Retro** (entry marker checked only here, not during an in-turn retry):
    1. `SHELL: python3 <F>/bin/factory show <branch>`. Read the run's `state.json` at the returned `state_path`; if its `ledger` already has an entry with stage `retro`, skip to item 4.
    2. `SHELL: python3 <F>/bin/factory improvements`. Collect the `signal_key` of each `ready` entry with `kind: retro` as `covered_keys`. `SHELL: python3 <F>/bin/factory budget retro`; `SPAWN retro` with `F`, `worktree`, `spec_dir`, `branch`, the printed `deadline`, show JSON, the read-only `state.json` path, every `analyze.reports` path from that state resolved against `spec_dir`, every round's `verdict.json` path, and `covered_keys`.
@@ -164,7 +170,7 @@ Active design work publishes only after `design-code-mapping.md`'s publication r
    4. When the saved, parseable `done` envelope holds candidates, `SHELL: python3 <F>/bin/factory improvements add --from <spec_dir>/factory/retro-envelope.md --run <branch>`. Zero candidates writes nothing. A non-zero exit notes the skipped write and its reported reason for the final notice; continue to `drop`. On re-entry, if the marker exists but the saved envelope is missing, unparseable or failed, note the skipped retro and reason rather than spawning again.
 6. `SHELL: python3 <F>/bin/factory drop`; retain its JSON output.
 7. Push. If the final push fails, retry once in the same turn. If the retry fails, `NOTIFY` the user to run `git push` from the named worktree path; do not resume the run.
- 8. `NOTIFY` the `totals_sentence` and `pr_url` from the drop JSON, never from `state.json`; name any skipped retro or skipped write and its reason. Offer (do not do) any after-PR extras `harness.md` lists.
+8. `NOTIFY` the `totals_sentence` and `pr_url` from the drop JSON, never from `state.json`; name any assignment problem as its own item, separate from `pr_url`; name any skipped retro or skipped write and its reason. Offer (do not do) any after-PR extras `harness.md` lists.
 
 Done when the PR URL is recorded in the archived state and shown to the user.
 
