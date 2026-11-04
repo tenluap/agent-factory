@@ -281,6 +281,14 @@
       "auto": false,
       "at": "2026-11-04T10:45:34.987973Z",
       "kind": "answer"
+    },
+    {
+      "stage": "grill-with-docs",
+      "question": "Q1-pre-adoption-tasks",
+      "answer": "A: tasks checked at adopted.base_commit are excluded from the blocking test-scope check and disclosed as pre-adoption; unchecked tasks get full checks; reviewers still review all code",
+      "auto": false,
+      "at": "2026-11-04T10:57:12.053128Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
