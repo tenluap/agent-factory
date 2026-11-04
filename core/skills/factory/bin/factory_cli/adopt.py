@@ -48,12 +48,20 @@ def _checkouts(repo):
 def _resolve(repo, src):
     """(shape, branch) for `src` (D2 steps 1 and 3), or None when no local branch matches.
 
-    A `specs/` prefix names the spec dir, and its last segment names the branch.
+    A local branch named exactly `src` wins. Otherwise a `specs/` prefix names the
+    spec dir, whose last segment matches a branch by `commands.name_matches`; several
+    matches exit 3 (ambiguous) listing them.
     """
-    for name in (src, src.removeprefix("specs/")):
-        if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{name}") is not None:
-            return "branch", name
-    return None
+    if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{src}") is not None:
+        return "branch", src
+    name = src.removeprefix("specs/")
+    branches = commands.git(
+        repo, "for-each-ref", "--format=%(refname:lstrip=2)", "refs/heads/"
+    ).splitlines()
+    matches = sorted(b for b in branches if commands.name_matches(b, name))
+    if len(matches) > 1:
+        commands.die(3, f"'{src}' matches several branches: {', '.join(matches)}")
+    return ("branch", matches[0]) if matches else None
 
 
 def _entries(repo, ref, directory):
@@ -86,6 +94,28 @@ def _markers(repo, ref, spec_dir):
     if text is None:
         return []
     return [line.strip() for line in text.splitlines() if NEEDS_CLARIFICATION in line]
+
+
+def _refusal(repo, report):
+    """The first refusal reason in D5's order, or None; `dirty` already lists every path."""
+    branch, spec_dir = report["branch"], report["spec_dir"]
+    own = f"{report['pending']}.json"
+    others = [path.name for path, _ in commands.pending_states(repo) if path.name != own]
+    if others:
+        return f"another pending run '{others[0]}' exists for this repo; resume it or prune it first"
+    if report["dirty"]:
+        return "uncommitted changes: " + ", ".join(report["dirty"])
+    state_path = f"refs/heads/{branch}:{spec_dir}/factory/state.json"
+    if _try(repo, "cat-file", "-e", state_path) is not None:
+        return f"{spec_dir} already has factory/state.json; resume it with `resume {branch}`"
+    if "spec.md" not in report["artifacts"]:
+        return f"spec.md is required; {spec_dir} has none on '{branch}'"
+    for path, held in _checkouts(repo):
+        if held == branch:
+            return f"'{branch}' is checked out at {path}; switch that checkout away from it first"
+    if Path(report["worktree"]).exists():
+        return f"worktree path {report['worktree']} already exists"
+    return None
 
 
 def inspect(repo, src, base):
@@ -127,4 +157,5 @@ def inspect(repo, src, base):
         worktree=str(Path(repo).parent / f"{name}-factory" / branch),
         pending=f"{name}-adopt-{branch}",
     )
+    report["refusal"] = _refusal(repo, report)
     return report

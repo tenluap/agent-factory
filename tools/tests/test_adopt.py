@@ -215,6 +215,7 @@ class DryRunFixture(unittest.TestCase):
         spec = self.box.repo / "specs" / branch
         spec.mkdir(parents=True, exist_ok=True)
         for name, text in files.items():
+            (spec / name).parent.mkdir(parents=True, exist_ok=True)
             (spec / name).write_text(text)
         self.box.git("add", "-A")
         self.box.git("commit", "-q", "-m", f"spec {branch}")
@@ -317,6 +318,83 @@ class DryRunReportTests(DryRunFixture):
     def test_stage_inside_adopt_stages_is_accepted(self):
         out = self.box.cli("adopt", "007-x", "--stage", "plan", "--dry-run")
         self.assertEqual(out.returncode, 0, out.stderr)
+
+
+class DryRunRefusalTests(DryRunFixture):
+    """Every refusal exits 1 (or 3 for ambiguity) and leaves the repo unchanged (T004)."""
+
+    def setUp(self):
+        super().setUp()
+        self.spec_branch("007-x", {"spec.md": "# Spec\n"})
+
+    def refused(self, src, *fragments):
+        before = self.snapshot()
+        out = self.box.cli("adopt", src, "--dry-run")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        report = json.loads(out.stdout)
+        self.assertIsNotNone(report["refusal"])
+        for fragment in fragments:
+            self.assertIn(fragment, report["refusal"])
+        self.assertEqual(self.snapshot(), before)
+        return report
+
+    def test_dirty_spec_file_and_source_checkout_are_all_listed(self):
+        # The spec tracked on main, then edited there; an untracked file in a worktree on 007-x.
+        self.box.git("checkout", "-q", "007-x", "--", "specs/007-x")
+        self.box.git("commit", "-q", "-m", "copy spec to main")
+        (self.box.repo / "specs" / "007-x" / "spec.md").write_text("# edited\n")
+        worktree = self.box.dir / "elsewhere"
+        self.box.git("worktree", "add", "-q", str(worktree), "007-x")
+        (worktree / "notes.txt").write_text("scratch\n")
+        report = self.refused("007-x", "specs/007-x/spec.md", "notes.txt")
+        self.assertEqual(report["dirty"], ["notes.txt", "specs/007-x/spec.md"])
+
+    def test_committed_factory_state_names_resume(self):
+        self.spec_branch("011-r", {"spec.md": "# S\n", "factory/state.json": "{}\n"})
+        report = self.refused("011-r", "resume 011-r")
+        self.assertEqual(report["dirty"], [])
+
+    def test_spec_dir_without_spec_md_is_refused(self):
+        self.spec_branch("012-p", {"plan.md": "# P\n"})
+        self.refused("012-p", "spec.md")
+
+    def test_branch_checked_out_in_main_checkout_names_switch_hint(self):
+        self.box.git("checkout", "-q", "007-x")
+        self.refused("007-x", "007-x", "switch")
+
+    def test_branch_checked_out_in_another_worktree_names_its_path(self):
+        worktree = self.box.dir / "elsewhere"
+        self.box.git("worktree", "add", "-q", str(worktree), "007-x")
+        self.refused("007-x", "elsewhere", "switch")
+
+    def test_existing_worktree_path_is_named(self):
+        (self.box.dir / "repo-factory" / "007-x").mkdir(parents=True)
+        self.refused("007-x", "repo-factory", "007-x")
+
+    def test_other_pending_file_is_named_with_resume_and_prune_hint(self):
+        self.box.pending_run("other", fixture("state-v1.json"))
+        self.refused("007-x", "repo-other", "resume", "prune")
+
+    def test_own_pending_adoption_refuses_nothing(self):
+        self.box.pending_run("adopt-007-x", fixture("state-v1.json"))
+        out = self.box.cli("adopt", "007-x", "--dry-run")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIsNone(json.loads(out.stdout)["refusal"])
+
+    def test_no_matching_source_exits_1(self):
+        self.refused("nope", "no branch or spec dir matches 'nope'")
+
+    def test_invalid_branch_name_is_no_match_exits_1(self):
+        self.refused("../x", "not a valid branch name")
+
+    def test_ambiguous_source_exits_3_listing_both_branches(self):
+        self.box.git("branch", "008-x")
+        before = self.snapshot()
+        out = self.box.cli("adopt", "x", "--dry-run")
+        self.assertEqual(out.returncode, 3, out.stdout + out.stderr)
+        self.assertIn("007-x", out.stderr)
+        self.assertIn("008-x", out.stderr)
+        self.assertEqual(self.snapshot(), before)
 
 
 if __name__ == "__main__":

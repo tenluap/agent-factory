@@ -235,6 +235,11 @@ def deduped(runs):
     return out + [picked[key] for key in order]
 
 
+def name_matches(candidate, name):
+    """The `<name>` rule: equal to it, or ending in `-<name>` (the repo-name prefix)."""
+    return candidate == name or candidate.endswith(f"-{name}")
+
+
 def find_matches(repo, name):
     """Every deduped run matching `<name>`: (path, state, source) triples."""
     name = name[:-5] if name.endswith(".json") else name
@@ -246,7 +251,7 @@ def find_matches(repo, name):
         if identity["source"] == "worktree":
             if name in (loaded.get("branch"), path.parents[1].name):
                 matches.append((path, loaded, "worktree"))
-        elif name == identity["name"] or identity["name"].endswith(f"-{name}"):
+        elif name_matches(identity["name"], name):
             matches.append((path, loaded, "pending"))
     return matches
 
