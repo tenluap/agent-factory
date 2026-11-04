@@ -8,3 +8,9 @@
 - F6: tasks.md T005 red step asserts the result's `record` field equals the record path.
 - F7: plan.md "New files, abstractions, dependencies" adds one reason line per new flag (`--question`, `--round`, `--full`) and result field (`review`, `full`, `record`, `unchanged`), each citing its FR.
 - F8: tasks.md T003 red/Done cite SC-002 (`fix_rounds` reaches 2); T010 Done requires the `review.fix_rounds` cap read in step 7 (SC-002).
+
+# Remediation log — pass 2 (analyze-2.md)
+
+- G1: plan.md "Test seams" — replaced the "Confirmation pending" note with `Confirmed: 2026-11-04 - remediate Q1 accepted (cruise override) - seams: ...; failure paths: ...`, carrying the full accepted seam-to-path scope (S1a-d, S2a-d with narrowed S2(c), S3a-b, S4a-b) as the stored snapshot. Acceptance from `state.json` decisions (remediate Q1 = A, cruise override, 2026-11-04T22:13:55Z); scope unchanged since, so no new question. tasks.md header no longer says implementation waits for confirmation.
+- G2: tasks.md T009 "Resume" item now covers the ordinary branch of state.md:238: on resume at stored stage `fix` with no reservation, re-run verify, then `checkpoint fix --next review` (stage guard makes a repeat safe), then re-review, so the cap counts the round (FR-002, FR-019, SC-002). T009 Done checks it. SKILL.md does not repeat the resume step, so T010 is unchanged.
+- G3: data-model.md `pending_design_fix` row reworded: reservation stores `attempt` = `fix_rounds + 1` without incrementing; cleared after the attempt, then `checkpoint fix` counts it; legacy `attempt == fix_rounds` suppresses the increment.

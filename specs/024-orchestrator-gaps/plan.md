@@ -135,7 +135,7 @@ Exempt: core/skills/factory/references/state.md - documentation only
 Exempt: core/skills/factory/references/design-code-mapping.md §5 - documentation only
 Overridden: none
 
-Confirmation pending: remediation 1 narrowed S2(c) to "with a record due" (analyze-1 F1), so the plan Q1 acceptance of 2026-11-04 is stale. Fresh acceptance is requested as remediate Q1; the `Confirmed:` line is written only after it.
+Confirmed: 2026-11-04 - remediate Q1 accepted (cruise override) - seams: S1 `factory checkpoint review|fix`, S2 `factory answer [--question]`, S3 `factory budget <role> [--round n | --full]`, S4 `factory ledger-add [--round n | --full]` overrun detection; failure paths: S1 - (a) commit failure after state write then retry increments `fix_rounds` once, (b) no `round-<n>/verdict.json` leaves `review.round` unchanged, (c) active `pending_design_fix` with `attempt` equal to the counter does not increment, (d) repeated `checkpoint fix` after the stage moved on does not increment; S2 - (a) existing record with a different answer exits 1 naming the path, state and files unchanged, (b) malformed `--question` JSON or `id` mismatch exits 1, nothing written, (c) unsafe qid/stage characters with a record due (`requires_user: true` question on a worktree run) exit 1, nothing written; the same characters with no record due are answered as today, (d) pending run without worktree stores the answer, no record; S3 - (a) missing or malformed `review_full_s` / config falls back to 600 without failure, (b) non-positive or non-integer `--round` is a usage exit 2; S4 - (a) duration 1 ms over budget rounds excess up to 1 s, (b) self-reported overrun keeps detail unchanged.
 
 Test runner: existing (`python3 -m unittest discover -s tools`); none added.
 
