@@ -386,6 +386,14 @@
       "auto": false,
       "at": "2026-11-04T18:08:57.261288Z",
       "kind": "answer"
+    },
+    {
+      "stage": "review",
+      "question": "R2-Q3-origin-less-repo",
+      "answer": "A: refuse with NO_BASE when no origin remote; fix message; update D3; add test",
+      "auto": false,
+      "at": "2026-11-04T18:08:57.768868Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
