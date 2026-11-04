@@ -130,6 +130,8 @@ tools/tests/test_adopt.py                                # NEW
 - Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md`, `core/skills/factory/SKILL.md`, `references/state.md`, `core/roles/spec-conformance.md`, `core/roles/review-judge.md`, `core/roles/retro.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
 - Overridden: none
 
+Confirmed: 2026-11-04 - Q1 accepted - seams: `adopt --dry-run`, `adopt` write, `validate_state`, `resume`; failure paths: each seam -> every failure path declared above, unchanged. Accepted scope snapshot: `specs/022-adopt-spec/factory/relay/plan-Q1.md`.
+
 ## Complexity Tracking
 
 None.
