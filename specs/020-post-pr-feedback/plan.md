@@ -91,7 +91,7 @@ tools/tests/test_improvements.py         # feedback entry tests
 | `subprocess.TimeoutExpired`, any other non-zero exit | `transient` |
 | unparseable JSON or wrong shape (`state` not `OPEN`/`CLOSED`/`MERGED`, `headRefOid` not hex, non-list rollup, a review that is not an object with a string `state`, a `CHANGES_REQUESTED` review without an integer `id`) | `transient` |
 | existing outcome file unreadable or malformed | `inaccessible`, file kept |
-| backlog entry at the target name unreadable or owned by another run | `inaccessible`, both files kept |
+| backlog entry at the target name unreadable, unwritable or owned by another run | `inaccessible`, earlier links kept |
 | outcome or backlog lock still held after the 5 s wait | `transient`, both files kept |
 | outcome-file write fails after the backlog write | `transient`, backlog links kept |
 
@@ -103,7 +103,7 @@ Each gap is `{run, pr_url, class, reason}`; `reason` is the first stderr line or
 - Status contexts: `state` `FAILURE` only (`ERROR`, `PENDING`, `SUCCESS` ignored per FR-004's "every other conclusion"); name = `context`, `event_at` = `startedAt`, `url` = `targetUrl`.
 - Two runs of one check on one head commit share an id; the first in response order is kept.
 - Reviews: `state` `CHANGES_REQUESTED`; id `review:<id>`, `event_at` = `submitted_at`, `url` = `html_url`, `detail` `{reviewer}`. A null login (deleted account) is stored as `ghost`; other reviews need no `id` (Q13).
-- PR state: `MERGED` gives `state:merged` (`mergedAt`); `CLOSED` gives `state:closed` (`closedAt`).
+- PR state: `MERGED` gives `state:merged` (`mergedAt`); `CLOSED` gives `state:closed` (`closedAt`); `url` = read 1 `url`.
 - Missing times or links are stored as `null`/`""`, never invented. Conclusions lowercased; names verbatim.
 
 ### Data model
@@ -116,7 +116,7 @@ Outcome file:
    "recorded_at": "...", "url": "...", "detail": {"name": "test", "conclusion": "failure"}}]}
 ```
 
-`kind` is `check` | `review` | `state`; `detail` is `{name, conclusion}`, `{reviewer}` or `{}`. Records are append-only; a stored id is never rewritten (FR-007).
+`kind` is `check` | `review` | `state`; `detail` is `{name, conclusion}`, `{reviewer}` or `{}`. Outcomes are append-only; a stored id is never rewritten (FR-007).
 
 Feedback entry (`improvements/<repo-name>-<branch>.<repo-hash>.feedback.<kind>.<subject>.json`, the retro naming rule):
 
@@ -134,7 +134,7 @@ Feedback entry (`improvements/<repo-name>-<branch>.<repo-hash>.feedback.<kind>.<
 
 ### Write order and integrity (FR-006, FR-009, FR-010, ENG-26)
 
-Per run (FR-010, Q10): read the outcome file unlocked for the terminal skip; fetch; take the outcomes lock, re-read and compute unstored ids; `add_feedback` under the nested backlog lock; then append the new outcomes (`recorded_at` = now) and write atomically. Lock order is always outcomes then backlog; retro `add` and `claim` take only the backlog lock, so no deadlock. A lock timeout or refused backlog entry writes nothing. A failed outcome write after the backlog write is a `transient` gap: links stay, and the next refresh re-sees the ids while `add_feedback` skips present links. The archive is opened read-only.
+Per run (FR-010, Q10): read the outcome file unlocked for the terminal skip; fetch; take the outcomes lock, re-read and compute unstored ids; `add_feedback` under the nested backlog lock; then append the new outcomes (`recorded_at` = now) and write atomically. Lock order is always outcomes then backlog; retro `add` and `claim` take only the backlog lock, so no deadlock. A lock timeout writes nothing; a failure after a backlog write keeps the links already written, and the next refresh re-sees the ids while `add_feedback` skips present links. The archive is opened read-only.
 
 `_acquire_backlog_lock` becomes `_acquire_home_lock(directory, harness)` for both writes. `feedback.py` imports `_write_atomic` by name, so a test can fail the outcome write alone.
 

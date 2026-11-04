@@ -119,7 +119,7 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 - An archived run's outcome file is missing: it is created on the first successful refresh.
 - An existing outcome file is unreadable or malformed: the run is an `inaccessible` gap and the file is not overwritten.
 - Two refreshes run at once: the lock serialises writes to each outcome file and to the backlog; neither loses outcomes.
-- A refresh is interrupted mid-write: atomic writes leave each file either fully old or fully new.
+- A refresh is interrupted mid-write: atomic writes leave each file fully old or fully new.
 - A reviewer login or check name contains characters unsafe for a signal key: it is reduced to a slug; the full name stays in `detail`.
 - A PR is both merged and has failed checks: both are recorded; only the checks are actionable.
 
@@ -138,7 +138,7 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 - **FR-009**: Each run MUST have at most one `feedback` entry per signal key. A new outcome mapping to a `ready` entry MUST append its evidence link to that entry; one mapping to a `claimed` entry MUST leave it untouched. The refresh MUST NOT cap entries per run or skip a signal key another run's entry already covers.
 - **FR-010**: A `feedback` entry MUST carry `kind: feedback`, its `signal_key`, its source run, its evidence links and a deterministic one-line `suggested_feature` usable unchanged as `/factory <feature>`. Backlog writes MUST be atomic and under the backlog lock. Per run, the refresh MUST take the outcomes lock first, re-read the outcome file and compute new ids, write the backlog under the nested backlog lock, then write the outcome file; the lock order MUST always be outcomes then backlog.
 - **FR-011**: The existing improvement listing and claim flow MUST handle `feedback` entries; Run exports and Retro entries MUST behave as before.
-- **FR-012**: Problems MUST be classified as `missing` (PR not found, unparseable `pr_url`), `inaccessible` (`gh` missing, unauthenticated or no access; unreadable or malformed outcome file; foreign or unreadable backlog file) or `transient` (network or server error, malformed response, a lock held past 5 s, a failed outcome-file write). For an affected run nothing MUST be written, except that a failed outcome-file write keeps the backlog links already written and the next refresh MUST NOT duplicate them; the run MUST be listed under `gaps` with its class and a reason; other runs MUST still refresh.
+- **FR-012**: Problems MUST be classified as `missing` (PR not found, unparseable `pr_url`), `inaccessible` (`gh` missing, unauthenticated or no access; unreadable or malformed outcome file; foreign, unreadable or unwritable backlog file) or `transient` (network or server error, malformed response, a lock held past 5 s, a failed outcome-file write). For an affected run nothing MUST be written, except that any write failing after a backlog write keeps the links already written and the next refresh MUST NOT duplicate them; the run MUST be listed under `gaps` with its class and a reason; other runs MUST still refresh.
 - **FR-013**: The command MUST print JSON naming each refreshed run with its new outcomes and backlog changes, the `gaps`, and the `skipped` runs (terminal outcome already recorded, or unreadable archive state) each with a reason. It MUST exit 1 when any gap exists or a `<branch>` is refused (no such archived run, or no `pr_url`; not a gap, GitHub never called, nothing written), and 0 otherwise. It MUST NOT retry automatically.
 - **FR-014**: All GitHub access MUST go through one injectable runner so tests replace it with fakes; the command MUST store no credential.
 - **FR-015**: `DESIGN.md` MUST record the feedback refresh before core and adapter files change; the new route MUST stay harness-neutral in `core/` and render for every harness.
@@ -166,7 +166,7 @@ GitHub is unreachable, the maintainer is signed out, or a PR was deleted. The re
 
 - An outcome without an evidence link in the GitHub response is stored with an empty `url`; no link is invented.
 - A slug lowercases a name, replaces each run of characters outside `a-z`, `0-9` and `-` with one hyphen, trims leading and trailing hyphens, keeps at most 64 characters, and is `unnamed` when nothing remains.
-- The refresh reads only the head commit's checks as GitHub reports them for the PR; earlier commits' checks are seen only if an earlier refresh caught them.
+- The refresh reads only the head commit's checks as GitHub reports them; earlier commits' checks are seen only if an earlier refresh caught them.
 - The refresh is bounded by the number of archived runs with a `pr_url`; each run costs two `gh` calls, and the reviews call pages through every review.
 - The `<repo-name>` in the outcome file name matches the run archive's naming; runs archived from a since-moved checkout are not found (known limitation).
 - Merging, deployment and any write to GitHub are out of scope.
