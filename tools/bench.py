@@ -183,14 +183,14 @@ def launch_command(harness, prompt, *, model, out, home, skill_dir):
     return ["claude", "-p", prompt, *model_args, *add_dirs, "--allowedTools", *allowed]
 
 
-GIT_TIMEOUT = 10
+PROBE_TIMEOUT = 10
 
 
 def git_bytes(path, *args):
     return subprocess.run(
         ["git", "-C", str(path), *args],
         capture_output=True,
-        timeout=GIT_TIMEOUT,
+        timeout=PROBE_TIMEOUT,
         check=True,
     ).stdout
 
@@ -234,6 +234,64 @@ def tree_digest(path):
     for relative, content in sorted(records):
         digest.update(f"{relative}\0{content}\n".encode())
     return digest.hexdigest()
+
+
+def harness_version(executable):
+    """`<executable> --version` output, or "unavailable" when the probe fails or hangs."""
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=PROBE_TIMEOUT,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    text = result.stdout.strip()
+    return text if result.returncode == 0 and text else "unavailable"
+
+
+def safe_digest(path):
+    try:
+        return tree_digest(path)
+    except OSError:
+        return "unavailable"
+
+
+def installed_factory(harness):
+    """The maintainer's installed factory under the driver's own environment (the baseline)."""
+    skill = Path(render.load_adapter(harness)["skill_dir"]).expanduser()
+    if not skill.exists():
+        return {"skill_dir": "unavailable", "digest": "unavailable"}
+    return {"skill_dir": str(skill.resolve()), "digest": safe_digest(skill)}
+
+
+def write_provenance(out, *, bench_name, harness, model, repo, from_checkout):
+    """Attribution written once, before launch; it never holds credentials or environment values."""
+    if from_checkout:
+        render_record = {
+            "mode": "checkout",
+            "digest": safe_digest(out / "home" / "dist" / harness),
+        }
+    else:
+        render_record = {"mode": "installed", "digest": "none"}
+    record = {
+        "version": 1,
+        "written_at": state.iso(datetime.now(timezone.utc)),
+        "bench": bench_name,
+        "harness": harness,
+        "model": model,
+        "repo": str(repo),
+        "checkout": {"path": str(ROOT), **checkout_provenance(ROOT)},
+        "render": render_record,
+        "installed_factory": installed_factory(harness),
+        "harness_versions": {
+            name: harness_version(name) for name in ("claude", "opencode")
+        },
+    }
+    path = out / "provenance.json"
+    path.write_text(json.dumps(record, indent=2) + "\n")
+    return path
 
 
 def adapter_template(harness):
@@ -352,6 +410,14 @@ def run(args):
         f"Record the fixture acceptance command separately in verify: {config['acceptance']}. "
         "Stop before approver; do not approve or open a PR."
     )
+    provenance = write_provenance(
+        out,
+        bench_name=args.bench,
+        harness=args.harness,
+        model=args.model,
+        repo=repo,
+        from_checkout=args.from_checkout,
+    )
     log = out / "harness.log"
     env = dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness)
     if args.from_checkout:
@@ -383,6 +449,7 @@ def run(args):
                 "home": str(home),
                 "pending": str(pending),
                 "log": str(log),
+                "provenance": str(provenance),
                 "exit_status": process.returncode,
             }
         )

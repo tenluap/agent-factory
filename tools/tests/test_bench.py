@@ -187,11 +187,12 @@ class StubHarness:
             "STUB_RECORD": str(self.record),
         }
 
-    def bench(self, *args, path=None):
+    def bench(self, *args, path=None, extra=None):
         env = dict(os.environ)
         for key in ("CLAUDE_CONFIG_DIR", "FACTORY_HARNESS", "ANTHROPIC_API_KEY"):
             env.pop(key, None)
         env.update(self.env, PATH=path or f"{self.bin}{os.pathsep}{os.environ['PATH']}")
+        env.update(extra or {})
         return subprocess.run(
             [sys.executable, str(REPO_ROOT / "tools" / "bench.py"), "run", *map(str, args)],
             capture_output=True,
@@ -217,9 +218,9 @@ class RunTests(unittest.TestCase):
         self.out = self.box.dir / "out"
         self.home = self.box.dir / "home"
 
-    def run_bench(self, harness, *extra, out=None, path=None):
+    def run_bench(self, harness, *extra, out=None, path=None, env=None):
         return self.stub.bench(
-            "--harness", harness, "--out", out or self.out, *extra, path=path
+            "--harness", harness, "--out", out or self.out, *extra, path=path, extra=env
         )
 
     def skill_link(self):
@@ -439,3 +440,86 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(bench_module.tree_digest(tree), expected)
         (tree / "b.txt").write_bytes(b"Bravo")
         self.assertNotEqual(bench_module.tree_digest(tree), expected)
+
+
+class ProvenanceRunTests(unittest.TestCase):
+    """Provenance written by `run` before the harness launches."""
+
+    setUp = RunTests.setUp
+    run_bench = RunTests.run_bench
+    skill_link = RunTests.skill_link
+
+    def record(self):
+        return json.loads((self.out / "provenance.json").read_text())
+
+    def test_installed_run_writes_record_before_launch(self):
+        link, resolved = self.skill_link()
+        out = self.run_bench("claude-code", "--home", self.home)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        printed = json.loads(out.stdout)
+        self.assertEqual(printed["provenance"], str(self.out.resolve() / "provenance.json"))
+        record = self.record()
+        self.assertEqual(
+            set(record),
+            {"version", "written_at", "bench", "harness", "model", "repo", "checkout",
+             "render", "installed_factory", "harness_versions"},
+        )
+        self.assertEqual(record["version"], 1)
+        self.assertEqual(record["bench"], "greet-001")
+        self.assertEqual(record["harness"], "claude-code")
+        self.assertIsNone(record["model"])
+        self.assertEqual(record["repo"], str(self.out.resolve() / "fixture-greet-001"))
+        self.assertEqual(record["render"], {"mode": "installed", "digest": "none"})
+        self.assertEqual(
+            record["installed_factory"],
+            {"skill_dir": str(resolved), "digest": bench_module.tree_digest(link)},
+        )
+        self.assertEqual(
+            record["harness_versions"],
+            {"claude": "claude 9.9.9-stub", "opencode": "opencode 9.9.9-stub"},
+        )
+        self.assertEqual(
+            set(record["checkout"]), {"path", "revision", "changed_paths", "diff_sha256"}
+        )
+
+    def test_checkout_run_digests_its_render(self):
+        out = self.run_bench("claude-code", "--from-checkout")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        rendered = self.out.resolve() / "home" / "dist" / "claude-code"
+        record = self.record()
+        self.assertEqual(
+            record["render"],
+            {"mode": "checkout", "digest": bench_module.tree_digest(rendered)},
+        )
+
+    def test_secrets_never_reach_the_record(self):
+        out = self.run_bench(
+            "claude-code", "--home", self.home, env={"ANTHROPIC_API_KEY": "stub-secret"}
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertNotIn("stub-secret", (self.out / "provenance.json").read_text())
+
+    def test_failed_harness_still_leaves_the_record(self):
+        out = self.run_bench("claude-code", "--home", self.home, env={"STUB_EXIT": "5"})
+        self.assertEqual(out.returncode, 1)
+        self.assertTrue((self.out / "provenance.json").exists())
+
+    def test_failed_version_probe_is_recorded_as_unavailable(self):
+        out = self.run_bench(
+            "claude-code", "--home", self.home, env={"STUB_VERSION_FAIL": "1"}
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(
+            self.record()["harness_versions"],
+            {"claude": "unavailable", "opencode": "unavailable"},
+        )
+
+    def test_absent_installed_factory_is_unavailable_and_not_granted(self):
+        out = self.run_bench("claude-code", "--home", self.home)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(
+            self.record()["installed_factory"],
+            {"skill_dir": "unavailable", "digest": "unavailable"},
+        )
+        (call,) = self.stub.calls()
+        self.assertFalse(any("skills" in path for path in add_dirs(call["argv"])))
