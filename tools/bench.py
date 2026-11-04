@@ -2,6 +2,7 @@
 """Replay a fixture manually/headlessly, score recorded runs offline, compare scores."""
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -15,6 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "core" / "skills" / "factory" / "bin"))
 
 from factory_cli import checks, state, totals  # noqa: E402
+
+sys.path.insert(0, str(ROOT / "tools"))
+import render  # noqa: E402
 
 CONDITIONS = (
     "reached-approver",
@@ -31,11 +35,27 @@ def load_bench(name):
     return folder, json.loads((folder / "bench.json").read_text())
 
 
+def load_provenance(state):
+    """The provenance beside the state's fixture when it names the same repo; never raises."""
+    try:
+        repo = state["repo"]
+        path = Path(repo).parent / "provenance.json"
+        record = json.loads(path.read_text())
+    except FileNotFoundError:
+        return {"missing": "no provenance.json beside the fixture"}
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
+        return {"missing": f"unreadable provenance.json: {error}"}
+    if not isinstance(record, dict) or record.get("repo") != repo:
+        return {"missing": "provenance repo does not match the state repo"}
+    return record
+
+
 def score(path, acceptance):
     """A missing or malformed artifact fails by condition name, never by traceback."""
     result = {
         "state": str(path),
         "run": Path(path).stem,
+        "provenance": {"missing": "state unreadable"},
         "metrics": {
             "wall_ms": 0,
             "agent_ms": 0,
@@ -57,6 +77,7 @@ def score(path, acceptance):
         if error:
             raise ValueError(error)
         result["run"] = loaded.get("branch") or result["run"]
+        result["provenance"] = load_provenance(loaded)
         computed = totals.compute(loaded)
         metrics = result["metrics"]
         for key in ("wall_ms", "agent_ms", "human_ms", "spawns"):
@@ -153,17 +174,195 @@ def compare(a_path, b_path):
         print(f"cannot compare scores: {error}", file=sys.stderr)
 
 
+EXECUTABLES = {"claude-code": "claude", "opencode": "opencode"}
+
+
+CLAUDE_TOOLS = ["Read", "Edit", "Write", "Agent", "Skill", "Bash(git:*)", "Bash(python3:*)"]
+
+
+def launch_command(harness, prompt, *, model, out, home, skill_dir):
+    """Headless argv per contracts/bench-cli.md; Claude Code gets a scoped grant, never a bypass."""
+    if harness == "opencode":
+        return ["opencode", "run", *(["-m", model] if model else []), prompt]
+    model_args = ["--model", model] if model else []
+    out, skill = Path(out), Path(skill_dir)
+    candidates = [out]
+    if skill.exists():
+        candidates += [skill, skill.resolve()]
+    candidates.append(Path(home))
+    # The output directory already covers anything inside it; each path is granted once.
+    grants = []
+    for path in candidates:
+        if (path == out or out not in path.parents) and str(path) not in grants:
+            grants.append(str(path))
+    add_dirs = [arg for grant in grants for arg in ("--add-dir", grant)]
+    allowed = [*CLAUDE_TOOLS, f"Bash({skill}/bin/factory:*)"]
+    return ["claude", "-p", prompt, *model_args, *add_dirs, "--allowedTools", *allowed]
+
+
+PROBE_TIMEOUT = 10
+
+
+def git_bytes(path, *args):
+    return subprocess.run(
+        ["git", "-C", str(path), *args],
+        capture_output=True,
+        timeout=PROBE_TIMEOUT,
+        check=True,
+    ).stdout
+
+
+def checkout_provenance(path):
+    """Revision and working-tree changes; a checkout git cannot report gives "unavailable"."""
+    try:
+        revision = git_bytes(path, "rev-parse", "HEAD").decode().strip()
+        tracked = git_bytes(path, "diff", "HEAD", "--name-only").decode().splitlines()
+        untracked = (
+            git_bytes(path, "ls-files", "--others", "--exclude-standard")
+            .decode()
+            .splitlines()
+        )
+        # Bytes, not text: the digest must match `git diff` output exactly.
+        diff = git_bytes(path, "diff", "HEAD", "--binary")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return {
+            "revision": "unavailable",
+            "changed_paths": "unavailable",
+            "diff_sha256": "unavailable",
+        }
+    return {
+        "revision": revision,
+        "changed_paths": sorted(set(tracked + untracked)),
+        "diff_sha256": hashlib.sha256(diff).hexdigest() if diff else None,
+    }
+
+
+def tree_digest(path):
+    """sha256 over `<relative path>\\0<sha256 of bytes>\\n` per regular file, sorted, symlinks followed.
+
+    "unavailable" when the root is missing or not a directory, anything under it cannot be read,
+    or a symlink cycle is found; never the digest of a partial tree.
+    """
+    root = Path(path)
+    records = []
+    try:
+        _collect_records(root, root, (os.path.realpath(root),), records)
+    except OSError:
+        return "unavailable"
+    digest = hashlib.sha256()
+    for relative, content in sorted(records):
+        digest.update(f"{relative}\0{content}\n".encode())
+    return digest.hexdigest()
+
+
+def _collect_records(root, folder, ancestors, records):
+    """Regular files under folder; a directory already on the path from root is a cycle (OSError)."""
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            if entry.is_dir():
+                real = os.path.realpath(entry.path)
+                if real in ancestors:
+                    raise OSError(f"symlink cycle at {entry.path}")
+                _collect_records(root, entry.path, (*ancestors, real), records)
+            elif entry.is_file():
+                content = hashlib.sha256(Path(entry.path).read_bytes()).hexdigest()
+                records.append((Path(entry.path).relative_to(root).as_posix(), content))
+
+
+def harness_version(executable):
+    """`<executable> --version` output, or "unavailable" when the probe fails or hangs."""
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=PROBE_TIMEOUT,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    text = result.stdout.strip()
+    return text if result.returncode == 0 and text else "unavailable"
+
+
+def installed_factory(harness):
+    """The maintainer's installed factory under the driver's own environment (the baseline)."""
+    skill = Path(render.load_adapter(harness)["skill_dir"]).expanduser()
+    if not skill.exists():
+        return {"skill_dir": "unavailable", "digest": "unavailable"}
+    return {"skill_dir": str(skill.resolve()), "digest": tree_digest(skill)}
+
+
+def write_provenance(out, *, bench_name, harness, model, repo, from_checkout):
+    """Attribution written once, before launch; it never holds credentials or environment values."""
+    if from_checkout:
+        render_record = {
+            "mode": "checkout",
+            "digest": tree_digest(out / "home" / "dist" / harness),
+        }
+    else:
+        render_record = {"mode": "installed", "digest": "none"}
+    record = {
+        "version": 1,
+        "written_at": state.iso(datetime.now(timezone.utc)),
+        "bench": bench_name,
+        "harness": harness,
+        "model": model,
+        "repo": str(repo),
+        "checkout": {"path": str(ROOT), **checkout_provenance(ROOT)},
+        "render": render_record,
+        "installed_factory": installed_factory(harness),
+        "harness_versions": {
+            name: harness_version(name) for name in ("claude", "opencode")
+        },
+    }
+    path = out / "provenance.json"
+    path.write_text(json.dumps(record, indent=2) + "\n")
+    return path
+
+
+def adapter_template(harness):
+    return json.loads((render.ADAPTERS / harness / "adapter.json").read_text())
+
+
+def checkout_env(harness, config):
+    """Launch variables pointing the harness at the isolated config directory."""
+    if harness == "claude-code":
+        return {"CLAUDE_CONFIG_DIR": str(config), "CLAUDE_HOME": str(config)}
+    return {"XDG_CONFIG_HOME": str(config)}
+
+
+def isolated_install(harness, out):
+    """Render this checkout under `out`; the maintainer's factory home and config stay untouched."""
+    home, config = out / "home", out / "harness-config"
+    home.mkdir()
+    config.mkdir()
+    env = dict(
+        os.environ,
+        FACTORY_HOME=str(home),
+        HOME=str(out),
+        **checkout_env(harness, config),
+    )
+    result = subprocess.run(
+        ["bash", str(ROOT / "install.sh"), "--harness", harness],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        tail = "\n".join((result.stdout + result.stderr).splitlines()[-8:])
+        raise ValueError(f"checkout render failed (exit {result.returncode}): {tail}")
+
+
 def run(args):
     """Prepare a disposable repository; only the selected headless CLI spends tokens."""
-    drivers = {"claude-code": ["claude", "-p"], "opencode": ["opencode", "run"]}
-    if args.harness not in drivers:
+    if args.harness not in EXECUTABLES:
         raise ValueError(
             f"unsupported headless harness '{args.harness}'; use the manual benchmark fallback"
         )
-    driver = drivers[args.harness]
-    if not shutil.which(driver[0]):
+    executable = EXECUTABLES[args.harness]
+    if not shutil.which(executable):
         raise ValueError(
-            f"harness '{args.harness}' command '{driver[0]}' is unavailable; use the manual benchmark fallback"
+            f"harness '{args.harness}' command '{executable}' is unavailable; use the manual benchmark fallback"
         )
     folder, config = load_bench(args.bench)
     if args.out:
@@ -172,7 +371,11 @@ def run(args):
     else:
         out = Path(tempfile.mkdtemp(prefix="factory-bench-"))
     repo = out / f"fixture-{args.bench}"
-    home = Path(args.home).expanduser().resolve() if args.home else out / "home"
+    if args.from_checkout:
+        isolated_install(args.harness, out)
+        home = out / "home"
+    else:
+        home = Path(args.home).expanduser().resolve() if args.home else out / "home"
     shutil.copytree(
         ROOT / config["fixture_repo"],
         repo,
@@ -233,12 +436,35 @@ def run(args):
         f"Record the fixture acceptance command separately in verify: {config['acceptance']}. "
         "Stop before approver; do not approve or open a PR."
     )
+    provenance = write_provenance(
+        out,
+        bench_name=args.bench,
+        harness=args.harness,
+        model=args.model,
+        repo=repo,
+        from_checkout=args.from_checkout,
+    )
     log = out / "harness.log"
+    env = dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness)
+    if args.from_checkout:
+        config_dir = out / "harness-config"
+        env.update(checkout_env(args.harness, config_dir))
+        skill_dir = adapter_template(args.harness)["skill_dir"].format(home=config_dir)
+    else:
+        skill_dir = Path(render.load_adapter(args.harness)["skill_dir"]).expanduser()
+    launch = launch_command(
+        args.harness,
+        prompt,
+        model=args.model,
+        out=out,
+        home=home,
+        skill_dir=skill_dir,
+    )
     with log.open("w") as stream:
         process = subprocess.run(
-            [*driver, prompt],
+            launch,
             cwd=repo,
-            env=dict(os.environ, FACTORY_HOME=str(home), FACTORY_HARNESS=args.harness),
+            env=env,
             stdout=stream,
             stderr=subprocess.STDOUT,
         )
@@ -249,6 +475,7 @@ def run(args):
                 "home": str(home),
                 "pending": str(pending),
                 "log": str(log),
+                "provenance": str(provenance),
                 "exit_status": process.returncode,
             }
         )
@@ -271,7 +498,10 @@ def main(argv=None):
     running = commands.add_parser("run")
     running.add_argument("--harness", required=True)
     running.add_argument("--bench", default="greet-001")
-    running.add_argument("--home")
+    running.add_argument("--model")
+    source = running.add_mutually_exclusive_group()
+    source.add_argument("--home")
+    source.add_argument("--from-checkout", action="store_true")
     running.add_argument("--out")
     args = parser.parse_args(argv)
     if args.command == "compare":

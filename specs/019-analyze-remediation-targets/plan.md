@@ -39,7 +39,7 @@ core/skills/factory/SKILL.md              # step 4 RESOLVE speckit-constitution;
 core/skills/factory/references/state.md   # analyze.baseline, cycle writer, new command
 core/roles/spec-builder.md                # amendment draft and hash check; escalated report name
 DESIGN.md                                 # loop, gate table, "Analyze acceptance targets validation"
-docs/adr/0014-analyze-acceptance-targets.md
+docs/adr/0016-analyze-acceptance-targets.md
 docs/factory-overview.md                  # analyze diagram and paragraph
 docs/product-brief.md                     # "Analysis and remediation policy" + revision line
 tools/tests/test_gates.py                 # gate tests (extended)
@@ -48,7 +48,7 @@ tools/tests/test_analyze_record.py        # recorder, checkpoint, resume, amendm
 
 ### New files, abstractions, dependencies
 
-- `docs/adr/0014-analyze-acceptance-targets.md` - file - FR-022 and Q7 require it.
+- `docs/adr/0016-analyze-acceptance-targets.md` - file - FR-022 and Q7 require it.
 - `analyze.baseline` - abstraction - state field required by FR-001; same shape as `analyze.result` so one validity check serves both.
 - `checks.analyze_baseline(analyze)` - abstraction - one source of truth for the stored-or-derived baseline (FR-010), shared by the gate and `analyze-record`.
 - `factory amendment-check <draft> [--sha256 <hex>]` - abstraction - one tested hash check for amendment approval (FR-018, FR-019), identical on every harness.
@@ -138,7 +138,7 @@ Replace "Constitution conflicts are fixed in the artifacts, never in the constit
 - Seam: `bin/factory resume` - baseline and `loops` preserved across resume on another harness. Failure paths: none.
 - Seam: `factory_cli.state.validate_state` - `analyze.baseline` shape. Failure paths: negative count; missing count; non-integer count; empty `report`.
 - Seam: `bin/factory amendment-check` - prints the draft sha256. Failure paths: missing draft exits 1; changed draft (hash mismatch) exits 1; constitution file byte-identical after each.
-- Exempt: `DESIGN.md`, `docs/adr/0014-analyze-acceptance-targets.md`, `docs/factory-overview.md`, `docs/product-brief.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md`, `core/roles/spec-builder.md` - documentation only (agent instructions and overview docs).
+- Exempt: `DESIGN.md`, `docs/adr/0016-analyze-acceptance-targets.md`, `docs/factory-overview.md`, `docs/product-brief.md`, `core/skills/factory/SKILL.md`, `core/skills/factory/references/state.md`, `core/roles/spec-builder.md` - documentation only (agent instructions and overview docs).
 - Overridden: none
 
 Confirmed: 2026-11-04 - Q1 accepted - seams: `factory_cli.checks.gate_violation(state, "implement")`, `factory_cli.checks.gate_violation(state, "remediate")`, `bin/factory analyze-record`, `bin/factory checkpoint` (remediate and into implement), `bin/factory resume`, `factory_cli.state.validate_state`, `bin/factory amendment-check`; failure paths: implement gate -> CRITICAL > 0, HIGH > 0 including a new HIGH on a clean baseline, total exactly half (12 -> 6) and above, LOW exactly half (6 -> 3), odd baseline (7 -> 4), zero baseline with nonzero latest (LOW 0 -> 1), `pending_clarify` non-empty with targets met, unanswered `requires_user` relay question, no baseline with zero reports / several reports / a result naming another report; remediate gate -> `loops == 2` with no decision, an `auto: true` analyze decision, a guided decision older than `analyze.result.at`; analyze-record -> `--fresh-baseline` with an existing or derivable baseline refused, state and HEAD unchanged; checkpoint -> repeated `checkpoint remediate` after the stage advanced does not increment, refused into `remediate` at the cap leaves state unchanged, into `implement` with the stale pre-remediation result refused until a fresh analysis is recorded; resume -> none; validate_state -> negative count, missing count, non-integer count, empty `report`; amendment-check -> missing draft exits 1, changed draft (hash mismatch) exits 1, constitution file byte-identical after each. Snapshot of the accepted question: `factory/relay-plan-1.json` (Q1).

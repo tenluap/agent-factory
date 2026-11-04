@@ -2,7 +2,7 @@
 
 **Prepared:** 24 October 2026  
 **Engineering policy revised:** 25 October 2026  
-**Analysis policy revised:** 4 November 2026 (baseline-relative acceptance targets and two-cycle cap; see [ADR 0014](adr/0014-analyze-acceptance-targets.md))  
+**Analysis policy revised:** 4 November 2026 (baseline-relative acceptance targets and two-cycle cap; see [ADR 0016](adr/0016-analyze-acceptance-targets.md))  
 **Audience:** Product owners, developers, and coding agents recreating or extending a software factory.  
 **Status:** Reviewable product brief. It describes the existing factory and recommends a more efficient rebuild; it does not change the factory's behaviour.
 
@@ -228,7 +228,7 @@ Relay questions have stable stage-local IDs, context, meaningful choices where a
 
 On the full chain, CRITICAL/HIGH analysis findings trigger remediation of all reported severities in place, followed by another analysis, within the two-cycle cap described below. Questions that would change a settled user decision return to the user; they are never guessed or auto-accepted. Re-enter clarification only when those questions require it. After two remediation loops, halt and let the user choose how to proceed.
 
-Implementation waits for baseline-relative acceptance targets, not a fixed remediation pass: CRITICAL and HIGH must be zero, and the total and LOW counts must each be below half their baseline (a zero baseline stays zero). The first recorded analysis is the baseline. Repair runs at most two cycles; then the run pauses for the user's decision (a guided pass, a recorded override, or abort). Constitution amendments are applied only after approval of the exact draft. On lite, CRITICAL/HIGH findings still switch to full, starting at clarify and re-deriving plan and tasks before analysis. [ADR 0014](adr/0014-analyze-acceptance-targets.md) records the rule.
+Implementation waits for baseline-relative acceptance targets, not a fixed remediation pass: CRITICAL and HIGH must be zero, and the total and LOW counts must each be below half their baseline (a zero baseline stays zero). The first recorded analysis is the baseline. Repair runs at most two cycles; then the run pauses for the user's decision (a guided pass, a recorded override, or abort). Constitution amendments are applied only after approval of the exact draft. On lite, CRITICAL/HIGH findings still switch to full, starting at clarify and re-deriving plan and tasks before analysis. [ADR 0016](adr/0016-analyze-acceptance-targets.md) records the rule.
 
 ### Failure policy
 

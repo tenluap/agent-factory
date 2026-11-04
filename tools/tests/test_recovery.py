@@ -67,7 +67,7 @@ class KillAndResumeTests(unittest.TestCase):
 
     def prepare(self, box, wt, stage):
         """The records the real flow produces before completing `stage`."""
-        if stage == "analyze":  # a clean analysis result; its derived baseline passes the gate (ADR 0014)
+        if stage == "analyze":  # a clean analysis result; its derived baseline passes the gate (ADR 0016)
             box.corrupt_worktree_state(
                 self.branch,
                 lambda s: s["analyze"].update(

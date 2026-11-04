@@ -111,7 +111,7 @@ One append-only record of a single thing that went wrong in a factory run: an ov
 _Avoid_: finding, bug, incident
 
 **Improvement backlog**:
-The factory home's set of `ready` or claimed improvement entries, of two kinds: Run exports and Retro entries.
+The factory home's set of `ready` or claimed improvement entries, of three kinds: Run exports, Retro entries and Feedback entries.
 _Avoid_: issue list, pending improvements
 
 **Run export**:
@@ -135,8 +135,12 @@ A proposed improvement the retro returns: signal key, evidence, impact rank and 
 _Avoid_: suggestion, recommendation
 
 **Retro entry**:
-An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence, suggested feature and source run.
+An improvement candidate accepted into the improvement backlog, carrying its signal key, evidence (a string), suggested feature and source run.
 _Avoid_: retro export, retro backlog
+
+**Source run**:
+The ended factory run an improvement backlog entry or a PR outcome belongs to.
+_Avoid_: originating run, parent run
 
 **Run folder**:
 The `specs/<branch>/factory/` directory of run artifacts (state, brief, reports, findings and design evidence), committed on the feature branch while the run is in progress.
@@ -180,6 +184,32 @@ _Avoid_: implementation checkpoint, transition gate, analyze gate
 The protected question asked when acceptance targets are still unmet after the automatic repair cycles: one more guided pass, a recorded gate override, or abort.
 _Avoid_: halt question, escalation question, cap prompt
 
+## Post-PR feedback
+
+**Feedback refresh**:
+The user-started, read-only reading of archived runs' PRs on GitHub that records their PR outcomes; it never writes to GitHub, merges or deploys.
+_Avoid_: sync, poll, PR check
+
+**PR outcome**:
+One meaningful GitHub event on a source run's PR (a failed check, a change request, or the PR merged or closed unmerged), identified by its outcome id.
+_Avoid_: outcome record, PR event, result
+
+**Outcome id**:
+The stable identity of a PR outcome, built from its kind and GitHub's own identity for the event, so a re-seen event is the same PR outcome.
+_Avoid_: outcome key, event id
+
+**Outcome file**:
+The per-run file in the factory home, beside the run archive, holding that run's PR outcomes.
+_Avoid_: outcome store, PR log
+
+**Feedback entry**:
+An improvement backlog entry made from actionable PR outcomes: one per source run and signal key, carrying evidence (a list of links) and suggested feature text.
+_Avoid_: PR entry, CI entry, feedback candidate
+
+**Refresh gap**:
+A run the feedback refresh could not read or write, with its class (missing, inaccessible or transient) and reason; it is reported, never guessed.
+_Avoid_: error, failure, skipped run
+
 ## Skill routing
 
 **Intake intent**:
@@ -195,12 +225,28 @@ A logical skill name plus the path the active harness's adapter resolved for it,
 _Avoid_: skill reference, dependency
 
 **Protected question**:
-A relay question carrying `requires_user: true`, which fast mode must never auto-accept; the plan's seam confirmation is one.
+A relay question carrying `requires_user: true`, which fast mode must never auto-accept; the plan's seam confirmation is one. Only cruise mode answers it on the user's behalf, and then only as a cruise override.
 _Avoid_: manual question, forced question
 
 **Seam confirmation**:
-The user's agreement to a plan's proposed public test seams, persisted with the plan and invalidated when the seams or scope it names change.
+The user's agreement to a plan's proposed public test seams, persisted with the plan and invalidated when the seams or scope it names change. Under cruise mode a cruise override stands in for it, and the user sees it in the veto list before anything is published.
 _Avoid_: test approval, sign-off
+
+**Cruise mode**:
+An opt-in run mode in which every decision the run would put to the user is taken with its recommended answer, so the run waits on the user only at the approver gate, a failure halt or a stop point. It never approves publishing.
+_Avoid_: YOLO mode, autopilot, unattended mode
+
+**Cruise override**:
+A decision cruise mode took that a run without it would have put to the user: a protected question's answer, a `pending_clarify` answer, an auto-resolved decision halt, or an accepted one-off setup offer.
+_Avoid_: forced answer, auto-approval, bypass
+
+**Veto list**:
+The approver screen's list of decisions the run made on the user's behalf, which the user can reverse with "Request changes" before anything is published; under cruise mode its cruise overrides are listed first, apart from ordinary auto-accepted answers.
+_Avoid_: audit log, decision summary, auto-accept list
+
+**No-prompt launch option**:
+A harness's own way of starting a session that does not ask for tool permissions, documented by that harness's adapter and never turned on by the factory.
+_Avoid_: permission bypass, YOLO flag
 
 **UI change signal**:
 A diff's classification as touching a user-visible surface: view markup and styles, design tokens and themes, UI assets, locale and string files, or user-visible copy inside UI code.
@@ -327,7 +373,7 @@ The replay of a pre-settled fixture feature against one factory version, stopped
 _Avoid_: perf run, regression suite, test run
 
 **Benchmark score**:
-One run's measured outcome — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
+One run's measured result — time, spawns, overruns, issues by kind, token estimates, review rounds and a pass verdict — comparable against another score.
 _Avoid_: metrics dump, report, summary
 
 ## FACETS

@@ -86,6 +86,43 @@ class StateError(Exception):
     """A refused write, with the reason."""
 
 
+class ModeError(ValueError):
+    """Mode flags that cannot be combined, or an unknown mode flag."""
+
+
+DEFAULT_MODE = {"chain": "lite", "fast": True, "cruise": False}
+
+
+def resolve_mode(base, flags):
+    """Apply mode flags to `base` and return {chain, fast, cruise} (spec 021).
+
+    Pairs are last-wins in argv order. Cruise on forces fast on, so `--no-fast`
+    anywhere in the flags conflicts with cruise on (FR-003), whether cruise came
+    from a flag or from the stored base. `--no-cruise` keeps fast as it was.
+    """
+    chain = base.get("chain", "lite")
+    fast = bool(base.get("fast", True))
+    cruise = base.get("cruise") is True
+    no_fast = False
+    for flag in flags:
+        if flag in ("--lite", "--full"):
+            chain = flag[2:]
+        elif flag in ("--fast", "--no-fast"):
+            fast = flag == "--fast"
+            no_fast = no_fast or flag == "--no-fast"
+        elif flag in ("--cruise", "--no-cruise"):
+            cruise = flag == "--cruise"
+        else:
+            raise ModeError(f"unknown mode flag '{flag}'")
+    if cruise:
+        if no_fast:
+            raise ModeError(
+                "--cruise conflicts with --no-fast: cruise mode needs fast mode"
+            )
+        fast = True
+    return {"chain": chain, "fast": fast, "cruise": cruise}
+
+
 def parse_iso(value):
     """Parse an ISO-8601 UTC timestamp; None when missing or malformed."""
     if not isinstance(value, str) or not value:
@@ -154,6 +191,7 @@ def validate_state(state):
         if not state.get("ended_at"):
             bad("ended_at", "a pr-open run has ended")
 
+    _check_mode(state, bad)
     decisions = _check_decisions(state, bad)
     _check_history(state, decisions, bad)
     _check_timeline(state, bad)
@@ -162,6 +200,35 @@ def validate_state(state):
     _check_baseline(state, bad)
     _check_issues(state, bad)
     return problems
+
+
+def _check_mode(state, bad):
+    """Cruise mode (spec 021): optional boolean; cruise on requires fast on."""
+    mode = state.get("mode")
+    if not isinstance(mode, dict) or "cruise" not in mode:
+        return  # absent means off
+    if not isinstance(mode["cruise"], bool):
+        bad("mode.cruise", "not a boolean")
+    elif mode["cruise"] and mode.get("fast") is not True:
+        bad("mode.cruise", "cruise mode requires fast mode")
+
+
+def _check_marker(bad, location, record):
+    """A `cruise_override` marker: boolean, and true only on an auto answer
+    that is never an approval and never sits at the approver stage (FR-015)."""
+    if "cruise_override" not in record:
+        return
+    marker = record["cruise_override"]
+    where = f"{location}.cruise_override"
+    if not isinstance(marker, bool):
+        bad(where, "not a boolean")
+    elif marker:
+        if record.get("auto") is not True:
+            bad(where, "a cruise override requires auto: true")
+        if record.get("kind") == "approved":
+            bad(where, "an approved record is never a cruise override")
+        if record.get("stage") == "approver":
+            bad(where, "a cruise override never sits at the approver stage")
 
 
 def _check_decisions(state, bad):
@@ -182,11 +249,16 @@ def _check_decisions(state, bad):
                 bad(f"decisions[{i}].{field}", "missing required field")
         if entry.get("kind") not in DECISION_KINDS:
             bad(f"decisions[{i}].kind", f"{entry.get('kind')!r} is off-vocabulary")
+        cruise_gate = entry.get("kind") == "gate-override" and entry.get(
+            "cruise_override"
+        ) is True  # analyze-exhaustion auto-proceed; scope is the decisions-add guard
         if (
             entry.get("kind") in ("approved", "gate-override")
             and entry.get("auto") is not False
+            and not cruise_gate
         ):
             bad(f"decisions[{i}].auto", "a gate decision is never auto")
+        _check_marker(bad, f"decisions[{i}]", entry)
         if entry.get("stage") not in STAGES:
             bad(f"decisions[{i}].stage", f"{entry.get('stage')!r} is off-vocabulary")
         at = parse_iso(entry.get("at"))
@@ -381,7 +453,7 @@ def analyze_record_problems(record):
 
 
 def _check_baseline(state, bad):
-    """A stored `analyze.baseline` is a well-formed analysis record (ADR 0014)."""
+    """A stored `analyze.baseline` is a well-formed analysis record (ADR 0016)."""
     analyze = state.get("analyze")
     if not isinstance(analyze, dict) or "baseline" not in analyze:
         return
@@ -452,6 +524,8 @@ def _check_round(bad, location, one_round):
                 f"{location}.answers.{key}",
                 "no question with this id in the same round",
             )
+        if isinstance(answers[key], dict):
+            _check_marker(bad, f"{location}.answers.{key}", answers[key])
 
 
 def upgrade(state):

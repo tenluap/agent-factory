@@ -15,7 +15,7 @@ from factory_cli import state
 
 ENVELOPE_STATUSES = ("done", "needs_input", "partial", "failed")
 VERDICTS = ("pass", "fix")
-# ADR 0014: automatic repair cycles per run (FR-014)
+# ADR 0016: automatic repair cycles per run (FR-014)
 REPAIR_CYCLE_CAP = 2
 # the six self-report causes; `unreported` is detected-only (state.py) and
 # never valid in a role's own overrun report
@@ -291,6 +291,16 @@ def unmet_targets(baseline, latest):
     return problems
 
 
+def _approver_permits(state_dict):
+    """Approver records that may permit `pr`. A record carrying cruise_override
+    never does: cruise may not publish, only the user's own Approve (FR-015, FR-016)."""
+    return [
+        d
+        for d in _decisions(state_dict, "approver", ("approved", "gate-override"))
+        if d.get("cruise_override") is not True
+    ]
+
+
 def gate_violation(state_dict, into):
     """None when the transition into `into` may record; else the missing record."""
     if into == "review":
@@ -353,7 +363,7 @@ def gate_violation(state_dict, into):
             "'<guidance>'`), a gate-override, or abort"
         )
     if into == "pr":
-        if _decisions(state_dict, "approver", ("approved", "gate-override")):
+        if _approver_permits(state_dict):
             return None
         return (
             "no approved decision recorded at approver "
@@ -365,7 +375,7 @@ def gate_violation(state_dict, into):
 def permitting_decision(state_dict, into):
     """The decision record permitting this gate, or None (event stays `complete`)."""
     if into == "pr":
-        candidates = _decisions(state_dict, "approver", ("approved", "gate-override"))
+        candidates = _approver_permits(state_dict)
     elif into == "implement":
         candidates = _decisions(state_dict, "analyze", ("gate-override",))
     else:

@@ -180,7 +180,7 @@ def answered_relay(qid, answered):
 
 
 class AcceptanceTargetTests(unittest.TestCase):
-    """The implement gate compares latest with baseline (FR-004..FR-008, ADR 0014)."""
+    """The implement gate compares latest with baseline (FR-004..FR-008, ADR 0016)."""
 
     def gate(self, baseline, latest, **kw):
         s = base(analyze=analysis(baseline=baseline, result=latest, **kw))
