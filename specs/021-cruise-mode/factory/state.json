@@ -142,6 +142,14 @@
       "auto": false,
       "at": "2026-11-04T00:51:47.961663Z",
       "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "ESCALATE",
+      "answer": "lite->full: analyze pass 1 has 2 HIGH (T1, T2); state CLI has no mode.chain writer, so chain change recorded here and followed by the orchestrator",
+      "auto": false,
+      "at": "2026-11-04T00:56:59.455535Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
