@@ -1,0 +1,57 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 1,
+  "summary": "Every declared seam and most declared failure paths are implemented and tested, but a valid-JSON malformed outcome file crashes the refresh and the review-read malformed-JSON path has no test.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 241,
+      "summary": "A stored outcome file that is valid JSON but malformed in shape (for example `[]`, `{\"outcomes\": null}`, `{\"outcomes\": [1]}`) raises AttributeError or TypeError inside `_is_terminal`, aborting the whole refresh instead of becoming an inaccessible gap for that run.",
+      "evidence": "spec.md edge case (line 120): 'An existing outcome file is unreadable or malformed: the run is an inaccessible gap and the file is not overwritten.' spec.md FR-012 (line 141) and US4 (line 110): other runs must still refresh. plan.md Confirmed line (177) and Test seams (line 170) declare 'malformed outcome file (inaccessible)'. Code: `_is_terminal` (feedback.py 232-241) catches only OSError/ValueError on json.loads, then runs `any(o.get(\"id\") ... for o in body.get(\"outcomes\", []))` with no shape check; it is called in `refresh` (feedback.py 359) outside any try that catches Gap. A probe calling `feedback._is_terminal` on a run whose outcome file held `[]` raised AttributeError ('list' object has no attribute 'get'); `{\"outcomes\": null}` raised TypeError; `{\"outcomes\": [1]}` and `{\"outcomes\": \"x\"}` raised AttributeError. `_load_outcomes` (feedback.py 278-294) performs the correct shape check, but it runs only after the terminal check. The only malformed-file test (test_feedback.py 611-613) uses the invalid-JSON text '{not json', so this path is untested.",
+      "fix": "Validate the outcome-file shape before the terminal check: read the file through `_load_outcomes` (or a shared shape check) and raise `Gap('inaccessible', ...)` for a non-dict body, a non-list or null `outcomes`, or a non-dict or id-less entry, so the terminal check only runs on validated bodies. Add LocalGapTests cases for `[]`, `{\"outcomes\": null}` and `{\"outcomes\": [1]}` asserting an inaccessible gap, an untouched outcome file and a healthy second run still refreshed."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_feedback.py",
+      "line": 544,
+      "summary": "The declared failure path 'malformed JSON or shape from either read' has no test for malformed JSON from the review read (read 2), so missing coverage of a declared seam failure path blocks implementation.",
+      "evidence": "plan.md Test seams (line 170) and Confirmed line (177): 'malformed JSON or shape from either read'. engineering.md 'Confirmed test scope': missing coverage of a declared failure path blocks implementation with a HIGH finding; tasks.md T008 step 1 repeats the read-2 path. test_malformed_reads_are_transient_gaps (test_feedback.py 544-556) has malformed JSON only for read 1 (`reply(pr_text=\"{\")`), and its read-2 cases are shape cases only (`[]`, `{\"id\": 1}`, CHANGES_REQUESTED without id). No case feeds a non-JSON review line. The implementing branch exists at feedback.py 165-168 (`json.loads(line)` ValueError -> Gap transient) but nothing exercises it.",
+      "fix": "Add a read-2 case to test_malformed_reads_are_transient_gaps, for example `reply(review_text=\"{\\n\")`, and assert via assert_gap that the run is a transient gap with its files unchanged."
+    },
+    {
+      "id": "SPEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 319,
+      "summary": "An OSError from acquiring the outcomes lock (for example an unwritable existing outcomes directory) escapes `refresh` uncaught, so the command crashes without a report and other runs are not refreshed, instead of the run being a transient gap.",
+      "evidence": "spec.md FR-012 (line 141): a failed outcome-file write is transient; 'other runs MUST still refresh'. spec.md FR-013 requires the JSON report. Code: `_store` wraps only `_acquire_home_lock(directory, \"feedback\")` in `except lock.LockHeld` (feedback.py 319-322). `lock.acquire` creates the lock with `os.open(..., O_CREAT | O_EXCL | O_WRONLY)` in `_create` (lock.py), so PermissionError propagates through `_acquire_home_lock` (improvements.py 75-85, which catches only LockHeld). `refresh` (feedback.py 362-373) catches only Gap, and `cmd_feedback` (commands.py 414-419) catches only ValueError. No test covers this path.",
+      "fix": "In `_store`, also catch OSError from the outcomes-lock acquisition and raise `Gap('transient', ...)` (or `inaccessible` for an unwritable directory, per the class table), then add a test that makes the outcomes directory unwritable and asserts the run is a gap while the other run still refreshes."
+    },
+    {
+      "id": "SPEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 247,
+      "summary": "The signal-key slug collapses runs of hyphens and trims after truncation, which diverges from the documented slug rule and can merge distinct checks into one signal key.",
+      "evidence": "spec.md Assumptions (line 168): 'replaces each run of characters outside a-z, 0-9 and - with one hyphen, trims leading and trailing hyphens, keeps at most 64 characters'. plan.md line 130 and DESIGN.md state the same rule (runs outside [a-z0-9-] become one hyphen). Code: `re.sub(r\"[^a-z0-9]+\", \"-\", ...)` (line 247) treats '-' as an outside character, so 'build--test' becomes 'build-test' (spec: 'build--test'), and 'Lint - test' yields 'lint-test' (spec: 'lint---test'), colliding with 'Lint / test'. The code also applies `.rstrip(\"-\")` after the 64-character cut, which the spec does not give. Consequence: a second distinct failing check can be appended to another check's ci-failure entry, and its suggested feature names the wrong check.",
+      "fix": "Use the documented class `[^a-z0-9-]+` for the replacement, trim before truncating to 64, and add slug cases ('build--test' keeps its double hyphen; 'Lint - test' differs from 'Lint / test') to the BacklogMappingTests slug test."
+    },
+    {
+      "id": "SPEC-5",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 328,
+      "summary": "A successful refresh that stores no new outcomes never creates the run's outcome file, although the spec says a missing outcome file is created on the first successful refresh.",
+      "evidence": "spec.md edge case (line 119): 'An archived run's outcome file is missing: it is created on the first successful refresh.' Code: `_store` writes the outcome file only inside `if new:` (feedback.py 328-337), so a run whose PR has only passed checks or approvals never gets a file. No test asserts file creation for that case.",
+      "fix": "Either write the (possibly empty) outcome file on the first successful refresh, or amend the spec edge case to say the file appears on the first stored outcome. If the spec is kept, add a test that a clean PR leaves a readable empty outcome file."
+    }
+  ]
+}
