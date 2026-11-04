@@ -9,6 +9,7 @@ import filecmp
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1379,13 +1380,39 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
-def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
+def cmd_answer(
+    repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False, question=None
+):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
         die(
             1,
             "--cruise-override needs cruise mode on this run; run resume --cruise first",
         )
+    if question is not None:
+        try:
+            question = json.loads(question)
+        except ValueError as e:
+            die(1, f"invalid --question JSON: {e}")
+        if not isinstance(question, dict) or question.get("id") != qid:
+            die(1, "--question must be an object whose id matches the question id")
+    relay = loaded.get("relay") if isinstance(loaded.get("relay"), dict) else {}
+    rounds = rounds_of(relay)
+    questions = (rounds[-1].get("questions") or []) if rounds else []
+    existing = next(
+        (q for q in questions if isinstance(q, dict) and q.get("id") == qid), None
+    )
+    resolved = question if existing is None or set(existing) == {"id"} else existing
+    record_stage = stage or relay.get("stage") or loaded.get("stage")
+    if (
+        worktree
+        and isinstance(resolved, dict)
+        and resolved.get("requires_user") is True
+    ):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", qid) or not re.fullmatch(
+            r"[A-Za-z0-9_-]+", record_stage
+        ):
+            die(1, "relay record stage and question id must match [A-Za-z0-9_-]+")
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
@@ -1394,8 +1421,18 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=F
         rounds = rounds_of(relay) or [{"questions": [], "answers": {}}]
         last = dict(rounds[-1])
         questions = list(last.get("questions") or [])
-        if not any(isinstance(q, dict) and q.get("id") == qid for q in questions):
-            questions.append({"id": qid})
+        existing_index = next(
+            (
+                i
+                for i, q in enumerate(questions)
+                if isinstance(q, dict) and q.get("id") == qid
+            ),
+            None,
+        )
+        if existing_index is None:
+            questions.append(question or {"id": qid})
+        elif question is not None and set(questions[existing_index]) == {"id"}:
+            questions[existing_index] = question
         last["questions"] = questions
         answers = dict(last.get("answers") or {})
         answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}

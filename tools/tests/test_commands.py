@@ -926,6 +926,63 @@ class ReviewCounterTests(unittest.TestCase):
                 )
 
 
+class RelayRecordTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        run = v4_state(stage="review")
+        run["relay"] = {
+            "stage": "review",
+            "rounds": [{"questions": [{"id": "R2-Q1"}], "answers": {}}],
+        }
+        self.wt = self.box.worktree_run("074-relay", run)
+        self.root = self.wt / "specs/074-relay/factory"
+        self.path = self.root / "state.json"
+
+    def test_question_replaces_stub_and_appends_missing(self):
+        for qid in ("R2-Q1", "R2-Q2"):
+            question = {"id": qid, "title": "Choose", "text": "Context"}
+            out = self.box.cli(
+                "answer", qid, "A", "--question", json.dumps(question), cwd=self.wt
+            )
+            self.assertEqual(out.returncode, 0, out.stderr)
+            round_ = json.loads(self.path.read_text())["relay"]["rounds"][-1]
+            self.assertIn(question, round_["questions"])
+            self.assertEqual(round_["answers"][qid]["answer"], "A")
+        changed = {"id": "R2-Q1", "title": "Replacement"}
+        out = self.box.cli(
+            "answer", "R2-Q1", "B", "--question", json.dumps(changed), cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn(
+            {"id": "R2-Q1", "title": "Choose", "text": "Context"},
+            json.loads(self.path.read_text())["relay"]["rounds"][-1]["questions"],
+        )
+
+    def test_invalid_question_and_unsafe_record_paths_refused_before_write(self):
+        cases = [
+            ("Q1", "{", ()),
+            ("Q1", '{"id":"Q9"}', ()),
+            ("../x", '{"id":"../x","requires_user":true}', ()),
+            ("Q1", '{"id":"Q1","requires_user":true}', ("--stage", "a/b")),
+        ]
+        for qid, question, flags in cases:
+            with self.subTest(qid=qid, question=question, flags=flags):
+                before = self.path.read_bytes()
+                head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+                out = self.box.cli(
+                    "answer", qid, "A", "--question", question, *flags, cwd=self.wt
+                )
+                self.assertEqual(out.returncode, 1, out.stderr)
+                self.assertEqual(self.path.read_bytes(), before)
+                self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+                self.assertFalse((self.root / "relay").exists())
+        out = self.box.cli(
+            "answer", "../x", "A", "--question", '{"id":"../x"}', cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+
+
 class CheckpointCommitFailureTests(unittest.TestCase):
     """FR-011: a checkpoint whose git commit fails after the state write
     exits 1 with 'state written, commit failed: <reason>', its JSON carrying

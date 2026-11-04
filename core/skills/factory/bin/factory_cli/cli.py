@@ -383,7 +383,7 @@ def main(argv):
             positional, flags = parse_flags(
                 rest,
                 command,
-                value_flags=("--repo", "--stage"),
+                value_flags=("--repo", "--stage", "--question"),
                 bool_flags=("--auto", "--cruise-override"),
             )
             if len(positional) != 2:
@@ -397,6 +397,7 @@ def main(argv):
                 auto=bool(flags.get("--auto")),
                 stage=flags.get("--stage"),
                 cruise_override=bool(flags.get("--cruise-override")),
+                question=flags.get("--question"),
             )
         elif command == "set-status":
             positional, flags = parse_flags(
@@ -459,8 +460,10 @@ def main(argv):
                 if "--commands" in flags
                 else []
             )
-            if not isinstance(payload, list) or not payload or not all(
-                isinstance(command, dict) for command in payload
+            if (
+                not isinstance(payload, list)
+                or not payload
+                or not all(isinstance(command, dict) for command in payload)
             ):
                 die_usage("--commands needs a JSON list of {command, status} objects")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
@@ -468,10 +471,7 @@ def main(argv):
                 repo,
                 Path.cwd(),
                 passed=bool(flags.get("--pass")),
-                commands_payload=[
-                    (c.get("command"), c.get("status"))
-                    for c in payload
-                ],
+                commands_payload=[(c.get("command"), c.get("status")) for c in payload],
             )
         elif command == "lock":
             sub = rest[:1]
@@ -508,7 +508,9 @@ def main(argv):
             if len(positional) != 1:
                 die_usage("adopt needs exactly one <src>")
             if flags.get("--stage") not in (None, *state.ADOPT_STAGES):
-                die_usage(f"adopt: --stage must be one of {', '.join(state.ADOPT_STAGES)}")
+                die_usage(
+                    f"adopt: --stage must be one of {', '.join(state.ADOPT_STAGES)}"
+                )
             repo = commands.main_repo(Path.cwd())
             if flags.get("--dry-run"):
                 result = adopt.inspect(repo, positional[0], adopt.default_base(repo))
