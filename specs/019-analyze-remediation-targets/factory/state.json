@@ -482,6 +482,18 @@
       "duration_ms": 463000,
       "started_at": "2026-11-04T01:33:45Z",
       "ended_at": "2026-11-04T01:41:28Z"
+    },
+    {
+      "at": "2026-11-04T02:01:33.054230Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "claude-code",
+      "in_est": 20000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 853000,
+      "started_at": "2026-11-04T01:47:05Z",
+      "ended_at": "2026-11-04T02:01:18Z"
     }
   ],
   "issues": [
