@@ -22,6 +22,7 @@
 
 ## Notes
 
+- `no_prompt_launch`: none documented. No verified launch-time or config option was found for ZCode, so cruise runs here keep harness prompts; the orchestrator's preflight disclosure says so.
 - Main agent (`mode: primary`): unverified. Try `zcode --agent factory-<role>`; otherwise ask your session to spawn `factory-<role>`.
 - Figma capability discovery: inspect the session's available MCP tool inventory for Figma inspection tools; pass exact identities and schemas to the role. If unavailable, report the gap.
 - The factory's agents are Markdown files in `~/.zcode/agents/` (`factory-<role>.md`).
