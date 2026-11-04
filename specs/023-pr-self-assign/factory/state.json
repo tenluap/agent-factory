@@ -326,6 +326,18 @@
       "duration_ms": 96000,
       "started_at": "2026-11-04T18:22:44Z",
       "ended_at": "2026-11-04T18:24:20Z"
+    },
+    {
+      "at": "2026-11-04T18:33:39.705046Z",
+      "stage": "review",
+      "role": "spec-conformance",
+      "harness": "claude-code",
+      "in_est": 9000,
+      "out_est": 900,
+      "reported": null,
+      "duration_ms": 174000,
+      "started_at": "2026-11-04T18:22:44Z",
+      "ended_at": "2026-11-04T18:25:38Z"
     }
   ],
   "issues": [
