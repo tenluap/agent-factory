@@ -9,7 +9,7 @@
   "branch": "024-orchestrator-gaps",
   "spec_dir": "specs/024-orchestrator-gaps",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -18,26 +18,7 @@
     "cruise": true
   },
   "skills": {},
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T22:07:08.745185Z",
-            "auto": true,
-            "cruise_override": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -64,6 +45,15 @@
       "answer": "delivery",
       "auto": true,
       "at": "2026-11-04T22:00:03.490170Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T22:07:09.082188Z",
       "kind": "answer",
       "cruise_override": true
     }
@@ -109,6 +99,13 @@
     {
       "at": "2026-11-04T22:03:38.383257Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T22:07:09.082188Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
