@@ -35,6 +35,19 @@ def backlog_name(repo, branch):
     return f"{Path(repo).name}-{branch}.json"
 
 
+def _entry_name(run_state, kind, key):
+    """`<repo-name>-<branch>.<repo-hash>.<kind>.<key>` with `:` as `.`: one
+    entry per run and signal key (retro and feedback entries)."""
+    repo_hash = hashlib.sha256(str(run_state.get("repo")).encode()).hexdigest()[:12]
+    return (
+        backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
+        + "."
+        + repo_hash
+        + f".{kind}."
+        + key.replace(":", ".")
+    )
+
+
 def factory_sha(factory_dir=FACTORY_DIR):
     """The factory version: best-effort `git -C <F> rev-parse HEAD`, else null
     when the install is not in a git tree."""
@@ -59,11 +72,11 @@ def _write_atomic(path, body):
         raise
 
 
-def _acquire_backlog_lock(directory):
+def _acquire_home_lock(directory, harness):
     deadline = time.monotonic() + 5
     while True:
         try:
-            lock.acquire(directory, harness="improvements")
+            lock.acquire(directory, harness=harness)
             return
         except lock.LockHeld:
             remaining = deadline - time.monotonic()
@@ -78,7 +91,7 @@ def add(home, run_state, candidates, now=None):
     result = {"written": [], "skipped": [], "dropped": []}
     acquired = False
     try:
-        _acquire_backlog_lock(directory)
+        _acquire_home_lock(directory, "improvements")
         acquired = True
         directory.mkdir(parents=True, exist_ok=True)
         own = {}
@@ -153,13 +166,7 @@ def add(home, run_state, candidates, now=None):
             if key not in own and len(own) >= 3:
                 result["dropped"].append({"signal_key": key, "reason": "cap"})
                 continue
-            name = (
-                backlog_name(run_state.get("repo"), run_state.get("branch"))[:-5]
-                + "."
-                + hashlib.sha256(str(run_state.get("repo")).encode()).hexdigest()[:12]
-                + ".retro."
-                + key.replace(":", ".")
-            )
+            name = _entry_name(run_state, "retro", key)
             path = own_paths.get(key, directory / f"{name}.json")
             name = path.stem
             if key not in own and path.exists():
@@ -182,6 +189,81 @@ def add(home, run_state, candidates, now=None):
             _write_atomic(path, body)
             own[key] = body
             result["written"].append(name)
+    except (OSError, lock.LockHeld) as e:
+        raise AddError(e, result) from e
+    finally:
+        if acquired:
+            lock.release(directory)
+    return result
+
+
+def add_feedback(home, run, items, now=None):
+    """Write or extend the feedback entries of one run (seam S2).
+
+    `items` are `{signal_key, evidence, suggested_feature}`; `evidence` is one
+    link, and an empty link is never stored. One entry per run and key: a
+    `ready` entry gains only new non-empty links and keeps its stored fields;
+    a `claimed` entry is reported and left byte-identical. Any other file at
+    the entry name (unreadable, foreign or not ready) is refused, not replaced.
+    Returns `{created, updated, claimed}` lists of entry names.
+    """
+    directory = Path(home) / "improvements"
+    result = {"created": [], "updated": [], "claimed": []}
+    acquired = False
+    try:
+        _acquire_home_lock(directory, "improvements")
+        acquired = True
+        directory.mkdir(parents=True, exist_ok=True)
+        own = {}
+        for path in sorted(directory.glob("*.json")):
+            try:
+                entry = json.loads(path.read_text())
+            except (OSError, ValueError):
+                continue
+            if not isinstance(entry, dict) or entry.get("kind") != "feedback":
+                continue
+            stored_run = entry.get("run")
+            if isinstance(stored_run, dict) and all(
+                stored_run.get(k) == run.get(k) for k in ("repo", "branch")
+            ):
+                own[entry.get("signal_key")] = (path, entry)
+        for item in items:
+            key = item["signal_key"]
+            link = item.get("evidence") or ""
+            if key in own:
+                path, body = own[key]
+                if body.get("status") == "claimed":
+                    result["claimed"].append(path.stem)
+                    continue
+                if body.get("status") != "ready" or not isinstance(
+                    body.get("evidence"), list
+                ):
+                    raise OSError(f"refusing to replace a feedback entry: {path}")
+                if link and link not in body["evidence"]:
+                    body["evidence"].append(link)
+                    _write_atomic(path, body)
+                    result["updated"].append(path.stem)
+                continue
+            path = directory / f"{_entry_name(run, 'feedback', key)}.json"
+            if path.exists():
+                raise OSError(
+                    f"refusing to replace a file not owned by this run: {path}"
+                )
+            body = {
+                "name": path.stem,
+                "kind": "feedback",
+                "run": {k: run.get(k) for k in ("repo", "branch", "spec_dir")},
+                "signal_key": key,
+                "evidence": [link] if link else [],
+                "suggested_feature": item.get("suggested_feature"),
+                "factory_sha": factory_sha(),
+                "status": "ready",
+                "exported_at": now or state.iso(datetime.now(timezone.utc)),
+                "claimed_at": None,
+            }
+            _write_atomic(path, body)
+            own[key] = (path, body)
+            result["created"].append(path.stem)
     except (OSError, lock.LockHeld) as e:
         raise AddError(e, result) from e
     finally:
@@ -276,7 +358,7 @@ def claim(home, name, source_runs=()):
         raise ClaimError(f"invalid improvement backlog name '{name}'")
     acquired = False
     try:
-        _acquire_backlog_lock(directory)
+        _acquire_home_lock(directory, "improvements")
         acquired = True
         if not path.is_file():
             raise ClaimError(f"no improvement backlog named '{name}'")

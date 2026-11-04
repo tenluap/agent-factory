@@ -42,6 +42,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
             [--cause <cause>] [--commit <sha>] [--partial-return]
   improvements claim <name>         claim a ready backlog, never start a run
   improvements add --from <file> --run <branch>  write retro candidates
+  feedback [<branch>] [--repo <path>]  refresh archived runs' PR outcomes and feedback entries
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
   wait-close <wait-id>                              close it
   answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
@@ -52,8 +53,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
 
 <run> is a run's branch (worktree runs) or a pending file's name, with or
 without the <repo-name>- prefix and .json suffix. Exit codes: 0 success,
-1 no run or refused, 2 not a git repository, 3 ambiguous name, 4 the run's
-recorded worktree is gone, 5 usage error."""
+1 no run, refused, or a feedback gap, 2 not a git repository, 3 ambiguous
+name, 4 the run's recorded worktree is gone, 5 usage error."""
 
 
 MODE_FLAGS = ("--lite", "--full", "--fast", "--no-fast", "--cruise", "--no-cruise")
@@ -339,6 +340,12 @@ def main(argv):
                 result = commands.cmd_improvements()
             else:
                 die_usage("improvements supports only: improvements [claim <name>]")
+        elif command == "feedback":
+            positional, flags = parse_flags(rest, command, value_flags=("--repo",))
+            if len(positional) > 1:
+                die_usage("feedback takes at most one <branch>")
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_feedback(repo, positional[0] if positional else None)
         elif command == "wait-open":
             positional, flags = parse_flags(rest, command)
             if len(positional) != 3:
@@ -478,6 +485,8 @@ def main(argv):
         else:
             die_usage(f"unknown command '{command}'")
         emit(result)
+        if command == "feedback" and result["gaps"]:
+            raise SystemExit(1)
         if isinstance(result, dict) and result.get("commit_error"):
             # FR-011: the state write landed, the commit did not — the JSON
             # above names it and the exit code says the command failed
