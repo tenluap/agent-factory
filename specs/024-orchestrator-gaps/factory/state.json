@@ -305,6 +305,17 @@
       "duration_ms": 410000,
       "commit": "e5c8662",
       "partial_return": false
+    },
+    {
+      "at": "2026-11-04T23:26:03.361040Z",
+      "kind": "retry",
+      "stage": "review",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "premature checkpoint fix before fixer spawn: fix_rounds incremented to 1 with no fix performed; counter treated as this round's entry; fixer spawning now; one cap slot effectively consumed by bookkeeping error",
+      "duration_ms": 0,
+      "commit": "e5c8662",
+      "partial_return": false
     }
   ],
   "analyze": {
