@@ -231,6 +231,14 @@
       "auto": true,
       "at": "2026-11-04T00:38:09.297413Z",
       "kind": "answer"
+    },
+    {
+      "stage": "analyze",
+      "question": "LOOP1",
+      "answer": "full-chain repair cycle 1 of 2 done (remediation-1.md); analyze.loops/pass have no CLI writer, so state still reads loops=0 pass=1; next analyze is pass 2",
+      "auto": false,
+      "at": "2026-11-04T00:48:56.416439Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
