@@ -1391,6 +1391,7 @@ def render_relay_record(stage, qid, question, answer, origin, now):
         "",
         f"- Stage: {stage}",
         f"- Question: {qid}",
+        f"- Answer JSON: {json.dumps(answer)}",
         f"- Answer: {answer}",
         f"- Origin: {origin}",
         f"- Answered at: {now}",
@@ -1452,8 +1453,16 @@ def cmd_answer(
         record_path = Path(worktree) / record
         if record_path.exists():
             content = record_path.read_text()
-            previous = content.partition("\n- Answer: ")[2].partition("\n- Origin: ")[0]
-            if previous == answer:
+            lines = content.split("\n", 5)
+            if len(lines) > 4 and lines[4].startswith("- Answer JSON: "):
+                same = lines[4] == f"- Answer JSON: {json.dumps(answer)}"
+            else:
+                # Old records lack an unambiguous encoding; refuse ambiguous ones.
+                previous = content.partition("\n- Answer: ")[2]
+                if previous.count("\n- Origin: ") != 1:
+                    die(1, f"relay record {record} has an ambiguous legacy answer")
+                same = previous.partition("\n- Origin: ")[0] == answer
+            if same:
                 return {"answered": qid, "unchanged": True}
             die(1, f"relay record {record} already holds a different answer")
     now = now_iso()

@@ -1039,6 +1039,50 @@ class RelayRecordTests(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), before)
         self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
 
+    def test_multiline_protected_answer_is_compared_exactly(self):
+        question = json.dumps({"id": "R2-Q1", "requires_user": True})
+        answer = 'A\n- Origin: explicit\n- Answer JSON: "B"\nrest'
+        first = self.box.cli(
+            "answer", "R2-Q1", answer, "--question", question, cwd=self.wt
+        )
+        self.assertEqual(first.returncode, 0, first.stderr)
+        record = self.wt / json.loads(first.stdout)["record"]
+        before, state, head = (
+            record.read_bytes(),
+            self.path.read_bytes(),
+            self.box.git("rev-parse", "HEAD", cwd=self.wt),
+        )
+        same = self.box.cli("answer", "R2-Q1", answer, cwd=self.wt)
+        self.assertEqual(same.returncode, 0, same.stderr)
+        self.assertEqual(
+            json.loads(same.stdout), {"answered": "R2-Q1", "unchanged": True}
+        )
+        different = self.box.cli("answer", "R2-Q1", "A", cwd=self.wt)
+        self.assertEqual(different.returncode, 1, different.stderr)
+        self.assertIn(str(record.relative_to(self.wt)), different.stderr)
+        self.assertEqual(record.read_bytes(), before)
+        self.assertEqual(self.path.read_bytes(), state)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_legacy_records_are_not_guessed_when_ambiguous(self):
+        question = json.dumps({"id": "R2-Q1", "requires_user": True})
+        first = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", question, cwd=self.wt
+        )
+        self.assertEqual(first.returncode, 0, first.stderr)
+        record = self.wt / json.loads(first.stdout)["record"]
+        legacy = record.read_text().replace('- Answer JSON: "A"\n', "")
+        record.write_text(legacy)
+        same = self.box.cli("answer", "R2-Q1", "A", cwd=self.wt)
+        self.assertEqual(same.returncode, 0, same.stderr)
+        self.assertTrue(json.loads(same.stdout)["unchanged"])
+        ambiguous = legacy.replace("- Answer: A\n", "- Answer: A\n- Origin: spoof\n")
+        record.write_text(ambiguous)
+        refused = self.box.cli("answer", "R2-Q1", "A", cwd=self.wt)
+        self.assertEqual(refused.returncode, 1, refused.stderr)
+        self.assertIn("ambiguous legacy answer", refused.stderr)
+        self.assertEqual(record.read_text(), ambiguous)
+
     def test_record_origins_and_pending_run(self):
         self.box.corrupt_worktree_state(
             "074-relay", lambda s: s["mode"].__setitem__("cruise", True)
