@@ -153,6 +153,7 @@ def validate_state(state):
         if not state.get("ended_at"):
             bad("ended_at", "a pr-open run has ended")
 
+    _check_mode(state, bad)
     decisions = _check_decisions(state, bad)
     _check_history(state, decisions, bad)
     _check_timeline(state, bad)
@@ -160,6 +161,35 @@ def validate_state(state):
     _check_relay(state, bad)
     _check_issues(state, bad)
     return problems
+
+
+def _check_mode(state, bad):
+    """Cruise mode (spec 021): optional boolean; cruise on requires fast on."""
+    mode = state.get("mode")
+    if not isinstance(mode, dict) or "cruise" not in mode:
+        return  # absent means off
+    if not isinstance(mode["cruise"], bool):
+        bad("mode.cruise", "not a boolean")
+    elif mode["cruise"] and mode.get("fast") is not True:
+        bad("mode.cruise", "cruise mode requires fast mode")
+
+
+def _check_marker(bad, location, record):
+    """A `cruise_override` marker: boolean, and true only on an auto answer
+    that is never an approval and never sits at the approver stage (FR-015)."""
+    if "cruise_override" not in record:
+        return
+    marker = record["cruise_override"]
+    where = f"{location}.cruise_override"
+    if not isinstance(marker, bool):
+        bad(where, "not a boolean")
+    elif marker:
+        if record.get("auto") is not True:
+            bad(where, "a cruise override requires auto: true")
+        if record.get("kind") == "approved":
+            bad(where, "an approved record is never a cruise override")
+        if record.get("stage") == "approver":
+            bad(where, "a cruise override never sits at the approver stage")
 
 
 def _check_decisions(state, bad):
@@ -180,11 +210,16 @@ def _check_decisions(state, bad):
                 bad(f"decisions[{i}].{field}", "missing required field")
         if entry.get("kind") not in DECISION_KINDS:
             bad(f"decisions[{i}].kind", f"{entry.get('kind')!r} is off-vocabulary")
+        cruise_gate = entry.get("kind") == "gate-override" and entry.get(
+            "cruise_override"
+        ) is True  # analyze-exhaustion auto-proceed; scope is the decisions-add guard
         if (
             entry.get("kind") in ("approved", "gate-override")
             and entry.get("auto") is not False
+            and not cruise_gate
         ):
             bad(f"decisions[{i}].auto", "a gate decision is never auto")
+        _check_marker(bad, f"decisions[{i}]", entry)
         if entry.get("stage") not in STAGES:
             bad(f"decisions[{i}].stage", f"{entry.get('stage')!r} is off-vocabulary")
         at = parse_iso(entry.get("at"))
@@ -421,6 +456,8 @@ def _check_round(bad, location, one_round):
                 f"{location}.answers.{key}",
                 "no question with this id in the same round",
             )
+        if isinstance(answers[key], dict):
+            _check_marker(bad, f"{location}.answers.{key}", answers[key])
 
 
 def upgrade(state):

@@ -19,7 +19,7 @@ description: "Task list for 021-cruise-mode"
 
 ## Phase 2: Foundational - state schema (blocks every CLI task)
 
-- [ ] T002 [US4][US1] Validate `mode.cruise` and `cruise_override` in `core/skills/factory/bin/factory_cli/state.py` (`validate_state`, `_check_decisions`, `_check_round`); tests in new `tools/tests/test_cruise.py`.
+- [X] T002 [US4][US1] Validate `mode.cruise` and `cruise_override` in `core/skills/factory/bin/factory_cli/state.py` (`validate_state`, `_check_decisions`, `_check_round`); tests in new `tools/tests/test_cruise.py`.
   - Seam: `factory_cli.state.validate_state`. Failure paths: non-boolean `mode.cruise`; `cruise: true` with `fast: false`; non-boolean `cruise_override` on a decision or relay answer; marker with `auto: false`; marker on kind `approved` or at stage `approver`.
   - Red: write tests first: a pre-feature state (no `cruise`, no marker) and the existing fixtures validate clean (FR-004, SC-004); `mode.cruise: true, fast: true` valid; decision `{kind: answer, auto: true, cruise_override: true}` valid; decision `{kind: gate-override, stage: analyze, auto: true, cruise_override: true}` valid; relay answer with `auto: true, cruise_override: true` valid; each failure path above yields a problem naming its location (only these; the existing "a gate decision is never auto" coverage stays in `tools/tests/test_state.py`). Run; the failure-path tests fail.
   - Implement: boolean check on `mode.cruise`; `cruise` requires `fast`; marker boolean when present, `true` requires `auto: true`, rejected on kind `approved` or at stage `approver`; a marked `gate-override` is exempt from "a gate decision is never auto" (the `analyze`-only rule is T006's `decisions-add` guard, clarify Q1). No version bump.
