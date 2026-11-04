@@ -285,8 +285,9 @@ def main(argv):
                     "--out-est",
                     "--reported",
                     "--overrun",
+                    "--round",
                 ),
-                bool_flags=("--partial-return",),
+                bool_flags=("--partial-return", "--full"),
             )
             if len(positional) != 2:
                 die_usage("ledger-add needs <stage> <role>")
@@ -315,6 +316,7 @@ def main(argv):
                 if "--overrun" in flags
                 else None,
                 partial_return=bool(flags.get("--partial-return")),
+                full=review_full(flags),
             )
         elif command == "issue-add":
             positional, flags = parse_flags(

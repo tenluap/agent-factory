@@ -89,7 +89,7 @@ None: every unit extends an existing command and test module.
   - Pass: runner green.
   - Done: tests pass; existing `budget <role>` tests unchanged.
 
-- [ ] T008 [US4] `ledger-add [--round n | --full]` compares reviewer spawns to the budget they were given, in `cli.py`, `commands.py` `cmd_ledger_add` and `overrun_issue`; tests in `OverrunDetectionTests` (depends on T006, T007).
+- [x] T008 [US4] `ledger-add [--round n | --full]` compares reviewer spawns to the budget they were given, in `cli.py`, `commands.py` `cmd_ledger_add` and `overrun_issue`; tests in `OverrunDetectionTests` (depends on T006, T007).
   - Seam: S4. Failure paths: S4(a) and S4(b) re-asserted under the round-1 budget.
   - Red: tests first: `security-reviewer` 590 s with `--round 1` and no config records no issue (SC-005); 601000 ms with `--round 1` records `ran 1s past its 600s budget (601s total)`; 310 s with `--round 2` records an overrun on 300 s; self-report with `--full` stored unchanged; `--round 0` and `--round 1 --full` each exit 2. Run; flags unknown.
   - Implement: pass `full` through to the shared `budget.resolve` call in `overrun_issue` (FR-016).

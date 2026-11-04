@@ -1239,6 +1239,7 @@ def cmd_ledger_add(
     reported=None,
     overrun=None,
     partial_return=False,
+    full=False,
 ):
     path, loaded, source, worktree = resolve_target(
         repo, cwd, allow_pr_open=stage == "retro"
@@ -1249,7 +1250,7 @@ def cmd_ledger_add(
         int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
     )
     issue = overrun_issue(
-        loaded, worktree, stage, role, duration, overrun, partial_return
+        loaded, worktree, stage, role, duration, overrun, partial_return, full
     )
 
     def mutate(s):
@@ -1283,7 +1284,9 @@ def cmd_ledger_add(
     return result
 
 
-def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_return):
+def overrun_issue(
+    loaded, worktree, stage, role, duration, overrun, partial_return, full=False
+):
     """The one issue a ledger-add records (FR-006), or None: the self-report
     wins; else a duration over the role's budget yields cause `unreported`;
     neither signal records nothing. `--partial-return` marks the spawn as a
@@ -1309,7 +1312,7 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         if not isinstance(detail, str) or not detail:
             die(1, "--overrun needs a non-empty detail")
     else:
-        seconds = budget.resolve(role, read_config())
+        seconds = budget.resolve(role, read_config(), full=full)
         if duration <= seconds * 1000:
             return None
         cause = "unreported"

@@ -189,6 +189,54 @@ class OverrunDetectionTests(unittest.TestCase):
                 f"spec-conformance ran {expected} without a self-report",
             )
 
+    def test_reviewer_overruns_use_selected_round_budget(self):
+        def add(end, *flags):
+            return self.box.cli(
+                "ledger-add",
+                "review",
+                "security-reviewer",
+                "--started-at",
+                "2026-10-23T10:00:00Z",
+                "--ended-at",
+                end,
+                *flags,
+                cwd=self.wt,
+            )
+
+        first = add("2026-10-23T10:09:50Z", "--round", "1")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(self.issues(), [])
+        for end, flags, expected in (
+            (
+                "2026-10-23T10:10:01Z",
+                ("--round", "1"),
+                "1s past its 600s budget (601s total)",
+            ),
+            (
+                "2026-10-23T10:10:00.001Z",
+                ("--full",),
+                "1s past its 600s budget (601s total)",
+            ),
+            (
+                "2026-10-23T10:05:10Z",
+                ("--round", "2"),
+                "10s past its 300s budget (310s total)",
+            ),
+        ):
+            out = add(end, *flags)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertIn(expected, self.issues()[-1]["detail"])
+        out = add(
+            "2026-10-23T10:10:01Z",
+            "--full",
+            "--overrun",
+            json.dumps({"cause": "tool-slow", "detail": "exact detail"}),
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.issues()[-1]["detail"], "exact detail")
+        for flags in (("--round", "0"), ("--round", "1", "--full")):
+            self.assertEqual(add("2026-10-23T10:10:01Z", *flags).returncode, 2)
+
     def test_detection_yields_unreported(self):
         out = self.ledger_add()
         self.assertEqual(out.returncode, 0, out.stderr)
