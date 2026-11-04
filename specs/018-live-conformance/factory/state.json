@@ -50,7 +50,25 @@
       "at": "2026-11-04T00:32:21.559229Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "fix",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A: confirm bench.tree_digest(root) as test seam 4; failure paths: missing root -> unavailable; unreadable subdirectory -> unavailable; symlink cycle -> bounded, unavailable",
+            "at": "2026-11-04T07:41:35.168106Z",
+            "auto": false
+          }
+        }
+      }
+    ]
+  },
   "timeline": [
     {
       "at": "2026-11-04T00:11:07.764485Z",
