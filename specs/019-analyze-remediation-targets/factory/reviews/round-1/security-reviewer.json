@@ -1,0 +1,57 @@
+{
+  "reviewer": "security",
+  "round": 1,
+  "summary": "The change adds no secrets, dependencies or network surface, but the new protected-question, repair-cap, fresh-baseline and constitution-approval controls are enforced only by CLI writes that carry no user provenance, and the CLI accepts auto-answers to requires_user questions that the protocol forbids.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "medium",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/checks.py",
+      "line": 250,
+      "summary": "The implement gate's protected-question clause counts an auto-accepted answer to a requires_user question as answered, and cmd_answer accepts --auto on any question including requires_user ones.",
+      "evidence": "checks.py:250-260 _unanswered_user_questions adds every key of relay answers to the answered set without looking at the auto flag. commands.py:1322-1336 cmd_answer stores answers[qid] = {'answer', 'at', 'auto': bool(auto)} for any qid and never checks requires_user. Probe: a relay round with requires_user question Q-amend answered with auto True, analyze.loops 0 and a result meeting every target -> gate_violation(state, 'implement') returns None; the same state with the answer omitted refuses with 'relay question Q-amend requires the user's answer'. Contract the code breaks: protocol.md:61 'An answer to such a question ... never carries \"auto\": true'; protocol.md:109; DESIGN.md:103. ADR 0014 says the rule is 'enforced by the CLI writer and gate ... not by agent prose'. Rule ENG-25. Consequence: a protected question, including a constitution approval whose answer string is the token that amendment-check --sha256 compares (commands.py:1051-1059), can be cleared by one CLI call. Mitigant: in fast mode the approver veto list shows auto answers.",
+      "fix": "In cmd_answer, read the relay question and refuse --auto when requires_user is true (exit 1). In _unanswered_user_questions, count an answer as settled only when answer.get('auto') is not true. Add test_gates cases: an auto answer to a requires_user question leaves the implement gate refusing, and cmd_answer --auto on such a question exits 1."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/checks.py",
+      "line": 337,
+      "summary": "The third repair cycle and the fresh-baseline reset are unlocked by CLI writes that carry no record of a user choice, so the orchestrator alone can pass both gates.",
+      "evidence": "checks.py:337-355: the remediate branch passes at loops >= 2 when any decision with stage 'analyze', kind 'answer' and a falsy auto is newer than result.at. commands.py:1421-1437 cmd_decisions_add hard-codes 'auto': False and has no user-origin field. Probe: a decision {stage analyze, auto False, at later than result} with loops 2 -> gate_violation(state, 'remediate') returns None. commands.py:1017-1028: --fresh-baseline is accepted whenever no baseline is stored or derivable, with no user decision recorded, although FR-012 requires the user to choose it. spec.md SC-003. Rules ENG-24, ENG-25. Pre-existing approved and gate-override decisions share this trust basis.",
+      "fix": "Record provenance on answers that unlock a gate; refuse guided-pass decisions not tied to an open exhaustion question; require a recorded user choice before --fresh-baseline. At minimum, list guided passes and fresh-baseline records on the approver veto list and state in ADR 0014 that the cap is an orchestrator-trust control."
+    },
+    {
+      "id": "SEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 877,
+      "summary": "Constitution changes are committed by checkpoint remediate with no recorded amendment approval, so the approved-hash check exists only as remediate-role instructions.",
+      "evidence": "commands.py:877-895 cmd_checkpoint commits every declared file; nothing inspects the constitution path or any approval record. amendment-check (commands.py:1045-1060) is read-only and its hash is never written to state. Only check is roles/spec-builder.md:48. FR-019 and ADR 0014. Rules ENG-25, ENG-26. Mitigant: the constitution diff appears in the PR.",
+      "fix": "Store the approved sha256 as a decision; have checkpoint remediate refuse a declared change to the constitution path unless the latest approved hash equals the current draft hash; show the constitution path on the approver veto list."
+    },
+    {
+      "id": "SEC-4",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1045,
+      "summary": "amendment-check reads any path the orchestrator supplies, with no containment, no regular-file check and no size bound, and prints that file's hash.",
+      "evidence": "commands.py:1051 hashlib.sha256(Path(draft).read_bytes()). Probe: amendment-check /etc/hosts returned its sha256; /dev/zero did not return within 5 s. analyze-record enforces containment for the same class of input (commands.py:1000-1007). Rules ENG-24, ENG-25.",
+      "fix": "Resolve the draft under the run's spec_dir/factory, reject paths outside it and non-regular files, hash in fixed-size chunks with a maximum byte count."
+    },
+    {
+      "id": "SEC-5",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/checks.py",
+      "line": 275,
+      "summary": "The acceptance gate trusts the analyze role's self-reported counts, and nothing checks them against the report they describe.",
+      "evidence": "commands.py:1000-1040 writes analyze.result from the envelope; checks.py:275 unmet_targets reads those counts. ADR 0014 deliberately rejects parsing report markdown; advisory under ENG-26.",
+      "fix": "Optional: machine-readable counts block or report sha256 at analyze-record; otherwise document the trade-off in ADR 0014."
+    }
+  ]
+}
