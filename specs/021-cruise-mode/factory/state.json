@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
   "spec_dir": "specs/021-cruise-mode",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -41,25 +41,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T00:51:07.366608Z",
-            "auto": false
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:31:50.175600Z",
@@ -142,6 +124,14 @@
       "auto": false,
       "at": "2026-11-04T00:51:07.868161Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:51:47.961663Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
@@ -209,6 +199,13 @@
     {
       "at": "2026-11-04T00:44:11.932693Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:51:47.961663Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
