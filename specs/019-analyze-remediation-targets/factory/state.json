@@ -9,7 +9,7 @@
   "branch": "019-analyze-remediation-targets",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/019-analyze-remediation-targets",
   "spec_dir": "specs/019-analyze-remediation-targets",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -631,8 +631,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-11-04T07:46:40.888596Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/18",
   "history": [
     {
       "at": "2026-11-04T00:06:55.496569Z",
@@ -787,6 +787,13 @@
       "commit": null,
       "harness": "claude-code",
       "decision": "A1"
+    },
+    {
+      "at": "2026-11-04T07:46:40.888596Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
