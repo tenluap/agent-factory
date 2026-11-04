@@ -50,6 +50,14 @@
       "summary": "Grilling round 1: cruise mode design (7 questions)",
       "answered_at": "2026-11-04T00:33:50.602568Z",
       "latency_ms": 120426
+    },
+    {
+      "at": "2026-11-04T00:48:31.372367Z",
+      "kind": "questions",
+      "stage": "plan",
+      "summary": "Plan Q1: protected test-seam confirmation",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
