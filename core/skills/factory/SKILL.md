@@ -2,7 +2,7 @@
 name: factory
 description: Software factory orchestrator. Takes a feature from grilling through SpecKit, implementation, parallel reviews and your approval to a PR. Resumable.
 disable-model-invocation: true
-argument-hint: "[<feature description> | resume <branch> | improve | init] [--lite | --full] [--fast | --no-fast] [--stop-at <stage>]"
+argument-hint: "[<feature description> | resume <branch> | improve | feedback [<branch>] | init] [--lite | --full] [--fast | --no-fast] [--stop-at <stage>]"
 metadata:
   opencode/slash: "true"
   opencode/autoinvoke: "false"
@@ -27,7 +27,8 @@ Every agent you `SPAWN` gets `F` (the absolute path of `<F>`) in its inputs, so 
 
 - `$ARGUMENTS` empty: `SHELL: python3 <F>/bin/factory runs` (state.md, "CLI"). Offer each run it lists (branch or name, stage, status, last activity) as a resume option plus "start a new run". No runs: ask for the feature.
 - `resume <branch>`: `SHELL: python3 <F>/bin/factory resume <branch-or-name>` — records the `resumed` history entry through the writer and prints the resume digest (state.md, "CLI") — then rerun preflight and resume that run from the digest (state.md, "Resume").
-- `improve`: `SHELL: python3 <F>/bin/factory improvements`. Show each `ready` backlog's name, run, kind counts and `suggested_feature`; if none are ready, say so. Stop here. Starting an improvement run stays manual: the user submits the chosen feature text with `/factory <feature>`.
+- `improve`: `SHELL: python3 <F>/bin/factory improvements`. Show each `ready` backlog's name, run, `kind`, `signal_key`, kind counts and `suggested_feature`; if none are ready, say so. Stop here. Starting an improvement run stays manual: the user submits the chosen feature text with `/factory <feature>`.
+- `feedback [<branch>]`: `SHELL: python3 <F>/bin/factory feedback [<branch>]`. Show each refreshed run's new outcomes and backlog changes, the skipped runs with their reasons, and every gap with its class and reason; stop. No other route refreshes PR outcomes.
 - `init`: `SHELL: python3 <F>/bin/factory init`. Show its printed table or error and stop (FR-016).
 - Anything else: the feature description of a new run. Classify its **intake intent** from the request text (DESIGN.md, "Skill routing"), deciding which stage starts the run:
   - **Exploration** — open-ended idea wording with no settled solution (e.g. "I have an idea for...", "explore whether we could...", "not sure yet, but what if..."): after step 1, go to step 2 (`brainstorm`).
