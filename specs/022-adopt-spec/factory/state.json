@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/022-adopt-spec",
   "spec_dir": "specs/022-adopt-spec",
   "status": "running",
-  "stage": "implement",
+  "stage": "review",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -659,7 +659,7 @@
       "harness": "claude-code"
     },
     {
-      "at": "2026-11-04T17:14:03.020295Z",
+      "at": "2026-11-04T17:14:03.266669Z",
       "stage": "implement",
       "event": "verify-pass",
       "commit": null,
