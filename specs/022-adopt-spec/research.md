@@ -24,7 +24,7 @@ Spec dir on a branch: `specs/<branch>/` when present on the ref, else the single
 
 ## D3 No fetch
 
-`factory adopt` never runs `fetch`, `pull` or `push` and never refreshes the source branch (clarify Q3). The dry-run, run before preflight, takes `base` from `refs/remotes/origin/HEAD` (else `origin/main` when present, else `main`) and prints it; the write uses the pending run's `default_branch` and `base` from preflight and is authoritative.
+`factory adopt` never runs `fetch`, `pull` or `push` and never refreshes the source branch (clarify Q3). The dry-run, run before preflight, previews `base` as the first existing of `refs/remotes/origin/HEAD`, `origin/main`, `origin/master`, and prints it. When none exists, including a repo with no `origin` remote, it reports `base` null and the named NO_BASE refusal, exit 1; local `main` is never a base. The dry-run base is a preview only: the pending run's `base` (from preflight) governs the write, which refuses by name when the source then resolves to another branch or pending name than the dry run (SPEC-9).
 
 ## D4 Pending identity (clarify Q1)
 
@@ -45,13 +45,13 @@ First reason named in `refusal`; every dirty path listed even when another reaso
 Holding the pending run's lock (`lock.acquire` on the pending path; a live foreign lock exits 1) for the whole write:
 
 1. Load `pending/<repo-name>-adopt-<branch>.json` (branch from the re-resolved source). Missing → exit 1 "no pending adoption `<name>`; start it with adopt <src>" (the CLI names its own verb; the skill names the harness command). Status `aborted` or `pr-open` → exit 1, ended.
-2. Re-run the inspection against the pending `base`; any refusal (including another pending file) exits 1, nothing written. This also re-reads the branch HEAD, so a branch that moved since the dry-run is adopted at its new HEAD (spec edge case).
+2. Re-run the inspection against the pending `base`; a branch or pending name that differs from the dry run, or any refusal (including another pending file), exits 1 by name, nothing written. This also re-reads the branch HEAD, so a branch that moved since the dry-run is adopted at its new HEAD (spec edge case).
 3. `git worktree add <path> <branch>` (`branch`), `git worktree add --track -b <branch> <path> origin/<branch>` (`remote-branch`), or `git worktree add -b <branch> <path> <base>` (`default-branch`).
 4. Record `base_commit` = `git rev-parse <branch>` in the new worktree; write `<worktree>/<spec_dir>/factory/state.json` from the pending state through `state.write_state` (`worktree`, `branch`, `spec_dir`, `stage` = chosen, `status: running`, the `adopted` block, one `adopted` history entry, [data-model.md](data-model.md)); copy `<pending>.brief.md` → `brief.md` and `<pending>.profile.md` → `profile.md` when present.
-5. `commit_worktree(worktree, "factory: adopt <branch>", spec_dir=<spec_dir>/factory)`, staging only that folder (FR-014).
-6. After the commit succeeds, delete the pending JSON, brief and profile, as step 4 of a new run does.
+5. `git add -- <spec_dir>/factory` and `git commit -m "factory: adopt <branch>"` in the worktree, staging only that folder (FR-014). The short sha is read after the commit, outside the rollback guard.
+6. After the commit succeeds, delete the pending JSON, brief and profile, as step 4 of a new run does. A failure here exits 1 with `committed <sha>; pending cleanup failed: resume <branch>, do not retry` and is not rolled back (R2-Q2, FR-013).
 
-Any failure in 3-5 (a `CLIError` from `git`, a `StateError`, an `OSError`): `git worktree remove --force <path>`, `git branch -D <branch>` only when step 3 created it, pending untouched, exit 1 with the cause (FR-013). Steps 1-2 refuse before anything exists.
+Any exception in 3-5 before the commit lands (a `CLIError` from `git`, a `StateError`, an `OSError`, a `LockHeld` on a committed `factory/lock.json`, a non-UTF-8 brief or profile): `git worktree remove --force <path>`, `git branch -D <branch>` only when step 3 created it, pending untouched, exit 1 with the cause (FR-013); leftovers that git cannot remove are named as `rollback left ...`. Steps 1-2 refuse before anything exists.
 
 ## D8 Declined adoption
 

@@ -203,12 +203,16 @@ class ResumeHintTests(unittest.TestCase):
 
 
 class DryRunFixture(unittest.TestCase):
-    """A repo whose default branch is `main`, with SpecKit specs on their own branches."""
+    """A repo whose default branch is `main` on `origin`, with SpecKit specs on their own branches."""
 
     def setUp(self):
         self.box = Sandbox()
         self.addCleanup(self.box.close)
         self.box.git("branch", "-M", "main")
+        self.origin = self.box.dir / "origin.git"
+        self.box.git("init", "-q", "--bare", str(self.origin))
+        self.box.git("remote", "add", "origin", str(self.origin))
+        self.box.git("push", "-q", "origin", "main")
 
     def spec_branch(self, branch, files):
         """Commit `files` (name -> text) under specs/<branch>/ on a new branch, back on main."""
@@ -250,7 +254,7 @@ class DryRunReportTests(DryRunFixture):
         self.assertEqual(report["shape"], "branch")
         self.assertEqual(report["branch"], "007-x")
         self.assertEqual(report["spec_dir"], "specs/007-x")
-        self.assertEqual(report["base"], "main")
+        self.assertEqual(report["base"], "origin/main")
         self.assertEqual(report["artifacts"], ["spec.md"])
         self.assertEqual(report["dirty"], [])
         self.assertEqual(report["inferred_stage"], "plan")
@@ -404,6 +408,7 @@ class DryRunRefusalTests(DryRunFixture):
             (spec / "spec.md").write_text("# S\n")
         self.box.git("add", "-A")
         self.box.git("commit", "-q", "-m", "two specs on main")
+        self.box.git("push", "-q", "origin", "main")
         before = self.snapshot()
         out = self.box.cli("adopt", "y", "--dry-run")
         self.assertEqual(out.returncode, 3, out.stdout + out.stderr)
@@ -431,13 +436,6 @@ class DryRunRefusalTests(DryRunFixture):
 
 class OtherShapeTests(DryRunFixture):
     """The remote-branch, default-branch and renamed-dir shapes, previewed only (T005)."""
-
-    def setUp(self):
-        super().setUp()
-        self.origin = self.box.dir / "origin.git"
-        self.box.git("init", "-q", "--bare", str(self.origin))
-        self.box.git("remote", "add", "origin", str(self.origin))
-        self.box.git("push", "-q", "origin", "main")
 
     def publish_spec(self, branch):
         """Push `branch` and drop its local copy, so only origin/<branch> remains."""
@@ -544,7 +542,7 @@ def pending_state(repo, **extra):
         "feature": "Spec 007",
         "repo": str(repo),
         "default_branch": "main",
-        "base": "main",
+        "base": "origin/main",
         "branch": "007-x",
         "worktree": None,
         "spec_dir": "specs/007-x",
@@ -741,10 +739,6 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
 
     def setUp(self):
         super().setUp()
-        self.origin = self.box.dir / "origin.git"
-        self.box.git("init", "-q", "--bare", str(self.origin))
-        self.box.git("remote", "add", "origin", str(self.origin))
-        self.box.git("push", "-q", "origin", "main")
         self.worktree = self.box.dir / "repo-factory" / "007-x"
         self.pending = self.box.pending_run(
             "adopt-007-x", pending_state(self.box.repo, base="origin/main")
@@ -837,9 +831,7 @@ class DefaultBaseTests(DryRunFixture):
     def setUp(self):
         super().setUp()
         self.spec_branch("007-x", {"spec.md": "# Spec\n"})
-        self.origin = self.box.dir / "origin.git"
-        self.box.git("init", "-q", "--bare", str(self.origin))
-        self.box.git("remote", "add", "origin", str(self.origin))
+        self.box.git("update-ref", "-d", "refs/remotes/origin/main")
 
     def test_default_branch_shape_on_master_without_origin_head_resolves(self):
         self.box.git("branch", "-M", "master")
@@ -881,7 +873,72 @@ class DefaultBaseTests(DryRunFixture):
         report = json.loads(out.stdout)
         self.assertIsNone(report["base"])
         self.assertIn("no base ref", report["refusal"])
+        self.assertIn("set-head origin -a", report["refusal"])
         self.assertEqual(self.snapshot(), before)
+
+
+class NoOriginTests(DryRunFixture):
+    """A repo with no origin remote has no base: refused by name, never local main (FR-004, R2-Q3)."""
+
+    def setUp(self):
+        super().setUp()
+        self.spec_branch("007-x", {"spec.md": "# Spec\n"})
+        self.box.git("remote", "remove", "origin")
+
+    def test_dry_run_without_origin_is_refused_by_name_and_names_no_set_head(self):
+        before = self.snapshot()
+        out = self.box.cli("adopt", "007-x", "--dry-run")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        report = json.loads(out.stdout)
+        self.assertIsNone(report["base"])
+        self.assertIn("no base ref", report["refusal"])
+        self.assertIn("no origin remote", report["refusal"])
+        self.assertNotIn("set-head", report["refusal"])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_write_without_origin_refuses_and_writes_nothing(self):
+        self.pending = self.box.pending_run("adopt-007-x", pending_state(self.box.repo))
+        before = self.snapshot()
+        out = self.box.cli("adopt", "007-x")
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("no base ref", combined)
+        self.assertNotIn("Traceback", out.stderr)
+        self.assertEqual(self.snapshot(), before)
+        self.assertFalse((self.box.dir / "repo-factory" / "007-x").exists())
+        self.assertTrue(self.pending.exists())
+
+
+class BaseDriftTests(DryRunFixture):
+    """The write re-resolves under the pending base; a source that now means another branch is refused by name (SPEC-9)."""
+
+    def test_pending_base_resolving_another_spec_dir_is_refused_by_name(self):
+        self.box.git("checkout", "-q", "-b", "tmp-y")
+        spec = self.box.repo / "specs" / "002-007"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# Y\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec 002-007 on master")
+        self.box.git("push", "-q", "origin", "tmp-y:master")
+        self.box.git("checkout", "-q", "main")
+        self.box.git("branch", "-D", "tmp-y")
+        spec = self.box.repo / "specs" / "001-007"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# X\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec 001-007 on main")
+        self.box.git("push", "-q", "origin", "main")
+        self.box.git("fetch", "-q", "origin")
+        self.box.pending_run("adopt-001-007", pending_state(self.box.repo, base="origin/master"))
+        names = self.box.git("branch", "--format=%(refname:short)")
+        out = self.box.cli("adopt", "007")
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("002-007", combined)
+        self.assertIn("001-007", combined)
+        self.assertNotIn("Traceback", out.stderr)
+        self.assertFalse((self.box.dir / "repo-factory").exists())
+        self.assertEqual(self.box.git("branch", "--format=%(refname:short)"), names)
 
 
 class SymlinkWriteTests(DryRunFixture):
@@ -938,6 +995,23 @@ class SymlinkWriteTests(DryRunFixture):
         self.commit_evil("factory/brief.md", self.outside / "brief.md")
         self.assert_refused_and_outside_untouched("symlink")
 
+    def test_symlinked_state_json_created_in_the_checkout_is_not_written_through(self):
+        outside = self.box.dir / "outside-state.json"
+        outside.write_text("precious\n")
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"mkdir -p specs/evil/factory && ln -s '{outside}' specs/evil/factory/state.json\n"
+        )
+        hook.chmod(0o755)
+        out = self.box.cli("adopt", "evil")
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("symlink", combined)
+        self.assertEqual(outside.read_text(), "precious\n")
+        self.assertFalse(self.worktree.exists())
+        self.assertTrue(self.pending.exists())
+
     def test_symlink_created_in_the_checkout_is_not_written_through(self):
         hook = self.box.repo / ".git" / "hooks" / "post-checkout"
         hook.write_text(
@@ -980,22 +1054,82 @@ class WriteFailureTests(AdoptWriteFixture):
         self.assertNotIn("/factory", combined)
 
     def test_failure_after_the_commit_is_reported_without_rollback(self):
+        if os.geteuid() == 0:
+            self.skipTest("root ignores directory permissions")
         head = self.box.git("rev-parse", "007-x").strip()
-        env = dict(os.environ, FACTORY_HOME=str(self.box.home))
-        with mock.patch.dict(os.environ, env), mock.patch.object(
-            adopt, "_clear_pending", side_effect=OSError("pending busy")
-        ):
-            with self.assertRaises(commands.CLIError) as caught:
-                adopt.write(str(self.box.repo), "007-x")
-        self.assertEqual(caught.exception.code, 1)
-        self.assertIn("committed", str(caught.exception))
-        self.assertIn("pending cleanup failed", str(caught.exception))
+        pending_dir = self.box.home / "pending"
+        lock_file = self.pending.with_suffix(".lock.json")
+        hook = self.box.repo / ".git" / "hooks" / "post-commit"
+        # The write holds the pending lock; it is removed here so the lock release
+        # stays clean, then the pending directory is made read-only so the cleanup fails.
+        hook.write_text(f"#!/bin/sh\nrm -f '{lock_file}'\nchmod a-w '{pending_dir}'\n")
+        hook.chmod(0o755)
+        self.addCleanup(os.chmod, pending_dir, 0o755)
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("committed", combined)
+        self.assertIn("pending cleanup failed: resume 007-x, do not retry", combined)
+        self.assertNotIn("Traceback", out.stderr)
         self.assertTrue(self.worktree.exists())
         self.assertEqual(
             self.box.git("log", "--format=%s", f"{head}..007-x").splitlines(),
             ["factory: adopt 007-x"],
         )
+        self.assertTrue(self.pending.exists())
 
+    def test_rollback_that_leaves_the_worktree_behind_names_it(self):
+        hook = self.box.repo / ".git" / "hooks" / "post-checkout"
+        hook.write_text('#!/bin/sh\ngit worktree lock "$PWD"\nexit 1\n')
+        hook.chmod(0o755)
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertIn("rollback left", combined)
+        self.assertIn(str(self.worktree), combined)
+        self.assertTrue(self.pending.exists())
+        self.assertTrue(self.brief.exists())
+
+    def test_committed_foreign_host_lock_rolls_back_with_a_named_reason(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        self.commit_on(
+            "007-x",
+            {
+                "factory/lock.json": json.dumps(
+                    {
+                        "owner_pid": 1,
+                        "host": "another-host",
+                        "harness": "codex",
+                        "at": "2026-11-04T10:00:00Z",
+                        "taken_over": False,
+                        "previous": None,
+                    }
+                )
+            },
+            "lock 007-x",
+        )
+        head = self.box.git("rev-parse", "007-x").strip()
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertNotIn("Traceback", out.stderr)
+        self.assertIn("locked by PID 1 on another-host", combined)
+        self.assertFalse(self.worktree.exists())
+        self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
+        self.assertTrue(self.pending.exists())
+
+    def test_non_utf8_pending_brief_rolls_back_with_a_named_reason(self):
+        head = self.box.git("rev-parse", "007-x").strip()
+        self.brief.write_bytes(b"\xff\xfe# Brief\n")
+        out = self.write_run()
+        combined = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 1, combined)
+        self.assertNotIn("Traceback", out.stderr)
+        self.assertIn("repo-adopt-007-x.brief.md is not UTF-8", combined)
+        self.assertFalse(self.worktree.exists())
+        self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
+        self.assertTrue(self.pending.exists())
+        self.assertEqual(self.brief.read_bytes(), b"\xff\xfe# Brief\n")
 
 if __name__ == "__main__":
     unittest.main()

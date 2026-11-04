@@ -25,7 +25,7 @@ Exit: 0 clean; 1 refused (report still printed, `refusal` set; a `<src>` failing
 
 ## `factory adopt <src> [--stage <stage>]`
 
-The write ([research.md](../research.md) D7). Prints the resume digest of the new run, as `resume` does. Exit: 0 adopted; 1 refused, no pending adoption, ended pending adoption, live lock, or a failed step (rolled back, pending kept); 3 ambiguous; 5 usage.
+The write ([research.md](../research.md) D7). Prints the resume digest of the new run, as `resume` does. Exit: 0 adopted; 1 refused, no pending adoption, ended pending adoption, live lock, or a failed step (rolled back, pending kept), or a pending-cleanup failure after the adoption commit landed (`committed <sha>; pending cleanup failed: resume <branch>, do not retry`: not rolled back, worktree, commit and pending files kept, do not retry); 3 ambiguous; 5 usage.
 
 ## `factory resume <name>` (changed message only)
 

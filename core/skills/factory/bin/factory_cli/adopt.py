@@ -12,10 +12,19 @@ from pathlib import Path
 from factory_cli import commands, lock, state
 
 NEEDS_CLARIFICATION = "[NEEDS CLARIFICATION"
-NO_BASE = (
-    "no base ref resolves (origin/HEAD unset, no origin/main or origin/master); "
-    "set origin/HEAD with `git remote set-head origin -a`"
-)
+
+
+def _no_base(repo):
+    """The named NO_BASE refusal (D3); the set-head remedy is named only when an origin exists to hold it."""
+    if _try(repo, "config", "--get", "remote.origin.url") is None:
+        return (
+            "no base ref resolves (no origin remote; adopt bases on origin/main or origin/master, "
+            "never on local main); add an origin that holds the default branch"
+        )
+    return (
+        "no base ref resolves (origin/HEAD unset, no origin/main or origin/master); "
+        "set origin/HEAD with `git remote set-head origin -a`"
+    )
 
 
 def _try(repo, *args):
@@ -25,15 +34,13 @@ def _try(repo, *args):
 
 
 def default_base(repo):
-    """The `base` a dry run reports (D3): the first existing of origin's default branch, origin/main,
-    origin/master, and main when the repo has no origin; None when none exists, so the caller refuses by name."""
+    """The `base` a dry run previews (D3): the first existing of origin/HEAD, origin/main, origin/master;
+    None when none exists (including a repo with no origin), so the caller refuses by name. Local main is never a base."""
     candidates = []
     head = _try(repo, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
     if head:
         candidates.append(head.strip())
     candidates += ["refs/remotes/origin/main", "refs/remotes/origin/master"]
-    if _try(repo, "config", "--get", "remote.origin.url") is None:
-        candidates.append("refs/heads/main")
     for ref in candidates:
         if _try(repo, "show-ref", "--verify", "--quiet", ref) is not None:
             return ref.removeprefix("refs/remotes/").removeprefix("refs/heads/")
@@ -211,7 +218,7 @@ def inspect(repo, src, base):
         report["refusal"] = f"'{src}' is not a valid branch name"
         return report
     if base is None:
-        report["refusal"] = NO_BASE
+        report["refusal"] = _no_base(repo)
         return report
     if _try(repo, "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}") is None:
         report["refusal"] = f"base '{base}' does not resolve"
@@ -263,6 +270,12 @@ def write(repo, src, stage=None):
         if loaded.get("status") in ("aborted", "pr-open"):
             commands.die(1, f"pending adoption '{name}' is {loaded['status']} and has ended")
         report = inspect(repo, src, loaded.get("base") or probe["base"])
+        if report["branch"] is not None and (report["branch"], report["pending"]) != (probe["branch"], probe["pending"]):
+            commands.die(
+                1,
+                f"'{src}' now resolves to '{report['branch']}' under the pending base '{report['base']}', "
+                f"not '{probe['branch']}' of the dry run (base '{probe['base']}'); re-run `adopt {src} --dry-run`",
+            )
         if report["refusal"]:
             commands.die(1, report["refusal"])
         return _adopt_worktree(repo, report, loaded, pending, stage)
@@ -273,23 +286,28 @@ def write(repo, src, stage=None):
 def _adopt_worktree(repo, report, loaded, pending, stage):
     """D7 steps 3-6: the worktree for the source shape, then its state and adoption commit.
 
-    Failures before the commit lands roll back: the worktree, and the branch only when this write
-    creates it (FR-013). After the commit only the pending cleanup can fail; that is reported and not rolled back.
+    Any failure before the commit lands rolls back: the worktree, and the branch only when this write
+    creates it (FR-013), and exits 1 with the reason. After the commit only the pending cleanup can fail;
+    that is reported as `committed <sha>; pending cleanup failed` and is not rolled back.
     """
     worktree = Path(report["worktree"])
     created = _created_branch(repo, report)
     try:
         _add_worktree(repo, report, worktree)
-        sha, summary = _record_worktree_run(worktree, report, loaded, pending, stage)
-    except (commands.CLIError, state.StateError, OSError) as e:
+        summary = _record_worktree_run(worktree, report, loaded, pending, stage)
+        _commit_run(worktree, report)
+    except Exception as e:
         leftovers = _rollback(repo, worktree, created)
+        reason = str(e) or type(e).__name__
         if leftovers:
-            commands.die(1, f"adopt failed: {e}; rollback left {'; '.join(leftovers)}")
-        commands.die(1, f"adopt failed and was rolled back: {e}")
+            commands.die(1, f"adopt failed: {reason}; rollback left {'; '.join(leftovers)}")
+        commands.die(1, f"adopt failed and was rolled back: {reason}")
+    sha = _short_sha(worktree)
     try:
         _clear_pending(pending)
-    except OSError as e:
-        commands.die(1, f"committed {sha}; pending cleanup failed: {e}")
+    except OSError:
+        label = f"committed {sha}" if sha else "committed"
+        commands.die(1, f"{label}; pending cleanup failed: resume {report['branch']}, do not retry")
     return summary
 
 
@@ -313,9 +331,9 @@ def _add_worktree(repo, report, worktree):
 
 
 def _record_worktree_run(worktree, report, loaded, pending, stage):
-    """D7 steps 4-5: the adopted state, the sidecars and the one adoption commit.
+    """D7 steps 4: the adopted state and the sidecars, written before the commit.
 
-    Returns (short sha, resume digest); the digest is built before the commit so nothing after it can fail."""
+    Returns the resume digest, built here so nothing after the commit can fail."""
     branch, spec_dir = report["branch"], report["spec_dir"]
     chosen = stage or report["inferred_stage"]
     base_commit = commands.git(str(worktree), "rev-parse", "HEAD").strip()
@@ -352,11 +370,32 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
     for suffix, target in ((".brief.md", "brief.md"), (".profile.md", "profile.md")):
         sidecar = pending.with_name(pending.name.replace(".json", suffix))
         if sidecar.exists():
+            text = _utf8(sidecar)
             _no_link(worktree, folder / target)
-            (folder / target).write_text(sidecar.read_text())
-    summary = commands.digest(written, state_path, "worktree")
-    sha = commands.commit_worktree(str(worktree), f"factory: adopt {branch}", spec_dir=f"{spec_dir}/factory")
-    return sha, summary
+            (folder / target).write_text(text, encoding="utf-8")
+    return commands.digest(written, state_path, "worktree")
+
+
+def _utf8(path):
+    """The sidecar's text; a non-UTF-8 file refuses by name (the write rolls back)."""
+    try:
+        return path.read_bytes().decode("utf-8")
+    except UnicodeDecodeError as e:
+        commands.die(1, f"{path.name} is not UTF-8 text ({e.reason})")
+
+
+def _commit_run(worktree, report):
+    """D7 step 5: the one adoption commit, staging only the run's factory folder (FR-014)."""
+    commands.git(str(worktree), "add", "--", f"{report['spec_dir']}/factory")
+    commands.git(str(worktree), "commit", "-q", "-m", f"factory: adopt {report['branch']}")
+
+
+def _short_sha(worktree):
+    """The landed commit's short sha, read outside the rollback guard; empty when git cannot say."""
+    try:
+        return commands.git(str(worktree), "rev-parse", "--short", "HEAD").strip()
+    except commands.CLIError:
+        return ""
 
 
 def _clear_pending(pending):
