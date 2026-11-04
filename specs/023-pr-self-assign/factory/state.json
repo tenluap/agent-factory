@@ -62,7 +62,26 @@
       "at": "2026-11-04T17:15:40.517930Z"
     }
   },
-  "relay": null,
+  "relay": {
+    "stage": "fix",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A: Accept widened test scope for seam pr_contract_gaps — keep the six existing failure paths and add: lookup-failure-never-creates (FR-007), bounded-retry (FR-006), no-url-on-halt (FR-006), assignment-non-blocking (FR-008), same-repo-lookup (SEC-1: --base <default-branch> and isCrossRepository false); tighten resume-rule and lookup-after-error to assert their clauses (STD-2), each injected reversal returning exactly its element",
+            "at": "2026-11-04T17:57:27.059067Z",
+            "auto": true,
+            "cruise_override": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
