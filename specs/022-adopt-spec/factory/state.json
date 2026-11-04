@@ -110,6 +110,14 @@
       "summary": "Plan re-run: confirm updated test seams (protected)",
       "answered_at": "2026-11-04T11:09:37.688719Z",
       "latency_ms": 324963
+    },
+    {
+      "at": "2026-11-04T11:17:48.857876Z",
+      "kind": "questions",
+      "stage": "remediate",
+      "summary": "Remediate: 1 pending_clarify (pre-adoption ENG-1/ENG-3 boundary)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
