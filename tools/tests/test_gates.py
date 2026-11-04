@@ -111,16 +111,16 @@ class ImplementGateTests(unittest.TestCase):
         self.assertIsNotNone(checks.gate_violation(s, "implement"))
 
     def test_passes_clean_remediated_or_overridden(self):
-        clean = base()
+        clean = base(analyze=analysis(result=counts(report="factory/analyze-1.md")))
         self.assertIsNone(checks.gate_violation(clean, "implement"))
         remediated = base(
-            analyze={
-                "pass": 2,
-                "loops": 1,
-                "reports": ["factory/analyze-1.md"],
-                "remediations": ["factory/remediation-1.md"],
-                "pending_clarify": [],
-            }
+            analyze=analysis(
+                baseline=counts(medium=6, low=6),
+                result=counts(medium=3, low=2, report="factory/analyze-2.md"),
+                reports=("factory/analyze-1.md", "factory/analyze-2.md"),
+                pass_=2,
+                loops=1,
+            )
         )
         self.assertIsNone(checks.gate_violation(remediated, "implement"))
         overridden = base(
@@ -136,6 +136,148 @@ class ImplementGateTests(unittest.TestCase):
             decision("analyze", kind="gate-override", question="Q9")
         ]
         self.assertIsNone(checks.gate_violation(overridden, "implement"))
+
+
+def counts(
+    critical=0,
+    high=0,
+    medium=0,
+    low=0,
+    report="factory/analyze-1.md",
+    at="2026-11-04T00:00:00Z",
+):
+    return {
+        "critical": critical,
+        "high": high,
+        "medium": medium,
+        "low": low,
+        "report": report,
+        "at": at,
+    }
+
+
+def analysis(baseline=None, result=None, reports=("factory/analyze-1.md",), **kw):
+    loops = kw.pop("loops", 0)
+    pass_ = kw.pop("pass_", 1)
+    record = {
+        "pass": pass_,
+        "loops": loops,
+        "reports": list(reports),
+        "remediations": [],
+        "pending_clarify": [],
+    }
+    if baseline is not None:
+        record["baseline"] = baseline
+    if result is not None:
+        record["result"] = result
+    return record
+
+
+def answered_relay(qid, answered):
+    answers = {qid: {"answer": "yes", "at": "2026-11-04T00:05:00Z"}} if answered else {}
+    question = {"id": qid, "requires_user": True}
+    return {"stage": "analyze", "rounds": [{"questions": [question], "answers": answers}]}
+
+
+class AcceptanceTargetTests(unittest.TestCase):
+    """The implement gate compares latest with baseline (FR-004..FR-008, ADR 0014)."""
+
+    def gate(self, baseline, latest, **kw):
+        s = base(analyze=analysis(baseline=baseline, result=latest, **kw))
+        return checks.gate_violation(s, "implement")
+
+    def test_half_rule_allows_below_half_and_refuses_exactly_half(self):
+        baseline = counts(medium=6, low=6)
+        self.assertIsNone(self.gate(baseline, counts(medium=3, low=2)))
+        reason = self.gate(baseline, counts(medium=4, low=2))
+        self.assertIn("total 6 (baseline 12, must be < 6)", reason)
+        self.assertNotIn("LOW", reason)
+
+    def test_low_exactly_half_is_refused(self):
+        reason = self.gate(counts(medium=0, low=6), counts(low=3))
+        self.assertIn("LOW 3 (baseline 6, must be < 3)", reason)
+
+    def test_odd_baseline_seven_allows_three_and_refuses_four(self):
+        baseline = counts(medium=7)
+        self.assertIsNone(self.gate(baseline, counts(medium=3)))
+        reason = self.gate(baseline, counts(medium=4))
+        self.assertIn("total 4 (baseline 7, must be < 3.5)", reason)
+
+    def test_zero_baseline_must_stay_zero(self):
+        reason = self.gate(counts(), counts(low=1))
+        self.assertIn("LOW 1 (baseline 0, must stay 0)", reason)
+        self.assertIsNone(self.gate(counts(), counts()))
+
+    def test_critical_must_be_zero(self):
+        reason = self.gate(counts(medium=6, low=6), counts(critical=1, medium=3, low=2))
+        self.assertIn("CRITICAL 1 (must be 0)", reason)
+
+    def test_new_high_on_clean_baseline_is_refused(self):
+        reason = self.gate(counts(), counts(high=1))
+        self.assertIn("HIGH 1 (must be 0)", reason)
+
+    def test_every_unmet_target_is_named_in_one_refusal(self):
+        reason = self.gate(counts(medium=6, low=6), counts(critical=1, medium=2, low=3))
+        self.assertEqual(
+            reason.split("; "),
+            [
+                "CRITICAL 1 (must be 0)",
+                "total 6 (baseline 12, must be < 6)",
+                "LOW 3 (baseline 6, must be < 3)",
+            ],
+        )
+
+    def test_latest_equal_to_a_non_clean_baseline_is_refused(self):
+        reason = self.gate(counts(medium=2), counts(medium=2))
+        self.assertIn("total 2 (baseline 2, must be < 1)", reason)
+
+    def test_zero_findings_against_a_clean_baseline_allows(self):
+        self.assertIsNone(self.gate(counts(), counts()))
+
+    def test_pending_clarify_refuses_with_targets_met(self):
+        s = base(analyze=analysis(baseline=counts(medium=6, low=6), result=counts(medium=1)))
+        s["analyze"]["pending_clarify"] = [{"id": "Q9"}]
+        reason = checks.gate_violation(s, "implement")
+        self.assertIn("pending_clarify", reason)
+
+    def test_unanswered_requires_user_question_refuses_by_id(self):
+        s = base(analyze=analysis(baseline=counts(medium=6, low=6), result=counts(medium=1)))
+        s["relay"] = answered_relay("Q7", answered=False)
+        self.assertIn("Q7", checks.gate_violation(s, "implement"))
+        s["relay"] = answered_relay("Q7", answered=True)
+        self.assertIsNone(checks.gate_violation(s, "implement"))
+
+    def test_derives_the_baseline_from_one_named_report(self):
+        clean = base(analyze=analysis(result=counts()))
+        self.assertIsNone(checks.gate_violation(clean, "implement"))
+        dirty = base(analyze=analysis(result=counts(medium=2)))
+        self.assertIn("total 2 (baseline 2, must be < 1)", checks.gate_violation(dirty, "implement"))
+
+    def test_several_reports_without_a_baseline_have_no_trustworthy_baseline(self):
+        s = base(
+            analyze=analysis(
+                result=counts(report="factory/analyze-2.md"),
+                reports=("factory/analyze-1.md", "factory/analyze-2.md"),
+            )
+        )
+        reason = checks.gate_violation(s, "implement")
+        self.assertIn("no trustworthy baseline", reason)
+        self.assertIn("gate-override", reason)
+
+    def test_result_naming_another_report_has_no_trustworthy_baseline(self):
+        s = base(analyze=analysis(result=counts(report="factory/analyze-2.md")))
+        self.assertIn("no trustworthy baseline", checks.gate_violation(s, "implement"))
+
+    def test_stored_baseline_is_used_when_valid_and_ignored_when_malformed(self):
+        s = base(analyze=analysis(baseline=counts(medium=6, low=6), result=counts(medium=1)))
+        self.assertIsNone(checks.gate_violation(s, "implement"))
+        s["analyze"]["baseline"]["low"] = -1
+        s["analyze"].pop("result")
+        self.assertIn("no trustworthy baseline", checks.gate_violation(s, "implement"))
+
+    def test_zero_reports_still_refuses_with_the_existing_reason(self):
+        s = base(analyze=analysis(reports=()))
+        self.assertIn("analyze.reports is empty", checks.gate_violation(s, "implement"))
 
 
 class PrGateTests(unittest.TestCase):
