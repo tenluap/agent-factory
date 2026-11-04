@@ -1,0 +1,17 @@
+{
+  "reviewer": "security",
+  "round": 2,
+  "summary": "The fix terminates on symlink cycles and returns 'unavailable' for missing, unreadable and cyclic trees with no dangling references, but the new walker has no bound on acyclic symlink fan-out, so a crafted tree can make tree_digest run for minutes.",
+  "findings": [
+    {
+      "id": "SEC-R2-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "tools/bench.py",
+      "line": 258,
+      "summary": "_collect_records follows every symlinked directory with only an ancestor-chain cycle check and no visited set or work bound, so an acyclic symlink fan-out is walked once per path and grows exponentially with depth.",
+      "evidence": "ENG-24 (no bound on work for an input-driven walk) and ENG-21 (the walk repeats work). Probe on this worktree (scratchpad sec2/probe.py): a chain of directories where each level holds 2 symlinks to the next level, with one leaf file: depth 10 takes 0.75 s; depth 14 takes 18.56 s. The seam wording 'bounded walk, no hang' is met only for cycles. The prior SEC-3 advisory asked for visited realpaths and a bound; the fix tracks ancestors only. tree_digest runs in write_provenance before launch and in installed_factory, so a symlink-fan-out tree in --from-checkout or the installed skill stalls the driver with no timeout.",
+      "fix": "Track a visited set of realpaths across the whole walk (a directory already hashed is skipped or recorded 'unavailable'), or cap total entries visited and return 'unavailable' on overflow. Add a test with a 2-way symlink fan-out asserting a bounded result."
+    }
+  ]
+}
