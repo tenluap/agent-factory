@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec",
-  "round": 3,
-  "summary": "The fix commit 84bdbec makes _outcome_list require a string id, removing round-2's confirmed blocker on FR-012 and the declared malformed-outcome-file failure path, with a valid Red line and no new spec divergence in the delta.",
-  "findings": []
-}

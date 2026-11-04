@@ -1,6 +1,0 @@
-{
-  "reviewer": "security",
-  "round": 3,
-  "summary": "The delta fix in feedback.py _outcome_list now requires string outcome ids, which closes the round-2 SEC-1 crash and the null-id acceptance, and the new test cases are a valid Red on the pre-fix predicate and green on HEAD, with no new security or resource-limit defect introduced.",
-  "findings": []
-}
