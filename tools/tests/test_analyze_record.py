@@ -9,7 +9,7 @@ from unittest.mock import patch
 from tests import Sandbox, fixture
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core/skills/factory/bin"))
-from factory_cli import commands
+from factory_cli import commands, state
 
 
 class AnalyzeRecordTests(unittest.TestCase):
@@ -163,3 +163,55 @@ class AnalyzeRecordTests(unittest.TestCase):
                 )
         self.assertEqual(self.load()["stage"], "analyze")
         self.assertEqual(self.load()["analyze"]["result"]["high"], 1)
+
+
+class AnalyzeBaselineValidationTests(unittest.TestCase):
+    """`validate_state` checks the shape of the stored `analyze.baseline` (FR-001)."""
+
+    BASELINE = {
+        "critical": 0,
+        "high": 1,
+        "medium": 4,
+        "low": 2,
+        "report": "factory/analyze-1.md",
+        "at": "2026-11-04T00:10:00Z",
+    }
+
+    def with_baseline(self, **changes):
+        s = fixture("state-v4.json")
+        s["analyze"] = {
+            "pass": 1,
+            "loops": 0,
+            "reports": ["factory/analyze-1.md"],
+            "remediations": [],
+            "pending_clarify": [],
+            "baseline": {**self.BASELINE, **changes},
+        }
+        return s
+
+    def locations(self, s):
+        return [p["location"] for p in state.validate_state(s)]
+
+    def test_valid_and_absent_baselines_validate(self):
+        s = self.with_baseline()
+        self.assertEqual(state.validate_state(s), [])
+        del s["analyze"]["baseline"]
+        self.assertEqual(state.validate_state(s), [])
+
+    def test_negative_count_is_located_at_its_field(self):
+        self.assertEqual(self.locations(self.with_baseline(high=-1)), ["analyze.baseline.high"])
+
+    def test_missing_count_is_located_at_its_field(self):
+        s = self.with_baseline()
+        del s["analyze"]["baseline"]["low"]
+        self.assertEqual(self.locations(s), ["analyze.baseline.low"])
+
+    def test_non_integer_count_is_located_at_its_field(self):
+        self.assertEqual(self.locations(self.with_baseline(medium="4")), ["analyze.baseline.medium"])
+        self.assertEqual(self.locations(self.with_baseline(medium=4.0)), ["analyze.baseline.medium"])
+
+    def test_bool_count_counts_as_non_integer(self):
+        self.assertEqual(self.locations(self.with_baseline(critical=False)), ["analyze.baseline.critical"])
+
+    def test_empty_report_is_located_at_report(self):
+        self.assertEqual(self.locations(self.with_baseline(report="")), ["analyze.baseline.report"])

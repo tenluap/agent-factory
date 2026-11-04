@@ -21,7 +21,7 @@ description: "Task list for 019-analyze-remediation-targets"
 
 ## Phase 2: Foundational
 
-- [ ] T003 [US2] Validate `analyze.baseline` in `validate_state`, `core/skills/factory/bin/factory_cli/state.py`; tests in `tools/tests/test_analyze_record.py`.
+- [X] T003 [US2] Validate `analyze.baseline` in `validate_state`, `core/skills/factory/bin/factory_cli/state.py`; tests in `tools/tests/test_analyze_record.py`.
   - Seam: `factory_cli.state.validate_state`. Failure paths: negative count; missing count; non-integer count; empty `report`.
   - Red: tests first: a state with a valid baseline `{critical, high, medium, low, report, at}` validates; each failure path (a `bool` count counts as non-integer) yields a problem whose `location` is `analyze.baseline` (or `analyze.baseline.<field>`); absent baseline is valid. Run; fails (no baseline validation exists).
   - Implement: one check for the baseline shape (non-negative non-bool ints for the four counts, non-empty string `report`); `at` gets no new check (clarify Q1).

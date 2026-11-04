@@ -158,6 +158,7 @@ def validate_state(state):
     _check_timeline(state, bad)
     _check_ledger(state, bad)
     _check_relay(state, bad)
+    _check_baseline(state, bad)
     _check_issues(state, bad)
     return problems
 
@@ -360,6 +361,23 @@ def _check_issues(state, bad):
         at = parse_iso(entry.get("at"))
         if entry.get("at") and not at:
             bad(f"issues[{i}].at", "not an ISO-8601 UTC timestamp")
+
+
+def _check_baseline(state, bad):
+    """A stored `analyze.baseline` carries four counts and a report (FR-001, ADR 0014)."""
+    analyze = state.get("analyze")
+    if not isinstance(analyze, dict) or "baseline" not in analyze:
+        return
+    baseline = analyze["baseline"]
+    if not isinstance(baseline, dict):
+        bad("analyze.baseline", "not an object")
+        return
+    for field in ("critical", "high", "medium", "low"):
+        value = baseline.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            bad(f"analyze.baseline.{field}", "must be a non-negative integer")
+    if not (isinstance(baseline.get("report"), str) and baseline["report"]):
+        bad("analyze.baseline.report", "must be a non-empty string")
 
 
 def _check_relay(state, bad):
