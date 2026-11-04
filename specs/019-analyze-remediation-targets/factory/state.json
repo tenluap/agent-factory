@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/019-analyze-remediation-targets",
   "spec_dir": "specs/019-analyze-remediation-targets",
   "status": "running",
-  "stage": "worktree",
+  "stage": "specify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -127,6 +127,13 @@
       "event": "resumed",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T00:07:28.211627Z",
+      "stage": "worktree",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
