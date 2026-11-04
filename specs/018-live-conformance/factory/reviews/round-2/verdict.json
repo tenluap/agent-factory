@@ -1,0 +1,154 @@
+{
+  "round": 2,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "tools/bench.py",
+      "line": 267,
+      "summary": "ENG-17: _collect_records skips a dangling symlink (is_dir() and is_file() both False, no else branch), so tree_digest returns the digest of a partial tree instead of 'unavailable', contrary to its own docstring (lines 243-244).",
+      "fix": "Raise OSError for an entry that is neither a directory nor a regular file (or check entry.is_symlink() for a broken target) so a dangling link records 'unavailable'; if a test is added, add the failure path to seam 4 through the orchestrator first (ENG-4).",
+      "sources": [
+        "STD-1"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/tests/test_bench.py",
+      "line": 451,
+      "summary": "ENG-5: test_unreadable_subdirectory_is_unavailable_not_silently_skipped carries skipIf(os.geteuid() == 0) with no plan-stated exemption, so the declared seam 4 failure path is not exercised on root runs (CI runs ubuntu-latest as a non-root user, so it does run there).",
+      "fix": "Make the path deterministic regardless of euid (e.g. patch os.scandir to raise PermissionError for the locked directory) and drop the skip, or declare the exemption and its reason in plan.md.",
+      "sources": [
+        "STD-2"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "tools/bench.py",
+      "line": 258,
+      "summary": "ENG-24: the walker detects cycles only along the ancestor chain and keeps no visited set or work bound, so an acyclic symlink fan-out is re-walked once per path (measured 18.56 s at depth 14) and each file is still read whole; tree_digest runs before launch with no timeout. Operator-controlled trees only.",
+      "fix": "Keep a visited set of realpaths across the whole walk (or treat a symlinked directory already hashed as 'unavailable'), cap total entries with 'unavailable' on overflow, and hash files in chunks.",
+      "sources": [
+        "STD-3",
+        "SEC-R2-1",
+        "SEC-3"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/tests/test_bench.py",
+      "line": 279,
+      "summary": "ENG-18: the combined no-bypass test reuses one --out for both harnesses, so the opencode run fails on out.mkdir(exist_ok=False) (bench.py:370) and the loop asserts nothing for opencode; return codes are unchecked.",
+      "fix": "Use a per-harness output directory, assert returncode == 0 in each subTest, and assert two recorded calls.",
+      "sources": [
+        "STD-1 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/bench.py",
+      "line": 206,
+      "summary": "ENG-6: the New: reason for git_bytes/checkout_provenance rests on a tools/-only search; factory_cli.improvements.factory_sha already performs the rev-parse HEAD lookup and factory_cli.commands.git is an existing git subprocess helper.",
+      "fix": "Reuse factory_sha for the revision (None -> 'unavailable') or extend the factory_cli git helper with a bytes/timeout option; correct the New: reasoning in a follow-up commit.",
+      "sources": [
+        "STD-3 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/bench.py",
+      "line": 180,
+      "summary": "ENG-25: the Claude Code grant (bare Read/Edit/Write, Bash(git:*), Bash(python3:*)) is not path-bounded and the launch inherits os.environ and the operator's HOME, so the 'confinement to the throwaway fixture is the control' line in claude-code.md:38 names a control the code does not enforce; the scoped no-bypass grant itself is the accepted brief Q2 decision.",
+      "fix": "Set HOME for the launched process to the output directory (as isolated_install does) and/or narrow the Bash entries, or reword the residual-risk line to state that the grant reaches the operator account and a disposable environment is the control.",
+      "sources": [
+        "SEC-1 (round 1)",
+        "STD-6 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "install.sh",
+      "line": 295,
+      "summary": "ENG-26: in --from-checkout mode the isolated config's repo-layer skills are symlinks back into the live source checkout, so they sit outside every provenance digest and are writable through the Edit/Write grant.",
+      "fix": "Copy repo-layer skills into <out>/harness-config/skills in checkout mode (or digest the full harness-config skills tree) and test that no link in the isolated config resolves outside <out>.",
+      "sources": [
+        "SEC-2 (round 1)"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "tools/bench.py",
+      "line": 337,
+      "summary": "ENG-25: out, home, harness-config and harness.log are created with the default umask while the golden-run procedure tells the operator to put a login or ANTHROPIC_API_KEY in that config directory, and the run tree is retained.",
+      "fix": "Create the run directories with mode 0o700 and harness.log with 0o600, and document credential file mode and run-tree retention.",
+      "sources": [
+        "SEC-4 (round 1)"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "tools/bench.py",
+      "line": 464,
+      "summary": "ENG-24: the harness launch and the checkout isolated-install subprocess.run calls have no timeout, so a hung agent or installer blocks the driver indefinitely.",
+      "fix": "Pass generous timeouts, kill on expiry and report the timeout as the exit status.",
+      "sources": [
+        "SEC-5 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "tools/bench.py",
+      "line": 278,
+      "summary": "FR-007 and US4 AS5 require the installed factory revision, but installed_factory records only skill_dir and digest; research R5 and data-model.md chose the digest, so spec and plan disagree.",
+      "fix": "Reconcile through the spec owner: record a revision (e.g. factory_sha or 'unavailable') beside the digest, or amend FR-007 to 'installed factory digest'.",
+      "sources": [
+        "SPEC-2 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "conformance/golden-run/opencode.md",
+      "line": 38,
+      "summary": "The OpenCode checklist defers headless smoke, pause/kill/resume, installed baseline and the PR leg to claude-code.md and never names tenluap/factory-golden-run-<date>, so it does not stand alone as FR-012, FR-014 and SC-006 require.",
+      "fix": "Write the resume, installed-baseline and PR-leg steps (private tenluap/factory-golden-run-<date>, created at trial time, kept as evidence) into opencode.md itself.",
+      "sources": [
+        "SPEC-3 (round 1)"
+      ]
+    },
+    {
+      "severity": "medium",
+      "file": "conformance/golden-run/codex.md",
+      "line": 32,
+      "summary": "Both checklists route the cross-harness fallback to codex.md, which still holds unfilled placeholders, and claude-code.md:22 / opencode.md:22 cite the internal task id 'see T008' (SC-006, FR-012).",
+      "fix": "Fill codex.md's placeholders from adapters/codex/harness.md or state in both checklists that the Codex fallback is not yet runnable; delete ', see T008' from both checklists.",
+      "sources": [
+        "SPEC-4 (round 1)",
+        "STD-5 (round 1)",
+        "SPEC-5 (round 1)"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "tools/bench.py",
+      "line": 218,
+      "summary": "ENG-17: non-UTF-8 git output (checkout_provenance .decode()) or harness --version output (text=True) raises UnicodeDecodeError past the 'unavailable' handling and aborts the run before launch, contrary to FR-008.",
+      "fix": "Decode with errors='replace' or catch UnicodeDecodeError into the 'unavailable' fallback.",
+      "sources": [
+        "SPEC-7 (round 1)"
+      ]
+    },
+    {
+      "severity": "low",
+      "file": "docs/benchmark.md",
+      "line": 6,
+      "summary": "ENG-7: the user-facing benchmark guide still lists only --home/--out and says the driver always uses the installed factory; it omits --model, --from-checkout and <out>/provenance.json.",
+      "fix": "Document --model, --from-checkout and the provenance.json output, qualifying the installed-factory sentence with 'unless --from-checkout is given'.",
+      "sources": [
+        "STD-4 (round 1)",
+        "SPEC-9 (round 1)"
+      ]
+    }
+  ],
+  "rejected": []
+}
