@@ -19,9 +19,9 @@
       "blocking": false,
       "file": "e9bbfd7 (T004)",
       "line": 0,
-      "summary": "The T004 commit leaves tools/tests/test_recovery.py red, and the fixture repair was split into the later T013 commit, outside T004's commit unit.",
-      "evidence": "ENG-3. Exported snapshot at e9bbfd7 fails 9 test_recovery.KillAndResumeTests cases; 4cc2779 (T003) has none. e8beb84 (T013) body explains the fixture fix; tasks.md T013 says 'runs the test and build commands only'.",
-      "fix": "Do not rewrite history. Record in the PR body that e9bbfd7 is red in test_recovery until e8beb84; keep fixture repairs inside the unit's own passing commit in future."
+      "summary": "Commits T004 through T008 each leave tools/tests/test_recovery.py red (9 failures), and the fixture repair landed in the later T013 commit, outside those units.",
+      "evidence": "ENG-3. Exported snapshots show 9 test_recovery.KillAndResumeTests failures at e9bbfd7 (T004), 39668b3 (T005), 60c9480 (T006), 351a531 (T007) and 7ca220a (T008); none at 4cc2779 (T003); e8beb84 (T013) runs 410 tests with none. tasks.md T013 says 'runs the test and build commands only' yet edits test_recovery.py. Branch tip green; gap is in intermediate commits.",
+      "fix": "Do not rewrite history. Record in the PR body that e9bbfd7 through 7ca220a are red in test_recovery until e8beb84 lands the fixture repair."
     },
     {
       "id": "STD-3",
