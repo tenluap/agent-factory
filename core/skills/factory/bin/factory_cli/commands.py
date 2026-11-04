@@ -14,7 +14,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, detect, improvements, lock, state, totals
+from factory_cli import budget, checks, detect, feedback, improvements, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -408,6 +408,14 @@ def cmd_improvements_claim(repo, name):
     try:
         return improvements.claim(factory_home(), name, source_runs=runs)
     except improvements.ClaimError as e:
+        die(1, str(e))
+
+
+def cmd_feedback(repo, branch=None):
+    """Refresh archived runs' PR outcomes (ADR 0014); a refused `<branch>` exits 1."""
+    try:
+        return feedback.refresh(factory_home(), repo, branch=branch)
+    except ValueError as e:
         die(1, str(e))
 
 

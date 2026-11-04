@@ -110,7 +110,7 @@ None: `unittest` and `tools/tests.Sandbox` exist.
 
 ## Phase 7: Entry points (US1 command, FR-001, FR-013)
 
-- [ ] T010 [US1] Add the `factory feedback` command (seam S3). Files: `core/skills/factory/bin/factory_cli/cli.py`, `core/skills/factory/bin/factory_cli/commands.py`, `tools/tests/test_feedback.py`. Depends on T009.
+- [X] T010 [US1] Add the `factory feedback` command (seam S3). Files: `core/skills/factory/bin/factory_cli/cli.py`, `core/skills/factory/bin/factory_cli/commands.py`, `tools/tests/test_feedback.py`. Depends on T009.
   1. Failing tests through `Sandbox.cli` with `FACTORY_HOME` set and a fake `gh` script on `PATH` returning inline JSON (exercises the default `run_gh`): `factory feedback` prints `{refreshed, skipped, gaps}` and exits 0 with no gaps; exits 0 with zero runs; `factory feedback <branch>` refreshes one run; `--repo <path>` run from another directory selects that repository's runs. Declared S3 failure paths: unknown `<branch>` -> exit 1, not a gap, nothing written; `<branch>` without `pr_url` -> exit 1, not a gap, nothing written; `--repo` not a git repository -> exit 2, nothing written; `gh` not on `PATH` -> `inaccessible` gap, exit 1; fake `gh` exiting with an HTTP 502 message -> `transient` gap, exit 1. Observe red.
   2. Implement `commands.cmd_feedback(repo, branch)` (`main_repo` of `--repo` or cwd, `factory_home`, `ValueError` to `die(1, ...)`; print the report and exit 1 when `gaps` is non-empty) and the `feedback [<branch>] [--repo <path>]` dispatch (`value_flags=("--repo",)`) and USAGE line in `cli.py`.
   3. Run the test command and the build command; pass.

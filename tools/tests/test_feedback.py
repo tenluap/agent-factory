@@ -7,6 +7,7 @@ archive stays byte-identical; a fake runner stands in for GitHub.
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import time
@@ -663,6 +664,110 @@ class LocalGapTests(FeedbackTestCase):
         self.assertEqual(
             report["refreshed"][0]["backlog"], {"created": [], "updated": [], "claimed": []}
         )
+
+
+FAKE_GH = (
+    "#!" + sys.executable + "\n"
+    "import json, os, sys\n"
+    "if os.environ.get('FAKE_GH_MODE') == '502':\n"
+    "    print('HTTP 502: Bad Gateway', file=sys.stderr)\n"
+    "    sys.exit(1)\n"
+    "if sys.argv[1] == 'pr':\n"
+    "    print(" + repr(json.dumps(pr([check_run("test", "FAILURE")]))) + ")\n"
+    "else:\n"
+    "    print('')\n"
+)
+
+
+class FeedbackCommandTests(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.repo = str(self.box.repo.resolve())
+        bin_dir = self.box.dir / "bin"
+        bin_dir.mkdir()
+        gh = bin_dir / "gh"
+        gh.write_text(FAKE_GH)
+        gh.chmod(0o755)
+        self.patch_env(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", FAKE_GH_MODE="ok")
+
+    def patch_env(self, **values):
+        patcher = mock.patch.dict(os.environ, values)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def archive(self, branch, pr_url=PR_URL):
+        folder = self.box.home / "archive" / f"{self.box.repo.name}-{branch}"
+        folder.mkdir(parents=True, exist_ok=True)
+        run = {"repo": self.repo, "branch": branch, "spec_dir": f"specs/{branch}", "status": "pr-open"}
+        if pr_url is not None:
+            run["pr_url"] = pr_url
+        (folder / "state.json").write_text(json.dumps(run))
+
+    def feedback(self, *args, cwd=None):
+        return self.box.cli("feedback", *args, cwd=cwd or self.box.repo)
+
+    def test_prints_report_and_exits_zero_without_gaps(self):
+        self.archive("feature-x")
+        out = self.feedback()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual(set(report), {"refreshed", "skipped", "gaps"})
+        self.assertEqual(report["gaps"], [])
+        self.assertEqual([r["run"] for r in report["refreshed"]], ["feature-x"])
+
+    def test_zero_runs_exits_zero(self):
+        out = self.feedback()
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout), {"refreshed": [], "skipped": [], "gaps": []})
+
+    def test_branch_refreshes_only_that_run(self):
+        self.archive("feature-x")
+        self.archive("feature-y")
+        out = self.feedback("feature-x")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual([r["run"] for r in json.loads(out.stdout)["refreshed"]], ["feature-x"])
+
+    def test_repo_flag_selects_that_repository_from_another_directory(self):
+        self.archive("feature-x")
+        out = self.feedback("--repo", self.repo, cwd=self.box.home)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual([r["run"] for r in json.loads(out.stdout)["refreshed"]], ["feature-x"])
+
+    def test_unknown_branch_exits_one_and_writes_nothing(self):
+        out = self.feedback("missing")
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("missing", out.stderr)
+        self.assertFalse((self.box.home / "outcomes").exists())
+
+    def test_branch_without_pr_url_exits_one_and_writes_nothing(self):
+        self.archive("feature-x", pr_url=None)
+        out = self.feedback("feature-x")
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertIn("pr_url", out.stderr)
+        self.assertFalse((self.box.home / "outcomes").exists())
+
+    def test_repo_outside_git_exits_two_and_writes_nothing(self):
+        self.archive("feature-x")
+        out = self.box.cli("feedback", "--repo", str(self.box.home), cwd=self.box.home)
+        self.assertEqual(out.returncode, 2, out.stderr)
+        self.assertFalse((self.box.home / "outcomes").exists())
+
+    def test_gh_not_on_path_is_an_inaccessible_gap(self):
+        self.archive("feature-x")
+        self.patch_env(PATH=f"{self.box.dir / 'empty'}{os.pathsep}/usr/bin{os.pathsep}/bin")
+        out = self.feedback()
+        self.assertEqual(out.returncode, 1, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual([(g["run"], g["class"]) for g in report["gaps"]], [("feature-x", "inaccessible")])
+
+    def test_server_error_is_a_transient_gap(self):
+        self.archive("feature-x")
+        self.patch_env(FAKE_GH_MODE="502")
+        out = self.feedback()
+        self.assertEqual(out.returncode, 1, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual([(g["run"], g["class"]) for g in report["gaps"]], [("feature-x", "transient")])
 
 
 if __name__ == "__main__":
