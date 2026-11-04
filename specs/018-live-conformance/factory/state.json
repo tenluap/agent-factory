@@ -8,7 +8,7 @@
   "base": "origin/main",
   "branch": "018-live-conformance",
   "spec_dir": "specs/018-live-conformance",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
@@ -442,8 +442,8 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "ended_at": null,
-  "pr_url": null,
+  "ended_at": "2026-11-04T08:22:25.886501Z",
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/19",
   "history": [
     {
       "at": "2026-11-04T00:17:39.752117Z",
@@ -549,6 +549,13 @@
       "commit": null,
       "harness": "claude-code",
       "decision": "approve"
+    },
+    {
+      "at": "2026-11-04T08:22:25.886501Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "claude-code"
     }
   ],
   "models": {
