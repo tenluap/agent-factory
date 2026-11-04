@@ -130,18 +130,18 @@ When a finding is best fixed by changing the project constitution, the user sees
 - **FR-015**: Remediation MUST edit `spec.md`, `plan.md`, `tasks.md` and other spec artifacts in place; it never regenerates them.
 - **FR-016**: When targets are unmet after 2 cycles, the orchestrator MUST show baseline counts, latest counts and the unmet targets, and ask the exhaustion question, `requires_user`, with options: one more guided pass, an explicit recorded `gate-override`, or abort. Fast mode MUST NOT auto-answer it.
 - **FR-017**: Implementation MUST stay paused while any target is unmet and no `gate-override` is recorded.
-- **FR-018**: When a finding warrants a constitution change, remediate MUST write the exact amendment text, rationale, version bump and any implied `DESIGN.md` changes to `<spec_dir>/factory/constitution-amendment-<n>.md` and return a `requires_user` question carrying the draft's content hash, without touching the constitution.
-- **FR-019**: After approval, a fresh remediate MUST verify the current draft hash equals the approved hash and then apply exactly that draft through the `speckit-constitution` amendment process, plus its `DESIGN.md` changes, listing `.specify/memory/constitution.md` and `DESIGN.md` in its envelope `files` so one checkpoint commits both; any mismatch or missing draft MUST trigger a fresh approval question and apply nothing.
+- **FR-018**: When a finding warrants a constitution change, remediate MUST write the exact amendment text, rationale, version bump and implied changes to other governed files (e.g. `DESIGN.md`) to `<spec_dir>/factory/constitution-amendment-<n>.md` and return a `requires_user` question carrying the draft's content hash, without touching the constitution.
+- **FR-019**: After approval, a fresh remediate MUST verify the current draft hash equals the approved hash and then apply exactly that draft through the `speckit-constitution` amendment process, plus those implied changes, listing the constitution and each file it changed, never a missing file, in its envelope `files` so one checkpoint commits them; any mismatch or missing draft MUST trigger a fresh approval question and apply nothing.
 - **FR-020**: A declined amendment, or a run aborted or overridden without approval, MUST leave the constitution unchanged; the finding is fixed in the spec artifacts or stays counted.
 - **FR-021**: An applied amendment MUST be followed by the cycle's recheck before the gate is evaluated.
 - **FR-022**: The rule MUST be recorded as ADR 0014 and reflected in `DESIGN.md` (including a "Validation plan" entry), `references/state.md`, `SKILL.md` step 5 (rules and done condition) and `roles/spec-builder.md`. `docs/factory-overview.md` and `docs/product-brief.md` are updated, documentation-exempt; behaviour changes live in `core/` and render cleanly for all five harnesses.
-- **FR-023**: Automated tests MUST cover every acceptance example in this spec, including exactly-half, odd and zero baselines, legacy derivation and refusal, and every amendment approval path.
+- **FR-023**: Automated tests MUST cover every acceptance example in this spec, including exactly-half, odd and zero baselines, legacy derivation and refusal, and a missing or hash-mismatched amendment draft.
 - **FR-024**: After an implement-gate refusal, the orchestrator MUST classify the cause from run state (`factory show`), never from the reason text, in this order. (1) An open `pending_clarify` or an unanswered `requires_user` question routes to `clarify` or the relay wait, with no cycle charged. (2) Zero reports runs analyze (FR-011). (3) No stored and no derivable baseline (FR-010) asks for a fresh baseline, an override or an abort (FR-012); a derivable one falls through. (4) Otherwise, unmet targets run a repair cycle when `analyze.loops < 2` (FR-014), or ask the exhaustion question (FR-016).
 
 ### Key Entities
 
 - **Baseline analysis**: the first completed analysis of a run; four severity counts, report path, record time. Its report file is never overwritten; it changes only through a fresh-baseline choice.
-- **Recheck**: any analysis after the baseline analysis; the most recent one is the latest result.
+- **Recheck**: any analysis after the baseline; the most recent one is the latest result.
 - **Implement gate**: the transition check that refuses implementation while any acceptance target is unmet, a protected question is open, or no trustworthy baseline exists.
 - **Acceptance targets**: zero CRITICAL, zero HIGH, total below half of baseline total, LOW below half of baseline LOW, and zero stays zero.
 - **Repair cycle**: one remediate plus recheck (including any clarify and grill-with-docs loop pass); counted in `analyze.loops`, capped at 2 automatic cycles per run.
@@ -157,14 +157,14 @@ When a finding is best fixed by changing the project constitution, the user sees
 - **SC-002**: No run enters implementation with an unmet target unless a `gate-override` decision is recorded; verified by tests covering every refusal path.
 - **SC-003**: A run performs at most 2 automatic repair cycles; the third attempt always requires an explicit user answer, including in fast mode.
 - **SC-004**: The baseline and consumed cycle count are unchanged in 100% of resume, later-record and no-`checkpoint remediate` tests; the last two cover escalation.
-- **SC-005**: The constitution file is byte-identical after every declined, unanswered or hash-mismatched amendment in tests.
+- **SC-005**: In tests, a missing or hash-mismatched amendment draft leaves the constitution byte-identical.
 - **SC-006**: The build renders all five harnesses cleanly and the full test suite passes.
 
 ## Assumptions
 
 - The existing `analyze.result` count fields, `analyze.loops`, `analyze.pass`, `pending_clarify`, `requires_user` and the analyze `gate-override` decision kind are reused; only `analyze.baseline` is new state.
 - The existing state writer's validation rules (non-negative counts, non-decreasing timestamps, paths relative to `spec_dir`) extend to the baseline.
-- The content hash is SHA-256 of the draft file bytes; any change to the file changes the hash.
+- The content hash is SHA-256 of the draft file bytes.
 - "One more guided pass" increments `analyze.loops` like an automatic cycle; the user's guidance is passed to remediate.
 - Past the cap, any non-auto analyze answer newer than the latest result authorises remediate; only a guided pass reaches it (abort ends the run, an override passes the gate, a fresh baseline or an escalation record is followed by a newer result). Plan and `DESIGN.md` state why.
 - The amendment file number `<n>` is the current `analyze.pass`.

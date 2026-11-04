@@ -6,7 +6,7 @@
 
 ## Summary
 
-The implement gate (`factory_cli/checks.py`) compares `analyze.result` (the latest recheck) with a new `analyze.baseline` and refuses, naming every unmet acceptance target, until CRITICAL and HIGH are 0 and total and LOW meet the integer half rule. `analyze-record` sets the baseline once. A gate into `remediate` caps automatic repair cycles at 2; `checkpoint remediate` becomes the missing writer for `analyze.loops` and `analyze.pass` (ADR 0006). `amendment-check` hashes a constitution amendment draft and verifies an approved hash. The orchestrator classifies refusals from run state (FR-024).
+The implement gate (`factory_cli/checks.py`) compares `analyze.result` with a new `analyze.baseline` and refuses, naming every unmet acceptance target, until CRITICAL and HIGH are 0 and total and LOW meet the integer half rule. `analyze-record` sets the baseline once. A gate into `remediate` caps automatic repair cycles at 2; `checkpoint remediate` becomes the missing writer for `analyze.loops` and `analyze.pass` (ADR 0006). `amendment-check` hashes a constitution amendment draft and verifies an approved hash. The orchestrator classifies refusals from run state (FR-024).
 
 ## Technical Context
 
@@ -14,7 +14,7 @@ The implement gate (`factory_cli/checks.py`) compares `analyze.result` (the late
 - **Storage**: run `state.json` v5, additive `analyze.baseline`; no version bump (readers ignore unknown analyze keys).
 - **Testing**: `python3 -m unittest discover -s tools` (existing runner, CI).
 - **Platform**: macOS/Linux, five harnesses.
-- **Constraints**: harness-neutral core; state written only by the CLI writer (ADR 0006); refusals change nothing.
+- **Constraints**: harness-neutral core; state written only by the CLI writer (ADR 0006).
 - **Scope**: two gates, one recorder, one checkpoint branch, one command, six prose files, one ADR.
 
 ## Constitution Check
@@ -26,8 +26,6 @@ The implement gate (`factory_cli/checks.py`) compares `analyze.result` (the late
 - **V. Simplicity and Reuse**: PASS. Reuses `analyze.result`, `loops`, `pass`, `decisions`, `gate-override`, `requires_user`, the gate table and the checkpoint writer.
 
 ## Project Structure
-
-Research, data model and validation are folded into this plan.
 
 ### Source Code (repository root)
 
@@ -64,7 +62,7 @@ No new test files.
 - **Draft hash**: SHA-256 of the draft bytes, lower-case hex, from `amendment-check`. Agent-run `shasum` rejected: platform-dependent and untestable.
 - **Terms** (grill Q1): `CONTEXT.md`. "Fresh analysis" in the verbatim confirmed scope means a recheck.
 - **Amendment number**: `n` = `analyze.pass`, as for `remediation-<n>.md`.
-- **Escalated report** (clarify Q3): `factory/analyze-<n>-full.md`, keeping the baseline report file; `pass` and `loops` untouched. Prose-only.
+- **Escalated report** (clarify Q3): `factory/analyze-<n>-full.md`, keeping the baseline report file; `pass` and `loops` untouched.
 - **Refusal causes** (clarify Q2): the orchestrator reads `factory show`, never the reason text (FR-024).
 - **Latest equals baseline**: unmet with findings (`2 * b < b` is false for `b > 0`), met with none.
 - **Pre-change runs**: resume under the new rules (FR-010 to FR-012); `DESIGN.md`'s old-gate note is replaced.
@@ -115,7 +113,7 @@ After `analyze-record`: lite with CRITICAL or HIGH escalates as today (re-analys
 
 1. Open `pending_clarify` or an unanswered `requires_user` question: `clarify` or the relay wait; no cycle charged.
 2. Zero reports: run analyze, no user question.
-3. No stored and no derivable baseline (`reports` length not 1, or `result.report` names another): ask re-run as fresh baseline (`analyze-record --fresh-baseline`), override, or abort. A derivable baseline falls through to 4.
+3. No stored and no derivable baseline (`reports` length not 1, or `result.report` names another): ask re-run as fresh baseline (new report `factory/analyze-<n>-baseline.md`; `analyze-record --fresh-baseline`), override, or abort. A derivable baseline falls through to 4.
 4. Unmet targets, `loops < 2`: `checkpoint analyze --next remediate`, spawn remediate (with the resolved `speckit-constitution` path), `checkpoint remediate --next analyze` (or `clarify` when `pending_clarify` is non-empty), recheck.
 5. Unmet targets, `loops >= 2`: `NOTIFY`; ask the exhaustion question (`requires_user`) with baseline and latest counts and unmet targets: guided pass (`decisions-add analyze <qid> '<guidance>'`, then cycle), `gate-override` (`decisions-add ... --kind gate-override`, then checkpoint), or abort.
 
@@ -123,7 +121,7 @@ Step 5's done condition becomes: acceptance targets met with no protected questi
 
 ### Remediate role (spec-builder.md)
 
-Replace "Constitution conflicts are fixed in the artifacts, never in the constitution": a finding warranting a constitution change gets `factory/constitution-amendment-<n>.md` (exact text, rationale, version bump, implied `DESIGN.md` changes) and a `requires_user` approval question carrying `amendment-check`'s sha256; the constitution is untouched. With an approved answer, a fresh remediate runs `amendment-check <draft> --sha256 <approved>`: pass applies exactly the draft through `speckit-constitution` plus its `DESIGN.md` changes, listing `.specify/memory/constitution.md` and `DESIGN.md` in envelope `files` so `checkpoint remediate` commits both; failure asks fresh approval and applies nothing. Declined, aborted or overridden: fix in artifacts or leave the finding counted. The analyze stage names an escalated re-analysis `analyze-<n>-full.md`.
+Replace "Constitution conflicts are fixed in the artifacts, never in the constitution": a finding warranting a constitution change gets `factory/constitution-amendment-<n>.md` (exact text, rationale, version bump, implied changes to other governed files, e.g. `DESIGN.md`) and a `requires_user` approval question carrying `amendment-check`'s sha256; the constitution is untouched. With an approved answer, a fresh remediate runs `amendment-check <draft> --sha256 <approved>`: pass applies exactly the draft through `speckit-constitution` plus those changes, listing the constitution and each file actually changed (never a missing file) in envelope `files` so `checkpoint remediate` commits them; failure asks fresh approval and applies nothing. Declined, aborted or overridden: fix in artifacts or leave the finding counted. The analyze stage names an escalated re-analysis `analyze-<n>-full.md` and a fresh baseline `analyze-<n>-baseline.md`.
 
 ### Quality constraints
 
@@ -150,7 +148,7 @@ Confirmed: 2026-11-04 - Q1 accepted - seams: `factory_cli.checks.gate_violation(
 - `python3 -m unittest discover -s tools` passes, including every spec acceptance example (FR-023).
 - Escalation (US2.4, US3.3, SC-004; grill Q4) is verified through the `analyze-record` seam: a later record keeps the baseline and `loops`; no new seam or failure path.
 - Build command renders all five harnesses, `dist/` untracked, `bash -n install.sh`.
-- End to end: new `DESIGN.md` "Analyze acceptance targets validation" (T001).
+- End to end: new `DESIGN.md` "Analyze acceptance targets validation" (T001), including the amendment flow.
 
 ## Complexity Tracking
 
