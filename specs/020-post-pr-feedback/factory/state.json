@@ -108,8 +108,8 @@
       "kind": "questions",
       "stage": "plan",
       "summary": "Re-plan: Q20 updated test-scope confirmation (requires_user)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-04T00:51:32.546819Z",
+      "latency_ms": 96195
     }
   ],
   "decisions": [
