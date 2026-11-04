@@ -45,15 +45,18 @@ def _checkouts(repo):
     return found
 
 
-def _resolve(repo, src):
-    """(shape, branch) for `src` (D2 steps 1 and 3), or None when no local branch matches.
+def _resolve(repo, src, base):
+    """(shape, branch, ref) for `src` (D2), or None when nothing matches.
 
-    A local branch named exactly `src` wins. Otherwise a `specs/` prefix names the
-    spec dir, whose last segment matches a branch by `commands.name_matches`; several
-    matches exit 3 (ambiguous) listing them.
+    In order: a local branch named `src`; origin's branch named `src` (as held, never
+    fetched); a local branch matching the spec-dir name (a `specs/` prefix is dropped);
+    a spec dir on `base` matching it, whose branch is named after the dir. Matching is
+    `commands.name_matches`; several matches in one step exit 3 (ambiguous).
     """
     if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{src}") is not None:
-        return "branch", src
+        return "branch", src, f"refs/heads/{src}"
+    if _try(repo, "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{src}") is not None:
+        return "remote-branch", src, f"refs/remotes/origin/{src}"
     name = src.removeprefix("specs/")
     branches = commands.git(
         repo, "for-each-ref", "--format=%(refname:lstrip=2)", "refs/heads/"
@@ -61,7 +64,37 @@ def _resolve(repo, src):
     matches = sorted(b for b in branches if commands.name_matches(b, name))
     if len(matches) > 1:
         commands.die(3, f"'{src}' matches several branches: {', '.join(matches)}")
-    return ("branch", matches[0]) if matches else None
+    if matches:
+        return "branch", matches[0], f"refs/heads/{matches[0]}"
+    dirs = [d for d in _entries(repo, base, "specs") if commands.name_matches(d, name)]
+    if len(dirs) > 1:
+        commands.die(3, f"'{src}' matches several spec dirs on {base}: {', '.join(dirs)}")
+    if dirs:
+        return "default-branch", dirs[0], base
+    return None
+
+
+def _unmatched(repo, src, base):
+    """Why `src` matched nothing. A spec dir only on the local default branch gets its own reason (clarify Q2)."""
+    name = src.removeprefix("specs/")
+    local = base.removeprefix("origin/")
+    if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{local}") is not None and any(
+        commands.name_matches(d, name) for d in _entries(repo, f"refs/heads/{local}", "specs")
+    ):
+        return f"spec dir is on local '{local}' but not on '{base}'; push it or create its branch first"
+    return f"no branch or spec dir matches '{src}'"
+
+
+def _spec_dir(repo, ref, branch, base):
+    """The branch's spec dir (D2): `specs/<branch>` when present, else the one `specs/` dir it adds over base."""
+    own = f"specs/{branch}"
+    if _entries(repo, ref, own):
+        return own
+    added = commands.git(repo, "diff", "--name-only", f"{base}...{ref}", "--", "specs/")
+    dirs = sorted({"/".join(path.split("/")[:2]) for path in added.splitlines() if path.count("/") >= 2})
+    if len(dirs) > 1:
+        commands.die(3, f"'{branch}' adds several spec dirs: {', '.join(dirs)}")
+    return dirs[0] if dirs else own
 
 
 def _entries(repo, ref, directory):
@@ -96,7 +129,7 @@ def _markers(repo, ref, spec_dir):
     return [line.strip() for line in text.splitlines() if NEEDS_CLARIFICATION in line]
 
 
-def _refusal(repo, report):
+def _refusal(repo, report, ref):
     """The first refusal reason in D5's order, or None; `dirty` already lists every path."""
     branch, spec_dir = report["branch"], report["spec_dir"]
     own = f"{report['pending']}.json"
@@ -105,7 +138,7 @@ def _refusal(repo, report):
         return f"another pending run '{others[0]}' exists for this repo; resume it or prune it first"
     if report["dirty"]:
         return "uncommitted changes: " + ", ".join(report["dirty"])
-    state_path = f"refs/heads/{branch}:{spec_dir}/factory/state.json"
+    state_path = f"{ref}:{spec_dir}/factory/state.json"
     if _try(repo, "cat-file", "-e", state_path) is not None:
         return f"{spec_dir} already has factory/state.json; resume it with `resume {branch}`"
     if "spec.md" not in report["artifacts"]:
@@ -137,13 +170,12 @@ def inspect(repo, src, base):
     if _try(repo, "check-ref-format", "--branch", src) is None:
         report["refusal"] = f"'{src}' is not a valid branch name"
         return report
-    found = _resolve(repo, src)
+    found = _resolve(repo, src, base)
     if found is None:
-        report["refusal"] = f"no branch or spec dir matches '{src}'"
+        report["refusal"] = _unmatched(repo, src, base)
         return report
-    shape, branch = found
-    spec_dir = f"specs/{branch}"
-    ref = f"refs/heads/{branch}"
+    shape, branch, ref = found
+    spec_dir = _spec_dir(repo, ref, branch, base)
     artifacts = _entries(repo, ref, spec_dir)
     name = Path(repo).name
     report.update(
@@ -157,5 +189,5 @@ def inspect(repo, src, base):
         worktree=str(Path(repo).parent / f"{name}-factory" / branch),
         pending=f"{name}-adopt-{branch}",
     )
-    report["refusal"] = _refusal(repo, report)
+    report["refusal"] = _refusal(repo, report, ref)
     return report

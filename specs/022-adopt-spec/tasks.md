@@ -43,7 +43,7 @@ description: "Task list for 022-adopt-spec"
 
 ## Phase 4: User Story 3 - Other source shapes, preview (P2)
 
-- [ ] T005 [US3] Resolve `remote-branch` and `default-branch` shapes in `inspect` (`core/skills/factory/bin/factory_cli/adopt.py`); tests in `tools/tests/test_adopt.py`.
+- [x] T005 [US3] Resolve `remote-branch` and `default-branch` shapes in `inspect` (`core/skills/factory/bin/factory_cli/adopt.py`); tests in `tools/tests/test_adopt.py`.
   - Seam: `bin/factory adopt <src> --dry-run`. Failure paths: spec dir on local default branch but not on `base` exits 1 with the "push it or create its branch first" reason; every refusal leaves the repo unchanged.
   - Red: write tests first with a bare `origin` remote: branch only on `origin` → `shape: remote-branch`; spec dir on `origin/<default>` with no own branch → `shape: default-branch`, `branch` = dir name; same dir plus a local branch of that name → `shape: branch`; branch `feat-y` holding `specs/009-renamed/` → `spec_dir: specs/009-renamed` (US3-3); branch local and on `origin`, diverged → local artifacts; remote moved ahead after the last fetch → `refs/remotes/origin/*` unchanged (no fetch, D3); spec dir committed on local default branch only → exit 1 with that reason (clarify Q2); repo unchanged throughout. Run; fail.
   - Implement: D2 steps 2-3; spec dir from `specs/<branch>/` on the ref, else the single dir from `git diff --name-only <base>...<ref> -- specs/` (several → exit 3).

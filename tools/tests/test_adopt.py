@@ -397,5 +397,110 @@ class DryRunRefusalTests(DryRunFixture):
         self.assertEqual(self.snapshot(), before)
 
 
+class OtherShapeTests(DryRunFixture):
+    """The remote-branch, default-branch and renamed-dir shapes, previewed only (T005)."""
+
+    def setUp(self):
+        super().setUp()
+        self.origin = self.box.dir / "origin.git"
+        self.box.git("init", "-q", "--bare", str(self.origin))
+        self.box.git("remote", "add", "origin", str(self.origin))
+        self.box.git("push", "-q", "origin", "main")
+
+    def publish_spec(self, branch):
+        """Push `branch` and drop its local copy, so only origin/<branch> remains."""
+        self.box.git("push", "-q", "origin", branch)
+        self.box.git("branch", "-D", branch)
+
+    def dry_run(self, src):
+        out = self.box.cli("adopt", src, "--dry-run")
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        return json.loads(out.stdout)
+
+    def test_branch_only_on_origin_is_remote_branch(self):
+        self.spec_branch("007-x", {"spec.md": "# S\n"})
+        self.publish_spec("007-x")
+        report = self.dry_run("007-x")
+        self.assertEqual(report["shape"], "remote-branch")
+        self.assertEqual(report["base"], "origin/main")
+        self.assertEqual(report["artifacts"], ["spec.md"])
+        self.assertIsNone(report["refusal"])
+
+    def test_spec_dir_on_base_without_own_branch_is_default_branch(self):
+        self.write_main_spec("010-d")
+        report = self.dry_run("010-d")
+        self.assertEqual(report["shape"], "default-branch")
+        self.assertEqual(report["branch"], "010-d")
+        self.assertEqual(report["spec_dir"], "specs/010-d")
+        self.assertIsNone(report["refusal"])
+
+    def test_same_dir_with_a_local_branch_is_branch_shape(self):
+        self.write_main_spec("010-d")
+        self.box.git("branch", "010-d")
+        self.assertEqual(self.dry_run("010-d")["shape"], "branch")
+
+    def test_branch_holding_renamed_spec_dir_records_that_dir(self):
+        self.box.git("checkout", "-q", "-b", "feat-y")
+        spec = self.box.repo / "specs" / "009-renamed"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "renamed spec")
+        self.box.git("checkout", "-q", "main")
+        report = self.dry_run("feat-y")
+        self.assertEqual(report["shape"], "branch")
+        self.assertEqual(report["spec_dir"], "specs/009-renamed")
+        self.assertEqual(report["inferred_stage"], "plan")
+
+    def test_spec_dir_only_on_local_default_is_refused(self):
+        self.write_main_spec("011-l", push=False)
+        before = self.snapshot()
+        out = self.box.cli("adopt", "011-l", "--dry-run")
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        refusal = json.loads(out.stdout)["refusal"]
+        self.assertIn("not on 'origin/main'", refusal)
+        self.assertIn("push it or create its branch first", refusal)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_local_branch_also_on_origin_uses_local_artifacts(self):
+        self.spec_branch("012-v", {"spec.md": "# S\n"})
+        self.box.git("push", "-q", "origin", "012-v")
+        self.box.git("checkout", "-q", "012-v")
+        (self.box.repo / "specs" / "012-v" / "plan.md").write_text("# P\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "local plan")
+        self.box.git("checkout", "-q", "main")
+        report = self.dry_run("012-v")
+        self.assertEqual(report["shape"], "branch")
+        self.assertEqual(report["inferred_stage"], "tasks")
+
+    def test_remote_ahead_of_last_fetch_is_not_fetched(self):
+        self.spec_branch("013-r", {"spec.md": "# S\n"})
+        self.publish_spec("013-r")
+        other = self.box.dir / "other"
+        self.box.git("clone", "-q", str(self.origin), str(other))
+        self.box.git("checkout", "-q", "013-r", cwd=other)
+        (other / "specs" / "013-r" / "plan.md").write_text("# P\n")
+        self.box.git("add", "-A", cwd=other)
+        self.box.git(
+            "-c", "user.email=a@example.com", "-c", "user.name=Other",
+            "commit", "-q", "-m", "ahead", cwd=other,
+        )
+        self.box.git("push", "-q", "origin", "013-r", cwd=other)
+        before = self.snapshot()
+        report = self.dry_run("013-r")
+        self.assertEqual(report["artifacts"], ["spec.md"])
+        self.assertEqual(self.snapshot(), before)
+
+    def write_main_spec(self, name, push=True):
+        spec = self.box.repo / "specs" / name
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# S\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", f"spec {name} on main")
+        if push:
+            self.box.git("push", "-q", "origin", "main")
+
+
 if __name__ == "__main__":
     unittest.main()
