@@ -1,0 +1,195 @@
+{
+  "version": 5,
+  "started_at": "2026-11-03T23:58:26Z",
+  "harness": "claude-code",
+  "feature": "Execute docs/superpowers/plans/2026-11-03-factory-live-conformance-plan.md (Factory live conformance plan): prove a real coding-agent session can take a feature request through an interruption, resume, and one approved pull request.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "018-live-conformance",
+  "spec_dir": "specs/018-live-conformance",
+  "status": "waiting_user",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "grilling": "/Users/tenluap/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\"; done && bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [
+    {
+      "at": "2026-11-04T00:11:07.764485Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Initial grilling round 1: scope, permissions, second harness, UI leg, throwaway repo",
+      "answered_at": "2026-11-04T00:13:23.957469Z",
+      "latency_ms": 136192
+    },
+    {
+      "at": "2026-11-04T00:14:00.007942Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Initial grilling round 2: isolation, provenance, procedure location, OpenCode blocker",
+      "answered_at": "2026-11-04T00:16:04.340618Z",
+      "latency_ms": 124332
+    },
+    {
+      "at": "2026-11-04T00:16:04.492642Z",
+      "kind": "questions",
+      "stage": "grill",
+      "summary": "Initial grilling round 3: bench isolated render + shared-understanding confirmation",
+      "answered_at": "2026-11-04T00:17:39.667118Z",
+      "latency_ms": 95174
+    }
+  ],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q8",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q9",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q10",
+      "answer": "A",
+      "auto": false,
+      "at": "2026-11-04T00:17:39.752117Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-04T00:17:39.752117Z",
+      "stage": "grill",
+      "event": "resumed",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-opus-5-5",
+      "standard": "claude-haiku-5-5"
+    },
+    "source": {
+      "deep": "adapter",
+      "standard": "adapter"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-04T00:10:01.887698Z",
+    "detected_by": "factory detect 017"
+  },
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/018-live-conformance"
+}

@@ -1,0 +1,18 @@
+# Brief: live-conformance unblockers
+
+Deliver the tooling and procedure that unblock the Factory live conformance plan (docs/superpowers/plans/2026-11-03-factory-live-conformance-plan.md). The plan aims to prove that a real coding-agent session can take a feature request through an interruption, a cross-harness resume and one approved pull request. This run does not execute the live, token-spending trials. It fixes the blockers the last smoke tests hit (Claude Code headless lacked permission to read the factory references and run the state CLI; OpenCode's provider rejected the default model setup). It adds isolated checkout installs and provenance recording to the benchmark driver, and writes the per-leg golden-run procedure. The live legs run after merge, with their results recorded in a follow-up commit.
+
+## Decisions
+
+- Scope (Q1): unblockers + runbook in this run; the live trials run after merge, results in a follow-up commit. Factory implement roles never drive nested harness sessions.
+- Claude Code headless permission (Q2): `tools/bench.py run --harness claude-code` launches `claude -p` with a scoped allow-list: `--add-dir <installed or isolated factory skill dir>` plus `--allowedTools` limited to Read, Edit, Write, Agent, Skill, and Bash for git, python3 and the factory CLI. Applies only to the disposable fixture. No bypassPermissions.
+- Second harness for the cross-harness resume leg (Q3): OpenCode, after its model configuration is fixed; if it cannot be fixed at trial time, fall back to Codex and record why.
+- UI fixture leg (Q4): out of scope; golden-run-results.md records it as deferred until the UI handoffs repair plan (docs/superpowers/plans/2026-11-03-factory-ui-handoffs-plan.md) lands.
+- Throwaway PR target (Q5): a new private repo `tenluap/factory-golden-run-<date>`, created at trial time (not by this run) and kept as evidence; the user deletes it later.
+- Isolation (Q6): each acceptance trial renders the checkout with FACTORY_HOME and the harness home pointed at a temp dir, and launches the harness with that config dir (CLAUDE_CONFIG_DIR for Claude Code, XDG_CONFIG_HOME for OpenCode). Claude Code needs a one-time login or ANTHROPIC_API_KEY in the isolated dir; the procedure says so. The installed-version baseline stays a separate result.
+- Provenance (Q7): `bench.py run` writes `provenance.json` into its output dir: checkout SHA, `git status --porcelain` plus a diff hash of local changes, rendered dist hash, installed factory SHA, and harness CLI versions. `bench.py score` carries provenance into its output.
+- Procedure location (Q8): fill the existing conformance/golden-run/claude-code.md and opencode.md checklists (invoke, isolation, permissions, pause/kill/resume steps, PR leg). Extend conformance/golden-run-results.md with one row per leg: headless smoke, golden run, pause/resume, cross-harness resume, approval/PR, UI (deferred). Each leg's evidence is recorded separately.
+- OpenCode blocker (Q9): `bench.py run --model <provider/model>` passes the model to `opencode run -m` and `claude --model`; the OpenCode checklist names how to pick a known-compatible model. Live diagnosis happens at trial time.
+- Checkout render (Q10): opt-in `bench.py run --from-checkout` renders this checkout into an isolated FACTORY_HOME and harness config dir under the output dir and launches against it. Without the flag, behaviour is unchanged (installed baseline).
+- Verification: offline unit tests only (`python3 -m unittest discover -s tools`); no test spends model tokens or calls a real harness CLI. Existing bench tests and recorded-score behaviour are preserved.
+- Chain: lite (fast mode on). Tooling and docs change of moderate size; full not needed.
