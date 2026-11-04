@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/021-cruise-mode",
   "spec_dir": "specs/021-cruise-mode",
   "status": "running",
-  "stage": "clarify",
+  "stage": "grill-with-docs",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -51,25 +51,7 @@
       "at": "2026-11-04T00:56:52.423205Z"
     }
   },
-  "relay": {
-    "stage": "clarify",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A",
-            "at": "2026-11-04T00:58:08.973193Z",
-            "auto": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-04T00:31:50.175600Z",
@@ -167,6 +149,14 @@
       "answer": "lite->full: analyze pass 1 has 2 HIGH (T1, T2); state CLI has no mode.chain writer, so chain change recorded here and followed by the orchestrator",
       "auto": false,
       "at": "2026-11-04T00:56:59.455535Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q1",
+      "answer": "A",
+      "auto": true,
+      "at": "2026-11-04T00:59:21.010985Z",
       "kind": "answer"
     }
   ],
@@ -304,6 +294,13 @@
     {
       "at": "2026-11-04T00:56:59.709843Z",
       "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:59:21.010985Z",
+      "stage": "clarify",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
