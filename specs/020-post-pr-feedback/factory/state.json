@@ -10,7 +10,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/020-post-pr-feedback",
   "spec_dir": "specs/020-post-pr-feedback",
   "status": "running",
-  "stage": "tasks",
+  "stage": "analyze",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -234,6 +234,13 @@
     {
       "at": "2026-11-04T00:31:38.733392Z",
       "stage": "plan",
+      "event": "complete",
+      "commit": null,
+      "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T00:34:17.222946Z",
+      "stage": "tasks",
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
