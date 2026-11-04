@@ -1,0 +1,80 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 146,
+      "summary": "The documented Approve-to-publish sequence never records the user's approved decision and runs the pr gate before git push, so the FR-016/SC-002 publish boundary that ADR 0014 and the plan rest on the pr gate is not on the publish path.",
+      "evidence": "SKILL.md step 8 (line 146) newly says approved is recorded via `decisions-add approver ... --kind approved` but does not order it. The Approve bullet goes straight to step 9, whose first item (line 158) is `git push`, followed by `gh pr create` (160) and `set-status pr-open` (161), with no `checkpoint approver --next pr` in between. checks.gate_violation('pr') runs only inside cmd_checkpoint (commands.py:879), and cmd_set_status has no gate call. ENG-25. A pr-open gate in cmd_set_status alone cannot fix it: step 9 runs set-status only after the push and PR creation.",
+      "fix": "In SKILL.md step 8's Approve bullet, require in order: `factory decisions-add approver <qid> '<answer>' --kind approved` (never with --cruise-override), then `factory checkpoint approver --next pr`; a refusal stops and nothing is pushed; only then step 9. Optionally also make `set-status pr-open` refuse on checks.gate_violation(s, 'pr') as defense in depth, with a test that it refuses with no approved record and with only a marked one.",
+      "sources": ["SEC-1", "STD-4"]
+    },
+    {
+      "severity": "high",
+      "file": "tools/tests/test_cruise.py",
+      "line": 372,
+      "summary": "Declared seam outcomes are unasserted through the CLI: checkpoint carrying a marked answer into decisions, show listing it in the veto list, and checkpoint analyze --next implement succeeding after a marked analyze-exhaustion override (FR-011).",
+      "evidence": "ENG-1. plan.md Test seams (lines 123-124); tasks.md T005 Red (line 49) and T006 Red (line 56). test_cruise.py never calls checkpoint or show.",
+      "fix": "Add subprocess tests on a cruise run: (1) `answer Q1 A --cruise-override`, then checkpoint the stage, and assert the decisions entry has kind answer, auto true and cruise_override true; then `show` and assert it appears in the veto list with the marker. Use this to replace the direct settled_answers call. (2) After `decisions-add analyze analyze-exhaustion 'proceed to implement' --kind gate-override --cruise-override`, run `checkpoint analyze --next implement` and assert exit 0, stage implement, and a history entry with event gate-override.",
+      "sources": ["SPEC-1", "SPEC-2", "STD-3"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 61,
+      "summary": "The brainstorm step (idea path) has no cruise behaviour: its frontier and direction confirmation still wait on the user, and the visual companion is still offered.",
+      "evidence": "spec.md FR-006 (line 154) and the brainstorm edge case (line 137); tasks.md T008. SKILL.md step 2 (lines 61-69) unchanged.",
+      "fix": "Add a cruise bullet to step 2: under mode.cruise, answer each brainstorm frontier question with its recommendation via `answer <qid> '<recommended>' --auto --stage brainstorm`, confirm the recommended direction without asking, do not offer the visual companion, write brief.md and continue to step 3.",
+      "sources": ["SPEC-3"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 35,
+      "summary": "Under cruise, an ambiguous intake still ASKs the user a relay question at routing instead of taking the delivery path.",
+      "evidence": "spec.md US5 scenario 4 (line 107) and FR-013 (line 164). SKILL.md line 35 has no cruise carve-out.",
+      "fix": "In the Ambiguous branch, add: under mode.cruise, take the delivery path (step 3) with no question and, once pending state exists after step 1, record `factory decisions-add grill intake 'delivery' --cruise-override`.",
+      "sources": ["SPEC-4"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 52,
+      "summary": "Under cruise, the constitution is still drafted 'with the user' after specify init, and the missing-SpecKit-skill offer still asks.",
+      "evidence": "spec.md US5 scenario 1 (line 104). SKILL.md preflight 3 (line 52) and preflight 4 (line 53).",
+      "fix": "In preflight 3, under cruise: run specify init, draft the constitution from the repository without asking, and record setup-speckit with --cruise-override. In preflight 4, under cruise: run the named specify init for a missing speckit skill without asking and record it the same way; a failing command halts.",
+      "sources": ["SPEC-5"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 54,
+      "summary": "Under cruise, detected build and test commands are still confirmed with the user; the setup-commands override named in the plan has no prose step.",
+      "evidence": "spec.md US5 scenario 2 (line 105) and FR-013 (line 164); plan.md 'Non-question overrides'. SKILL.md preflight 5 (line 54) unchanged.",
+      "fix": "In preflight 5, add: under mode.cruise, record the detected proposed commands without a question and run `factory decisions-add grill setup-commands '<commands recorded>' --cruise-override`.",
+      "sources": ["SPEC-6"]
+    }
+  ],
+  "advisory": [
+    { "severity": "medium", "file": "tools/tests/test_cruise.py", "line": 228, "summary": "ENG-1: resume --full, --lite and --fast are not asserted through resume.", "fix": "Add ResumeModeTests cases for --full, --lite on a full run, and --fast on a no-fast run, each asserting one resumed entry.", "sources": ["STD-1"] },
+    { "severity": "medium", "file": "tools/tests/test_cruise.py", "line": 504, "summary": "ENG-4: tests assert unlisted seams (checks.permitting_decision at 504/509, commands.settled_answers at 386).", "fix": "Drop the permitting_decision assertions; replace the settled_answers call with the CLI checkpoint test from the blocking test entry.", "sources": ["STD-2", "SPEC-10"] },
+    { "severity": "medium", "file": "core/skills/factory/SKILL.md", "line": 73, "summary": "The grill step keeps 'with the user' and 'initial grilling stays interactive whatever the mode' unqualified.", "fix": "Change it to 'initial grilling stays interactive unless mode.cruise is on' and qualify 'with the user' the same way.", "sources": ["SPEC-7"] },
+    { "severity": "medium", "file": "core/skills/factory/SKILL.md", "line": 112, "summary": "The analyze-loop exhaustion line still says halt and ask, with no pointer to the Policies cruise carve-out.", "fix": "Append 'under mode.cruise, follow Policies, Cruise (analyze exhaustion) instead'.", "sources": ["SPEC-8"] },
+    { "severity": "medium", "file": "core/skills/factory/SKILL.md", "line": 73, "summary": "Step 3's mode record does not say cruise is kept.", "fix": "Change it to 'Record mode (the settled chain and fast, keeping cruise as created)'.", "sources": ["SPEC-9"] },
+    { "severity": "low", "file": "core/skills/factory/bin/factory_cli/commands.py", "line": 1389, "summary": "ENG-26: the marked analyze gate-override guard checks only kind and stage, not that exhaustion occurred.", "fix": "Optionally require analyze.reports non-empty and analyze.loops at the limit for a marked analyze gate-override, with a refusal test.", "sources": ["SEC-3"] },
+    { "severity": "low", "file": "core/skills/factory/references/protocol.md", "line": 110, "summary": "ENG-25: cruise extends the single-quoted recommended-answer shell pattern to protected questions answered without user review.", "fix": "Optionally add `answer <qid> --recommended`, or document stdin/file passing.", "sources": ["SEC-2"] },
+    { "severity": "low", "file": "core/skills/factory/bin/factory_cli/commands.py", "line": 1280, "summary": "ENG-23: the cruise-mode guard reads the pre-lock snapshot.", "fix": "Repeat the mode.cruise check inside the mutate callback.", "sources": ["SEC-5"] },
+    { "severity": "low", "file": "adapters/zcode/harness.md", "line": 25, "summary": "ZCode no_prompt_launch bullet not docs-checked.", "fix": "Run the ZCode documentation check or mark the bullet explicitly unverified.", "sources": ["SPEC-11"] },
+    { "severity": "low", "file": "core/skills/factory/SKILL.md", "line": 41, "summary": "The mode-flag conflict path does not ask the user to drop one flag.", "fix": "Add 'and ask the user to drop one of the conflicting flags' at line 41 and on the resume route.", "sources": ["SPEC-12"] },
+    { "severity": "low", "file": "tools/tests/test_cruise.py", "line": 446, "summary": "ENG-19: assert_refused takes an unused cruise_state parameter.", "fix": "Drop the parameter and update the callers.", "sources": ["STD-6"] },
+    { "severity": "low", "file": "CONTEXT.md", "line": 180, "summary": "ENG-7: Cruise mode glossary entry omits the no-usable-recommendation wait.", "fix": "Add the no-usable-recommendation wait to the entry.", "sources": ["STD-8"] }
+  ],
+  "rejected": [
+    { "id": "SEC-4", "reason": "Not a defect: the local CLI has no caller trust boundary beyond the orchestrator acting on the user's flags; publishing still needs the user's Approve." },
+    { "id": "STD-5", "reason": "plan.md 'Writer guard' explicitly chose the inline check; no consequence shown." },
+    { "id": "STD-7", "reason": "validate_state refuses non-boolean markers, and a forged state can omit the marker, so a stricter check adds no protection." },
+    { "id": "STD-9", "reason": "The reviewer concedes ENG-5 is met." }
+  ]
+}

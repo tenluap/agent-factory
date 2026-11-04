@@ -397,6 +397,18 @@
       "duration_ms": 771000,
       "started_at": "2026-11-04T01:33:03Z",
       "ended_at": "2026-11-04T01:45:54Z"
+    },
+    {
+      "at": "2026-11-04T01:51:42.054444Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "claude-code",
+      "in_est": 12000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 272000,
+      "started_at": "2026-11-04T01:46:33Z",
+      "ended_at": "2026-11-04T01:51:05Z"
     }
   ],
   "issues": [
