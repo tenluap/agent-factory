@@ -1,0 +1,118 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 241,
+      "summary": "A stored outcome file that is valid JSON but the wrong shape crashes _is_terminal with AttributeError/TypeError outside any Gap handler, aborting the whole refresh instead of yielding an inaccessible gap for that run while other runs still refresh.",
+      "evidence": "Judge probe on the worktree code: _is_terminal on '[]' -> AttributeError ('list' object has no attribute 'get'); '{\"outcomes\": null}' -> TypeError; '{\"outcomes\": [1]}' -> AttributeError. _is_terminal (lines 232-241) catches only OSError/ValueError from json.loads and is called at line 359 outside the try that catches Gap (362-373); the shape check in _load_outcomes (278-294) runs only after it. spec.md line 120 (edge case), FR-012 (line 141: malformed outcome file -> inaccessible; other runs MUST still refresh) and the plan's confirmed seam failure path 'malformed existing outcome file -> inaccessible' (plan.md lines 170, 177). The only malformed-file test (test_feedback.py 611-613) uses non-JSON text. ENG-17; Confirmed test scope (missing coverage of a declared failure path is HIGH).",
+      "fix": "Validate the outcome-file shape before the terminal check (reuse _load_outcomes' shape check, or have _is_terminal return False on any non-dict body / non-list outcomes / non-dict entry so _store raises Gap('inaccessible')). Add LocalGapTests cases for '[]', '{\"outcomes\": null}' and '{\"outcomes\": [1]}' asserting an inaccessible gap, the outcome file unchanged, and a healthy second run still refreshed.",
+      "sources": ["SPEC-1", "STD-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 23,
+      "summary": "Capture of TIMED_OUT and STARTUP_FAILURE check conclusions (FR-004) has no asserting test; reducing CHECK_FAILURES to ('FAILURE',) leaves all 43 feedback tests green.",
+      "evidence": "Judge mutant in a scratch copy: CHECK_FAILURES = ('FAILURE',) -> 'Ran 43 tests ... OK'. The only TIMED_OUT use (test_same_check_on_same_head_keeps_the_first, test_feedback.py 203-212) passes whether or not TIMED_OUT is captured; STARTUP_FAILURE appears in no test. FR-004 (spec.md line 133) names both conclusions; the refresh seam declares 'capture/ignore rules' (plan.md line 170). ENG-1.",
+      "fix": "Add CaptureTests cases, one per conclusion, asserting a TIMED_OUT and a STARTUP_FAILURE check run are stored with kind check, id check:<name>@<head>, detail.conclusion lowercased, and the completedAt and detailsUrl values.",
+      "sources": ["STD-3"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 225,
+      "summary": "The terminal skip for a stored state:closed outcome (FR-002) has no asserting test; dropping state:closed from TERMINAL_IDS leaves all 43 feedback tests green.",
+      "evidence": "Judge mutant in a scratch copy: TERMINAL_IDS = ('state:merged',) -> 'Ran 43 tests ... OK'. test_terminal_run_is_skipped_and_not_fetched (test_feedback.py 323-334) seeds only a MERGED PR. FR-002 (spec.md line 131) requires skipping runs whose state:merged or state:closed outcome is recorded; the seam declares 'terminal skip' (plan.md line 170). ENG-1.",
+      "fix": "Parametrise test_terminal_run_is_skipped_and_not_fetched over MERGED and CLOSED (pr(state='CLOSED', closedAt=...)), asserting gh.calls is empty and the skipped reason is 'terminal outcome recorded'.",
+      "sources": ["STD-4"]
+    },
+    {
+      "severity": "high",
+      "file": "tools/tests/test_feedback.py",
+      "line": 544,
+      "summary": "The confirmed failure path 'malformed JSON from either read' has no test for non-JSON output from the review read (read 2); only shape cases are covered there.",
+      "evidence": "plan.md lines 170 and 177 confirm 'malformed JSON or shape from either read' -> transient. test_malformed_reads_are_transient_gaps (544-556) feeds malformed JSON only to read 1 (reply(pr_text='{')); its read-2 cases are '[]', '{\"id\": 1}' and a CHANGES_REQUESTED review without id, all valid JSON. The ValueError branch at feedback.py 165-168 is never exercised. engineering.md 'Confirmed test scope': missing coverage of a declared failure path is a HIGH finding.",
+      "fix": "Add reply(review_text='{\\n') to test_malformed_reads_are_transient_gaps and assert via assert_gap that the run is a transient gap with its files unchanged.",
+      "sources": ["SPEC-2"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 320,
+      "summary": "ENG-17: an OSError (e.g. PermissionError from lock._create's os.open) while acquiring the outcomes lock escapes refresh as a traceback instead of a classified gap; _store catches only lock.LockHeld. Practical impact is limited to an unwritable factory home, where every run fails the same way, so the loss is the JSON report rather than other runs' refreshes.",
+      "fix": "In _store, catch OSError alongside lock.LockHeld around _acquire_home_lock and raise Gap('inaccessible', ...); add a test planting a failing lock.acquire that asserts a gap and a report. Adjacent to the first blocking fix in the same function.",
+      "sources": ["STD-2", "SEC-3", "SPEC-3"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 247,
+      "summary": "_slug uses [^a-z0-9]+ while plan.md line 130, DESIGN.md line 310 and its own docstring specify runs outside [a-z0-9-], so existing hyphens collapse ('build--test' -> 'build-test') and 'Lint - test' collides with 'Lint / test' on one ci-failure entry.",
+      "fix": "Use [^a-z0-9-]+ as documented (or amend the documented rule to the collapsing behaviour) and add the distinguishing slug cases to the slug test.",
+      "sources": ["SPEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/improvements.py",
+      "line": 252,
+      "summary": "ENG-6: add_feedback repeats add's backlog entry envelope and own-entry glob scan, so the entry schema and ownership refusal live in two writers that can drift.",
+      "fix": "Optionally extract a shared entry-body builder and owned-entries scan used by add and add_feedback; keep the cap/cover logic in add.",
+      "sources": ["STD-5"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 333,
+      "summary": "ENG-24: outcomes per run and evidence links per feedback entry grow without a cap, and gh output is read unbounded; growth tracks real PR review volume, so the practical risk is low.",
+      "fix": "Optionally cap stored evidence links per entry (most recent N plus an omitted count) and bound the gh read, reporting overflow as a gap.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 229,
+      "summary": "ENG-25: a branch containing '/' is joined into the outcome and feedback-entry file names, so that run is a reported gap on every refresh (not a traversal; the gap is classified, not silent).",
+      "fix": "Derive the file-name component from a slug or hash of the branch, or reject separators up front as a classified gap.",
+      "sources": ["SEC-2"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 15,
+      "summary": "ENG-14: feedback imports commands (only for main_repo) while commands imports feedback, an import cycle that works only because of partial-module tolerance.",
+      "fix": "Resolve the main repository in commands.cmd_feedback and pass it into refresh, then drop feedback's import of commands.",
+      "sources": ["STD-6"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/feedback.py",
+      "line": 328,
+      "summary": "A successful refresh with no new outcomes never creates the run's outcome file, while spec.md line 119 says a missing file is created on the first successful refresh.",
+      "fix": "Write the (possibly empty) outcome file on the first successful refresh, or amend the spec edge case to 'created on the first stored outcome'.",
+      "sources": ["SPEC-5"]
+    },
+    {
+      "severity": "low",
+      "file": "1f8ef55 (T009)",
+      "line": 0,
+      "summary": "ENG-3: unit T009 spans ed49088 and 1f8ef55; the later commit reopens the checked unit with its own valid Red line and no tasks.md change.",
+      "fix": "No history change; record in the verification record that T009 spans both commits.",
+      "sources": ["1f8ef55 (T009)"]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "50056bd (T003)",
+      "reason": "The commit body carries a valid 'Red: CaptureTests.test_failed_check_and_change_request_are_recorded failed as expected' line; ENG-2 requires one accepted form and it is present. An extra narrative line does not create a third form or invalidate the proof, so no rule is broken."
+    },
+    {
+      "id": "STD-7",
+      "reason": "The 'Benchmark score' definition rewording (measured outcome -> measured result) is the settled grill-with-docs decision Q15 = A recorded in state.decisions (state.json line 230), made to avoid overloading the new 'outcome' term. The term itself is unchanged, so T002's done condition holds."
+    }
+  ]
+}
