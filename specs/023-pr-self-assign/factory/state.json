@@ -43,7 +43,26 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A: Accept this scope — seam pr_contract_gaps(skill_text, state_text) in tools/tests/test_pr_publication.py with the six injected failure paths (self-assign, lookup-before-create, lookup-after-error, assignment-report, no-ask, resume-rule); exempt DESIGN.md and quickstart runbook",
+            "at": "2026-11-04T17:06:59.575664Z",
+            "auto": true,
+            "cruise_override": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
