@@ -470,6 +470,18 @@
       "duration_ms": 904000,
       "started_at": "2026-11-04T01:18:10Z",
       "ended_at": "2026-11-04T01:33:14Z"
+    },
+    {
+      "at": "2026-11-04T01:47:01.990659Z",
+      "stage": "review",
+      "role": "review-judge",
+      "harness": "claude-code",
+      "in_est": 25000,
+      "out_est": 3500,
+      "reported": null,
+      "duration_ms": 463000,
+      "started_at": "2026-11-04T01:33:45Z",
+      "ended_at": "2026-11-04T01:41:28Z"
     }
   ],
   "issues": [
@@ -492,6 +504,17 @@
       "cause": "unreported",
       "detail": "code-standards ran 904s past its 300s budget without a self-report",
       "duration_ms": 904000,
+      "commit": "e8beb84",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-04T01:47:01.991333Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "review-judge",
+      "cause": "unreported",
+      "detail": "review-judge ran 463s past its 300s budget without a self-report",
+      "duration_ms": 463000,
       "commit": "e8beb84",
       "partial_return": false
     }
