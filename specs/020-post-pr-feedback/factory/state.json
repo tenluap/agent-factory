@@ -592,6 +592,23 @@
       "event": "complete",
       "commit": null,
       "harness": "claude-code"
+    },
+    {
+      "at": "2026-11-04T01:44:41.829122Z",
+      "stage": "implement",
+      "event": "verify-pass",
+      "commit": null,
+      "harness": "claude-code",
+      "commands": [
+        {
+          "command": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+          "status": 0
+        },
+        {
+          "command": "python3 -m unittest discover -s tools",
+          "status": 0
+        }
+      ]
     }
   ],
   "models": {
