@@ -283,6 +283,18 @@
       "duration_ms": 330000,
       "started_at": "2026-11-04T00:59:23Z",
       "ended_at": "2026-11-04T01:04:53Z"
+    },
+    {
+      "at": "2026-11-04T07:37:31.819724Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "claude-code",
+      "in_est": 25000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 23869000,
+      "started_at": "2026-11-04T00:59:23Z",
+      "ended_at": "2026-11-04T07:37:12Z"
     }
   ],
   "issues": [
@@ -305,6 +317,17 @@
       "cause": "unreported",
       "detail": "code-standards ran 330s past its 300s budget without a self-report",
       "duration_ms": 330000,
+      "commit": "f6f2981",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-04T07:37:31.819942Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "security-reviewer",
+      "cause": "unreported",
+      "detail": "security-reviewer ran 23869s past its 300s budget without a self-report",
+      "duration_ms": 23869000,
       "commit": "f6f2981",
       "partial_return": false
     }
