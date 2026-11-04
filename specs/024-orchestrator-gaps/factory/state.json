@@ -431,6 +431,13 @@
       "at": "2026-11-04T23:24:21.194558Z",
       "stage": "review",
       "event": "complete",
+      "commit": "4b9a253",
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-04T23:25:01.645686Z",
+      "stage": "review",
+      "event": "complete",
       "commit": null,
       "harness": "opencode"
     }
