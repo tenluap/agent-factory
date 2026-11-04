@@ -1,0 +1,97 @@
+{
+  "reviewer": "code-standards",
+  "round": 2,
+  "summary": "The fix clears round-1 STD-1 (default_base and the named NO_BASE refusal), STD-2 (exit-3 tests, which pass on the pre-fix tree) and STD-4 (CLI verb), but the STD-3 work leaves an untested rollback branch, an invented private seam, and failure paths outside the confirmed Q2 scope.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 287,
+      "summary": "Two added failure branches have no asserting test: the 'rollback left' message and the on-disk symlink guard for state.json (line 350).",
+      "evidence": "ENG-1. adopt.py:286-287 returns 'adopt failed: ...; rollback left ...' when _rollback reports leftovers (adopt.py:381 and 387 append them), and no test asserts that text or triggers a leftover. adopt.py:350 `_no_link(worktree, state_path)` is not asserted either. In a scratch copy of HEAD with the state.json guard and the leftover die removed, SymlinkWriteTests and WriteFailureTests still pass (6 tests OK). The brief sidecar guard is covered by test_symlink_created_in_the_checkout_is_not_written_through (test_adopt.py:941).",
+      "fix": "Add a test that makes the rollback fail and asserts exit 1, the 'rollback left' text naming that leftover, and the pending files kept. Add a test where the checkout hook creates specs/evil/factory/state.json as a symlink and asserts the outside target is unchanged. Reaching the leftover branch needs a fault the plan does not declare, so route it through STD-2 (ENG-4) rather than adding a private patch."
+    },
+    {
+      "id": "STD-2",
+      "severity": "high",
+      "blocking": true,
+      "file": "tools/tests/test_adopt.py",
+      "line": 986,
+      "summary": "The post-commit cleanup test patches an unlisted private helper (adopt._clear_pending) and calls adopt.write directly, inventing a seam the plan does not declare.",
+      "evidence": "ENG-4 and engineering.md 'Confirmed test scope'. plan.md:94 declares the write seam as `bin/factory adopt <src> [--stage]`; the plan lists no cleanup seam and no post-commit failure path. test_adopt.py:982-989 uses mock.patch.object(adopt, '_clear_pending'), a helper the fix extracted (adopt.py:362). Against the pre-fix tree this test ERRORs with AttributeError, so the recorded red is a missing seam, not the behaviour (ENG-2).",
+      "fix": "Return the missing seam to the orchestrator for plan declaration and fresh confirmation, or reach the cleanup failure through the declared `bin/factory adopt` seam with a real fault that needs no private patch. Record the real red in the retro."
+    },
+    {
+      "id": "STD-3",
+      "severity": "high",
+      "blocking": true,
+      "file": "specs/022-adopt-spec/plan.md",
+      "line": 94,
+      "summary": "The fix adds tested dry-run and write failure paths that the confirmed Q2 test scope does not declare, and it does not seek fresh confirmation.",
+      "evidence": "ENG-4 and engineering.md 'Confirmed test scope': adding or expanding a declared failure path invalidates prior confirmation. Q2 (factory/relay/plan-Q2.md; plan.md:93-94) declares for the write only the pre-commit hook rejection. The fix adds undeclared tests: committed symlinked factory directory and brief refusals (test_adopt.py:930, 934), on-disk symlink refusal (941), no resolvable base and unresolved base (875; adopt.py:213-218), the post-checkout hook rollback (959), and 'committed; pending cleanup failed' exit 1 (982; adopt.py:289-292). plan.md and plan-Q2.md are unchanged in 857741d..HEAD.",
+      "fix": "Return the expanded failure-path list to the orchestrator for fresh protected confirmation and store the accepted scope as an immutable snapshot beside plan-Q2.md."
+    },
+    {
+      "id": "STD-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "6e8d1ac (SEC-1, STD-1)",
+      "line": 0,
+      "summary": "Four behaviour-changing fix tests carry no Red line in the fix commit body.",
+      "evidence": "ENG-2. Missing Red lines: test_no_resolvable_base_is_a_named_refusal_not_a_git_failure (875), test_local_only_spec_dir_on_master_is_refused_without_origin_head (859), test_committed_symlinked_brief_is_refused (934), test_symlink_created_in_the_checkout_is_not_written_through (941). Each fails on the pre-fix tree. The two exit-3 tests pass on pre-fix code and need no Red line.",
+      "fix": "Do not rewrite the commit. Record the four missing red proofs in the retro."
+    },
+    {
+      "id": "STD-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "specs/022-adopt-spec/research.md",
+      "line": 27,
+      "summary": "research.md D3 still documents the default base as origin/HEAD, else origin/main, else main, which the code no longer implements.",
+      "evidence": "Constitution Principle I. adopt.py:27-40 now tries origin/HEAD, origin/main, origin/master, and local main only without an origin remote, and returns None (a named refusal) otherwise. The fix changed D7 only.",
+      "fix": "Update research.md D3 to the candidate order and the named refusal, and check DESIGN.md:77 and the contracts."
+    },
+    {
+      "id": "STD-6",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 292,
+      "summary": "A post-commit cleanup failure exits 1 although the adoption commit has landed, contradicting the documented 'rolled back, nothing written, retry reuses' contract.",
+      "evidence": "adopt.py:289-292. contracts/cli.md:28, SKILL.md:55 and DESIGN.md:77 say a failed write rolls back and a retry reuses the pending run; a retry after this exit meets 'already has factory/state.json; resume it' (ENG-17, ENG-26).",
+      "fix": "Either exit 0 with the digest and a warning that pending files remain, or keep exit 1 and document 'committed; pending cleanup failed: resume <branch>, do not retry' in contracts/cli.md, DESIGN.md and SKILL.md."
+    },
+    {
+      "id": "STD-7",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 16,
+      "summary": "The NO_BASE remedy names `git remote set-head origin -a`, which cannot run in a repo with no origin remote, the case where default_base returns None.",
+      "evidence": "adopt.py:15-18 and 35-40 (ENG-17).",
+      "fix": "Branch the message on remote.origin.url: without an origin, name the missing default branch."
+    },
+    {
+      "id": "STD-8",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 248,
+      "summary": "write() still takes the first probe's base from default_base rather than from the pending run, as the round-1 STD-1 fix asked.",
+      "evidence": "adopt.py:248 `probe = inspect(repo, src, default_base(repo))`; the pending base is read only at adopt.py:265. The refusal is safe, but the retry path is not (ENG-26).",
+      "fix": "Compare the re-inspected branch with the pending state's branch and base and refuse by name when they differ, then use the pending base for every probe."
+    },
+    {
+      "id": "STD-9",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/SKILL.md",
+      "line": 53,
+      "summary": "The new adoption step 2 sentence packs a three-way ref mapping and a read command into one sentence, against the constitution's one-idea-per-sentence rule.",
+      "evidence": "Constitution 'Writing Standards'. SKILL.md:53.",
+      "fix": "Split the sentence: one clause or bullet for the read command, and one for the ref per shape."
+    }
+  ]
+}

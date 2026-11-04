@@ -1,0 +1,57 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "Delta review of fix commit 6e8d1ac: SPEC-1 to SPEC-4 (exit-3 tests, judge pre-adoption rule, grill spec.md summary, exit 1 on failed worktree add) match FR-010, FR-019, the Q2 failure-path scope and contracts/cli.md, and SPEC-5's leftover naming is fixed, but the post-commit exit path contradicts FR-013 and contracts/cli.md; no blocking spec divergence remains, and the fix's Red lines match the behaviour-changing findings SEC-1 and STD-1.",
+  "findings": [
+    {
+      "id": "SPEC-7",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 35,
+      "summary": "default_base adds local main as the base when the repo has no origin remote, so a spec dir committed only on local main is a clean default-branch adoption with no FR-007 refusal.",
+      "evidence": "adopt.py:35-36 appends refs/heads/main to the candidates when `config --get remote.origin.url` is absent, and adopt.py:39 returns it. FR-004 defines base as 'the default branch on `origin`'; FR-007 and clarify Q2 require exit 1 for a spec dir on the local default branch but not on base. research.md D3 names the local main fallback, but the round-1 STD-1 fix text says 'never treat a local branch as base', and no test covers an origin-less repo. The skill route stops at preflight's fetch in such a repo, so the impact is a misleading clean dry-run and a direct-CLI write path.",
+      "fix": "Decide and record the origin-less rule: either refuse with NO_BASE when there is no origin remote (add an origin to DryRunFixture and a local-only refusal test), or amend FR-004, FR-007 and D3 to make the local base an explicit rule with its own test."
+    },
+    {
+      "id": "SPEC-8",
+      "severity": "medium",
+      "blocking": false,
+      "file": "specs/022-adopt-spec/research.md",
+      "line": 27,
+      "summary": "research.md D3 still gives the old dry-run base rule; default_base now checks origin/master too, drops the bare main once origin exists, and returns None for a named refusal, and the new origin/master candidate can disagree with the base preflight records.",
+      "evidence": "research.md:27 reads 'takes base from refs/remotes/origin/HEAD (else origin/main when present, else main)'. default_base tries origin/HEAD, origin/main, origin/master, and local main only without origin, and refuses with NO_BASE when None. Preflight records base = origin/<gh default-branch>, else main: with origin/HEAD unset, origin/main and origin/master both present and master the default, the dry run reports origin/main while preflight records origin/master.",
+      "fix": "Update D3 to the implemented candidate chain and the none-resolves refusal, stating that the dry-run base is a preview and the pending base governs; or align the candidate order with preflight's default-branch rule."
+    },
+    {
+      "id": "SPEC-9",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 248,
+      "summary": "write() still resolves its first probe with default_base(repo) rather than the pending run's base, the residual of round-1 STD-1 that the fix did not address and that research D3 says must not happen.",
+      "evidence": "adopt.py:248 `probe = inspect(repo, src, default_base(repo))`; the probe's branch fixes the pending name and a probe refusal exits before the pending base is read (adopt.py:265). research.md:27 says the write uses the pending run's base and is authoritative. The round-1 STD-1 fix text asked to use the pending file's base for the first probe as well. When the chains disagree (SPEC-8), the write refuses 'no branch or spec dir matches' although the pending base holds the spec dir.",
+      "fix": "Resolve the source against the pending base once the pending run is selected, or refuse by name when the probe base differs from the pending base; record it in D3 and add a test where the two chains disagree."
+    },
+    {
+      "id": "SPEC-10",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/adopt.py",
+      "line": 292,
+      "summary": "A failure in pending cleanup after the adoption commit exits 1 with 'committed; pending cleanup failed' and does not roll back, but FR-013 and contracts/cli.md require every failed write step to roll back and keep the pending run.",
+      "evidence": "adopt.py:289-292 wraps _clear_pending and dies with 'committed {sha}; pending cleanup failed'; _clear_pending unlinks the pending JSON first, so a later OSError can leave brief or profile removed or the JSON gone. FR-013: 'If any step of the adopt write fails, adopt MUST remove everything it created ..., leave the pending run intact, and exit with the reason.' contracts/cli.md:28: exit 1 is 'a failed step (rolled back, pending kept)'. The round-1 advisory asked for this non-rollback behaviour, but the spec and contract were not amended to match.",
+      "fix": "Amend FR-013, contracts/cli.md exit 1 and research D7 to name the post-commit exception, or restore rollback for this step and reorder the cleanup; the approver decides which."
+    },
+    {
+      "id": "SPEC-11",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/022-adopt-spec/plan.md",
+      "line": 93,
+      "summary": "The fix adds failure paths to the dry-run and write seams (symlinked factory folder or brief, base not resolving, post-commit cleanup) that the plan's declarations and the Q2 snapshot do not list.",
+      "evidence": "plan.md:93-94 and factory/relay/plan-Q2.md:5-6 declare the failure paths for both seams; none names a symlink refusal, an unresolvable base, or a post-commit cleanup failure. The fix adds them with tests (SymlinkWriteTests, DefaultBaseTests, WriteFailureTests). The declared seams are unchanged, so Q2 acceptance is not invalidated, but the accepted scope no longer lists every failure path covered.",
+      "fix": "Record the added failure paths in plan.md's seam declarations and take fresh protected confirmation, or have the approver name them as tests beyond the confirmed Q2 scope."
+    }
+  ]
+}
