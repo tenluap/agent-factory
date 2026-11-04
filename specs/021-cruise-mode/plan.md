@@ -2,7 +2,7 @@
 
 **Branch**: `021-cruise-mode` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/021-cruise-mode/spec.md`; settled decisions Q1-Q7 and confirmed defaults in `factory/brief.md`.
+**Input**: Feature specification from `specs/021-cruise-mode/spec.md`; settled decisions Q1-Q7 and confirmed defaults in `factory/brief.md`; clarify Q1 and grill-with-docs Q1-Q4 (spec Clarifications, `CONTEXT.md`, ADR 0014).
 
 ## Summary
 
@@ -33,7 +33,7 @@ Add `mode.cruise` and a `cruise_override` marker to run state, both additive and
 - **Marker shape**: a boolean field `cruise_override: true` on relay answers and decision records, absent otherwise. Rationale: `kind` keeps its gate meaning (`answer` | `approved` | `gate-override`), so `checks.py` gates and history cross-checks stay unchanged; absence keeps every older record valid. Alternative rejected: a new decision kind `cruise-override`, which would need new gate logic for analyze exhaustion and would collide with `answer` for protected relay answers.
 - **Marker invariants** (validator, `state.py`): `cruise_override` is boolean when present; `true` requires `auto: true`; `true` is never with kind `approved` and never at stage `approver`; a marked `gate-override` is exempt from "a gate decision is never auto". The `analyze`-only restriction on a marked `gate-override` (analyze-exhaustion auto-proceed) is enforced by the `decisions-add --cruise-override` guard, not the validator (clarify Q1).
 - **`pr` gate**: `checks.gate_violation` and `permitting_decision` for `pr` share one filtered approver candidate list that drops any record carrying `cruise_override` (tested through `gate_violation` only, clarify Q1), so even a hand-crafted state cannot publish without the user's Approve (FR-015, FR-016).
-- **Writer guard**: `answer --cruise-override` and `decisions-add --cruise-override` are refused (exit 1, state and HEAD unchanged) unless the target run has `mode.cruise: true`. This keeps fast mode's protections intact (FR-009).
+- **Writer guard**: `answer --cruise-override` and `decisions-add --cruise-override` are refused (exit 1, state and HEAD unchanged) unless the target run has `mode.cruise: true`. This keeps fast mode's protections intact (FR-009). The two-line check sits inline in `cmd_answer` and `cmd_decisions_add`; no shared helper.
 - **Mode resolution**: one function `state.resolve_mode(base, flags)` applies `--lite|--full|--fast|--no-fast|--cruise|--no-cruise` in argv order (last wins per pair), sets `fast` true when `cruise` ends on, and raises on the conflict "cruise on (flag or stored) and `--no-fast` present". `--no-cruise` leaves `fast` unchanged. Callers:
   - `factory mode [flags...]`: read-only, base = default `{chain: lite, fast: true, cruise: false}`; prints the mode JSON. Step 0 calls it before any pending state exists and writes the result into the pending state at creation (today's creation path), so a conflict creates nothing (SC-005).
   - `factory resume <run> [flags...]`: base = stored mode (absent `cruise` = false); a conflict exits 5 before the `resumed` entry is written; otherwise mode and the `resumed` entry land in one atomic write. This also gives today's resume `--lite/--full/--fast/--no-fast` a writer.
@@ -80,6 +80,7 @@ core/skills/factory/references/design-code-mapping.md # cruise-override exceptio
 core/roles/spec-builder.md, core/roles/spec-conformance.md # Confirmed line marks cruise override
 adapters/*/harness.md                                # no_prompt_launch bullet
 DESIGN.md
+README.md                                            # --cruise/--no-cruise usage, flag rows, resume example
 CONTEXT.md, docs/adr/0014-cruise-mode-overrides-protections-but-never-publishes.md  # written at grill-with-docs
 tools/tests/test_cruise.py                           # NEW
 ```
@@ -92,6 +93,7 @@ tools/tests/test_cruise.py                           # NEW
 - `tools/tests/test_cruise.py` - file - groups this feature's CLI seams in one suite, as `test_models.py` does for 017.
 - `state.resolve_mode(base, flags)` - abstraction - single source of the last-wins and conflict rules for both new runs and resume (DRY, FR-001..FR-003).
 - `factory mode [flags...]` - abstraction - read-only CLI entry so the orchestrator checks flags through the same rule before any state exists.
+- `mode.cruise`, `cruise_override`, `--cruise-override`, `no_prompt_launch` - abstraction - additive state fields, writer flag and adapter bullet; reasons under "Decisions".
 - Dependencies: none.
 
 ## Design (orchestrator prose)
@@ -122,7 +124,7 @@ tools/tests/test_cruise.py                           # NEW
 - Seam: `bin/factory decisions-add ... --cruise-override` - records kind `answer`, or `gate-override` at `analyze` that permits `checkpoint analyze --next implement`. Failure paths: run without `mode.cruise: true` refused; `--kind approved` with the marker refused; `--kind gate-override` with the marker at a stage other than `analyze` refused.
 - Seam: `factory_cli.state.validate_state` - pre-feature states (no `cruise`, no marker) valid. Failure paths: non-boolean `mode.cruise`; `cruise: true` with `fast: false`; non-boolean `cruise_override` on a decision or relay answer; marker with `auto: false`; marker on `approved` or at stage `approver`.
 - Seam: `factory_cli.checks.gate_violation` into `pr` - user `approved` record permits. Failure paths: a record carrying `cruise_override` at `approver` never permits `pr`.
-- Exempt: `DESIGN.md`, `CONTEXT.md`, `core/skills/factory/SKILL.md`, `references/protocol.md`, `references/state.md`, `references/engineering.md`, `references/design-code-mapping.md`, `core/roles/spec-builder.md`, `core/roles/spec-conformance.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
+- Exempt: `DESIGN.md`, `README.md`, `CONTEXT.md`, `core/skills/factory/SKILL.md`, `references/protocol.md`, `references/state.md`, `references/engineering.md`, `references/design-code-mapping.md`, `core/roles/spec-builder.md`, `core/roles/spec-conformance.md` - documentation only (agent prose; validated by the `DESIGN.md` validation plan).
 - Exempt: `adapters/*/harness.md` - documentation only.
 - Overridden: none
 
