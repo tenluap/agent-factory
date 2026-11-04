@@ -704,5 +704,100 @@ class AdoptRollbackTests(AdoptWriteFixture):
         self.assertFalse(self.pending.exists())
 
 
+class AdoptSourceShapeWriteTests(DryRunFixture):
+    """The remote-branch and default-branch shapes create their local branch in the write (T008)."""
+
+    def setUp(self):
+        super().setUp()
+        self.origin = self.box.dir / "origin.git"
+        self.box.git("init", "-q", "--bare", str(self.origin))
+        self.box.git("remote", "add", "origin", str(self.origin))
+        self.box.git("push", "-q", "origin", "main")
+        self.worktree = self.box.dir / "repo-factory" / "007-x"
+        self.pending = self.box.pending_run(
+            "adopt-007-x", pending_state(self.box.repo, base="origin/main")
+        )
+        self.brief = self.pending.with_name("repo-adopt-007-x.brief.md")
+        self.profile = self.pending.with_name("repo-adopt-007-x.profile.md")
+        self.brief.write_text("# Brief\n")
+        self.profile.write_text("# Profile\n")
+
+    def publish_remote_only(self):
+        """A SpecKit branch that exists only as origin/007-x."""
+        self.spec_branch("007-x", {"spec.md": "# Spec\n", "plan.md": "# Plan\n"})
+        self.box.git("push", "-q", "origin", "007-x")
+        self.box.git("branch", "-D", "007-x")
+
+    def publish_default_branch_spec(self):
+        """The spec dir lives on origin/main with no branch of its own."""
+        spec = self.box.repo / "specs" / "007-x"
+        spec.mkdir(parents=True)
+        (spec / "spec.md").write_text("# Spec\n")
+        (spec / "plan.md").write_text("# Plan\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "spec on main")
+        self.box.git("push", "-q", "origin", "main")
+
+    def write_run(self):
+        return self.box.cli("adopt", "007-x")
+
+    def remote_refs(self):
+        return self.box.git("ls-remote", "origin")
+
+    def test_remote_only_branch_is_created_tracking_origin(self):
+        self.publish_remote_only()
+        remote_head = self.box.git("rev-parse", "origin/007-x").strip()
+        refs = self.remote_refs()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertEqual(self.box.git("rev-parse", "--abbrev-ref", "007-x@{upstream}").strip(), "origin/007-x")
+        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
+        self.assertEqual(run["adopted"]["source"]["shape"], "remote-branch")
+        self.assertEqual(run["adopted"]["base_commit"], remote_head)
+        changed = self.box.git("diff", "--name-only", f"{remote_head}..007-x").splitlines()
+        self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
+        self.assertEqual(self.box.git("log", "--format=%s", f"{remote_head}..007-x").splitlines(), ["factory: adopt 007-x"])
+        self.assertEqual(self.remote_refs(), refs)
+        self.assertFalse(self.pending.exists())
+
+    def test_default_branch_spec_dir_creates_branch_at_base(self):
+        self.publish_default_branch_spec()
+        base = self.box.git("rev-parse", "origin/main").strip()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
+        self.assertEqual(run["adopted"]["source"], {"shape": "default-branch", "branch": "007-x", "spec_dir": "specs/007-x"})
+        self.assertEqual(run["adopted"]["base_commit"], base)
+        self.assertEqual(self.box.git("log", "--format=%s", "origin/main..007-x").splitlines(), ["factory: adopt 007-x"])
+        self.assertFalse(self.pending.exists())
+
+    def test_rejected_commit_removes_the_remote_branch_it_created(self):
+        self.publish_remote_only()
+        refs, pending_before = self.remote_refs(), files_under(self.box.home / "pending")
+        self.reject_commits()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        self.assertFalse(self.worktree.exists())
+        self.assertNotIn("007-x", self.box.git("branch", "--format=%(refname:short)").split())
+        self.assertEqual(self.remote_refs(), refs)
+        self.assertEqual(files_under(self.box.home / "pending"), pending_before)
+
+    def test_rejected_commit_removes_the_default_branch_it_created(self):
+        self.publish_default_branch_spec()
+        refs = self.remote_refs()
+        self.reject_commits()
+        out = self.write_run()
+        self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
+        self.assertFalse(self.worktree.exists())
+        self.assertNotIn("007-x", self.box.git("branch", "--format=%(refname:short)").split())
+        self.assertEqual(self.remote_refs(), refs)
+        self.assertTrue(self.pending.exists())
+
+    def reject_commits(self):
+        hook = self.box.repo / ".git" / "hooks" / "pre-commit"
+        hook.write_text("#!/bin/sh\necho 'rejected by test hook' >&2\nexit 1\n")
+        hook.chmod(0o755)
+
+
 if __name__ == "__main__":
     unittest.main()

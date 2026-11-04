@@ -66,7 +66,7 @@ description: "Task list for 022-adopt-spec"
   - Pass: runner green.
   - Done: every case asserted and passing.
 
-- [ ] T008 [US3] Create branches for `remote-branch` and `default-branch` in the adopt write (`core/skills/factory/bin/factory_cli/adopt.py`); tests in `tools/tests/test_adopt.py`.
+- [x] T008 [US3] Create branches for `remote-branch` and `default-branch` in the adopt write (`core/skills/factory/bin/factory_cli/adopt.py`); tests in `tools/tests/test_adopt.py`.
   - Seam: `bin/factory adopt <src> [--stage <stage>]` (write). Failure paths: a commit rejected by a `pre-commit` hook removes the worktree and any branch adopt created, keeps the pending files, exits 1.
   - Red: write tests first: remote-only `007-x` → local `007-x` with upstream `origin/007-x` (`git rev-parse --abbrev-ref 007-x@{upstream}`), `adopted.source.shape: remote-branch`; default-branch spec dir → new `007-x` at `base`, `shape: default-branch`; each with T006's state, file and single-commit assertions; with a rejecting `pre-commit` hook each exits 1, the created `007-x` branch and worktree gone, pending intact; `git ls-remote origin` unchanged (no push). Run; fail.
   - Implement: `git worktree add --track -b <branch> <path> origin/<branch>` and `git worktree add -b <branch> <path> <base>`; mark the branch as created for rollback.

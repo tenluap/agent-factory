@@ -219,19 +219,29 @@ def write(repo, src, stage=None):
         report = inspect(repo, src, loaded.get("base") or probe["base"])
         if report["refusal"]:
             commands.die(1, report["refusal"])
-        return _adopt_branch(repo, report, loaded, pending, stage)
+        return _adopt_worktree(repo, report, loaded, pending, stage)
     finally:
         lock.release(pending)
 
 
-def _adopt_branch(repo, report, loaded, pending, stage):
-    """The `branch` shape: the existing branch gets a worktree, its state and one commit (D7 steps 3-6)."""
+def _adopt_worktree(repo, report, loaded, pending, stage):
+    """D7 steps 3-6: the worktree for the source shape, then its state and adoption commit.
+
+    A branch this write creates (remote-branch, default-branch) is removed again on failure.
+    """
     worktree = Path(report["worktree"])
-    commands.git(repo, "worktree", "add", str(worktree), report["branch"])
+    branch, shape = report["branch"], report["shape"]
+    if shape == "remote-branch":
+        commands.git(repo, "worktree", "add", "--track", "-b", branch, str(worktree), f"origin/{branch}")
+    elif shape == "default-branch":
+        commands.git(repo, "worktree", "add", "-b", branch, str(worktree), report["base"])
+    else:
+        commands.git(repo, "worktree", "add", str(worktree), branch)
+    created = branch if shape != "branch" else None
     try:
         return _record_worktree_run(worktree, report, loaded, pending, stage)
     except (commands.CLIError, state.StateError, OSError) as e:
-        _rollback(repo, worktree)
+        _rollback(repo, worktree, created)
         commands.die(1, f"adopt failed and was rolled back: {e}")
 
 
@@ -279,11 +289,18 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
     return commands.digest(written, state_path, "worktree")
 
 
-def _rollback(repo, worktree):
-    """Remove the worktree a failed write created; the pending files are the caller's to keep (FR-013)."""
+def _rollback(repo, worktree, created_branch):
+    """Remove the worktree a failed write created, and the branch too when the write created it.
+
+    The pending files are the caller's to keep (FR-013).
+    """
     subprocess.run(
         ["git", "-C", repo, "worktree", "remove", "--force", str(worktree)],
         capture_output=True,
         text=True,
     )
+    if created_branch:
+        subprocess.run(
+            ["git", "-C", repo, "branch", "-D", created_branch], capture_output=True, text=True
+        )
 
