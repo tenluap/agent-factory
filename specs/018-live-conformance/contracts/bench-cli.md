@@ -30,7 +30,7 @@ claude -p <prompt> [--model <m>] --add-dir <out> [--add-dir <skill_dir>] [--add-
 opencode run [-m <m>] <prompt>
 ```
 
-`--add-dir` entries already inside `<out>` are omitted; duplicates are removed. No launch ever contains `--dangerously-skip-permissions`, `--permission-mode`, or a bare `Bash` allow entry.
+`--add-dir` entries already inside `<out>` are omitted; duplicates are removed. A skill directory that does not exist is not granted (no `--add-dir` for it or its target); the `Bash(<skill_dir>/bin/factory:*)` entry still names the path. No launch ever contains `--dangerously-skip-permissions`, `--permission-mode`, or a bare `Bash` allow entry.
 
 Launch environment: inherited environment plus `FACTORY_HOME`, `FACTORY_HARNESS`; checkout mode adds `CLAUDE_CONFIG_DIR` and `CLAUDE_HOME` (Claude Code) or `XDG_CONFIG_HOME` (OpenCode) set to `<out>/harness-config`.
 

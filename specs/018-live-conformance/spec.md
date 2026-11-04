@@ -152,7 +152,7 @@ A maintainer opens the Claude Code and OpenCode golden-run checklists and finds 
 ### Quality Requirements
 
 - **Security**: Permission grants are the narrowest set that lets the factory run in the disposable fixture; they apply only to benchmark runs and never to the maintainer's own sessions. The driver never creates, copies or logs credentials.
-- **Isolation**: An opt-in checkout run writes only under its output directory; the maintainer's installed factory home and harness configuration are not read for configuration and not modified.
+- **Isolation**: An opt-in checkout run puts its factory home and harness configuration under its output directory; the maintainer's installed factory home and harness configuration are not read for configuration and not modified. OpenCode's data directory (provider auth, session storage) stays shared by design.
 - **Integrity**: The provenance record is written before the harness starts, so every launched run is attributable even if the session fails.
 - **Compatibility**: Existing command-line usage of the benchmark run, score and compare commands keeps working unchanged.
 - **Dependencies**: No new third-party dependency.

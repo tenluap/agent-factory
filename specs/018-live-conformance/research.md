@@ -12,7 +12,7 @@ All Technical Context unknowns are resolved below. Facts come from `tools/bench.
 
 - **Decision**: `claude -p <prompt> [--model <m>] --add-dir <dir>... --allowedTools Read Edit Write Agent Skill "Bash(git:*)" "Bash(python3:*)" "Bash(<skill_dir>/bin/factory:*)"`. The prompt stays directly after `-p`.
 - **Rationale**: `--add-dir` and `--allowedTools` are variadic, so a prompt placed after them could be read as a directory or tool. The factory invokes its CLI as `python3 <F>/bin/factory` (SKILL.md), covered by `Bash(python3:*)`; the direct-path entry covers a session that runs the executable itself. No `--permission-mode` and no `--dangerously-skip-permissions` is ever emitted.
-- **Trial-time check**: the headless smoke leg confirms the grant reaches preflight; library skills outside the grant (installed baseline) are read under the bare `Read` allow rule, and the smoke leg records whether that held.
+- **Trial-time check**: the headless smoke leg confirms the grant reaches preflight; library skills outside the grant are read under the bare `Read` allow rule, in both the installed baseline and checkout mode (where `install.sh` links repo-layer skills from `<checkout>/skills/*` into `<out>/harness-config/skills`, so their targets resolve outside `<out>`); the smoke leg records whether that held in each mode.
 
 ## R3 Model option
 
@@ -24,7 +24,7 @@ All Technical Context unknowns are resolved below. Facts come from `tools/bench.
 - **Decision**: `--from-checkout` runs the existing `install.sh --harness <h>` with `FACTORY_HOME=<out>/home`, the adapter home variable (`CLAUDE_HOME` for Claude Code, `XDG_CONFIG_HOME` for OpenCode) set to `<out>/harness-config`, and `HOME=<out>`. The harness is then launched with `CLAUDE_CONFIG_DIR` and `CLAUDE_HOME` (Claude Code) or `XDG_CONFIG_HOME` (OpenCode) pointed at `<out>/harness-config`. `--from-checkout` and `--home` are mutually exclusive.
 - **Rationale**: Q10 and "reuse existing render and install tooling". `install.sh` already renders into `$FACTORY_HOME/dist/<harness>` and links into the adapter home (`render.py --paths` honours the adapter `home.env`). Its only other `$HOME` use migrates `~/.claude/factory/pending` into the factory home, which would move the maintainer's real pending runs; setting `HOME=<out>` prevents that. Forbidding `--home` keeps every rendered file under the output directory.
 - **Alternatives**: calling `render.py --out` and linking by hand (rejected: duplicates install.sh logic).
-- **Credentials**: the isolated Claude Code config directory has no login; the procedure documents a one-time `claude` login or `ANTHROPIC_API_KEY`. OpenCode keeps provider auth under its data directory, which isolation does not move.
+- **Credentials**: the isolated Claude Code config directory has no login; the procedure documents a one-time `claude` login or `ANTHROPIC_API_KEY`. OpenCode keeps provider auth, session storage and logs under its data directory, which isolation does not move; that directory is shared by design and is outside SC-004's scope (factory home and harness configuration).
 
 ## R5 Provenance
 

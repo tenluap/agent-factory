@@ -26,13 +26,14 @@ Extend `tools/bench.py run` so a headless trial can reach factory preflight and 
 
 **Performance Goals**: none beyond today; provenance adds a few bounded subprocess calls (10-second timeout each)
 
-**Constraints**: offline tests only (FR-015); never a permission-bypass mode (FR-002); checkout runs write only under the output directory (SC-004); existing CLI usage unchanged (FR-010)
+**Constraints**: offline tests only (FR-015); never a permission-bypass mode (FR-002); checkout runs leave the maintainer's factory home and harness configuration unchanged, with the rendered factory home and harness configuration under the output directory (SC-004); OpenCode's data directory (provider auth, sessions, logs) is shared by design; existing CLI usage unchanged (FR-010)
 
 **Scale/Scope**: one module (~313 lines) extended by roughly 150 lines; three Markdown documents; one DESIGN.md paragraph
 
 ## Quality constraints and verification
 
 - **Security**: narrowest grant (R1, R2); never `--dangerously-skip-permissions`, `--permission-mode` or a bare `Bash` entry. The driver never creates, copies or logs credentials; provenance stores no environment values. Verified by launch-command assertions over stub-recorded argv.
+- **Isolated skill directory**: formatted from the adapter's raw `skill_dir` template with `home=<out>/harness-config` (read from `render.ADAPTERS`), because `render.load_adapter` reads only the process environment; the driver never mutates `os.environ` and `tools/render.py` is unchanged.
 - **Isolation**: checkout mode sets `HOME=<out>` for the installer so its legacy pending migration cannot move real runs; `--from-checkout` excludes `--home`. Verified by snapshotting the sandboxed home, `CLAUDE_HOME` and `XDG_CONFIG_HOME` trees before and after a run.
 - **Integrity**: provenance is written before launch; score accepts a record only when its `repo` matches the state's `repo`.
 - **Errors/resources**: install failure stops before launch with the installer exit code and output tail; every provenance subprocess has a 10-second timeout and degrades to `"unavailable"`; the scorer stays exception-safe.
