@@ -4,7 +4,7 @@
 - `invoke`: `$factory` (how the user starts the factory)
 - Recognise it by: you are OpenAI Codex (CLI, IDE extension or app).
 - Capability tier: **1** (native subagents).
-- `speckit_init`: `--ai codex --ai-skills`
+- `speckit_init`: `--integration codex --integration-options="--skills" --force`
 - `impeccable_provider`: `codex` (confirm the name with `npx impeccable install --help` before installing)
 
 ## Verbs

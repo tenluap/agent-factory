@@ -4,7 +4,7 @@
 - `invoke`: `/factory` (how the user starts the factory)
 - Recognise it by: you are GitHub Copilot (Copilot CLI, or agent mode in VS Code).
 - Capability tier: **1** (custom agents run as subagents). Falls back to **2** where delegation is unavailable (below).
-- `speckit_init`: `--ai copilot --ai-skills`
+- `speckit_init`: `--integration copilot --integration-options="--skills" --force`
 - `impeccable_provider`: `copilot` (confirm the name with `npx impeccable install --help` before installing)
 
 ## Verbs
