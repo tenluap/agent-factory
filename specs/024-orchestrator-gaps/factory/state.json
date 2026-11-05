@@ -32,7 +32,16 @@
     "tdd": "/Users/tenluap/.config/opencode/skills/tdd/SKILL.md"
   },
   "relay": null,
-  "timeline": [],
+  "timeline": [
+    {
+      "at": "2026-11-05T00:01:50.537143Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "024-orchestrator-gaps approval: verdict fix with SPEC-2 unresolved (fix-round cap reached); FIX-SCOPE acceptance closed SPEC-1",
+      "answered_at": null,
+      "latency_ms": null
+    }
+  ],
   "decisions": [
     {
       "stage": "grill",
@@ -609,7 +618,7 @@
       "at": "2026-11-05T00:01:46.036702Z",
       "stage": "review",
       "event": "complete",
-      "commit": null,
+      "commit": "9c6acbd",
       "harness": "opencode"
     }
   ],
