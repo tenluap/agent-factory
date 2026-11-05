@@ -9,7 +9,7 @@
   "branch": "024-orchestrator-gaps",
   "spec_dir": "specs/024-orchestrator-gaps",
   "status": "running",
-  "stage": "fix",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -31,26 +31,7 @@
     "ponytail": "/Users/tenluap/.config/opencode/skills/ponytail/SKILL.md",
     "tdd": "/Users/tenluap/.config/opencode/skills/tdd/SKILL.md"
   },
-  "relay": {
-    "stage": "fix",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "FIX-SCOPE"
-          }
-        ],
-        "answers": {
-          "FIX-SCOPE": {
-            "answer": "Accept the complete current S1-S4 scope including the fix-round extensions: S1 checkpoint review|fix counters with (a-d) failure paths plus the --design-fix reservation writer on checkpoint review --next fix (refusal paths: non-review stage, target other than fix, pending run without worktree, each exit 1 with nothing written) and atomic clear + legacy no-double-count rule in checkpoint fix; S2 answer [--question] (a-d) with narrowed S2(c) (unsafe qid/stage refused only when a record is due) plus the commit-failure retry path (unchanged only when record committed; otherwise complete pending commit); S3 budget --round|--full (a-b); S4 ledger-add overrun detection (a-b). Runner: python3 -m unittest discover -s tools.",
-            "at": "2026-11-05T00:01:28.323265Z",
-            "auto": true,
-            "cruise_override": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -104,6 +85,15 @@
       "answer": "accepted",
       "auto": true,
       "at": "2026-11-05T00:01:29.627165Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "fix",
+      "question": "FIX-SCOPE",
+      "answer": "Accept the complete current S1-S4 scope including the fix-round extensions: S1 checkpoint review|fix counters with (a-d) failure paths plus the --design-fix reservation writer on checkpoint review --next fix (refusal paths: non-review stage, target other than fix, pending run without worktree, each exit 1 with nothing written) and atomic clear + legacy no-double-count rule in checkpoint fix; S2 answer [--question] (a-d) with narrowed S2(c) (unsafe qid/stage refused only when a record is due) plus the commit-failure retry path (unchanged only when record committed; otherwise complete pending commit); S3 budget --round|--full (a-b); S4 ledger-add overrun detection (a-b). Runner: python3 -m unittest discover -s tools.",
+      "auto": true,
+      "at": "2026-11-05T00:01:46.036702Z",
       "kind": "answer",
       "cruise_override": true
     }
@@ -478,7 +468,7 @@
     }
   },
   "review": {
-    "round": 1,
+    "round": 2,
     "fix_rounds": 2,
     "ui_diff": false,
     "ui_reviewer_skipped": false
@@ -616,7 +606,7 @@
       ]
     },
     {
-      "at": "2026-11-04T23:54:01.186215Z",
+      "at": "2026-11-05T00:01:46.036702Z",
       "stage": "review",
       "event": "complete",
       "commit": null,
