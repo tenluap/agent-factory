@@ -105,6 +105,14 @@
       "at": "2026-11-05T00:01:46.036702Z",
       "kind": "answer",
       "cruise_override": true
+    },
+    {
+      "stage": "approver",
+      "question": "approver-1",
+      "answer": "request changes: fix SPEC-2 (core/skills/factory/bin/factory_cli/commands.py:930). Write the --design-fix reservation whenever the stored stage is not already fix (transitions into fix from implement, verify or review), keep the retry a no-op once the stage is fix. Add a CLI test that starts at stage implement with a recorded verify-pass and a round-1 verdict, runs checkpoint review --next fix --design-fix, asserts the reservation {attempt: fix_rounds+1, round, verdict}, and asserts a retry does not rewrite it. User explicitly accepts this scope change at the approver.",
+      "auto": false,
+      "at": "2026-11-05T04:59:21.342865Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
