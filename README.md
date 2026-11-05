@@ -57,7 +57,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 
 - An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
-- SpecKit set up for your harness: `specify init --here --ai <claude|opencode|codex|copilot>` (add `--ai-skills` outside Claude Code). For ZCode: `specify init --here --integration zcode --integration-options="--skills"`. The factory offers to do this when `.specify/` is missing.
+- SpecKit set up for your harness: `specify init --here --integration <claude|opencode|codex|copilot|zcode> --force`, adding `--integration-options="--skills"` for Codex, Copilot and ZCode (SpecKit 1.1+; the exact command is `speckit_init` in each `adapters/<harness>/harness.md`). `--force` lets it run in a non-empty repo without a prompt; it keeps `.specify/memory/constitution.md` but rewrites `.specify/templates/`. The factory offers to do this when `.specify/` is missing.
 - Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, and — before any code-delivery work starts — `ponytail` and `tdd`. They must be in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads). The bundled skill library provides all of them.
 - Conditionally resolved skills:
   - `brainstorming` when a run starts from an exploratory idea.
