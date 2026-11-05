@@ -133,3 +133,7 @@ These repairs supersede T001/T009/T010's original reservation and resume order; 
 - [x] F003 Pass full question JSON through every relay answer path; test a protected plan-stage answer and its record at S2.
 - [x] F004 Cover an unsafe stage with no record due at S2(c).
 - [x] F005 Run the required build and full test suite for the fix round (five harness renders and shell syntax passed; 641 tests passed; no tracked `dist/` files).
+
+## Approver-requested change
+
+- [x] F006 Fix SPEC-2 at S1: test reservation from stored `implement` after a verify-pass and from `verify`/`review`, preserve it on retry at stored `fix`, update the reservation contract and run the required build and full test suite. Scope acceptance: plan.md `Confirmed fix-round extension`, approver `approver-1`. Five harness renders and shell syntax passed; 643 tests passed; no tracked `dist/` files.

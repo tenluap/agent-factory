@@ -849,6 +849,95 @@ class CheckpointStagingTests(unittest.TestCase):
 
 
 class ReviewCounterTests(unittest.TestCase):
+    def test_design_reservation_on_first_fix_and_retry(self):
+        for stage in ("implement", "verify", "review"):
+            with self.subTest(stage=stage):
+                box = Sandbox()
+                self.addCleanup(box.close)
+                run = v4_state(stage=stage)
+                run["history"] = run["history"][:3]  # Last event is verify-pass.
+                fix_rounds = 0 if stage == "implement" else 1
+                run["review"].update({"round": 0, "fix_rounds": fix_rounds})
+                wt = box.worktree_run("075-first-fix", run)
+                root = wt / "specs/075-first-fix/factory"
+                verdict = "specs/075-first-fix/factory/reviews/round-1/verdict.json"
+                (wt / verdict).parent.mkdir(parents=True)
+                (wt / verdict).write_text("{}")
+                first = box.cli(
+                    "checkpoint",
+                    "review",
+                    "--next",
+                    "fix",
+                    "--design-fix",
+                    verdict,
+                    cwd=wt,
+                )
+                self.assertEqual(first.returncode, 0, first.stderr)
+                saved = json.loads((root / "state.json").read_text())
+                self.assertEqual(saved["stage"], "fix")
+                reservation = {
+                    "attempt": fix_rounds + 1,
+                    "round": 1,
+                    "verdict": verdict,
+                }
+                self.assertEqual(saved["review"]["pending_design_fix"], reservation)
+                self.assertEqual(saved["review"]["fix_rounds"], fix_rounds)
+
+                retry = box.cli(
+                    "checkpoint",
+                    "review",
+                    "--next",
+                    "fix",
+                    "--design-fix",
+                    "other.json",
+                    cwd=wt,
+                )
+                self.assertEqual(retry.returncode, 0, retry.stderr)
+                saved = json.loads((root / "state.json").read_text())
+                self.assertEqual(saved["review"]["pending_design_fix"], reservation)
+
+    def test_design_fix_refusals_leave_run_unchanged(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        wt = box.worktree_run("074-refusal", v4_state(stage="implement"))
+        path = wt / "specs/074-refusal/factory/state.json"
+        before = path.read_bytes()
+        head = box.git("rev-parse", "HEAD", cwd=wt)
+        for stage, target in (("implement", "fix"), ("review", "approver")):
+            with self.subTest(stage=stage, target=target):
+                out = box.cli(
+                    "checkpoint",
+                    stage,
+                    "--next",
+                    target,
+                    "--design-fix",
+                    "verdict.json",
+                    cwd=wt,
+                )
+                self.assertEqual(out.returncode, 1)
+                self.assertIn(
+                    "--design-fix requires checkpoint review --next fix in a worktree",
+                    out.stderr,
+                )
+                self.assertEqual(path.read_bytes(), before)
+                self.assertEqual(box.git("rev-parse", "HEAD", cwd=wt), head)
+
+        pending_box = Sandbox()
+        self.addCleanup(pending_box.close)
+        pending = pending_box.pending_run("074-pending", v4_state(stage="implement"))
+        before = pending.read_bytes()
+        head = pending_box.git("rev-parse", "HEAD")
+        out = pending_box.cli(
+            "checkpoint", "review", "--next", "fix", "--design-fix", "verdict.json"
+        )
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(
+            "--design-fix requires checkpoint review --next fix in a worktree",
+            out.stderr,
+        )
+        self.assertEqual(pending.read_bytes(), before)
+        self.assertEqual(pending_box.git("rev-parse", "HEAD"), head)
+
     def test_design_reservation_set_and_cleared_by_checkpoints(self):
         box = Sandbox()
         self.addCleanup(box.close)

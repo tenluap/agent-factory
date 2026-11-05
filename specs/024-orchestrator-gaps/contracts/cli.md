@@ -4,7 +4,7 @@ Exit codes follow the existing CLI: 0 success, 1 refusal (nothing written), 2 us
 
 ## `factory checkpoint review|fix [...]`
 
-`checkpoint review --next fix --design-fix '<worktree-relative verdict path>'` atomically records the design reservation and fix stage. After fixer completion and successful verification, `checkpoint fix --next review` counts and clears it atomically, without recounting a legacy reservation. Result for `review` and `fix` adds:
+`checkpoint review --next fix --design-fix '<worktree-relative verdict path>'` atomically records the design reservation and fix stage on entry from stored stage `implement`, `verify` or `review`; a retry at stored stage `fix` preserves the existing reservation. The flag is refused when the completed-stage argument is not `review`, the target is not `fix`, or the run has no worktree. After fixer completion and successful verification, `checkpoint fix --next review` counts and clears it atomically, without recounting a legacy reservation. Result for `review` and `fix` adds:
 
 ```json
 { "review": { "round": 2, "fix_rounds": 1 } }

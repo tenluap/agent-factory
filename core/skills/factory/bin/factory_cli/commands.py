@@ -927,7 +927,7 @@ def cmd_checkpoint(
                 number = verdict.parent.name.removeprefix("round-")
                 if number.isascii() and number.isdigit() and verdict.is_file():
                     review["round"] = max(review.get("round", 0), int(number))
-            if design_fix is not None and s.get("stage") == "review":
+            if design_fix is not None and s.get("stage") != "fix":
                 review["pending_design_fix"] = {
                     "attempt": review.get("fix_rounds", 0) + 1,
                     "round": review.get("round", 0),
