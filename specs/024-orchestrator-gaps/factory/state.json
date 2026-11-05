@@ -620,6 +620,13 @@
       "event": "complete",
       "commit": "9c6acbd",
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-05T04:55:16.803366Z",
+      "stage": "approver",
+      "event": "resumed",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "models": {
@@ -642,7 +649,7 @@
     "commands": {},
     "unknown_markers": [],
     "notes": [],
-    "detected_at": "2026-11-04T21:59:58.260907Z",
+    "detected_at": "2026-11-05T04:55:56.377639Z",
     "detected_by": "factory detect 017"
   },
   "commands": {
