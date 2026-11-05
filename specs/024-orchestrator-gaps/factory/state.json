@@ -97,6 +97,15 @@
       "at": "2026-11-04T22:13:55.748924Z",
       "kind": "answer",
       "cruise_override": true
+    },
+    {
+      "stage": "fix",
+      "question": "FIX-SCOPE",
+      "answer": "accepted",
+      "auto": true,
+      "at": "2026-11-05T00:01:29.627165Z",
+      "kind": "answer",
+      "cruise_override": true
     }
   ],
   "ledger": [
