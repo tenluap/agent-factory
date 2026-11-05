@@ -38,8 +38,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "024-orchestrator-gaps approval: verdict fix with SPEC-2 unresolved (fix-round cap reached); FIX-SCOPE acceptance closed SPEC-1",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-05T04:59:21.124016Z",
+      "latency_ms": 17850586
     }
   ],
   "decisions": [
