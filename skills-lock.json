@@ -175,6 +175,11 @@
       "skillPath": "skills/create-formal-verification-skill/SKILL.md",
       "computedHash": "3563a3639481db6e5afc1c2b4ef64c5ba9153a99fa7853e4ea8ebfff1bc8f94f"
     },
+    "create-project-agents-file": {
+      "source": ".agents/skills",
+      "sourceType": "local",
+      "computedHash": "6d4a4f18ec2c0bb1d0524f1e066c58e146dd4a19b7e63e92ca080a03822e8e45"
+    },
     "create-verification-skill": {
       "source": "backnotprop/pstack",
       "sourceType": "github",
@@ -660,6 +665,11 @@
       "sourceType": "github",
       "skillPath": "skills/principle-type-system-discipline/SKILL.md",
       "computedHash": "6f6a325bcf1d45af7f233ca173af30b7f47f5d47a0e6d8c0eba0c1e5d77a9faa"
+    },
+    "prompt-optimiser": {
+      "source": ".agents/skills",
+      "sourceType": "local",
+      "computedHash": "ca7e2d508a03219dec2343ff7c2b58e8af0285c751d0642e52448af53dd90ce2"
     },
     "prototype": {
       "source": "mattpocock/skills",

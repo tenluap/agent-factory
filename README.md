@@ -113,6 +113,8 @@ npx skills remove <name>
 
 A new upstream source needs its license (and any `NOTICE`) at `.agents/LICENSES/<owner>-<repo>.txt` unless each of its skills ships a `LICENSE*` file; `tools/tests/test_skill_library.py` fails until it is there.
 
+Your own skills with no upstream (such as `prompt-optimiser` and `create-project-agents-file`) also live in `.agents/skills/`, with a lock entry of `"sourceType": "local"` and `"source": ".agents/skills"`. Edit them in place; `skills update` leaves them alone and they need no license file. To add one, `npx skills add <folder> --skill <name> -a codex -y`, then set its lock `source` to `.agents/skills`.
+
 ### Updating and removing
 
 After pulling, rerun the same install command; it re-renders the adapter and refreshes factory-owned links. `./install.sh --harness <name> --uninstall` (or `all`) removes factory-owned links, the OpenCode plugin link and rendered copies. Your configuration, pending runs, archives and backlogs under `${FACTORY_HOME}` are kept.

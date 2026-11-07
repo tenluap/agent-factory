@@ -67,6 +67,8 @@ class SkillLibraryLayoutTests(unittest.TestCase):
         # every skill folder vendored from that upstream.
         by_source = {}
         for name, entry in self.lock.items():
+            if entry.get("sourceType") == "local":
+                continue  # the maintainer's own skills; no upstream license
             by_source.setdefault(entry["source"], []).append(name)
         for source, names in sorted(by_source.items()):
             if source in UNLICENSED_SOURCES:
@@ -82,6 +84,17 @@ class SkillLibraryLayoutTests(unittest.TestCase):
                     shared.is_file() or per_skill,
                     f"{source}: add {shared.relative_to(REPO)} (skills: {', '.join(names)})",
                 )
+
+    def test_local_skills_are_edited_in_place(self):
+        # A local entry's source is the library itself, so its folder is the
+        # original: never a copy of a path outside the checkout.
+        local = {n: e for n, e in self.lock.items() if e.get("sourceType") == "local"}
+        self.assertIn("prompt-optimiser", local)
+        self.assertIn("create-project-agents-file", local)
+        for name, entry in local.items():
+            with self.subTest(name=name):
+                self.assertEqual(entry["source"], ".agents/skills")
+                self.assertEqual(self.folders[name].name, name)
 
     def test_exceptions_are_still_needed(self):
         for name in CASE_INSENSITIVE_ONLY:
