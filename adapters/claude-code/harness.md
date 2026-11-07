@@ -4,7 +4,7 @@
 - `invoke`: `/factory` (how the user starts the factory)
 - Recognise it by: you are Claude Code; you have the Agent, Bash, Read, Edit and Skill tools.
 - Capability tier: **1** (native subagents).
-- `speckit_init`: `--ai claude`
+- `speckit_init`: `--integration claude --force`
 - `impeccable_provider`: `claude`
 
 ## Verbs

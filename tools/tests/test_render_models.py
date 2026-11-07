@@ -726,6 +726,20 @@ class ReadOnlyConformanceTests(unittest.TestCase):
                 self.assertIn("WEB_SEARCH", text)
                 self.assertIn("WEB_FETCH", text)
 
+    def test_every_harness_speckit_init_uses_the_integration_flag(self):
+        # SpecKit 1.1 removed --ai/--ai-skills; --force lets `specify init --here`
+        # run in a non-empty repo with no TTY, which is how agents run it.
+        for harness in HARNESSES:
+            text = (ADAPTERS / harness / "harness.md").read_text()
+            line = re.search(r"^- `speckit_init`: `(.+)`$", text, re.M)
+            with self.subTest(harness=harness):
+                self.assertIsNotNone(line)
+                args = shlex.split(line.group(1))
+                self.assertNotIn("--ai", args)
+                self.assertNotIn("--ai-skills", args)
+                self.assertEqual(args[:1], ["--integration"])
+                self.assertIn("--force", args)
+
 
 if __name__ == "__main__":
     unittest.main()
