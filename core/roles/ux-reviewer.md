@@ -1,7 +1,7 @@
 ---
 name: ux-reviewer
 description: Spawned by the /factory orchestrator only. Reviews a factory run's user-facing flows, states and copy; returns findings JSON.
-tier: standard
+tier: deep
 access: read
 ---
 

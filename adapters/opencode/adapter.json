@@ -40,5 +40,5 @@
       ]
     }
   },
-  "models": {"deep": "claude-code/claude-opus-5-5[1m]", "standard": "openai/gpt-6.1-terra" }
+  "models": {"deep": "claude-code/claude-opus-5-5[1m]", "standard": "claude-code/claude-sonnet-5-5[1m]" }
 }

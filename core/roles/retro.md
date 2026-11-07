@@ -1,7 +1,7 @@
 ---
 name: retro
 description: Spawned by the /factory orchestrator only
-tier: standard
+tier: deep
 access: read
 ---
 

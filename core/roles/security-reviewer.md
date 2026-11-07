@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Spawned by the /factory orchestrator only. Security review of a factory run's diff; returns findings JSON.
-tier: standard
+tier: deep
 access: read
 ---
 

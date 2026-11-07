@@ -1,7 +1,7 @@
 ---
 name: ui-reviewer
 description: Spawned by the /factory orchestrator only. Reviews a factory run's UI changes with impeccable's audit and critique; returns findings JSON.
-tier: standard
+tier: deep
 access: read
 ---
 
