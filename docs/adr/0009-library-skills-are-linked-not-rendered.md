@@ -1,5 +1,7 @@
 # Library skills are linked from their source folders, not rendered
 
+2026-11-07: the repo layer is now `.agents/skills/<name>/`, managed by the `skills` CLI with provenance in `skills-lock.json` ([ADR 0018](0018-vendored-skills-are-managed-by-the-skills-cli.md)). Licenses for vendored skills live in `.agents/LICENSES/` instead of each folder. The linking decision below is unchanged.
+
 The factory skill and role agents reach a harness through the rendered distribution (ADR 0005), but library skills do not. Each library skill is symlinked from its own folder (repo layer `skills/<name>/` or per-user layer `${FACTORY_HOME}/skills/<name>/`) straight into the harness's skills root. Vendored skills are verbatim third-party copies with their upstream LICENSE, and per-user skills live outside the checkout. Rendering either one would rewrite attributed content, and for per-user skills it would put user files into tracked output. Linking keeps `dist/` and its porcelain gate unaffected by library content.
 
 ## Considered options

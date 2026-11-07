@@ -50,7 +50,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | Archive on PR | After the PR opens, the run folder is archived under `${FACTORY_HOME}/archive/` and removed from the branch; design evidence moves to `docs/design/<branch>/`. |
 | Retro and improvement backlog | After every PR a retro agent proposes up to three improvement candidates from the run's issues; `/factory improve` lists them as ready-made feature descriptions. |
 | Design-to-code | Pen, Figma, image or text-only design sources map to code anchors with rendered-fidelity evidence, across Avalonia and web stacks. Also usable standalone, with an auto-trigger plugin/hook. |
-| Skill library | The installer links a vendored skill library, the factory's first-party skills and your own per-user skills into each harness, with collision precedence and per-harness restrictions. |
+| Skill library | The installer links a vendored skill library, the factory's first-party skills and your own per-user skills into each harness, with collision precedence. The vendored library is managed by the `skills` CLI. |
 | Benchmark | Replays a pre-settled feature headlessly and scores runs, so factory versions can be compared before and after a change. |
 
 ## Requirements
@@ -92,16 +92,28 @@ A config file that does not parse aborts the install before anything is rendered
 The installer links three layers of skills into the selected harness's skill root:
 
 1. **Per-user** skills in `${FACTORY_HOME:-~/.factory}/skills/` — they win on name collision and always link to every harness.
-2. **First-party** skills rendered from `core/skills/` (every folder with a `SKILL.md` except `factory`) into `dist/<harness>/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)).
-3. **Vendored** skills in this checkout's `skills/`, with provenance in `skills/SOURCES.md` — including `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming`, `impeccable`, `design-to-code` and `pen-design`.
+2. **First-party** skills rendered from `core/skills/` (every folder with a `SKILL.md` except `factory`, including `design-to-code` and `pen-design`) into `dist/<harness>/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)).
+3. **Vendored** skills in this checkout's `.agents/skills/`, managed by the [`skills` CLI](https://skills.sh) with provenance in `skills-lock.json` ([ADR 0018](docs/adr/0018-vendored-skills-are-managed-by-the-skills-cli.md)) — including `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming` and `impeccable`. Every harness gets every vendored skill.
 
 Add a local skill with `--add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
 
-A `skills/SOURCES.md` row may restrict a vendored skill to specific harnesses with the optional sixth `harnesses` column: a comma-separated list of adapter names (`claude-code`, `codex`, `copilot`, `opencode`, `zcode`). An empty cell links the skill into every harness. An excluded skill has its existing link removed and is reported with `skip:`.
+Only folders whose `SKILL.md` frontmatter name has an entry in `skills-lock.json` are vendored. Anything else in `.agents/skills/` — such as the `speckit-*` skills `specify init` writes for this checkout — is reported with `skip: <name>: not in skills-lock.json` and never linked. A folder removed from the lock, or deleted, loses its links on the next install.
 
-After every non-uninstall run, the installer refreshes a browsing mirror of the vendored library in `${FACTORY_HOME}/skills/`: one symlink per `skills/` folder. Mirror links are not per-user skills and never override vendored links; stale mirror links are pruned. A non-symlink, or a symlink pointing elsewhere, in the per-user layer is a real per-user skill and is skipped with an adoption hint.
+After every non-uninstall run, the installer refreshes a browsing mirror of the vendored library in `${FACTORY_HOME}/skills/`: one symlink per lock-owned `.agents/skills/` folder. Mirror links are not per-user skills and never override vendored links; stale mirror links are pruned. A symlink pointing elsewhere in the per-user layer is skipped with an adoption hint, and a real folder there is a per-user skill.
 
-Existing files, directories and links outside the library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun. Links made from another checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically. Uninstall removes library links but keeps all layers; Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared links. Maintainers refresh vendored skills by copying the upstream skill and license and updating `skills/SOURCES.md` with the source commit.
+Existing files, directories and links outside the library are preserved and reported with `skip:`. To adopt one, run the suggested `--add-skill` command, remove the original, and rerun. Links made from another checkout are treated as user-owned: remove the old link and rerun. Stale library links are removed automatically, and links into the pre-ADR 0018 `skills/` folder are replaced with their `.agents/skills/` equivalents. Uninstall removes library links but keeps all layers; Codex and Copilot share `~/.agents/skills`, so uninstalling either removes their shared links.
+
+Maintain the vendored library with the `skills` CLI from the checkout root, then commit the result and rerun `./install.sh`:
+
+```bash
+npx skills add <owner>/<repo> --skill <name> -a codex -y   # -a codex writes to .agents/skills/ only
+npx skills update -p -y
+npx skills remove <name>
+```
+
+A new upstream source needs its license (and any `NOTICE`) at `.agents/LICENSES/<owner>-<repo>.txt` unless each of its skills ships a `LICENSE*` file; `tools/tests/test_skill_library.py` fails until it is there.
+
+Your own skills with no upstream (such as `prompt-optimiser` and `create-project-agents-file`) also live in `.agents/skills/`, with a lock entry of `"sourceType": "local"` and `"source": ".agents/skills"`. Edit them in place; `skills update` leaves them alone and they need no license file. To add one, `npx skills add <folder> --skill <name> -a codex -y`, then set its lock `source` to `.agents/skills`.
 
 ### Updating and removing
 
@@ -279,7 +291,7 @@ python3 tools/bench.py compare before.json after.json
 - `core/skills/factory/references/`: verbs, run state and resume, the agent protocol, findings shapes, engineering rules, design-code mapping and the FACETS checklist.
 - `core/roles/`: twelve roles with neutral `tier` and `access` — spec-builder, code-build, design-to-code, fixer, five reviewers, review-judge, retro, and facets-advisor.
 - `adapters/<harness>/`: `harness.md` (how to recognise the harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
-- `skills/`: the vendored skill library and `SOURCES.md`.
+- `.agents/skills/` and `skills-lock.json`: the vendored skill library, managed by the `skills` CLI; `.agents/LICENSES/`: their upstream licenses.
 - `plugins/`: the design-to-code trigger (OpenCode plugin and Claude Code/Codex hook).
 - `tools/render.py`: builds `dist/<harness>/` from core and an adapter. `tools/bench.py`: the benchmark. `tools/tests/`: the test suite.
 - `conformance/`: benchmark fixtures and golden runs.
