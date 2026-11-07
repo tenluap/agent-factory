@@ -67,40 +67,97 @@ except Exception as error:
   fi
 fi
 
-# The per-user layer doubles as the browsing mirror of the repo library
-# (Q&A). Mirror links point at this checkout's `skills/` and are managed
-# only by these two functions; the per-user skill scan must never treat
-# them as per-user skills.
+# The vendored library is `.agents/skills/`, managed by the `skills` CLI
+# (ADR 0018). A folder belongs to it only when its SKILL.md frontmatter name
+# has an entry in `skills-lock.json`; anything else there (for example the
+# speckit skills `specify init` writes for this checkout) is never linked.
+lib="$src/.agents/skills"
+lock="$src/skills-lock.json"
+if [ -f "$lock" ]; then
+  if ! parse_error="$(python3 -c 'import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+    assert isinstance(data.get("skills"), dict), "no \"skills\" object"
+except Exception as error:
+    sys.exit(str(error))' "$lock" 2>&1)"; then
+    echo "error: $lock does not parse: $parse_error" >&2
+    exit 2
+  fi
+fi
+
+# One folder name per line for every library folder with a SKILL.md, in
+# name order; a folder the lock does not own is prefixed with `!`.
+library_entries() {
+  python3 - "$lib" "$lock" <<'PY'
+import json, re, sys
+from pathlib import Path
+
+root, lock = Path(sys.argv[1]), Path(sys.argv[2])
+try:
+    owned = set(json.loads(lock.read_text(encoding="utf-8"))["skills"])
+except (OSError, ValueError, KeyError, TypeError):
+    owned = set()
+folders = sorted(root.iterdir()) if root.is_dir() else []
+for folder in folders:
+    skill = folder / "SKILL.md"
+    if folder.name.startswith(".") or not skill.is_file():
+        continue
+    text = skill.read_text(encoding="utf-8", errors="replace")
+    match = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
+    name = re.search(r"^name:\s*(.*?)\s*$", match.group(1), re.M) if match else None
+    value = name.group(1).strip().strip("'\"") if name else ""
+    print(("" if value in owned else "!") + folder.name)
+PY
+}
+
+owned_entry() { printf '%s\n' "$library" | grep -qxF -- "$1"; }
+
+# The per-user layer doubles as the browsing mirror of the vendored library
+# (Q&A). Mirror links point into this checkout's library (or, before
+# ADR 0018, its `skills/`) and are managed only by the mirror functions; the
+# per-user skill scan must never treat them as per-user skills.
+mirror_entry() {
+  [ -L "$1" ] || return 1
+  local target
+  target="$(readlink "$1")"
+  [[ "$target" == "$lib"/* || "$target" == "$src"/skills/* ]]
+}
+
+# A real per-user skill: a folder with a SKILL.md that is not a mirror link.
+user_skill() {
+  [ -f "$factory_home/skills/$1/SKILL.md" ] && ! mirror_entry "$factory_home/skills/$1"
+}
+
 mirror_link() {
   local from="$1" to="$2"
-  if [ -L "$to" ] && [[ "$(readlink "$to")" != "$src"/skills/* ]]; then
+  if [ -L "$to" ] && ! mirror_entry "$to"; then
     echo "skip: $to exists and is not a mirror link; to adopt it: ./install.sh --add-skill $to, remove the original, re-run"
     return
   fi
-  if [ ! -e "$to" ] || [ "$(readlink "$to")" != "$from" ]; then
+  [ -e "$to" ] && [ ! -L "$to" ] && return  # a real per-user skill wins
+  if [ ! -L "$to" ] || [ "$(readlink "$to")" != "$from" ]; then
     ln -sfn "$from" "$to"
   fi
 }
 
 mirror_library() {
   [ -d "$factory_home/skills" ] || return 0
-  local f name
+  local f entry
+  library="$(library_entries)"
   for f in "$factory_home"/skills/*; do
     [ -L "$f" ] || continue
-    if [ -e "$f" ]; then
-      if [[ "$(readlink "$f")" == "$src"/skills/* ]] && [ ! -f "$f/SKILL.md" ]; then
-        rm "$f"
-        echo "pruned: $f (stale link)"
-      fi
-    else
+    if [ ! -e "$f" ]; then
+      rm "$f"
+      echo "pruned: $f (stale link)"
+    elif mirror_entry "$f" && { [[ "$(readlink "$f")" != "$lib"/* ]] || ! owned_entry "$(basename "$(readlink "$f")")"; }; then
       rm "$f"
       echo "pruned: $f (stale link)"
     fi
   done
-  for f in "$src"/skills/*; do
-    [ -f "$f/SKILL.md" ] || continue
-    mirror_link "$f" "$factory_home/skills/$(basename "$f")"
-  done
+  while IFS= read -r entry; do
+    [ -n "$entry" ] && [[ "$entry" != '!'* ]] || continue
+    mirror_link "$lib/$entry" "$factory_home/skills/$entry"
+  done <<< "$library"
   mirror_done=1
 }
 
@@ -175,7 +232,7 @@ library_link() {
   [ -L "$1" ] || return 1
   local target
   target="$(readlink "$1")"
-  [[ "$target" == "$src"/skills/* || "$target" == "$factory_home"/dist/* || "$target" == "$factory_home"/skills/* ]]
+  [[ "$target" == "$lib"/* || "$target" == "$src"/skills/* || "$target" == "$factory_home"/dist/* || "$target" == "$factory_home"/skills/* ]]
 }
 
 link_skill() {
@@ -190,21 +247,7 @@ link_skill() {
   echo "linked: $to"
 }
 
-skill_harnesses() {
-  python3 - "$src/skills/SOURCES.md" "$1" <<'PY'
-import re, sys
-try:
-    text = open(sys.argv[1]).read()
-except OSError:
-    raise SystemExit(0)
-row = re.search(r"(?m)^\|\s*%s\s*\|(?:[^|]*\|){4}\s*([^|]*)\|" % re.escape(sys.argv[2]), text)
-print(row.group(1).strip().lower() if row else "")
-PY
-}
-
-# Link name for a repo-layer skill: the SKILL.md frontmatter name, which may
-# differ from the folder name so per-harness variants (folder suffixes) all
-# install under one skill name.
+# Link name for a rendered first-party skill: its SKILL.md frontmatter name.
 skill_name() {
   python3 - "$1/SKILL.md" <<'PY'
 import re, sys
@@ -219,21 +262,30 @@ PY
 }
 
 install_skills() {
-  local root="$1" dist="$2" harness="$3" f name allowed linked=""
+  local root="$1" dist="$2" f name target entry linked=""
+  library="$(library_entries)"
   mkdir -p "$root"
   for f in "$root"/*; do
+    [ -L "$f" ] || continue
+    target="$(readlink "$f")"
     if library_link "$f" && [ ! -e "$f" ]; then
       rm "$f"
       echo "removed: $f"
-    elif [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/core/skills/* ]]; then
-      # links from the superseded link-from-source layout; the rendered
-      # distribution is the source of first-party skills now
+    elif [[ "$target" == "$src"/core/skills/* || "$target" == "$src"/skills/* ]]; then
+      # links from superseded layouts: first-party skills linked from source
+      # (the rendered distribution replaced them, ADR 0012) and the vendored
+      # library in `skills/` (`.agents/skills/` replaced it, ADR 0018)
+      rm "$f"
+      echo "removed: $f"
+    elif [[ "$target" == "$lib"/* ]] && ! owned_entry "$(basename "$target")"; then
+      # the folder is still there but skills-lock.json no longer owns it
       rm "$f"
       echo "removed: $f"
     fi
   done
   # First-party skills are linked from the rendered distribution (ADR 0012),
-  # ahead of the vendored and per-user layers, which win on name collision.
+  # ahead of the vendored and per-user layers; a per-user skill wins on name
+  # collision, a vendored one is skipped.
   for f in "$dist"/skills/*; do
     [ -d "$f" ] || continue
     name="$(skill_name "$f")"
@@ -241,58 +293,44 @@ install_skills() {
       echo "skip: $f: no frontmatter name"
       continue
     fi
-    if [ -f "$factory_home/skills/$name/SKILL.md" ]; then
+    if user_skill "$name"; then
       echo "skip: $name: per-user skill takes precedence"
       continue
     fi
     linked="$linked,$name"
     link_skill "$f" "$root/$name"
   done
-  for f in "$src"/skills/* "$factory_home"/skills/*; do
-    if [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/skills/* ]]; then
-      # The browsing mirror lives in the per-user layer but points back at
-      # the repo layer; it is not a per-user skill and must not bypass the
-      # SOURCES.md harness rules the repo layer is linked under.
+  # Vendored skills link under their folder name (the `skills` CLI derives it
+  # from the frontmatter name); a per-user skill with the same name wins.
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
+    if [[ "$entry" == '!'* ]]; then
+      echo "skip: ${entry#!}: not in skills-lock.json"
       continue
     fi
+    f="$lib/$entry"
+    if [ "$entry" = factory ]; then
+      echo "skip: $f: name reserved for the factory skill"
+      continue
+    fi
+    user_skill "$entry" && continue
+    case ",$linked," in
+      *",$entry,"*)
+        echo "skip: $f: the first-party skill $entry is already linked"
+        continue
+        ;;
+    esac
+    link_skill "$f" "$root/$entry"
+  done <<< "$library"
+  for f in "$factory_home"/skills/*; do
+    # the browsing mirror lives here but points back at the vendored library
+    mirror_entry "$f" && continue
     [ -d "$f" ] && [ -f "$f/SKILL.md" ] || continue
     if [ "$(basename "$f")" = factory ]; then
       echo "skip: $f: name reserved for the factory skill"
       continue
     fi
-    if [[ "$f" == "$src"/skills/* ]]; then
-      name="$(skill_name "$f")"
-      if [ -z "$name" ]; then
-        echo "skip: $f: no frontmatter name"
-        continue
-      fi
-      if [ -f "$factory_home/skills/$name/SKILL.md" ]; then
-        continue
-      fi
-      if [ "$name" = factory ]; then
-        echo "skip: $f: name reserved for the factory skill"
-        continue
-      fi
-      allowed="$(skill_harnesses "$(basename "$f")")"
-      if [ -n "$allowed" ] && [[ ",$allowed," != *,"$harness",* ]]; then
-        if [ -L "$root/$name" ] && [ "$(readlink "$root/$name")" = "$f" ]; then
-          rm "$root/$name"
-          echo "removed: $root/$name"
-        fi
-        echo "skip: $name: not linked for harness $harness (SOURCES.md harnesses: $allowed)"
-        continue
-      fi
-      case ",$linked," in
-        *",$name,"*)
-          echo "skip: $f: another variant is already linked as $name for harness $harness"
-          continue
-          ;;
-      esac
-      linked="$linked,$name"
-    else
-      name="$(basename "$f")"
-    fi
-    link_skill "$f" "$root/$name"
+    link_skill "$f" "$root/$(basename "$f")"
   done
 }
 
@@ -313,7 +351,7 @@ prune_mirror() {
   [ -d "$factory_home/skills" ] || return 0
   local f
   for f in "$factory_home"/skills/*; do
-    if [ -L "$f" ] && [[ "$(readlink "$f")" == "$src"/skills/* ]] && [ ! -e "$f" ]; then
+    if mirror_entry "$f" && [ ! -e "$f" ]; then
       rm "$f"
       echo "pruned: $f (stale link)"
     fi
@@ -426,7 +464,7 @@ install_one() {
     link "$f" "$agent_dir/$(basename "$f")"
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
-  install_skills "$skills_root" "$dist" "$1"
+  install_skills "$skills_root" "$dist"
   case "$1" in
     opencode)
       install_plugin
