@@ -1026,7 +1026,7 @@ class PruneTests(unittest.TestCase):
         path = self.with_worktree_state("110-a", fixture("state-v4.json"))
         out = self.box.cli("prune", "--dry-run")
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn(str(path), out.stdout)
+        self.assertIn(json.dumps(str(path)), out.stdout)
         self.assertTrue(path.exists(), "a dry run deletes nothing")
 
     def test_stale_when_the_pending_run_ended(self):
@@ -1041,13 +1041,13 @@ class PruneTests(unittest.TestCase):
         pr_state["ended_at"] = "2026-10-24T00:00:00Z"
         pr.write_text(json.dumps(pr_state))
         out = self.box.cli("prune", "--dry-run")
-        self.assertIn(str(pr), out.stdout)
-        self.assertIn(str(aborted), out.stdout)
+        self.assertIn(json.dumps(str(pr)), out.stdout)
+        self.assertIn(json.dumps(str(aborted)), out.stdout)
 
     def test_a_run_whose_only_state_is_the_pending_file_is_never_stale(self):
         path = self.pending("113-c", fixture("state-v1.json"))
         out = self.box.cli("prune", "--dry-run")
-        self.assertNotIn(str(path), out.stdout)
+        self.assertNotIn(json.dumps(str(path)), out.stdout)
         out = self.box.cli("prune", "--delete")
         self.assertTrue(path.exists(), "--delete never removes a run's only state")
 
@@ -1059,7 +1059,7 @@ class PruneTests(unittest.TestCase):
             self.assertEqual(out.returncode, 0, out.stderr)
             self.assertTrue(stale.exists(), f"prune {args} deletes nothing")
             self.assertIn(
-                str(stale), out.stdout, f"prune {args} still lists the candidate"
+                json.dumps(str(stale)), out.stdout, f"prune {args} still lists the candidate"
             )
         out = self.box.cli("prune", "--delete")
         self.assertEqual(out.returncode, 0, out.stderr)

@@ -16,6 +16,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def _write_text(path, text):
+    """UTF-8 with LF endings on every OS (Path.write_text has no newline
+    argument before Python 3.10)."""
+    with open(path, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
+
 class LockHeld(Exception):
     """A live lock refuses the operation; the message reports the owner."""
 
@@ -51,6 +58,8 @@ def _alive(pid):
     proven-gone owner frees the lock."""
     if not isinstance(pid, int) or isinstance(pid, bool) or pid <= 0:
         return True
+    if os.name == "nt":
+        return _alive_windows(pid)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -58,6 +67,35 @@ def _alive(pid):
     except (OverflowError, OSError):
         return True
     return True
+
+
+def _alive_windows(pid):
+    """Windows probe: os.kill(pid, 0) there calls TerminateProcess and would
+    kill the owner, so ask the OS for the process's exit code instead. Only a
+    PID the OS reports as nonexistent, or a process that has exited, is gone."""
+    import ctypes
+    from ctypes import wintypes
+
+    if pid > 0xFFFFFFFF:
+        return True
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    kernel32.GetExitCodeProcess.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    process_query_limited_information = 0x1000
+    error_invalid_parameter = 87  # no process has this PID
+    still_active = 259
+    handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+    if not handle:
+        return ctypes.get_last_error() != error_invalid_parameter
+    try:
+        code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return True
+        return code.value == still_active
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def _live(info):
@@ -69,7 +107,7 @@ def _live(info):
 
 def read(path):
     try:
-        loaded = json.loads(Path(path).read_text())
+        loaded = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
     return loaded if isinstance(loaded, dict) else None
@@ -80,7 +118,7 @@ def _write(path, info):
     text = json.dumps(info, indent=2) + "\n"
     tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     try:
-        tmp.write_text(text)
+        _write_text(tmp, text)
         os.replace(tmp, path)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -104,7 +142,7 @@ def _create(path, info):
     """
     fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     try:
-        with os.fdopen(fd, "w") as handle:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(json.dumps(info, indent=2) + "\n")
     except BaseException:
         if read(path) == info:

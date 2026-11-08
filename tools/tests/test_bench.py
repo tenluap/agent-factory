@@ -181,6 +181,7 @@ class StubHarness:
         self.record = box.dir / f"{folder}-record.jsonl"
         self.env = {
             "HOME": str(box.dir / "sandbox-home"),
+            "USERPROFILE": str(box.dir / "sandbox-home"),
             "CLAUDE_HOME": str(box.dir / "claude-home"),
             "XDG_CONFIG_HOME": str(box.dir / "xdg"),
             "FACTORY_HOME": str(box.dir / "factory-home"),
@@ -448,7 +449,7 @@ class ProvenanceTests(unittest.TestCase):
             with self.subTest(name):
                 self.assertEqual(bench_module.tree_digest(root), "unavailable")
 
-    @unittest.skipIf(os.geteuid() == 0, "root reads unreadable directories")
+    @unittest.skipIf(getattr(os, "geteuid", lambda: -1)() == 0, "root reads unreadable directories")
     def test_unreadable_subdirectory_is_unavailable_not_silently_skipped(self):
         tree = self.box.dir / "tree"
         locked = tree / "locked"

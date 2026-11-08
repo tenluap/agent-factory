@@ -21,3 +21,46 @@ jobs:
           test -z "$(git ls-files -- dist/)"
       - name: Installer syntax (FR-018)
         run: bash -n install.sh
+
+  # ADR 0019: the installer and the factory CLI run natively on Windows.
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Shell scripts check out with LF endings (.gitattributes)
+        shell: bash
+        run: |
+          git ls-files --eol install.sh core/skills/factory/bin/factory
+          for f in install.sh core/skills/factory/bin/factory; do
+            git ls-files --eol "$f" | grep -q "w/lf" || { echo "$f is not LF in the working tree"; exit 1; }
+          done
+          bash -n install.sh
+      - name: Full suite (install tests through install.cmd)
+        run: python -m unittest discover -s tools
+      - name: Install tests through install.sh (Git Bash)
+        shell: bash
+        env:
+          FACTORY_TEST_ENTRY: sh
+        run: |
+          python -m unittest discover -s tools -p test_install.py
+          python -m unittest discover -s tools -p test_skill_library.py
+      - name: Real claude-code install through install.cmd
+        shell: cmd
+        run: .\install.cmd --harness claude-code
+      - name: The installed skill and agents are symlinks and the CLI runs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          home = Path(os.environ["USERPROFILE"]) / ".claude"
+          assert (home / "skills" / "factory").is_symlink(), "skill link"
+          agents = sorted((home / "agents").glob("factory-*.md"))
+          assert agents and all(a.is_symlink() for a in agents), "agent links"
+          assert (home / "skills" / "grilling" / "SKILL.md").is_file(), "vendored skill"
+          print("ok:", len(agents), "agents linked")
+          PY
+          python "$USERPROFILE/.claude/skills/factory/bin/factory" models --json > /dev/null

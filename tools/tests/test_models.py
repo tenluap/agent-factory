@@ -39,10 +39,11 @@ class ResolveTests(unittest.TestCase):
             with self.assertRaises(models.ModelConfigError):
                 models.resolve(self.repo, self.home)
             path.unlink()
-            os.mkfifo(path)
-            with self.assertRaises(models.ModelConfigError):
-                models.resolve(self.repo, self.home)
-            path.unlink()
+            if hasattr(os, "mkfifo"):  # no FIFOs on Windows
+                os.mkfifo(path)
+                with self.assertRaises(models.ModelConfigError):
+                    models.resolve(self.repo, self.home)
+                path.unlink()
             path.write_bytes(b" " * (1024 * 1024 + 1))
             with self.assertRaises(models.ModelConfigError):
                 models.resolve(self.repo, self.home)
@@ -366,12 +367,13 @@ class InitPublishTests(unittest.TestCase):
         real_link = os.link
 
         def racing_link(src, dst, **kwargs):
-            if dst == "config.json":
+            # dir_fd-relative names on POSIX, full paths where dir_fd is unsupported
+            if os.path.basename(dst) == "config.json":
                 fd = os.open(
-                    "config.json",
+                    dst,
                     os.O_WRONLY | os.O_CREAT | os.O_EXCL,
                     0o600,
-                    dir_fd=kwargs["dst_dir_fd"],
+                    dir_fd=kwargs.get("dst_dir_fd"),
                 )
                 with os.fdopen(fd, "wb") as other:
                     other.write(b"other writer")
@@ -389,7 +391,7 @@ class InitPublishTests(unittest.TestCase):
         real_link = os.link
 
         def failing_link(src, dst, **kwargs):
-            if dst == "config.README.md":
+            if os.path.basename(dst) == "config.README.md":
                 raise OSError("disk full")
             return real_link(src, dst, **kwargs)
 

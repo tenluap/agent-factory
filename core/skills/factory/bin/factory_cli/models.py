@@ -7,14 +7,25 @@ import stat
 from pathlib import Path
 
 
+# Windows has no O_NOFOLLOW, O_NONBLOCK or O_DIRECTORY and no dir_fd support;
+# there a symlink is refused by an explicit check instead (ADR 0019).
+_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
+_NONBLOCK = getattr(os, "O_NONBLOCK", 0)
+_DIRECTORY = getattr(os, "O_DIRECTORY", 0)
+_BINARY = getattr(os, "O_BINARY", 0)
+_DIR_FD = os.open in os.supports_dir_fd and os.link in os.supports_dir_fd
+
+
 class ModelConfigError(Exception):
     def __init__(self, path, detail):
         super().__init__(f"{path}: {detail}")
 
 
 def _read_models(path, defaults):
+    if not _NOFOLLOW and os.path.islink(path):
+        raise ModelConfigError(path, "config must not be a symlink")
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        fd = os.open(path, os.O_RDONLY | _NONBLOCK | _NOFOLLOW | _BINARY)
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise ModelConfigError(path, "config must be a regular file")
@@ -58,7 +69,9 @@ def _read_models(path, defaults):
 
 
 def resolve(repo, home, *, include_project=True):
-    defaults = json.loads(Path(__file__).with_name("adapter_models.json").read_text())
+    defaults = json.loads(
+        Path(__file__).with_name("adapter_models.json").read_text(encoding="utf-8")
+    )
     user = _read_models(Path(home) / "config.json", defaults)
     project = (
         _read_models(Path(repo) / ".factory/config.json", defaults)
@@ -123,10 +136,26 @@ def init(repo, home):
         "or restore the value shown above.\n"
     )
     directory.mkdir(parents=True, exist_ok=True)
-    try:
-        dirfd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-    except OSError as error:
-        raise ModelConfigError(directory, str(error)) from error
+    if _DIR_FD:
+        try:
+            dirfd = os.open(directory, os.O_RDONLY | _DIRECTORY | _NOFOLLOW)
+        except OSError as error:
+            raise ModelConfigError(directory, str(error)) from error
+        at = {"dir_fd": dirfd}
+        between = {"src_dir_fd": dirfd, "dst_dir_fd": dirfd}
+
+        def place(name):
+            return name
+
+    else:
+        if os.path.islink(directory) or not directory.is_dir():
+            raise ModelConfigError(directory, "must be a real directory, not a symlink")
+        dirfd = None
+        at, between = {}, {}
+
+        def place(name):
+            return str(directory / name)
+
     # config.README.md is staged and published first; config.json goes last as
     # the commit point, so any earlier failure leaves no recoverable bootstrap.
     payloads = (
@@ -142,18 +171,21 @@ def init(repo, home):
             name = ".factory-" + secrets.token_hex(16)
             try:
                 fd = os.open(
-                    name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=dirfd
+                    place(name),
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | _BINARY,
+                    0o600,
+                    **at,
                 )
-                with os.fdopen(fd, "w", encoding="utf-8") as temp:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as temp:
                     temp.write(text)
                 try:
                     try:
-                        os.link(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
+                        os.link(place(name), place(filename), **between)
                     except FileExistsError:
                         if filename != "config.json":
                             # a stale README without config.json is rewritten by design
-                            os.unlink(filename, dir_fd=dirfd)
-                            os.link(name, filename, src_dir_fd=dirfd, dst_dir_fd=dirfd)
+                            os.unlink(place(filename), **at)
+                            os.link(place(name), place(filename), **between)
                         else:
                             raise
                     published.append(filename)
@@ -163,25 +195,26 @@ def init(repo, home):
                     ) from error
             finally:
                 try:
-                    os.unlink(name, dir_fd=dirfd)
+                    os.unlink(place(name), **at)
                 except FileNotFoundError:
                     pass
     except FileExistsError:
         for filename in published:
             try:
-                os.unlink(filename, dir_fd=dirfd)
+                os.unlink(place(filename), **at)
             except OSError:
                 pass
         raise
     except OSError as error:
         for filename in published:
             try:
-                os.unlink(filename, dir_fd=dirfd)
+                os.unlink(place(filename), **at)
             except OSError:
                 pass
         raise ModelConfigError(
             directory, f"init failed; partial artifacts removed, retry: {error}"
         ) from error
     finally:
-        os.close(dirfd)
+        if dirfd is not None:
+            os.close(dirfd)
     return table + "\n\nModels are unverified until a run's preflight."

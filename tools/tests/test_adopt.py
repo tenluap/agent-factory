@@ -1101,8 +1101,10 @@ class WriteFailureTests(AdoptWriteFixture):
         self.assertNotIn("/factory", combined)
 
     def test_failure_after_the_commit_is_reported_without_rollback(self):
-        if os.geteuid() == 0:
+        if getattr(os, "geteuid", lambda: -1)() == 0:
             self.skipTest("root ignores directory permissions")
+        if os.name == "nt":
+            self.skipTest("Windows directories ignore the read-only mode bits")
         head = self.box.git("rev-parse", "007-x").strip()
         pending_dir = self.box.home / "pending"
         lock_file = self.pending.with_suffix(".lock.json")

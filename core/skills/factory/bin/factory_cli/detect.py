@@ -90,7 +90,7 @@ PYPROJECT_LOCK_MANAGERS = {
 
 def _read_json(path):
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
 
@@ -111,7 +111,7 @@ def _toml_sections(path, wanted):
     """
     result = {}
     try:
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
     except OSError:
         return result
     current = None
@@ -140,7 +140,7 @@ def _toml_sections(path, wanted):
 def _go_directive(path):
     """go.mod's bare `go 1.x` version line (a keyless directive, not a table)."""
     try:
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
     except OSError:
         return None
     for line in lines:
@@ -196,7 +196,7 @@ def _read_central_versions(root):
 
 def _requirements_names(path):
     try:
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
     except OSError:
         return []
     names = []

@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import subprocess
+import shutil
 import sys
 import time
 import unittest
@@ -735,9 +736,13 @@ class FeedbackCommandTests(unittest.TestCase):
         self.repo = str(self.box.repo.resolve())
         bin_dir = self.box.dir / "bin"
         bin_dir.mkdir()
-        gh = bin_dir / "gh"
-        gh.write_text(FAKE_GH)
-        gh.chmod(0o755)
+        if os.name == "nt":  # CreateProcess runs .exe and .cmd files, not shebang scripts
+            (bin_dir / "gh.py").write_text(FAKE_GH)
+            (bin_dir / "gh.cmd").write_text(f'@"{sys.executable}" "%~dp0gh.py" %*\r\n')
+        else:
+            gh = bin_dir / "gh"
+            gh.write_text(FAKE_GH)
+            gh.chmod(0o755)
         self.patch_env(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", FAKE_GH_MODE="ok")
 
     def patch_env(self, **values):
@@ -804,7 +809,12 @@ class FeedbackCommandTests(unittest.TestCase):
 
     def test_gh_not_on_path_is_an_inaccessible_gap(self):
         self.archive("feature-x")
-        self.patch_env(PATH=f"{self.box.dir / 'empty'}{os.pathsep}/usr/bin{os.pathsep}/bin")
+        system = (
+            os.path.dirname(shutil.which("git"))  # git, without gh, on Windows
+            if os.name == "nt"
+            else f"/usr/bin{os.pathsep}/bin"
+        )
+        self.patch_env(PATH=f"{self.box.dir / 'empty'}{os.pathsep}{system}")
         out = self.feedback()
         self.assertEqual(out.returncode, 1, out.stderr)
         report = json.loads(out.stdout)

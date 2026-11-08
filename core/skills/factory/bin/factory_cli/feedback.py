@@ -8,6 +8,7 @@ GitHub or to the archive; the archive is opened read-only.
 
 import json
 import re
+import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,8 +26,9 @@ CHECK_FAILURES = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE")
 
 def run_gh(args):
     """The one GitHub runner: `(returncode, stdout, stderr)`; tests inject a fake."""
+    # which() honours PATHEXT, so a gh.cmd shim resolves on Windows too
     out = subprocess.run(
-        ["gh", *args], capture_output=True, text=True, timeout=60
+        [shutil.which("gh") or "gh", *args], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60
     )
     return out.returncode, out.stdout, out.stderr
 
@@ -211,7 +213,7 @@ def _archived_runs(home, repo):
     runs, skipped = [], []
     for path in sorted((Path(home) / "archive").glob("*/state.json")):
         try:
-            run = json.loads(path.read_text())
+            run = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(run, dict):
                 raise ValueError("not an object")
         except (OSError, ValueError):
@@ -246,7 +248,7 @@ def _is_terminal(home, run):
     if not path.exists():
         return False
     try:
-        body = json.loads(path.read_text())
+        body = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
     outcomes = _outcome_list(body)
@@ -295,7 +297,7 @@ def _load_outcomes(path, run):
             "outcomes": [],
         }
     try:
-        body = json.loads(path.read_text())
+        body = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         raise Gap("inaccessible", f"unreadable outcome file {path}: {e}") from e
     if _outcome_list(body) is None:

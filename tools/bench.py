@@ -340,10 +340,11 @@ def isolated_install(harness, out):
         os.environ,
         FACTORY_HOME=str(home),
         HOME=str(out),
+        USERPROFILE=str(out),
         **checkout_env(harness, config),
     )
     result = subprocess.run(
-        ["bash", str(ROOT / "install.sh"), "--harness", harness],
+        [sys.executable, str(ROOT / "tools" / "install.py"), "--harness", harness],
         env=env,
         capture_output=True,
         text=True,

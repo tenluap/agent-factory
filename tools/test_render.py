@@ -20,7 +20,7 @@ class RenderHomeTests(unittest.TestCase):
         shutil.copytree(render.ROOT / "core", self.root / "core")
         self.enterContext(patch.object(render, "ROOT", self.root))
         self.adapters = {
-            name: json.loads((render.ADAPTERS / name / "adapter.json").read_text())
+            name: json.loads((render.ADAPTERS / name / "adapter.json").read_text(encoding="utf-8"))
             for name in render.known()
         }
         env = {adapter["home"]["env"]: "" for adapter in self.adapters.values()}
@@ -63,7 +63,7 @@ class RenderHomeTests(unittest.TestCase):
                 self.assertTrue(agents)
                 for agent in agents:
                     self.assertIn(
-                        adapter["skill_dir"].format(home=home), agent.read_text()
+                        adapter["skill_dir"].format(home=home), agent.read_text(encoding="utf-8")
                     )
 
 
@@ -112,9 +112,9 @@ class RenderAgentTests(unittest.TestCase):
                 )
 
     def test_opencode_roles_preserve_access_and_models(self):
-        adapter = json.loads((render.ADAPTERS / "opencode/adapter.json").read_text())
+        adapter = json.loads((render.ADAPTERS / "opencode/adapter.json").read_text(encoding="utf-8"))
         for role_file in sorted((render.ROOT / "core/roles").glob("*.md")):
-            meta, body = render.frontmatter(role_file.read_text())
+            meta, body = render.frontmatter(role_file.read_text(encoding="utf-8"))
             with self.subTest(role=meta["name"]):
                 fields = render.agent_fields(
                     adapter, meta, {"description": meta["description"]}
@@ -162,8 +162,8 @@ class RenderAgentTests(unittest.TestCase):
             role_files = sorted((root / "core/roles").glob("*.md"))
             self.assertEqual(len(list((out / "agents").glob("*.md"))), len(role_files))
             for role_file in role_files:
-                meta, _ = render.frontmatter(role_file.read_text())
-                text = (out / "agents" / f"factory-{meta['name']}.md").read_text()
+                meta, _ = render.frontmatter(role_file.read_text(encoding="utf-8"))
+                text = (out / "agents" / f"factory-{meta['name']}.md").read_text(encoding="utf-8")
                 mode = "all" if meta.get("mode") == "primary" else "subagent"
                 self.assertIn(f"\nmode: {mode}\npermissions:\n", text)
                 rules = [

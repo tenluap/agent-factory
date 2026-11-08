@@ -17,6 +17,13 @@ from pathlib import Path
 
 from factory_cli import budget, checks, detect, feedback, improvements, lock, state, totals
 
+
+def _write_text(path, text):
+    """UTF-8 with LF endings on every OS (Path.write_text has no newline
+    argument before Python 3.10)."""
+    with open(path, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
 
@@ -32,7 +39,7 @@ def die(code, message):
 
 def git(repo, *args):
     try:
-        out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+        out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
     except OSError:
         die(2, "git not runnable")
     if out.returncode != 0:
@@ -52,7 +59,7 @@ def main_repo(cwd):
                 "--git-common-dir",
             ],
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
         )
     except OSError:
         die(2, "git not runnable")
@@ -367,7 +374,7 @@ def factory_home():
 def read_config():
     """The user's ${FACTORY_HOME}/config.json, {} when missing or malformed."""
     try:
-        return json.loads((factory_home() / "config.json").read_text())
+        return json.loads((factory_home() / "config.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -393,7 +400,7 @@ def cmd_improvements_add(repo, from_path, run):
     if loaded.get("status") != "pr-open":
         die(1, f"run '{run}' is not pr-open")
     try:
-        text = Path(from_path).read_text()
+        text = Path(from_path).read_text(encoding="utf-8")
     except OSError as e:
         die(1, f"cannot read {from_path}: {e}")
     block, error = checks.extract_block(text)
@@ -510,7 +517,7 @@ def cmd_profile_record(repo, cwd, worktree=None, spec_dir=None):
     profile_md = detect.render_markdown(profile)
     if source == "pending":
         profile_path = path.with_name(path.name.replace(".json", ".profile.md"))
-        profile_path.write_text(profile_md)
+        _write_text(profile_path, profile_md)
         committed = None
     else:
         folder = (
@@ -520,7 +527,7 @@ def cmd_profile_record(repo, cwd, worktree=None, spec_dir=None):
         )
         folder.mkdir(parents=True, exist_ok=True)
         profile_path = folder / "profile.md"
-        profile_path.write_text(profile_md)
+        _write_text(profile_path, profile_md)
         committed = commit_worktree(
             run_worktree, "factory: profile recorded", loaded.get("spec_dir")
         )
@@ -847,7 +854,7 @@ def settled_answers(relay, fallback_stage, now):
 def read_envelope(path):
     """Read a role's final fenced block or a bare JSON file."""
     try:
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
     except OSError as e:
         die(1, f"cannot read {path}: {e}")
     block, error = checks.extract_block(text)
@@ -1026,7 +1033,7 @@ def cmd_analyze_record(repo, cwd, envelope, fresh_baseline=False):
     resolved = candidate.resolve()
     if not resolved.is_relative_to(root) or not resolved.is_file():
         die(1, "analysis report must exist inside the run's spec directory")
-    normalized = str(resolved.relative_to(root))
+    normalized = resolved.relative_to(root).as_posix()
     counts = {k: result[k] for k in ("critical", "high", "medium", "low")}
     recorded_at = now_iso()
 
@@ -1537,7 +1544,7 @@ def cmd_verify(repo, cwd, passed, commands_payload):
 def cmd_envelope_check(path):
     """Validate a role output's final fenced json block (FR-007)."""
     try:
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
     except OSError as e:
         die(1, f"cannot read {path}: {e}")
     block, error = checks.extract_block(text)
@@ -1571,7 +1578,7 @@ def cmd_rebind(repo, cwd, name, worktree):
     probe = subprocess.run(
         ["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
     )
     if probe.returncode != 0 or probe.stdout.strip() != "true":
         die(4, f"{target} is not a git worktree")

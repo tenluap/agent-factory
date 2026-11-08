@@ -29,7 +29,7 @@ def _no_base(repo):
 
 def _try(repo, *args):
     """Stdout of a git probe, or None when git exits non-zero (an absent ref or path)."""
-    out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+    out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
     return out.stdout if out.returncode == 0 else None
 
 
@@ -372,7 +372,8 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
         if sidecar.exists():
             text = _utf8(sidecar)
             _no_link(worktree, folder / target)
-            (folder / target).write_text(text, encoding="utf-8")
+            # verbatim: a text-mode write would turn \r\n into \r\r\n on Windows
+            (folder / target).write_bytes(text.encode("utf-8"))
     return commands.digest(written, state_path, "worktree")
 
 
@@ -416,13 +417,13 @@ def _rollback(repo, worktree, created_branch):
     removed = subprocess.run(
         ["git", "-C", repo, "worktree", "remove", "--force", str(worktree)],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
     )
     if removed.returncode != 0 and worktree.exists():
         leftovers.append(f"worktree {worktree} ({removed.stderr.strip()})")
     if created_branch and _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{created_branch}") is not None:
         deleted = subprocess.run(
-            ["git", "-C", repo, "branch", "-D", created_branch], capture_output=True, text=True
+            ["git", "-C", repo, "branch", "-D", created_branch], capture_output=True, text=True, encoding="utf-8", errors="replace"
         )
         if deleted.returncode != 0:
             leftovers.append(f"branch {created_branch} ({deleted.stderr.strip()})")

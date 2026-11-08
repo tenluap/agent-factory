@@ -17,6 +17,13 @@ from pathlib import Path
 
 from factory_cli import lock, state, totals
 
+
+def _write_text(path, text):
+    """UTF-8 with LF endings on every OS (Path.write_text has no newline
+    argument before Python 3.10)."""
+    with open(path, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
 FACTORY_DIR = Path(__file__).resolve().parents[2]
 
 
@@ -55,7 +62,7 @@ def factory_sha(factory_dir=FACTORY_DIR):
         out = subprocess.run(
             ["git", "-C", str(factory_dir), "rev-parse", "HEAD"],
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
         )
     except OSError:
         return None
@@ -65,7 +72,7 @@ def factory_sha(factory_dir=FACTORY_DIR):
 def _write_atomic(path, body):
     tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     try:
-        tmp.write_text(json.dumps(body, indent=2, ensure_ascii=False) + "\n")
+        _write_text(tmp, json.dumps(body, indent=2, ensure_ascii=False) + "\n")
         os.replace(tmp, path)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -99,7 +106,7 @@ def add(home, run_state, candidates, now=None):
         covered = {}
         for path in sorted(directory.glob("*.json")):
             try:
-                entry = json.loads(path.read_text())
+                entry = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 continue
             if not isinstance(entry, dict) or entry.get("kind") != "retro":
@@ -217,7 +224,7 @@ def add_feedback(home, run, items, now=None):
         own = {}
         for path in sorted(directory.glob("*.json")):
             try:
-                entry = json.loads(path.read_text())
+                entry = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 continue
             if not isinstance(entry, dict) or entry.get("kind") != "feedback":
@@ -306,7 +313,7 @@ def list_backlogs(home):
     entries = []
     for path in sorted((Path(home) / "improvements").glob("*.json")):
         try:
-            body = json.loads(path.read_text())
+            body = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue  # skip an unreadable file, never crash the listing
         if not isinstance(body, dict):
@@ -363,7 +370,7 @@ def claim(home, name, source_runs=()):
         if not path.is_file():
             raise ClaimError(f"no improvement backlog named '{name}'")
         try:
-            body = json.loads(path.read_text())
+            body = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
             raise ClaimError(f"cannot read {path}: {e}") from e
         status = body.get("status") if isinstance(body, dict) else None

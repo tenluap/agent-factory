@@ -1,0 +1,11 @@
+# Line endings are fixed per type so a Windows clone (core.autocrlf=true)
+# still runs: bash cannot execute CRLF scripts, and cmd/PowerShell expect CRLF.
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+core/skills/factory/bin/factory text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf

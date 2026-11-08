@@ -88,7 +88,7 @@ def render_to(harness, out=None, config=None, exported=True, flags=()):
     home = Path(tempfile.mkdtemp(prefix="factory-render-home-"))
     env = dict(os.environ)
     env.pop("FACTORY_HOME", None)
-    env["HOME"] = str(home)
+    env["HOME"] = env["USERPROFILE"] = str(home)  # ~ on POSIX and Windows
     factory_home = home if exported else home / ".factory"
     if config is not None:
         factory_home.mkdir(parents=True, exist_ok=True)
@@ -391,6 +391,7 @@ class ReportTests(unittest.TestCase):
                         env = dict(
                             os.environ,
                             HOME=str(home),
+                            USERPROFILE=str(home),
                             FACTORY_HOME=str(home / ".factory"),
                         )
                         for key, _ in overrides.values():

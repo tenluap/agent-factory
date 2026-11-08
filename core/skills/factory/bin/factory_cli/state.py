@@ -14,6 +14,13 @@ from pathlib import Path
 
 from factory_cli import lock
 
+
+def _write_text(path, text):
+    """UTF-8 with LF endings on every OS (Path.write_text has no newline
+    argument before Python 3.10)."""
+    with open(path, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
 VERSION = 5
 APPEND_ONLY = ("decisions", "issues")  # the writer only ever appends to these
 STATUSES = ("running", "waiting_user", "paused", "halted", "aborted", "pr-open")
@@ -147,7 +154,7 @@ def iso(dt):
 def read_state(path):
     """Read one state file: (state, None) or (None, reason). Never writes."""
     try:
-        loaded = json.loads(Path(path).read_text())
+        loaded = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         return None, str(e)
     if isinstance(loaded, dict):
@@ -642,7 +649,7 @@ def write_state(path, state, mutate=None):
         text = json.dumps(state, indent=2, ensure_ascii=False) + "\n"
         tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
         try:
-            tmp.write_text(text)
+            _write_text(tmp, text)
             os.replace(tmp, path)
         except BaseException:
             tmp.unlink(missing_ok=True)

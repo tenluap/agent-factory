@@ -12,7 +12,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | GitHub Copilot (CLI, VS Code agent mode) | `./install.sh --harness copilot` | `/factory <feature>` | `~/.copilot/agents/factory-*.agent.md` |
 | ZCode | `./install.sh --harness zcode` | `/factory <feature>` | `~/.zcode/agents/factory-*.md` |
 
-`./install.sh --harness all` installs every adapter and links the skill library described below. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links.
+`./install.sh --harness all` installs every adapter and links the skill library described below. Start a new session afterwards so the harness picks up the skill and agents. Re-run after pulling. `--uninstall` removes the links. On Windows, run `.\install.cmd` with the same arguments ([Windows](#windows)).
 
 ## Contents
 
@@ -55,7 +55,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 
 ## Requirements
 
-- An agent harness with an adapter in `adapters/`, and Python 3 (for the renderer and the run-state CLI).
+- An agent harness with an adapter in `adapters/`, and Python 3.9 or newer (for the installer, the renderer and the run-state CLI).
 - In the target repo: git, SpecKit (`.specify/` plus its commands for your harness), and `gh` authenticated for the PR step.
 - SpecKit set up for your harness: `specify init --here --integration <claude|opencode|codex|copilot|zcode> --force`, adding `--integration-options="--skills"` for Codex, Copilot and ZCode (SpecKit 1.1+; the exact command is `speckit_init` in each `adapters/<harness>/harness.md`). `--force` lets it run in a non-empty repo without a prompt; it keeps `.specify/memory/constitution.md` but rewrites `.specify/templates/`. The factory offers to do this when `.specify/` is missing.
 - Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, and — before any code-delivery work starts — `ponytail` and `tdd`. They must be in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads). The bundled skill library provides all of them.
@@ -77,6 +77,10 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 python3 tools/render.py --list            # available harnesses
 ```
 
+On Windows the same arguments go to `.\install.cmd` (see [Windows](#windows)).
+
+The installer is `tools/install.py` ([ADR 0019](docs/adr/0019-the-installer-is-a-python-module.md)). `install.sh`, `install.ps1` and `install.cmd` only find a Python 3.9+ interpreter and run it. They try `python3`, then `python` (on Windows: `py -3`, `python`, `python3`), and `FACTORY_PYTHON` overrides the search. The installer prints the interpreter it used as `python: <command> (<version>)`.
+
 `./install.sh` renders `core/` with the adapter into `${FACTORY_HOME:-~/.factory}/dist/<harness>/`, merging any model overrides from your config, then symlinks the skill, skills and agents into the harness's directories and prints the effective model per role. The repository's own `dist/` stays canonical: no install ever merges your configuration into it. The orchestrator skill is the same on every harness: it carries every adapter's `harness.md` and picks its own at the start of a run (set `FACTORY_HARNESS=<name>` to force one).
 
 A config file that does not parse aborts the install before anything is rendered or linked. An explicitly configured `FACTORY_HOME` must exist and be writable; the default `~/.factory` is created when missing.
@@ -86,6 +90,28 @@ A config file that does not parse aborts the install before anything is rendered
 - **OpenCode** requires V2's `subagent` and `shell` tools and uses native `permissions` rules. The installer verifies the skill and role-agent links and also links the design-to-code trigger plugin into OpenCode's `plugins/` directory. If an existing non-symlink blocks a link, resolve that path and rerun. If `/factory` loads but reports a missing tool, enable that capability and restart; if `/factory` is unavailable, install and reload first. OpenCode translates V1 agent and skill files, so existing installations keep working; see the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1).
 - **Claude Code and Codex** get the design-to-code trigger as a `UserPromptSubmit` hook script copied to `${FACTORY_HOME}/bin/design-to-code-hook.mjs`. The installer never edits your harness config; it prints the snippet to paste into `~/.claude/settings.json` or `~/.codex/hooks.json`.
 - **Codex, Copilot and ZCode** cannot take a model at spawn time: they run on the installed (rendered) model selections.
+
+### Windows
+
+You need:
+
+- [Git for Windows](https://git-scm.com/download/win). It provides Git Bash, which Claude Code uses for its Bash tool.
+- Python 3.9 or newer: `winget install Python.Python.3.13`. The Microsoft Store stub that answers to `python` without a real install is detected and skipped.
+- Developer Mode turned on (**Settings > System > For developers > Developer Mode**), so the installer can create symbolic links without an elevated shell. The installer checks this first and stops, changing nothing, if it can't create links.
+- Node.js only for the optional design-to-code hook, and `gh` for the PR step (`winget install GitHub.cli`, then `gh auth login`).
+
+Then clone the repository and run, from a Command Prompt or PowerShell:
+
+```bat
+.\install.cmd
+.\install.cmd --harness all
+```
+
+`install.cmd` runs `install.ps1` with the execution policy bypassed for that one process; your machine's policy is not changed. If your policy already allows scripts, `.\install.ps1` works the same. From Git Bash, `./install.sh` works too.
+
+The per-user render calls the interpreter command the installer found, for example `py -3`, wherever the skill says `python3`. Re-run the installer after installing or upgrading Python. Claude Code is fully supported on Windows. OpenCode, Codex, Copilot and ZCode install, but running the factory under them on Windows is best-effort, because they may run the skill's shell commands in PowerShell.
+
+If you once installed from Git Bash with the old bash installer, it may have left plain copies instead of links. Those show up as `skip: <path> exists and is not a symlink` (or `... not a library link`). Delete each named copy and re-run `.\install.cmd`.
 
 ### Skill library
 
@@ -204,6 +230,7 @@ The orchestrator runs the retro (see [Self-improvement](#self-improvement)), the
 |---|---|
 | `FACTORY_HARNESS` | Force a specific adapter's `harness.md` in preflight instead of auto-recognition. |
 | `FACTORY_HOME` | Harness-neutral home (default `~/.factory`): `pending/`, `archive/`, `improvements/`, `dist/`, `skills/`, `bin/`, `config.json`, and the optional `facets-profile.md`. Every harness shares it. |
+| `FACTORY_PYTHON` | The interpreter command the installer runs, and renders into the skill in place of `python3`, e.g. `py -3.13`. Default: the first of `python3`, `python` (Windows: `py -3`, `python`, `python3`) that is Python 3.9+. |
 
 ### User config: `${FACTORY_HOME}/config.json`
 
@@ -293,6 +320,6 @@ python3 tools/bench.py compare before.json after.json
 - `adapters/<harness>/`: `harness.md` (how to recognise the harness and perform each verb on it) and `adapter.json` (install paths, agent file format, fields, access, models). A new harness is one new folder here.
 - `.agents/skills/` and `skills-lock.json`: the vendored skill library, managed by the `skills` CLI; `.agents/LICENSES/`: their upstream licenses.
 - `plugins/`: the design-to-code trigger (OpenCode plugin and Claude Code/Codex hook).
-- `tools/render.py`: builds `dist/<harness>/` from core and an adapter. `tools/bench.py`: the benchmark. `tools/tests/`: the test suite.
+- `tools/install.py`: the installer; `install.sh`, `install.ps1` and `install.cmd` are its entry points. `tools/render.py`: builds `dist/<harness>/` from core and an adapter. `tools/bench.py`: the benchmark. `tools/tests/`: the test suite.
 - `conformance/`: benchmark fixtures and golden runs.
 - `specs/`: the SpecKit specs for each factory feature.

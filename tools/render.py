@@ -8,6 +8,8 @@ dist/<harness>/agents/   one native agent file per role, in this harness's forma
 
 Usage: render.py <harness>          render, print nothing
        render.py <harness> --out <dir>  per-user render into <dir>
+       render.py <harness> --out <dir> --python <cmd>
+                                    the same, calling <cmd> where it says python3
        render.py <harness> --paths  report the install targets, write nothing
        render.py <harness> --models report the effective model per role, write nothing
        render.py --list             print the known harnesses
@@ -71,13 +73,29 @@ def frontmatter(text):
     return meta, text[m.end() :]
 
 
+def expand(value):
+    """`~` the way the harnesses resolve it: $HOME on POSIX, %USERPROFILE%
+    on Windows (Node's os.homedir() ignores HOME there, and so does this)."""
+    return os.path.expanduser(str(value))
+
+
+def read_text(path):
+    return Path(path).read_text(encoding="utf-8")
+
+
+def write_text(path, text):
+    """UTF-8 with LF endings on every OS."""
+    with open(path, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
+
 def known():
     return sorted(p.name for p in ADAPTERS.iterdir() if (p / "adapter.json").exists())
 
 
 def default_home():
     """The documented factory home: ${FACTORY_HOME:-~/.factory}, expanded."""
-    return Path(os.environ.get("FACTORY_HOME") or "~/.factory").expanduser()
+    return Path(expand(os.environ.get("FACTORY_HOME") or "~/.factory"))
 
 
 def config_models(name, home=None):
@@ -95,7 +113,7 @@ def config_models(name, home=None):
     if not config.exists():
         return {}
     try:
-        models = json.loads(config.read_text())
+        models = json.loads(read_text(config))
         for key in ("models", name):
             if not isinstance(models, dict):
                 raise ValueError("expected a JSON object")
@@ -111,7 +129,7 @@ def load_adapter(name, *, use_env=True):
     path = ADAPTERS / name / "adapter.json"
     if not path.exists():
         raise SystemExit(f"unknown harness '{name}' (known: {', '.join(known())})")
-    adapter = json.loads(path.read_text())
+    adapter = json.loads(read_text(path))
     home = adapter["home"]["default"]
     if use_env:
         home = os.environ.get(adapter["home"]["env"]) or home
@@ -196,7 +214,7 @@ def render_agent(adapter, fields, body):
 def roles():
     """(file name, meta, body) per role file, sorted — one pass over core/roles."""
     for role_file in sorted((ROOT / "core" / "roles").glob("*.md")):
-        meta, body = frontmatter(role_file.read_text())
+        meta, body = frontmatter(read_text(role_file))
         yield role_file.name, meta, body
 
 
@@ -205,13 +223,14 @@ def effective_models(models):
     return [(meta["name"], models.get(meta["tier"], "")) for _, meta, _ in roles()]
 
 
-def render(name, out=None):
+def render(name, out=None, python=None):
     """Render one harness tree into the target directory and return it.
 
     out=None is the canonical dist/<harness> target and never reads user
     configuration (FR-002). An explicit `out` is the per-user render: the
     default home's config.json models merge per key over the adapter
-    defaults (FR-001, FR-003).
+    defaults (FR-001, FR-003). `python` (per-user only) replaces the
+    `python3` command in the rendered Markdown and TOML (ADR 0019).
     """
     adapter = load_adapter(name, use_env=out is not None)
     merge = config_models(name) if out is not None else {}
@@ -241,7 +260,7 @@ def render(name, out=None):
     tiers = {}
     for role_name, meta, body in roles():
         tiers[meta["name"]] = meta["tier"]
-        (skill / "roles" / role_name).write_text(body.lstrip("\n"))
+        write_text(skill / "roles" / role_name, body.lstrip("\n"))
         values = {
             "role": meta["name"],
             "role_": meta["name"].replace("-", "_"),
@@ -249,9 +268,23 @@ def render(name, out=None):
         }
         fields = agent_fields(adapter, meta, values, models=models)
         text = render_agent(adapter, fields, body.replace("<F>", adapter["skill_dir"]))
-        (target / "agents" / adapter["agent_file"].format(**values)).write_text(text)
-    (skill / "roles" / "tiers.json").write_text(json.dumps(tiers, indent=2) + "\n")
+        write_text(target / "agents" / adapter["agent_file"].format(**values), text)
+    write_text(skill / "roles" / "tiers.json", json.dumps(tiers, indent=2) + "\n")
+    if python and python != "python3":
+        substitute_python(target, python)
     return target
+
+
+def substitute_python(target, python):
+    """Per-user renders on hosts where `python3` is not the interpreter
+    command (Windows: `py -3`, `python`) call the detected one instead."""
+    pattern = re.compile(r"\bpython3\b")
+    for path in sorted(Path(target).rglob("*")):
+        if path.suffix in (".md", ".toml") and path.is_file():
+            text = read_text(path)
+            changed = pattern.sub(lambda _: python, text)
+            if changed != text:
+                write_text(path, changed)
 
 
 def print_paths(adapter, target):
@@ -261,7 +294,7 @@ def print_paths(adapter, target):
         ("skills_root", adapter["skills_root"]),
         ("agent_dir", adapter["agent_dir"]),
     ):
-        print(f"{key}={shlex.quote(os.path.expanduser(value))}")
+        print(f"{key}={shlex.quote(os.path.normpath(expand(value)))}")
 
 
 def print_models(harness):
@@ -283,6 +316,13 @@ def main():
             raise SystemExit("--out needs a directory")
         out = args[i + 1]
         args = args[:i] + args[i + 2 :]
+    python = None
+    if "--python" in args:
+        i = args.index("--python")
+        if i + 1 >= len(args) or out is None:
+            raise SystemExit("--python needs a command and --out")
+        python = args[i + 1]
+        args = args[:i] + args[i + 2 :]
     if not args or args[0].startswith("-"):
         raise SystemExit(__doc__.strip())
     harness = args[0]
@@ -296,7 +336,7 @@ def main():
         if "--models" in args:
             print_models(harness)
         return
-    render(harness, out=out)
+    render(harness, out=out, python=python)
 
 
 if __name__ == "__main__":

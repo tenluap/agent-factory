@@ -1,5 +1,8 @@
-"""Install seam tests: `install.sh` argument validation (FR-020) and the
-per-user install flow (FR-001..FR-005).
+"""Install seam tests: installer argument validation (FR-020) and the
+per-user install flow (FR-001..FR-005), run through one entry point
+(ADR 0019): FACTORY_TEST_ENTRY = sh (bash install.sh, the POSIX default),
+cmd (install.cmd, the Windows default), ps1 (install.ps1) or py
+(tools/install.py directly).
 
 Everything runs under a throwaway `HOME` so no real harness directory,
 factory state or the user's checkout is touched; the committed rendered
@@ -8,13 +11,47 @@ distribution is only ever read.
 
 import json
 import os
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 INSTALL = REPO / "install.sh"
+WINDOWS = os.name == "nt"
+ENTRY = os.environ.get("FACTORY_TEST_ENTRY") or ("cmd" if WINDOWS else "sh")
+# the command each entry point names in its messages
+ENTRY_NAME = {
+    "sh": "./install.sh",
+    "cmd": ".\\install.cmd",
+    "ps1": ".\\install.ps1",
+    "py": ".\\install.cmd" if WINDOWS else "./install.sh",
+}[ENTRY]
+
+
+def install_command(*args):
+    """The command line of the entry point under test; INSTALL names the
+    checkout's install.sh, and the other entry points sit beside it."""
+    checkout = INSTALL.parent
+    if ENTRY == "sh":
+        # PATH order, so Git Bash wins over System32's bash.exe (WSL) on Windows
+        return [shutil.which("bash") or "bash", str(INSTALL), *args]
+    if ENTRY == "cmd":
+        return ["cmd.exe", "/d", "/c", str(checkout / "install.cmd"), *args]
+    if ENTRY == "ps1":
+        return [
+            "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+            "-File", str(checkout / "install.ps1"), *args,
+        ]
+    return [sys.executable, str(checkout / "tools" / "install.py"), *args]
+
+
+def readlink(path):
+    """A symlink's target, without the \\\\?\\ prefix Windows stores."""
+    text = os.readlink(path)
+    return Path(text[4:] if text.startswith("\\\\?\\") else text)
 
 
 class InstallArgValidationTests(unittest.TestCase):
@@ -25,11 +62,12 @@ class InstallArgValidationTests(unittest.TestCase):
             env = dict(
                 os.environ,
                 HOME=home,
+                USERPROFILE=home,  # what ~ means on Windows
                 XDG_CONFIG_HOME=str(Path(home) / ".config"),
                 FACTORY_HOME=str(Path(home) / ".factory"),
             )
             return subprocess.run(
-                ["bash", str(INSTALL), *args],
+                install_command(*args),
                 capture_output=True,
                 text=True,
                 env=env,
@@ -42,11 +80,12 @@ class InstallArgValidationTests(unittest.TestCase):
             env = dict(
                 os.environ,
                 HOME=home,
+                USERPROFILE=home,  # what ~ means on Windows
                 XDG_CONFIG_HOME=str(config),
                 FACTORY_HOME=str(Path(home) / ".factory"),
             )
             out = subprocess.run(
-                ["bash", str(INSTALL), "--harness", "opencode"],
+                install_command("--harness", "opencode"),
                 capture_output=True,
                 text=True,
                 env=env,
@@ -74,11 +113,12 @@ class InstallArgValidationTests(unittest.TestCase):
             env = dict(
                 os.environ,
                 HOME=home,
+                USERPROFILE=home,  # what ~ means on Windows
                 XDG_CONFIG_HOME=str(config),
                 FACTORY_HOME=str(Path(home) / ".factory"),
             )
             out = subprocess.run(
-                ["bash", str(INSTALL), "--harness", "opencode"],
+                install_command("--harness", "opencode"),
                 capture_output=True,
                 text=True,
                 env=env,
@@ -109,7 +149,7 @@ class InstallSandbox:
         self.xdg = self.home / ".config"
 
     def run_install(self, *args, config=None, config_text=None, exported=True):
-        """Run install.sh under the sandbox; `config` lands in the factory
+        """Run the installer under the sandbox; `config` lands in the factory
         home that ${FACTORY_HOME:-~/.factory} resolves to for this run."""
         self.home.mkdir(parents=True, exist_ok=True)
         self.factory_home = self.home if exported else self.home / ".factory"
@@ -120,14 +160,14 @@ class InstallSandbox:
             self.factory_home.mkdir(parents=True, exist_ok=True)
             (self.factory_home / "config.json").write_text(json.dumps(config))
         env = dict(os.environ)
-        env["HOME"] = str(self.home)
+        env["HOME"] = env["USERPROFILE"] = str(self.home)  # ~ on POSIX and Windows
         env["XDG_CONFIG_HOME"] = str(self.xdg)
         if exported:
             env["FACTORY_HOME"] = str(self.factory_home)
         else:
             env.pop("FACTORY_HOME", None)
         return subprocess.run(
-            ["bash", str(INSTALL), "--harness", "opencode", *args],
+            install_command("--harness", "opencode", *args),
             capture_output=True,
             text=True,
             env=env,
@@ -279,14 +319,14 @@ class InstallHomePolicyTests(unittest.TestCase):
     def run_install(self, factory_home, exported=True):
         self.home.mkdir(parents=True, exist_ok=True)
         env = dict(os.environ)
-        env["HOME"] = str(self.home)
+        env["HOME"] = env["USERPROFILE"] = str(self.home)  # ~ on POSIX and Windows
         env["XDG_CONFIG_HOME"] = str(self.xdg)
         if exported:
             env["FACTORY_HOME"] = str(factory_home)
         else:
             env.pop("FACTORY_HOME", None)
         return subprocess.run(
-            ["bash", str(INSTALL), "--harness", "opencode"],
+            install_command("--harness", "opencode"),
             capture_output=True,
             text=True,
             env=env,
@@ -332,6 +372,7 @@ class InstallHomePolicyTests(unittest.TestCase):
         plain_file.write_text("not a home\n")
         self.assert_clean_failure(self.run_install(plain_file), plain_file)
 
+    @unittest.skipIf(WINDOWS, "Windows directories ignore the read-only mode bits")
     def test_unwritable_home_fails_naming_the_path(self):
         locked = self.tmp / "locked-home"
         locked.mkdir()

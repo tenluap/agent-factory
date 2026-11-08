@@ -12,6 +12,36 @@ import sys
 import tempfile
 from pathlib import Path
 
+if os.name == "nt":
+    # Hermetic on Windows as on POSIX (ADR 0019): fixtures are written UTF-8
+    # with LF, as the tests' byte comparisons expect, and every git the tests
+    # start (including the CLI's) ignores a global core.autocrlf, which
+    # Windows installs and GitHub runners turn on. Product code passes its
+    # own encodings and newlines, so these defaults only reach test fixtures.
+    _write_text, _read_text = Path.write_text, Path.read_text
+
+    def _lf_write_text(self, data, encoding=None, errors=None, newline=None):
+        return _write_text(
+            self, data, encoding=encoding or "utf-8", errors=errors,
+            newline="\n" if newline is None else newline,
+        )
+
+    def _utf8_read_text(self, encoding=None, errors=None, **options):
+        return _read_text(self, encoding=encoding or "utf-8", errors=errors, **options)
+
+    Path.write_text = _lf_write_text
+    Path.read_text = _utf8_read_text
+    # git hooks run in Git for Windows' sh, whose ln -s copies unless told not to
+    os.environ.setdefault("MSYS", "winsymlinks:nativestrict")
+    _count = int(os.environ.get("GIT_CONFIG_COUNT", "0"))
+    os.environ.update(
+        {
+            "GIT_CONFIG_COUNT": str(_count + 1),
+            f"GIT_CONFIG_KEY_{_count}": "core.autocrlf",
+            f"GIT_CONFIG_VALUE_{_count}": "false",
+        }
+    )
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FACTORY = REPO_ROOT / "core" / "skills" / "factory" / "bin" / "factory"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
