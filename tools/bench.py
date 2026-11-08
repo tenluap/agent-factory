@@ -344,7 +344,8 @@ def isolated_install(harness, out):
         **checkout_env(harness, config),
     )
     result = subprocess.run(
-        [sys.executable, str(ROOT / "tools" / "install.py"), "--harness", harness],
+        # which(): PATH order, so Git Bash wins over System32 bash.exe (WSL) on Windows
+        [shutil.which("bash") or "bash", str(ROOT / "install.sh"), "--harness", harness],
         env=env,
         capture_output=True,
         text=True,

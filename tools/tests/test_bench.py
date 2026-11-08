@@ -211,6 +211,7 @@ def add_dirs(argv):
     return [argv[i + 1] for i, arg in enumerate(argv) if arg == "--add-dir"]
 
 
+@unittest.skipIf(os.name == "nt", "the stub harness CLIs are shebang scripts, which Windows cannot execute; the benchmark is not supported on Windows (ADR 0019)")
 class RunTests(unittest.TestCase):
     def setUp(self):
         self.box = Sandbox()
@@ -450,6 +451,7 @@ class ProvenanceTests(unittest.TestCase):
                 self.assertEqual(bench_module.tree_digest(root), "unavailable")
 
     @unittest.skipIf(getattr(os, "geteuid", lambda: -1)() == 0, "root reads unreadable directories")
+    @unittest.skipIf(os.name == "nt", "Windows directories ignore the read-only mode bits")
     def test_unreadable_subdirectory_is_unavailable_not_silently_skipped(self):
         tree = self.box.dir / "tree"
         locked = tree / "locked"
@@ -468,6 +470,7 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(bench_module.tree_digest(tree), "unavailable")
 
 
+@unittest.skipIf(os.name == "nt", "the stub harness CLIs are shebang scripts, which Windows cannot execute; the benchmark is not supported on Windows (ADR 0019)")
 class ProvenanceRunTests(unittest.TestCase):
     """Provenance written by `run` before the harness launches."""
 

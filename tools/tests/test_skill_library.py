@@ -174,6 +174,15 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
             json.dumps({"version": 1, "skills": skills}, indent=2)
         )
 
+    def home_tree(self):
+        """Every path under the sandbox home, minus the AppData profile
+        folders PowerShell creates under a sandboxed USERPROFILE at startup."""
+        return sorted(
+            str(p.relative_to(self.home))
+            for p in self.home.rglob("*")
+            if p.relative_to(self.home).parts[0] != "AppData"
+        )
+
     def ok(self, *args):
         result = self.run_install(*args)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -345,20 +354,20 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
             (str(base / "factory"), "reserved: factory"),
             (str(base / "exists"), f"exists: {existing}"),
         ]
-        before = sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*"))
+        before = self.home_tree()
         for value, message in cases:
             with self.subTest(value=value):
                 result = self.run_install("--add-skill", value)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn(message, result.stdout + result.stderr)
                 self.assertEqual(
-                    before, sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*"))
+                    before, self.home_tree()
                 )
         for args in (("--add-skill",), ("--add-skill", str(base / "exists"), "--uninstall")):
             result = self.run_install(*args)
             self.assertEqual(result.returncode, 2, result.stderr)
             self.assertEqual(
-                before, sorted(str(p.relative_to(self.home)) for p in self.home.rglob("*"))
+                before, self.home_tree()
             )
 
     def test_add_skill_failed_copy_cleans_temporary_directory(self):
