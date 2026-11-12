@@ -57,6 +57,9 @@
           },
           {
             "id": "Q3"
+          },
+          {
+            "id": "Q4"
           }
         ],
         "answers": {
@@ -73,6 +76,11 @@
           "Q3": {
             "answer": "A: Regular file, others as aliases - same content at the same scope is one entry carrying the regular file's path (the symlink target); for identical regular copies the lexicographically first path; other paths go in the entry's aliases field",
             "at": "2026-11-12T00:06:27.148081Z",
+            "auto": true
+          },
+          "Q4": {
+            "answer": "A: Exclude, then config, then strongest - instructions.exclude drops the file; else instructions.include (always, root scope) beats instructions.reference; else the strongest derived kind wins (always > scoped > reference), ties broken catalogue/governance > import > link",
+            "at": "2026-11-12T00:06:27.396678Z",
             "auto": true
           }
         }
