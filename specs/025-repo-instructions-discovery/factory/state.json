@@ -1,7 +1,7 @@
 {
   "version": 5,
   "started_at": "2026-11-12T00:00:12.801662Z",
-  "ended_at": null,
+  "ended_at": "2026-11-12T09:28:41.978157Z",
   "harness": "opencode",
   "feature": "Give the factory its own discovery of repo instructions (see docs/repo-instructions-brief.md, run 1): add a deterministic, stdlib-only scanner to the factory CLI that reads git objects at the run's ref and indexes tracked agent instruction files at any depth from a table-driven catalogue, governance documents, @path imports and one-hop links; classify each entry as always, scoped or reference with its scope, size, hash and title; read instructions.include, instructions.reference and instructions.exclude from .factory/config.json; add the read-only `factory instructions` report and the `factory instructions-record` writer, which stores a summary in run state, writes the index file in the run folder and reports the delta on a re-record; call the writer at every preflight after profile-record and disclose counts, sizes, notes, the over-32-KiB warning and the no-instructions case; have the orchestrator read the always entries at preflight and grill and take documented build and test commands from every root-scope entry; record the new terms in CONTEXT.md and the decision as ADR 0019; add this repository's own config lists; and cover the scanner with unit tests over fixture trees.",
   "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
@@ -10,7 +10,7 @@
   "branch": "025-repo-instructions-discovery",
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/025-repo-instructions-discovery",
   "spec_dir": "specs/025-repo-instructions-discovery",
-  "status": "running",
+  "status": "pr-open",
   "stage": "pr",
   "halt_reason": "verify red: full suite fails 8 tests that fail identically on origin/main 0c3bf71 (main CI red since 7 Nov); the run adds 42 passing tests and 0 new failures; needs user decision",
   "stop_at": null,
@@ -676,7 +676,7 @@
     "ui_diff": false,
     "ui_reviewer_skipped": false
   },
-  "pr_url": null,
+  "pr_url": "https://github.com/tenluap/claude-factory/pull/39",
   "history": [
     {
       "at": "2026-11-12T00:00:58.472544Z",
@@ -865,6 +865,13 @@
       "commit": null,
       "harness": "opencode",
       "decision": "approve"
+    },
+    {
+      "at": "2026-11-12T09:28:41.978157Z",
+      "stage": "pr",
+      "event": "pr-open",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "models": {
