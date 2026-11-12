@@ -1,0 +1,104 @@
+"""Repo instruction discovery tests (spec 025): the scanner behind
+`factory instructions` and the `instructions-record` writer.
+
+Fixture trees are built in Sandbox git repos, never tracked fixture directories.
+"""
+
+import json
+import os
+import unittest
+
+from tests import Sandbox
+
+
+class ScanBase(unittest.TestCase):
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+
+    def add(self, files, message="add"):
+        """Write `files` ({path: text}) into the sandbox repo and commit them."""
+        for rel, text in files.items():
+            path = self.box.repo / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", message)
+
+    def link(self, rel, target):
+        path = self.box.repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(target, path)
+
+    def scan(self, *extra):
+        out = self.box.cli("instructions", *extra)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def entries(self, *extra):
+        return {e["path"]: e for e in self.scan(*extra)["entries"]}
+
+
+class ScannerCoreTests(ScanBase):
+    def build(self):
+        self.add({"AGENTS.md": "# Agents\nrules\n", "CONVENTIONS.md": "# Conv\nv1\n"})
+        self.link("CLAUDE.md", "AGENTS.md")
+        self.link("broken/AGENTS.md", "missing.md")
+        self.link("outside/AGENTS.md", "../../outside.md")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "links")
+        (self.box.repo / "GEMINI.md").write_text("# untracked\n")
+        (self.box.repo / "CONVENTIONS.md").write_text("# Conv\nedited\n")
+        blob = self.box.git("rev-parse", "HEAD:CONVENTIONS.md").strip()
+        sub = self.box.git("rev-parse", "HEAD:AGENTS.md").strip()
+        self.box.git("update-index", "--add", "--cacheinfo", f"160000,{sub},vendor/lib")
+        self.box.git("commit", "-q", "-m", "gitlink")
+        self.assertTrue(blob)
+
+    def test_scan_lists_tracked_entries_once_with_fields(self):
+        self.build()
+        status = self.box.git("status", "--porcelain")
+        index = self.scan()
+        entries = {e["path"]: e for e in index["entries"]}
+        agents = entries["AGENTS.md"]
+        self.assertEqual(agents["aliases"], ["CLAUDE.md"])
+        self.assertEqual(agents["kind"], "always")
+        self.assertEqual(agents["scope"], ["/"])
+        self.assertEqual(agents["source"], "catalogue")
+        self.assertEqual(agents["title"], "Agents")
+        self.assertEqual(agents["size"], len("# Agents\nrules\n"))
+        self.assertRegex(agents["hash"], r"^sha256:[0-9a-f]{64}$")
+        self.assertNotIn("CLAUDE.md", entries)
+        self.assertNotIn("GEMINI.md", entries)
+        self.assertFalse([p for p in entries if p.startswith("vendor/")])
+        self.assertFalse([p for p in entries if p.startswith(("broken/", "outside/"))])
+        self.assertTrue(index["notes"])
+        # the committed blob is hashed, not the modified working tree file
+        import hashlib
+
+        committed = self.box.git("show", "HEAD:CONVENTIONS.md").encode()
+        self.assertEqual(
+            entries["CONVENTIONS.md"]["hash"],
+            "sha256:" + hashlib.sha256(committed).hexdigest(),
+        )
+        self.assertEqual(self.box.git("status", "--porcelain"), status)
+
+    def test_default_ref_equals_explicit_head_and_runs_are_identical(self):
+        self.build()
+        first = self.box.cli("instructions")
+        second = self.box.cli("instructions", "--ref", "HEAD")
+        self.assertEqual(first.stdout, second.stdout)
+        self.assertEqual(first.stdout, self.box.cli("instructions").stdout)
+
+    def test_not_a_git_repository_exits_2(self):
+        out = self.box.cli("instructions", cwd=self.box.dir)
+        self.assertEqual(out.returncode, 2)
+
+    def test_unresolvable_ref_exits_5_naming_the_ref(self):
+        out = self.box.cli("instructions", "--ref", "no-such-ref")
+        self.assertEqual(out.returncode, 5)
+        self.assertIn("no-such-ref", out.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

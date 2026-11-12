@@ -25,6 +25,8 @@ read:
   models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
+  instructions [--repo <path>] [--ref <ref>]
+                                    the repo's tracked instruction files at a ref, JSON
   adopt <branch|spec_dir> [--stage <s>] [--dry-run]
                                     adopt a spec factory did not start: the report with
                                     --dry-run (JSON), else the worktree run's resume digest
@@ -237,6 +239,10 @@ def main(argv):
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_detect(repo)
+        elif command == "instructions":
+            _, flags = parse_flags(rest, command, value_flags=("--repo", "--ref"))
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_instructions(repo, flags.get("--ref") or "HEAD")
         elif command == "profile-record":
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))

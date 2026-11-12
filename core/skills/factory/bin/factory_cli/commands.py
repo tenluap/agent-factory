@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, detect, feedback, improvements, lock, state, totals
+from factory_cli import budget, checks, detect, feedback, improvements, instructions, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -450,6 +450,14 @@ def now_iso():
 def cmd_detect(repo):
     """Detect the repo's stack profile; read-only, prints JSON."""
     return detect.detect(repo)
+
+
+def cmd_instructions(repo, ref):
+    """The repo's instruction index at `ref`; read-only, prints JSON (spec 025)."""
+    try:
+        return instructions.scan(repo, ref)
+    except instructions.ScanError as err:
+        die(5, str(err))
 
 
 def cmd_models_record(repo, cwd, block):
