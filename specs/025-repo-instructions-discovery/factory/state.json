@@ -165,6 +165,18 @@
       "duration_ms": 100000,
       "started_at": "2026-11-12T00:06:27Z",
       "ended_at": "2026-11-12T00:08:07Z"
+    },
+    {
+      "at": "2026-11-12T00:09:52.221049Z",
+      "stage": "grill-with-docs",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 19938,
+      "out_est": 1700,
+      "reported": null,
+      "duration_ms": 104000,
+      "started_at": "2026-11-12T00:08:08Z",
+      "ended_at": "2026-11-12T00:09:52Z"
     }
   ],
   "issues": [],
