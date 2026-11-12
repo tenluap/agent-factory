@@ -44,7 +44,25 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "clarify",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A: No, config lists only - the scanner ignores other tools' config files (opencode.json instructions, Codex project_doc_fallback_filenames, Gemini context.fileName, Aider read:); owners add such files through instructions.include",
+            "at": "2026-11-12T00:06:26.675354Z",
+            "auto": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
