@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Give the factory its own discovery of repo instructions (run 1 of docs/repo-instructions-brief.md)": a stdlib-only scanner reading git objects at the run's ref, the `factory instructions` report and `factory instructions-record` writer, preflight recording and disclosure, orchestrator reads of `always` entries, `CONTEXT.md` terms, an ADR, this repository's config lists and fixture-tree tests. The full description and settled decisions are in `factory/brief.md`; the source design document is background only and is not part of this change.
+**Input**: User description: "Give the factory its own discovery of repo instructions": a stdlib-only scanner reading git objects at the run's ref, the `factory instructions` report and `factory instructions-record` writer, preflight recording and disclosure, orchestrator reads of `always` entries, `CONTEXT.md` terms, an ADR, this repository's config lists and fixture-tree tests. Settled decisions are under Clarifications. The source design document, `docs/repo-instructions-brief.md`, is background only and outside this change.
 
 ## Clarifications
 
@@ -25,17 +25,24 @@
 - Q: Precedence when several sources match? → A: Exclude, then config, then strongest kind (FR-012).
 - Q: Index file name and format? → A: `instructions.json` (FR-017).
 
+### Session 2026-11-12 (grill-with-docs, settled under cruise)
+
+- Q5: Input line? → A: Self-contained.
+- Q6: Which entries are followed for imports and links? → A: `always` and `scoped` only (FR-004).
+- Q7: Kind of `CONTRIBUTING*` and the constitution? → A: Root, `.github/` or `docs/` is `always`; elsewhere `scoped`; constitution only at `.specify/memory/constitution.md` (FR-003, FR-007).
+- Q8: Which copy does the orchestrator read? → A: The recorded ref (FR-023).
+- Q9: Conflicting documented commands? → A: Root catalogue agent files first; same-tier conflicts go to the setup-commands confirmation (FR-024).
+- Q10: Delta identity? → A: By path; changed = hash, kind or scope (FR-018).
+
 ## Background
 
-Today the orchestrator reads only the root `CLAUDE.md` and `AGENTS.md`, only for build and test commands. Nested and other tools' files are never read; no harness loads files inside the run's worktree. This feature gives the factory one deterministic, harness-independent discovery of the repository's instructions at the run's commit. Role consumption is a later feature.
+Today the orchestrator reads only the root `CLAUDE.md` and `AGENTS.md`, for build and test commands. No harness loads files inside the run's worktree. This feature gives the factory one deterministic, harness-independent discovery of the repository's instructions at the run's commit.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See every instruction file a repository publishes (Priority: P1)
 
 A factory user asks the CLI which instruction files a repository publishes at a commit. They get one deterministic report of every tracked instruction file at any depth, governance document, imported file and linked document, each with kind, scope, size, hash and title. No run is needed; nothing is written.
-
-**Why this priority**: Everything else records, discloses or reads the index.
 
 **Independent Test**: Run the report against a fixture with root and nested agent files, a Copilot `applyTo` file, a Cursor rule, `CONTRIBUTING.md`, an ADR directory and a linked document; confirm each appears once with the expected kind and scope, and nothing is written.
 
@@ -50,9 +57,7 @@ A factory user asks the CLI which instruction files a repository publishes at a 
 
 ### User Story 2 - Each entry is classified so roles know what to read when (Priority: P1)
 
-Each entry carries one of three kinds (FR-007): `always` entries are read in full at start; `scoped` entries are read before touching a file in their scope; `reference` entries are listed with a title and read when relevant.
-
-**Why this priority**: Without kinds, consumers read everything or nothing.
+Each entry carries a kind (FR-007): `always` is read in full at start; `scoped` before touching a file in its scope; `reference` when relevant.
 
 **Independent Test**: Assert each fixture file's kind and scope against an expected table.
 
@@ -73,8 +78,6 @@ Each entry carries one of three kinds (FR-007): `always` entries are read in ful
 
 A repository owner adds three glob lists to the tracked `<repo>/.factory/config.json`: `instructions.include`, `instructions.reference` and `instructions.exclude`. The scan honours them (FR-012).
 
-**Why this priority**: A fixed catalogue cannot know project-specific locations or exclude look-alike fixtures, such as this repository's `conformance/` tree.
-
 **Independent Test**: In a fixture with all three lists, confirm each list's effect.
 
 **Acceptance Scenarios**:
@@ -89,11 +92,9 @@ A repository owner adds three glob lists to the tracked `<repo>/.factory/config.
 
 ### User Story 4 - Every run records and discloses its instruction index at preflight (Priority: P1)
 
-At every preflight (new run, resume, adopt), right after the stack profile is recorded, the orchestrator calls the writer. The writer stores a summary in run state, writes the full index file in the run folder, and on a re-record reports what changed. The orchestrator discloses the result, including the over-32-KiB warning and the no-instructions case, and continues.
+At every preflight the orchestrator calls the writer after the stack profile is recorded, then discloses the result (FR-022) and continues.
 
-**Why this priority**: Recording at the run's commit makes the index trustworthy for later consumers; disclosure shows the user what the run treats as binding.
-
-**Independent Test**: Record twice against fixtures differing in instruction files; confirm the state summary, the index file and the reported delta.
+**Independent Test**: Record twice against differing fixtures; confirm the summary, index file and delta.
 
 **Acceptance Scenarios**:
 
@@ -109,8 +110,6 @@ At every preflight (new run, resume, adopt), right after the stack profile is re
 
 At preflight and grill, the orchestrator reads every `always` entry in full. Build and test commands documented in any root-scope entry count as documented commands (FR-024).
 
-**Why this priority**: Commands documented outside root `CLAUDE.md`/`AGENTS.md` are missed today, and the orchestrator should honour the rules before roles do.
-
 **Independent Test**: Text-contract test on the orchestrator skill (FR-028).
 
 **Acceptance Scenarios**:
@@ -124,13 +123,10 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 ### Edge Cases
 
 - **Not a git repository, or the ref does not resolve**: the read-only report exits with a usage-style error naming the problem; the writer at preflight records nothing new and discloses the error as a note. Discovery never halts a run.
-- **Duplicate content at the same scope** (symlink or identical copy): one entry per FR-010; distinct content stays separate.
 - **Import cycle or import of a missing or untracked file**: the cycle is followed once; a missing target is reported as a note; the importer stays indexed.
 - **Imports deeper than 4 hops**: not followed; a note names where the chain stopped.
 - **Links to URLs, anchors or paths outside the repository**: ignored. A linked catalogued file keeps its catalogue kind.
-- **A file matched by several sources**: precedence per FR-012; `instructions.exclude` always wins.
 - **Binary or non-UTF-8 content in a matched file**: indexed with size and hash; title empty; a note names it.
-- **Large repositories**: only matched blobs read.
 
 ## Requirements *(mandatory)*
 
@@ -140,14 +136,14 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 
 - **FR-001**: The factory CLI MUST provide a deterministic instruction scanner that uses only the language's standard library and git, and reads git objects at a given ref; only files tracked at that ref count, and the working tree is never read.
 - **FR-002**: The scanner MUST match files at any depth against a table-driven catalogue, one row per tool, covering at least: `AGENTS.md` (and `AGENTS.override.md`, Amp's `AGENT.md` fallback); Claude Code (`CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/**/*.md`); `GEMINI.md`; Copilot (`.github/copilot-instructions.md`, `.github/instructions/**/*.instructions.md`); Cursor (`.cursor/rules/**/*.mdc`); Windsurf/Devin (`.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules`, `.devin/rules/*.md`); Cline (`.clinerules`, `.cline/rules/`); Roo Code (`.roo/rules/`, `.roo/rules-{mode}/`, `.roorules`, `.roorules-{mode}`); Junie (`.junie/AGENTS.md`, `.junie/rules/*.md`, `.junie/playbook.md`, `.junie/guidelines.md`); Kiro (`.kiro/steering/*.md`); Aider's `CONVENTIONS.md`; Zed's `.rules`; Continue (`.continue/rules/*.md`). Each catalogue path is re-checked against its source at plan time. Other tools' config files are not read; owners add such files through `instructions.include`.
-- **FR-003**: The scanner MUST also index governance documents: `CONTRIBUTING*`, `.specify/memory/constitution.md`, and files in ADR directories.
-- **FR-004**: The scanner MUST follow `@path` imports from indexed files up to 4 hops, and relative links from instruction files one hop.
+- **FR-003**: The scanner MUST also index governance documents: `CONTRIBUTING*`, the constitution (only at `.specify/memory/constitution.md`), and files in ADR directories.
+- **FR-004**: The scanner MUST follow `@path` imports up to 4 hops and relative links one hop, only from `always` and `scoped` entries (including imported ones); `reference` entries are leaves. An import is an `@` token at line start or after whitespace, outside code spans and fenced blocks; a link is a Markdown inline or reference-style link outside code, anchor stripped, resolved against the file's directory.
 - **FR-005**: The scanner MUST NOT scan submodule contents, and MUST NOT index the root `README.md` unless it is linked or included.
 
 **Index entries and classification**
 
 - **FR-006**: Each entry MUST carry path, kind (`always`, `scoped` or `reference`), scope, size in bytes, content hash, title and aliases.
-- **FR-007**: Classification MUST follow: `always` = root agent files, the constitution, `CONTRIBUTING*`, rule files flagged always-apply, their imports, `instructions.include`; `scoped` = nested agent files (scope: their own directory subtree) and rule files with glob front matter (`globs`, `paths`, `applyTo`, `fileMatch`; scope: those globs); `reference` = ADR files, linked documents, description-only, manual, model-decision or mode-specific rule files, `instructions.reference`. Each catalogue row records its tool's documented default kind and front-matter-to-kind mapping.
+- **FR-007**: Classification MUST follow: `always` = root agent files, the constitution, `CONTRIBUTING*` at the root, `.github/` or `docs/` (root scope), rule files flagged always-apply, their imports, `instructions.include`; `scoped` = nested agent files and other `CONTRIBUTING*` (scope: their own directory subtree) and rule files with glob front matter (`globs`, `paths`, `applyTo`, `fileMatch`; scope: those globs); `reference` = ADR files, linked documents, description-only, manual, model-decision or mode-specific rule files, `instructions.reference`. Each catalogue row records its tool's documented default kind and front-matter-to-kind mapping.
 - **FR-008**: Imported files MUST inherit the importer's kind and scope.
 - **FR-009**: One tolerant front-matter reader MUST serve every catalogue row. A rule file with absent or unparseable front matter MUST take its row's default kind; an unparseable one also gets a note naming it.
 - **FR-010**: The same content at the same scope MUST be indexed once, carrying the regular file's path (the symlink target), or for identical regular copies the lexicographically first path; the other paths go in the entry's aliases.
@@ -164,7 +160,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 
 - **FR-016**: `factory instructions [--repo <path>] [--ref <ref>]` MUST print the index as a read-only report, needing no run and writing nothing.
 - **FR-017**: `factory instructions-record` MUST scan the one writable run at its ref (pending new run: `base`; pending adoption: the adoption source ref; worktree run: worktree `HEAD`), store a summary in state (ref, counts per kind, combined hash), write the full index as `instructions.json` (ref, combined hash, notes, ordered entries; sorted keys) in the run folder (beside the pending file before the worktree exists; `<spec_dir>/factory/` after, committed like `profile.md`), and follow the existing write-command contract (validate, atomic write, live-lock refusal, commit on worktree runs).
-- **FR-018**: On a re-record, the writer MUST report the delta against the previous index: added, removed and changed entries.
+- **FR-018**: On a re-record, the writer MUST report the delta against the previous index: added, removed and changed entries. Entries match by path; changed means a different hash, kind or scope; alias-only or title-only differences are not changes.
 - **FR-019**: The writer's result MUST carry the counts, total size of `always` entries, notes, the over-32-KiB warning with the largest `always` files when the fixed 32 KiB limit is exceeded, and a no-instructions flag when the index is empty.
 - **FR-020**: The state summary MUST be optional: older states without it stay valid. The run-state reference MUST document it.
 - **FR-021**: The index file MUST leave the branch with the other run artifacts before the PR.
@@ -172,8 +168,8 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 **Orchestrator**
 
 - **FR-022**: Preflight MUST call the writer at every preflight (new run, resume, adopt), immediately after the stack profile is recorded, and disclose counts, sizes, the delta and any notes; the over-32-KiB warning; and the no-instructions case with `create-project-agents-file` as a hint. Discovery MUST never stop a run.
-- **FR-023**: The orchestrator MUST read every `always` entry in full at preflight and at grill.
-- **FR-024**: Documented build and test commands MUST come from every root-scope entry, not only root `CLAUDE.md` and `AGENTS.md`. Documented commands still win over detector proposals. `commands` keeps exactly `build` and `test`.
+- **FR-023**: The orchestrator MUST read every `always` entry in full at preflight and at grill, at the index's recorded ref (`git show <ref>:<path>`), so content matches the recorded hash.
+- **FR-024**: Documented build and test commands MUST come from every root-scope entry, not only root `CLAUDE.md` and `AGENTS.md`. Root catalogue agent files win over governance and include entries; a remaining same-tier conflict goes to the existing setup-commands confirmation (under cruise: first in index order, recorded with that decision). Documented commands still win over detector proposals. `commands` keeps exactly `build` and `test`.
 - **FR-025**: The change MUST be recorded in `DESIGN.md` first and carried into the harness-neutral core using only neutral verbs, rendering cleanly for every harness. The catalogue lives in `core/` as data about consuming repositories; the plan carries one justification line for constitution principle II.
 
 **Records and proof**
@@ -184,7 +180,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 
 ### Key Entities
 
-- **Repo instructions**, **Instruction index**, **Instruction entry**, **Entry kind**: as defined for `CONTEXT.md` in FR-026; the full index lives in the index file, a summary in run state.
+- **Repo instructions**, **Instruction index**, **Instruction entry**, **Entry kind**: per FR-026.
 - **Instruction catalogue**: the table of tool naming conventions the scanner matches; one row per tool.
 - **Index summary**: the state record: ref, counts per kind, combined hash.
 - **Index delta**: added, removed and changed entries between two records of one run.
@@ -203,7 +199,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 
 ## Assumptions
 
-- Every run-2 consumption item (spawn inputs, shared reference, planner sorting, `code-standards`, breach severity, approver listing, bench and golden-run lines) is out of scope.
+- Consumption of the index by roles, reviewers, the approver and the bench is out of scope.
 - Default ADR directory patterns: `docs/adr/`, `docs/adrs/`, `docs/decisions/`, `doc/adr/`, `adr/` at any depth, Markdown files only; plan settles the final list.
 - Content hash: a standard digest of the blob bytes; combined hash: a digest over the ordered entries. Title: first Markdown heading, else front-matter `description`, else file name.
 - "Root agent files" means catalogued agent files whose scope is the repository root, including tool directories at the root (for example `.github/copilot-instructions.md`, `.junie/AGENTS.md`).
