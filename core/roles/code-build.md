@@ -23,7 +23,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
 
 ## Work
 
-1. `cd <worktree> && git status`. Uncommitted changes belong to an interrupted task: finish that task, or discard its partial changes and redo it.
+1. `cd <worktree> && git status`. An uncommitted change is interrupted work only when the task being resumed names its path: finish that task, or discard only those paths and redo it. Leave every other uncommitted change untouched: never stage, commit, stash or discard it.
 2. Follow `<F>/references/engineering.md` while implementing: per behaviour-changing task, ENG-1; before any new code, ENG-6. Read `ponytail` and `tdd` — that read is the skills' activation, with `ponytail` at its full level for this whole role — and apply their guidance inside the approved spec; where skill guidance conflicts with `<F>/references/engineering.md`, the skill wins except on ENG-1..ENG-5, ENG-11, ENG-17 and ENG-23..ENG-26, where engineering.md wins; apply ENG-7..ENG-10 and ENG-13..ENG-16 only to the code the unit changes.
 3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.

@@ -20,6 +20,19 @@ STAGING_MARKERS = (
 )
 
 
+RESUME_MARKERS = (
+    "only when the task being resumed names its path",
+    "never stage, commit, stash or discard it",
+)
+
+
+def resume_step(code_build_text):
+    """code-build's Work step 1 line."""
+    return next(
+        (line for line in code_build_text.splitlines() if line.startswith("1. ")), ""
+    )
+
+
 def commit_scope_gaps(texts):
     """Missing markers as `<role>: <marker>`, in contract order.
 
@@ -29,6 +42,10 @@ def commit_scope_gaps(texts):
         for marker in STAGING_MARKERS:
             if marker not in texts[role]:
                 gaps.append(f"{role}: {marker}")
+    step = resume_step(texts["code-build"])
+    for marker in RESUME_MARKERS:
+        if marker not in step:
+            gaps.append(f"code-build step 1: {marker}")
     return gaps
 
 
@@ -53,6 +70,19 @@ class CommitScopeContractTests(unittest.TestCase):
                     mutated = dict(self.texts)
                     mutated[role] = mutated[role].replace(marker, "")
                     self.assertEqual(commit_scope_gaps(mutated), [f"{role}: {marker}"])
+
+    def test_real_core_text_has_no_resume_gap(self):
+        gaps = [g for g in commit_scope_gaps(self.texts) if "step 1" in g]
+        self.assertEqual(gaps, [])
+
+    def test_each_removed_resume_marker_reports_exactly_that_gap(self):
+        for marker in RESUME_MARKERS:
+            with self.subTest(marker=marker):
+                mutated = dict(self.texts)
+                mutated["code-build"] = mutated["code-build"].replace(marker, "")
+                self.assertEqual(
+                    commit_scope_gaps(mutated), [f"code-build step 1: {marker}"]
+                )
 
 
 if __name__ == "__main__":

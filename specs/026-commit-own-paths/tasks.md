@@ -71,7 +71,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 **Independent test**: `python3 -m unittest tools.tests.test_commit_scope`.
 
-- [ ] T005 [US3] [AC-4] Rewrite Work step 1 of `core/roles/code-build.md`. Depends on T004 (same role file and test file).
+- [x] T005 [US3] [AC-4] Rewrite Work step 1 of `core/roles/code-build.md`. Depends on T004 (same role file and test file).
   - Seam and failure path (plan.md): prose contract `commit_scope_gaps` -> `marker-removed`.
   - 1. Failing test: extend `commit_scope_gaps` in `tools/tests/test_commit_scope.py` with code-build step-1 markers: the resume path-match rule (interrupted work only when the resumed task names its path) and the leave-untouched rule (no stage, commit, stash or discard of any other uncommitted change). Add real-text and one-marker-removed tests. Observe the real-text test fail.
   - 2. Implement: replace step 1 only: `cd <worktree> && git status`; an uncommitted change is interrupted work only when the task being resumed names its path; finish or discard only those paths; leave every other uncommitted change untouched (never stage, commit, stash or discard it).
