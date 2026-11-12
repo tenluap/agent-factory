@@ -51,12 +51,20 @@
         "questions": [
           {
             "id": "Q5"
+          },
+          {
+            "id": "Q6"
           }
         ],
         "answers": {
           "Q5": {
             "answer": "A: Self-contained Input line - drop the factory/brief.md pointer; say settled decisions are under Clarifications; name docs/repo-instructions-brief.md as background only, outside this change",
             "at": "2026-11-12T00:09:52.447562Z",
+            "auto": true
+          },
+          "Q6": {
+            "answer": "A: Follow from always/scoped only - imports and links are followed only from always and scoped entries (including imported ones); reference entries are leaves. Import = @ token at line start or after whitespace, outside code spans and fenced blocks; link = Markdown inline or reference-style link outside code, anchors stripped, resolved against the file's directory",
+            "at": "2026-11-12T00:09:52.696147Z",
             "auto": true
           }
         }
