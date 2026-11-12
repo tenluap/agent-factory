@@ -51,12 +51,20 @@
         "questions": [
           {
             "id": "Q1"
+          },
+          {
+            "id": "Q2"
           }
         ],
         "answers": {
           "Q1": {
             "answer": "A: No, config lists only - the scanner ignores other tools' config files (opencode.json instructions, Codex project_doc_fallback_filenames, Gemini context.fileName, Aider read:); owners add such files through instructions.include",
             "at": "2026-11-12T00:06:26.675354Z",
+            "auto": true
+          },
+          "Q2": {
+            "answer": "A: Per-tool catalogue default - each catalogue row records the tool's documented default kind and its front-matter-to-kind mapping (always-apply flag = always; globs/paths/applyTo/fileMatch = scoped; description-only, manual, model-decision and mode-specific = reference); absent or unparseable front matter takes the row default",
+            "at": "2026-11-12T00:06:26.900936Z",
             "auto": true
           }
         }
