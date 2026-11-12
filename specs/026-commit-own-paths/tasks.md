@@ -6,7 +6,7 @@
 
 **Commit rule for every task**: stage by explicit path only (`git add -- <paths>`); never `git add -A`, `git add .` or `git commit -a`. Commit body carries the `Red:` line (engineering.md "Red proof") unless the task is plan-exempt.
 
-**Out of scope**: the 7 tests already failing on base 0c3bf71 (`test_render_models` x3, `test_skill_library` x4). No task repairs, skips or edits them. "No new failures" means no failure beyond those 7.
+**Out of scope**: the tests already failing on base 0c3bf71, as listed in `factory/verify-baseline.md` (8 locally, 7 on CI). No task repairs, skips or edits them. "No new failures" means no failure beyond that list.
 
 **Format**: `- [ ] [ID] [P?] [Story] [AC-n] Description`
 
@@ -36,7 +36,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
     - `commit_worktree(worktree, msg, spec_dir=None, extra=())` with a staged change: returns `None`, HEAD unchanged, change still staged.
     - Run `python3 -m unittest tools.tests.test_commands`; observe the three new tests fail (deletion swept into the commit; helper commits without a pathspec).
   - 2. Implement: in `commit_worktree`, return `None` when the declared list is empty; otherwise `git add -- <paths>` then `git commit -q -m <message> -- <paths>`. Update the docstring. No other call site changes.
-  - 3. Passing check: `python3 -m unittest tools.tests.test_commands` green; full `python3 -m unittest discover -s tools` shows no failure beyond the 7 base failures.
+  - 3. Passing check: `python3 -m unittest tools.tests.test_commands` green; full `python3 -m unittest discover -s tools` shows no failure beyond the base failures in `factory/verify-baseline.md`.
   - Red proof: `Red: <checkpoint test name> failed as expected` (plus one line each for the resume and no-declared-paths tests).
   - Commit: `git add -- core/skills/factory/bin/factory_cli/commands.py tools/tests/test_commands.py specs/026-commit-own-paths/tasks.md`; `factory(implement): T002 Commit writer state with its declared pathspec`.
   - Done when: checkpoint and resume commits omit the staged `pnpm-lock.yaml` deletion and it stays staged; `commit_worktree` with no declared path makes no commit.
@@ -97,7 +97,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 ## Phase 7: Verification
 
-- [ ] T007 [AC-1] [AC-2] [AC-3] [AC-4] [AC-5] Run quickstart.md steps 1-4: `python3 -m unittest discover -s tools` (no failure beyond the 7 base failures, SC-005) and `commands.build` (exit 0). Verification only: no file change, no commit beyond ticking this box (`git add -- specs/026-commit-own-paths/tasks.md`; `factory(implement): T007 Verify suite and build`). Done when both commands meet their expected result.
+- [ ] T007 [AC-1] [AC-2] [AC-3] [AC-4] [AC-5] Run quickstart.md steps 1-4: `python3 -m unittest discover -s tools` (no failure beyond the base failures in `factory/verify-baseline.md`, SC-005) and `commands.build` (exit 0). Verification only: no file change, no commit beyond ticking this box (`git add -- specs/026-commit-own-paths/tasks.md`; `factory(implement): T007 Verify suite and build`). Done when both commands meet their expected result.
 
 ## Dependencies
 

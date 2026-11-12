@@ -62,7 +62,7 @@ Post-design re-check: Pass, no violations; Complexity Tracking is empty.
 7. `core/skills/factory/SKILL.md` step 8 (AC-5): one item: run `git status --porcelain` in the worktree; list every reported path under "📂 Uncommitted local changes the run didn't make" when it reports any; the run neither commits nor discards them.
 8. Core reference lines: `references/state.md` lines 203 and 210 already describe "commits its spec directory" and "touching only `<spec_dir>/factory/`"; they do not contradict the change and stay unchanged.
 
-Not planned: the `factory: start` commit, the AC-4 rule for design-to-code and fixer, any `engineering.md` rule, any CLI or `show` field, ADR, CONTEXT.md or README change, and the 7 tests already failing on base 0c3bf71 (`test_render_models`, `test_skill_library`).
+Not planned: the `factory: start` commit, the AC-4 rule for design-to-code and fixer, any `engineering.md` rule, any CLI or `show` field, ADR, CONTEXT.md or README change, and the tests already failing on base 0c3bf71, as listed in `factory/verify-baseline.md` (8 locally, 7 on CI).
 
 ## New files, abstractions, dependencies
 

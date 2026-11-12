@@ -128,5 +128,5 @@ At the approver, the user sees every uncommitted path in the worktree under "ðŸ“
 ## Assumptions
 
 - The writer commands' existing declared paths are correct; this run changes only how they commit, not what they declare. (AC-1)
-- The 7 tests already failing on base commit 0c3bf71 (`test_render_models`, `test_skill_library`) are out of scope and are neither repaired nor edited.
+- The tests already failing on base commit 0c3bf71, as listed in `factory/verify-baseline.md` (8 locally, 7 on CI), are out of scope and are neither repaired nor edited.
 - Declined scope (follow-ups, not specified here): extending the AC-4 rule to design-to-code and fixer; a CLI command or `show` field for the uncommitted-path list; a pathspec on the orchestrator's `factory: start` commit; a staging rule in `engineering.md`; an ADR, CONTEXT.md terms or README changes; repairing the base-commit test failures.

@@ -3,7 +3,7 @@
 Prerequisites: Python 3, git, this branch checked out.
 
 1. Run the suite: `python3 -m unittest discover -s tools`.
-   Expected: no failures beyond the 7 already failing on base 0c3bf71 (`test_render_models`, `test_skill_library`).
+   Expected: no failures beyond those already failing on base 0c3bf71, as listed in `factory/verify-baseline.md` (8 locally, 7 on CI).
 2. Focused AC-2 checks: `python3 -m unittest tools.tests.test_commands tools.tests.test_adopt`.
    Expected: the checkpoint, resume and adopt tests with an unrelated staged deletion of `pnpm-lock.yaml` pass: the deletion is absent from each factory commit and still staged afterwards.
 3. Focused prose checks (AC-3, AC-4, AC-5): `python3 -m unittest tools.tests.test_commit_scope`.
