@@ -41,7 +41,8 @@
     "pass": 2,
     "loops": 1,
     "reports": [
-      "factory/analyze-1.md"
+      "factory/analyze-1.md",
+      "factory/analyze-2.md"
     ],
     "remediations": [],
     "pending_clarify": [],
@@ -56,10 +57,10 @@
     "result": {
       "critical": 0,
       "high": 0,
-      "medium": 3,
-      "low": 7,
-      "report": "factory/analyze-1.md",
-      "at": "2026-11-12T00:23:10.216103Z"
+      "medium": 0,
+      "low": 0,
+      "report": "factory/analyze-2.md",
+      "at": "2026-11-12T00:25:48.575749Z"
     }
   },
   "relay": null,
