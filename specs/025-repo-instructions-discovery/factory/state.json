@@ -73,6 +73,9 @@
           },
           {
             "id": "Q2"
+          },
+          {
+            "id": "Q3"
           }
         ],
         "answers": {
@@ -84,6 +87,12 @@
           "Q2": {
             "answer": "opencode standard model: align core/skills/factory/bin/factory_cli/adapter_models.json and the expected table in test_shipped_model_policy_preserves_explicit_tiers to the committed adapters/opencode/adapter.json value claude-code/claude-sonnet-5-5[1m] (6e8caac changed it deliberately from openai/gpt-6.1-terra). The uncommitted claude-haiku-5-5[1m] edit in the main checkout is not adopted",
             "at": "2026-11-12T07:21:02.893341Z",
+            "auto": true,
+            "cruise_override": true
+          },
+          "Q3": {
+            "answer": "retro tier: keep deep (6e8caac moved retro, security-reviewer, ui-reviewer and ux-reviewer to deep deliberately); update test_retro_role_renders_read_only_for_every_harness to expect ('retro', 'deep', 'read')",
+            "at": "2026-11-12T07:21:03.147043Z",
             "auto": true,
             "cruise_override": true
           }
