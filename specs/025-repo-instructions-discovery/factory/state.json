@@ -70,6 +70,9 @@
         "questions": [
           {
             "id": "Q1"
+          },
+          {
+            "id": "Q2"
           }
         ],
         "answers": {
@@ -77,6 +80,12 @@
             "answer": "B: Fix the 8 baseline failures in this run as separate commits; intent for the opencode standard model, the retro tier and skills-lock handling is derived from git history by the orchestrator and recorded as cruise decisions for approver veto",
             "at": "2026-11-12T07:19:26.443089Z",
             "auto": false
+          },
+          "Q2": {
+            "answer": "opencode standard model: align core/skills/factory/bin/factory_cli/adapter_models.json and the expected table in test_shipped_model_policy_preserves_explicit_tiers to the committed adapters/opencode/adapter.json value claude-code/claude-sonnet-5-5[1m] (6e8caac changed it deliberately from openai/gpt-6.1-terra). The uncommitted claude-haiku-5-5[1m] edit in the main checkout is not adopted",
+            "at": "2026-11-12T07:21:02.893341Z",
+            "auto": true,
+            "cruise_override": true
           }
         }
       }
