@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "analyze",
+  "stage": "implement",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -335,6 +335,13 @@
     {
       "at": "2026-11-12T09:42:58.735019Z",
       "stage": "remediate",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T09:43:47.122344Z",
+      "stage": "analyze",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
