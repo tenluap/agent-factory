@@ -62,6 +62,14 @@ def _checkouts(repo):
     return found
 
 
+# pending sidecar suffix -> file name inside the run folder
+SIDECARS = (
+    (".brief.md", "brief.md"),
+    (".profile.md", "profile.md"),
+    (".instructions.json", "instructions.json"),
+)
+
+
 def _resolve(repo, src, base):
     """(shape, branch, ref) for `src` (D2), or None when nothing matches.
 
@@ -367,7 +375,7 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
     state_path = folder / "state.json"
     _no_link(worktree, state_path)
     written = state.write_state(state_path, run)
-    for suffix, target in ((".brief.md", "brief.md"), (".profile.md", "profile.md")):
+    for suffix, target in SIDECARS:
         sidecar = pending.with_name(pending.name.replace(".json", suffix))
         if sidecar.exists():
             text = _utf8(sidecar)
@@ -399,10 +407,10 @@ def _short_sha(worktree):
 
 
 def _clear_pending(pending):
-    """D7 step 6: delete the brief, profile and then the pending JSON once the adoption commit has landed.
+    """D7 step 6: delete the sidecars (brief, profile, instructions) and then the pending JSON once the adoption commit has landed.
 
     The JSON goes last so any failed delete keeps it (FR-013)."""
-    for suffix in (".brief.md", ".profile.md"):
+    for suffix, _ in SIDECARS:
         pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
     pending.unlink()
 

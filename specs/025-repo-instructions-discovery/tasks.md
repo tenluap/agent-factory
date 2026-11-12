@@ -96,7 +96,7 @@
   3. Verify: test file and full suite green.
   Done: writer output matches the contract in every case.
 
-- [ ] T010 [US4] Sidecar life cycle on adopt and drop (FR-021, R8). Seams **S3, S5**; failure path **F3.1**.
+- [x] T010 [US4] Sidecar life cycle on adopt and drop (FR-021, R8). Seams **S3, S5**; failure path **F3.1**.
   1. Test (red): in `tools/tests/test_adopt.py`, a successful adopt moves `<pending-name>.instructions.json` to `<spec_dir>/factory/instructions.json`; F3.1: a refused adoption keeps the pending sidecar. In `tools/tests/test_drop.py`, `drop` removes `instructions.json` with the run folder (S5; may pass already: then `Red: not applicable - <existing drop test> already covers this`).
   2. Implement the move and clean-up in `M/adopt.py` beside `.profile.md`.
   3. Verify: `tools.tests.test_adopt`, `tools.tests.test_drop` and full suite green.

@@ -637,6 +637,17 @@ class AdoptWriteTests(AdoptWriteFixture):
         changed = self.box.git("diff", "--name-only", f"{head}..007-x").splitlines()
         self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
 
+    def test_instructions_sidecar_moves_into_the_run_folder_and_is_committed(self):
+        sidecar = self.pending.with_name(self.pending.name.replace(".json", ".instructions.json"))
+        sidecar.write_text('{"entries": []}\n')
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        moved = self.worktree / "specs" / "007-x" / "factory" / "instructions.json"
+        self.assertEqual(moved.read_text(), '{"entries": []}\n')
+        self.assertFalse(sidecar.exists())
+        changed = self.box.git("show", "--format=", "--name-only", "007-x").splitlines()
+        self.assertIn("specs/007-x/factory/instructions.json", changed)
+
     def test_stage_flag_records_the_chosen_stage(self):
         out = self.write_run("--stage", "plan")
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
@@ -719,6 +730,13 @@ class AdoptRollbackTests(AdoptWriteFixture):
         self.assertTrue(self.pending.exists())
         self.assertEqual(self.brief.read_text(), brief)
         self.assertEqual(self.profile.read_text(), profile)
+
+    def test_refused_adoption_keeps_the_instructions_sidecar(self):
+        sidecar = self.pending.with_name(self.pending.name.replace(".json", ".instructions.json"))
+        sidecar.write_text('{"entries": []}\n')
+        self.reject_commits()
+        self.assertEqual(self.write_run().returncode, 1)
+        self.assertEqual(sidecar.read_text(), '{"entries": []}\n')
 
     def test_retry_after_the_hook_is_removed_reuses_the_pending_file(self):
         head = self.box.git("rev-parse", "007-x").strip()
