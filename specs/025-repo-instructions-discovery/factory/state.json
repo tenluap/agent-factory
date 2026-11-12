@@ -581,6 +581,18 @@
       "duration_ms": 89000,
       "started_at": "2026-11-12T08:39:56Z",
       "ended_at": "2026-11-12T08:41:25Z"
+    },
+    {
+      "at": "2026-11-12T08:41:26.291987Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 9831,
+      "out_est": 38,
+      "reported": null,
+      "duration_ms": 89000,
+      "started_at": "2026-11-12T08:39:56Z",
+      "ended_at": "2026-11-12T08:41:25Z"
     }
   ],
   "issues": [
