@@ -1,6 +1,0 @@
-{
-  "reviewer": "code-standards",
-  "round": 3,
-  "summary": "Delta fixes for SEC-5/STD-4, STD-6, SEC-6 and SEC-7 are correct, tested with Red lines, and introduce no new defect.",
-  "findings": []
-}
