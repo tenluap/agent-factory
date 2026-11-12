@@ -17,12 +17,15 @@ LICENSES = REPO / ".agents/LICENSES"
 LOCK = REPO / "skills-lock.json"
 # Skills the factory RESOLVEs by name and expects from the vendored library.
 REQUIRED = ("grilling", "domain-modeling", "pr", "ponytail", "tdd", "brainstorming", "impeccable")
-FIRST_PARTY = ("design-to-code", "pen-design")
+FIRST_PARTY = (
+    "create-project-agents-file",
+    "design-to-code",
+    "pen-design",
+    "prompt-optimiser",
+)
 # Accepted exceptions, decided by the maintainer when the library moved
 # (ADR 0018). Keep each one named so a new case still fails.
-# graphify-labs/graphify ships `skill.md`; harnesses on case-sensitive file
-# systems do not see it.
-CASE_INSENSITIVE_ONLY = {"graphify"}
+CASE_INSENSITIVE_ONLY = set()
 # markpitt/claude-skills publishes no license.
 UNLICENSED_SOURCES = {"markpitt/claude-skills"}
 
@@ -89,8 +92,6 @@ class SkillLibraryLayoutTests(unittest.TestCase):
         # A local entry's source is the library itself, so its folder is the
         # original: never a copy of a path outside the checkout.
         local = {n: e for n, e in self.lock.items() if e.get("sourceType") == "local"}
-        self.assertIn("prompt-optimiser", local)
-        self.assertIn("create-project-agents-file", local)
         for name, entry in local.items():
             with self.subTest(name=name):
                 self.assertEqual(entry["source"], ".agents/skills")

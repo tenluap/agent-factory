@@ -131,7 +131,7 @@ class ModelPolicyTests(unittest.TestCase):
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
             "opencode": {
                 "deep": "claude-code/claude-opus-5-5[1m]",
-                "standard": "openai/gpt-6.1-terra",
+                "standard": "claude-code/claude-sonnet-5-5[1m]",
             },
         }
         shipped = []
@@ -442,14 +442,14 @@ class ReadOnlyConformanceTests(unittest.TestCase):
         source = role.read_text()
         meta, _ = render_mod.frontmatter(source)
         self.assertEqual(
-            (meta["name"], meta["tier"], meta["access"]), ("retro", "standard", "read")
+            (meta["name"], meta["tier"], meta["access"]), ("retro", "deep", "read")
         )
         for harness in HARNESSES:
             with self.subTest(harness=harness):
                 render(harness)
                 adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
                 text = self.agent_path(harness, meta).read_text()
-                model = adapter["models"].get("standard")
+                model = adapter["models"].get(meta["tier"])
                 if model:
                     self.assertIn(model, text)
                 if harness in ("claude-code", "zcode", "copilot"):
