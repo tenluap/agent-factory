@@ -102,7 +102,7 @@
   3. Verify: `tools.tests.test_adopt`, `tools.tests.test_drop` and full suite green.
   Done: the index file follows the run folder through adopt and drop.
 
-- [ ] T011 [P] [US4] Document the summary, writer and report in `core/skills/factory/references/state.md` (FR-020), and the three config lists in the config README text in `M/models.py` (FR-014; `factory init` still seeds none). **Exempt: `references/state.md` and `models.py` config README text - documentation only.** Done: both texts describe the field, file, commands and lists; `factory init` in a sandbox writes a `config.json` with no `instructions` key (FR-014; existing init test or one added assertion); full suite green.
+- [x] T011 [P] [US4] Document the summary, writer and report in `core/skills/factory/references/state.md` (FR-020), and the three config lists in the config README text in `M/models.py` (FR-014; `factory init` still seeds none). **Exempt: `references/state.md` and `models.py` config README text - documentation only.** Done: both texts describe the field, file, commands and lists; `factory init` in a sandbox writes a `config.json` with no `instructions` key (FR-014; existing init test or one added assertion); full suite green.
 
 ---
 

@@ -117,6 +117,13 @@ def init(repo, home):
         "# Factory model configuration\n\n"
         'Schema: `{"models": {"<harness>": {"deep": "<model>", "standard": "<model>"}}}`.\n'
         "An empty string inherits the session model.\n\n"
+        "## Instruction discovery (optional)\n\n"
+        'Schema: `{"instructions": {"include": [], "reference": [], "exclude": []}}`, '
+        "glob lists read from the committed file at the scanned ref. "
+        "`include` makes matching files always-read instructions, `reference` makes them "
+        "reference-only, `exclude` drops them (and blocks them as import or link targets). "
+        "`*` stays inside one directory, `**` crosses directories. "
+        "`factory init` seeds none of these.\n\n"
         "Precedence per tier: project, then user, then adapter.\n\n"
         "## Seeded defaults and sources\n\n```\n" + table + "\n```\n\n"
         "To restore a default, remove the tier key to inherit the user or adapter value, "
