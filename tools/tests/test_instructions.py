@@ -567,5 +567,54 @@ class DeltaAndWarningTests(RecordBase):
         self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
 
 
+SKILL = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "SKILL.md"
+
+
+class OrchestratorTextTests(unittest.TestCase):
+    """Text contract for SKILL.md (spec 025, FR-022..FR-024)."""
+
+    def setUp(self):
+        self.lines = SKILL.read_text().splitlines()
+
+    def line(self, start):
+        (found,) = [ln for ln in self.lines if ln.startswith(start)]
+        return found
+
+    def section(self, heading):
+        text = "\n".join(self.lines)
+        return text.split(heading, 1)[1].split("\n## ", 1)[0]
+
+    def test_preflight_records_and_discloses_the_index(self):
+        item = self.line("5. Run the detector once")
+        self.assertLess(item.index("factory profile-record"), item.index("factory instructions-record"))
+        for phrase in (
+            "immediately after it at every preflight (new run, resume and adoption)",
+            "counts per kind", "`delta`", "`notes`", "32 KiB",
+            "`create-project-agents-file`", "never stops a run",
+        ):
+            self.assertIn(phrase, item)
+
+    def test_preflight_and_grill_read_every_always_entry_at_the_recorded_ref(self):
+        item = self.line("5. Run the detector once")
+        self.assertIn("read every `always` entry in full at the recorded `ref`", item)
+        grill = self.section("## 3. Grill")
+        self.assertIn("every `always` entry", grill)
+        self.assertIn("git -C <repo> show <ref>:<path>", grill)
+
+    def test_commands_come_from_every_root_scope_entry(self):
+        item = self.line("5. Run the detector once")
+        for phrase in (
+            "every root-scope entry", "root catalogue agent files win",
+            "setup-commands", "first in index order", "exactly `build` and `test`",
+        ):
+            self.assertIn(phrase, item)
+
+    def test_pending_sidecar_moves_with_the_run(self):
+        worktree = self.line("3. Create `<worktree>/specs/<branch>/factory/`")
+        self.assertIn("<pending-name>.instructions.json", worktree)
+        self.assertIn("factory/instructions.json", worktree)
+        self.assertIn("instructions-record", self.line("1. Preflight steps 1-5 run with"))
+
+
 if __name__ == "__main__":
     unittest.main()

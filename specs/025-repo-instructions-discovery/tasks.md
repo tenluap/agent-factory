@@ -111,7 +111,7 @@
 **Goal**: preflight calls the writer, discloses results, reads `always` entries, sources commands.
 **Independent test**: text-contract test on `core/skills/factory/SKILL.md`.
 
-- [ ] T012 [US5] Orchestrator text (FR-022, FR-023, FR-024). Seam **S6**; failure paths: none.
+- [x] T012 [US5] Orchestrator text (FR-022, FR-023, FR-024). Seam **S6**; failure paths: none.
   1. Test (red) in `T`: read `core/skills/factory/SKILL.md` and assert: step 1 item 5 calls `factory instructions-record` immediately after `profile-record` at every preflight (new, resume, adopt); disclosure of counts, sizes, delta and notes; the 32 KiB warning; the no-instructions case naming `create-project-agents-file`; "never stops a run"; step 4.3 moves the pending `<pending-name>.instructions.json` into `factory/instructions.json` beside `brief.md` before the start commit; adoption step 1 names `instructions-record` with `profile-record`; preflight, after `instructions-record`, reads every `always` entry in full at the recorded ref; grill reads every `always` entry in full with `git show <ref>:<path>`; documented build and test commands come from every root-scope entry, root catalogue agent files win, same-tier conflicts go to the setup-commands confirmation (cruise: first in index order); `commands` keeps exactly `build` and `test`.
   2. Edit `core/skills/factory/SKILL.md` using only neutral verbs (`SHELL`), no harness names.
   3. Verify: test file and full suite green; build command renders all five harnesses.
