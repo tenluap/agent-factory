@@ -1,0 +1,17 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 2,
+  "summary": "Delta fixes conform to the spec and the touched artifacts were updated; only the SEC-4 ref-rejection fix lacks a Red: line.",
+  "findings": [
+    {
+      "id": "SPEC-6",
+      "severity": "medium",
+      "blocking": false,
+      "file": "fefb7666fd732f96933b5a2647e749c50d131459 (SEC-4)",
+      "line": 0,
+      "summary": "ENG-2: the behaviour-changing SEC-4 fix (ref starting with '-' now raises ScanError) has no Red: line in the user-changes fix commit body.",
+      "evidence": "ENG-2 and the user-changes fix rule: every behaviour-changing fix needs a Red: line. The commit body carries seven Red: lines (symlink, glob, read cap, index shape, commands, worktree commit, adoption name) but none names test_ref_starting_with_a_dash_is_rejected. The fix is instructions.py resolve_ref `if ref.startswith(\"-\"): raise ScanError(...)`. The commit subject-body line lists SEC-4 among the fixes.",
+      "fix": "Add `Red: test_ref_starting_with_a_dash_is_rejected failed as expected` to the commit body or the PR text. Non-blocking: the one-line guard has a test and verify is green."
+    }
+  ]
+}

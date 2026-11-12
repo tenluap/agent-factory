@@ -1,0 +1,37 @@
+{
+  "reviewer": "code-standards",
+  "round": 2,
+  "summary": "Delta fixes the round-1 advisories it targets and tests pass; one medium non-blocking regression risk in adoption detection plus two low process/style notes.",
+  "findings": [
+    {
+      "id": "STD-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 492,
+      "summary": "FR-017: a pending new run now scans whatever ref adopt._resolve finds for its branch name, so an existing or suffix-matching branch is scanned instead of `base`.",
+      "evidence": "cmd_instructions_record: `found = adopt._resolve(repo, loaded.get(\"branch\"), loaded.get(\"base\"))`; `_resolve` returns refs/heads/<src>, refs/remotes/origin/<src>, or any branch where `name_matches` (equal or ending in `-<name>`). The comment 'only an adoption's exists already' is an assumption, not a check. FR-017 says a pending new run scans `base`. ENG-7: the comment states a premise the code does not enforce.",
+      "fix": "Tell adoption from new run by state content (adoption pending state is written by adopt with its own fields, or `branch` resolving AND matching the recorded adoption source), not by whether a branch happens to resolve; add a test with a pending new run whose branch name already exists locally and assert the scan ref is `base`."
+    },
+    {
+      "id": "STD-5",
+      "severity": "low",
+      "blocking": false,
+      "file": "fefb766 (SEC-4)",
+      "line": 0,
+      "summary": "ENG-2: the commit body has no Red line for the SEC-4 fix, and its test passes before the fix, so no red step exists for it.",
+      "evidence": "Seven Red: lines cover seven findings; `test_ref_starting_with_a_dash_is_rejected` has none. `git rev-parse --verify --quiet '--output=x^{commit}'` already exits 1, so the CLI already exits 5 with the ref named before the guard was added.",
+      "fix": "State in the PR text that SEC-4 is a defensive guard whose test cannot be red, or assert behaviour that differs (e.g. the guard fires without invoking git)."
+    },
+    {
+      "id": "STD-6",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 18,
+      "summary": "ENG-7: the fix commit reformats unrelated code (import block, find_matches, cmd_answer, cmd_decisions_add, cmd_verify) that no Adjacent line names, while new instructions.py lines stay unwrapped.",
+      "evidence": "git diff a528e36..HEAD -- commands.py shows wrapping-only hunks at the imports, find_matches, cmd_answer, cmd_decisions_add and cmd_verify; no formatter or line-length rule exists in the repo, so the churn follows no documented standard and the new instructions.py lines (e.g. `tokens.append(...)` one-liners) keep the older long-line style.",
+      "fix": "Revert the formatting-only hunks, or run one formatter over the module in a separate commit."
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "reviewer": "security",
+  "round": 2,
+  "summary": "SEC-4, size-cap and integrity fixes are sound, but the new adoption detection crashes every new-run instruction scan (branch unset at preflight) and can scan an unreviewed same-named branch; glob and total-read limits remain partial.",
+  "findings": [
+    {
+      "id": "SEC-5",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 493,
+      "summary": "Adoption detection now calls adopt._resolve for every pending run. A new run has no branch at preflight, so the scan crashes with AttributeError, and a same-named ref can redirect the scan to an unreviewed branch.",
+      "evidence": "commands.py:493-498 calls `adopt._resolve(repo, loaded.get(\"branch\"), loaded.get(\"base\"))` and catches only CLIError. A new run's branch is chosen at worktree step 4 (SKILL.md:90), after preflight step 5, so branch is None. Reproduced in a scratch repo: `adopt._resolve(repo, None, 'HEAD')` raises `AttributeError: 'NoneType' object has no attribute 'removeprefix'`, so instructions-record exits non-zero and records nothing for every new run (FR-022). With a local branch literally named `None` it returns `('branch', None, 'refs/heads/None')` and the scan reads that branch. When a new run does carry a branch name, any local or `refs/remotes/origin/<name>` branch matching it (adopt.py:81-93) is scanned instead of `base`, and its `always` entries and documented build/test commands (FR-024) are followed from unreviewed text (ENG-25). The code comment 'every state names a branch' contradicts the new-run flow, and tests miss it because fixture state-v5.json always sets branch.",
+      "fix": "Call _resolve only for a pending adoption (non-empty `branch` and `spec_dir`, or the adopt-file shape); otherwise scan `base`. Also catch any resolution failure as a recorded `error`. Add a test with a pending new-run state that has no `branch` and assert the scan reads `base`."
+    },
+    {
+      "id": "SEC-6",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 239,
+      "summary": "glob_matcher removes catastrophic backtracking but still costs O(glob tokens × path length) per tracked path, with no limit on glob length or repeated wildcards, so a hostile repository config can still stall every preflight.",
+      "evidence": "ENG-24. Measured: glob_matcher('**'*5000+'x').match(150-character path) takes 0.18 s. The config may be up to BLOB_CAP (1 MiB), so a glob of about 500k tokens costs tens of seconds per path and hours across a large tree. Every `include` and `reference` glob is matched against every tracked path (instructions.py:542-543, 596-600). Git calls have no timeout.",
+      "fix": "In glob_matcher, collapse runs of `*` and `**` into one token, and reject a glob over a fixed length (for example 256 characters) or wildcard count with an 'instructions config ignored' note. Add a time-bounded test."
+    },
+    {
+      "id": "SEC-7",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 167,
+      "summary": "A per-blob 1 MiB cap now exists, but nothing caps the total bytes read through config matches; `include: [\"**\"]` loads every tracked file up to 1 MiB into memory and starts one git process per larger file.",
+      "evidence": "ENG-24. read_blobs (instructions.py:167-191) holds the data of every blob up to BLOB_CAP in `cache`, and warm() (lines 516-520) reads every config-matched path (lines 596-598). Each blob over the cap runs its own `git cat-file blob` (_stream_digest). The round-1 SEC-2 fix also asked for a total cap through config matches; none was added.",
+      "fix": "Track the bytes read from config-matched entries and stop adding them past a total cap (for example 16 MiB) with a note naming the cap, or cap the number of config matches."
+    }
+  ]
+}
