@@ -374,6 +374,17 @@
       "duration_ms": 1326000,
       "commit": "19b521e",
       "partial_return": true
+    },
+    {
+      "at": "2026-11-12T01:18:32.673527Z",
+      "kind": "verify-fail",
+      "stage": "verify",
+      "role": "orchestrator",
+      "cause": null,
+      "detail": "python3 -m unittest discover -s tools",
+      "duration_ms": 0,
+      "commit": "a61710f",
+      "partial_return": false
     }
   ],
   "review": {
@@ -460,6 +471,23 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T01:18:32.673527Z",
+      "stage": "verify",
+      "event": "verify-fail",
+      "commit": null,
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+          "status": 0
+        },
+        {
+          "command": "python3 -m unittest discover -s tools",
+          "status": 1
+        }
+      ]
     }
   ],
   "models": {
