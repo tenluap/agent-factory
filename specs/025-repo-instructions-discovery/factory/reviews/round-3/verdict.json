@@ -1,0 +1,16 @@
+{
+  "round": 3,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 641,
+      "summary": "ENG-24: the import-following loop calls warm(...) without hold, so import targets are held up to BLOB_CAP each outside CONFIG_BUDGET. One import hop from a config-included file gets around the new 16 MiB budget. The path existed before this change and is bounded by the @path lines in included files and by IMPORT_HOPS.",
+      "fix": "Pass the remaining budget to the import-loop warm call and subtract what it returns, so config and import targets share one total. Index targets past the budget unparsed with the existing note. Add a test with CONFIG_BUDGET patched small where an included file imports a file that is not config-matched.",
+      "sources": ["SEC-8"]
+    }
+  ],
+  "rejected": []
+}
