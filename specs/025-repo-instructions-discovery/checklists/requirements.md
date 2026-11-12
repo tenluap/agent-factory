@@ -32,5 +32,5 @@
 ## Notes
 
 - The feature is developer tooling: CLI command names, git refs, file paths and the "standard library only" constraint are part of the settled user-facing contract (grill decisions in `factory/brief.md`), not leaked implementation detail.
-- The source design's open points (other tools' config files, ADR directory patterns, index file name and format) carry stated defaults in Assumptions; clarify or plan settles them, as the brief directs.
+- The source design's open points (other tools' config files, ADR directory patterns, index file name and format) are settled: other tools' config files and the index file at clarify (FR-002, FR-017); ADR directory patterns carry a default in Assumptions that plan finalises.
 - Word count is within the 3000-word `spec.md` budget.
