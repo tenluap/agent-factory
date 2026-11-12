@@ -80,6 +80,14 @@
       "summary": "Approve 025-repo-instructions-discovery (cruise run): verdict pass, 10 advisory",
       "answered_at": "2026-11-12T07:50:08.822384Z",
       "latency_ms": 121341
+    },
+    {
+      "at": "2026-11-12T08:20:56.261976Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 025-repo-instructions-discovery after user-changes round: round 2 pass, 5 advisory",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
