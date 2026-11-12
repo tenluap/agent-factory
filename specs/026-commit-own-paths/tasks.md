@@ -86,7 +86,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 **Independent test**: `python3 -m unittest tools.tests.test_commit_scope`.
 
-- [ ] T006 [US4] [AC-5] Add the uncommitted-paths item to "## 8. Approver" in `core/skills/factory/SKILL.md`. Depends on T004 (same test file).
+- [x] T006 [US4] [AC-5] Add the uncommitted-paths item to "## 8. Approver" in `core/skills/factory/SKILL.md`. Depends on T004 (same test file).
   - Seam and failure path (plan.md): prose contract `commit_scope_gaps` -> `marker-removed`.
   - 1. Failing test: extend `commit_scope_gaps` with approver markers read from the "## 8. Approver" section only: `git status --porcelain`, the exact heading "📂 Uncommitted local changes the run didn't make", and the no-commit/no-discard rule. Add real-text and one-marker-removed tests. Observe the real-text test fail.
   - 2. Implement: one item in the approver show-list: run `git status --porcelain` in the worktree; when it reports any path, list every reported path under "📂 Uncommitted local changes the run didn't make"; the run neither commits nor discards them. No other approver change.

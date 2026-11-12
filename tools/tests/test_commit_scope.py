@@ -6,6 +6,7 @@ proves each element fails on its own: every copy with one marker removed must
 report exactly that marker.
 """
 
+import re
 import unittest
 from pathlib import Path
 
@@ -33,10 +34,30 @@ def resume_step(code_build_text):
     )
 
 
+SKILL = REPO / "core" / "skills" / "factory" / "SKILL.md"
+APPROVER_MARKERS = (
+    "git status --porcelain",
+    "📂 Uncommitted local changes the run didn't make",
+    "neither commits nor discards them",
+)
+
+
+def approver_section(skill_text):
+    """SKILL.md text from `## 8. Approver` up to the next `## ` heading."""
+    match = re.search(r"^## 8\. Approver\n(.*?)(?=^## )", skill_text, re.S | re.M)
+    return match.group(1) if match else ""
+
+
+def approver_gaps(skill_text):
+    """Missing approver markers as `approver: <marker>`."""
+    section = approver_section(skill_text)
+    return [f"approver: {m}" for m in APPROVER_MARKERS if m not in section]
+
+
 def commit_scope_gaps(texts):
     """Missing markers as `<role>: <marker>`, in contract order.
 
-    `texts` maps a role name to its file text."""
+    `texts` maps a role name to its file text; the `skill` key holds SKILL.md."""
     gaps = []
     for role in STAGING_ROLES:
         for marker in STAGING_MARKERS:
@@ -46,14 +67,16 @@ def commit_scope_gaps(texts):
     for marker in RESUME_MARKERS:
         if marker not in step:
             gaps.append(f"code-build step 1: {marker}")
-    return gaps
+    return gaps + approver_gaps(texts["skill"])
 
 
 def real_texts():
-    return {
+    texts = {
         role: (ROLES / f"{role}.md").read_text(encoding="utf-8")
         for role in STAGING_ROLES
     }
+    texts["skill"] = SKILL.read_text(encoding="utf-8")
+    return texts
 
 
 class CommitScopeContractTests(unittest.TestCase):
@@ -83,6 +106,16 @@ class CommitScopeContractTests(unittest.TestCase):
                 self.assertEqual(
                     commit_scope_gaps(mutated), [f"code-build step 1: {marker}"]
                 )
+
+    def test_real_core_text_has_no_approver_gap(self):
+        self.assertEqual(approver_gaps(self.texts["skill"]), [])
+
+    def test_each_removed_approver_marker_reports_exactly_that_gap(self):
+        for marker in APPROVER_MARKERS:
+            with self.subTest(marker=marker):
+                mutated = dict(self.texts)
+                mutated["skill"] = mutated["skill"].replace(marker, "")
+                self.assertEqual(commit_scope_gaps(mutated), [f"approver: {marker}"])
 
 
 if __name__ == "__main__":
