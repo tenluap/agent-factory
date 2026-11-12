@@ -271,6 +271,14 @@
       "auto": false,
       "at": "2026-11-12T07:50:46.107294Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "Q2",
+      "answer": "Request changes: fix round-2 advisories SEC-5/STD-4, STD-6, SEC-6, SEC-7; STD-5/SPEC-6 and STD-1 go in the PR text; SEC-3 stays a follow-up",
+      "auto": false,
+      "at": "2026-11-12T08:21:40.657347Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
