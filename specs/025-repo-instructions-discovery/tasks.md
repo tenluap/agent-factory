@@ -122,7 +122,7 @@
 ## Phase 7: Polish
 
 - [x] T013 Records check (FR-026, FR-027). **Exempt: `CONTEXT.md` and the ADR - documentation only, already written.** Run `git ls-remote --heads origin` and `git ls-tree -r --name-only origin/<branch> docs/adr` for `origin/main` and every remote branch; if `0020` is taken, rename `docs/adr/0020-the-factory-discovers-repo-instructions-itself.md` to the next free number and update references (`git grep -n 0020-the-factory`). Done: ADR number unique; `CONTEXT.md` defines the five terms.
-- [ ] T014 Final verification: run the test command, the build command from state (`FACTORY_HOME="$(mktemp -d)"` render loop, untracked `dist/`, `bash -n install.sh`) and quickstart steps 2-3. Verification step; changes no files. Done: all green; `cmp` silent; exits 5 and 2.
+- [x] T014 Final verification: run the test command, the build command from state (`FACTORY_HOME="$(mktemp -d)"` render loop, untracked `dist/`, `bash -n install.sh`) and quickstart steps 2-3. Verification step; changes no files. Done: all green; `cmp` silent; exits 5 and 2.
 
 ---
 
