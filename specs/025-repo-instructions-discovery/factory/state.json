@@ -54,6 +54,9 @@
           },
           {
             "id": "Q2"
+          },
+          {
+            "id": "Q3"
           }
         ],
         "answers": {
@@ -65,6 +68,11 @@
           "Q2": {
             "answer": "A: Per-tool catalogue default - each catalogue row records the tool's documented default kind and its front-matter-to-kind mapping (always-apply flag = always; globs/paths/applyTo/fileMatch = scoped; description-only, manual, model-decision and mode-specific = reference); absent or unparseable front matter takes the row default",
             "at": "2026-11-12T00:06:26.900936Z",
+            "auto": true
+          },
+          "Q3": {
+            "answer": "A: Regular file, others as aliases - same content at the same scope is one entry carrying the regular file's path (the symlink target); for identical regular copies the lexicographically first path; other paths go in the entry's aliases field",
+            "at": "2026-11-12T00:06:27.148081Z",
             "auto": true
           }
         }
