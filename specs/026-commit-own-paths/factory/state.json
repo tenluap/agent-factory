@@ -286,7 +286,19 @@
       "ended_at": "2026-11-12T09:53:30Z"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "at": "2026-11-12T09:59:21.808965Z",
+      "kind": "overrun",
+      "stage": "verify",
+      "role": "orchestrator",
+      "cause": "tool-slow",
+      "detail": "full suite 314s + build; orchestrator budget 300s; ~15s over",
+      "duration_ms": 315000,
+      "commit": "a726c52",
+      "partial_return": false
+    }
+  ],
   "history": [
     {
       "at": "2026-11-12T09:31:27.299536Z",
