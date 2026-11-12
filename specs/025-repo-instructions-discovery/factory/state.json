@@ -565,6 +565,23 @@
           "status": 1
         }
       ]
+    },
+    {
+      "at": "2026-11-12T07:41:58.815906Z",
+      "stage": "verify",
+      "event": "verify-pass",
+      "commit": null,
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+          "status": "pass"
+        },
+        {
+          "command": "python3 -m unittest discover -s tools",
+          "status": "pass"
+        }
+      ]
     }
   ],
   "models": {
