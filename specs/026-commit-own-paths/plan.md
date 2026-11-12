@@ -86,6 +86,8 @@ Exempt: `DESIGN.md` - documentation only; behaviour it describes is tested throu
 
 Overridden: none
 
+Confirmed: 2026-11-12 - Q1 accepted (cruise override) - seams: factory checkpoint, factory resume (worktree), factory adopt (_commit_run), commands.commit_worktree, commit_scope_gaps; failure paths: checkpoint -> unrelated-staged-deletion; resume -> unrelated-staged-deletion; adopt -> unrelated-staged-deletion; commit_worktree -> no-declared-paths; commit_scope_gaps -> marker-removed
+
 ## Project Structure
 
 ### Documentation (this feature)
