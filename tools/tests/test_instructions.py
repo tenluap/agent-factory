@@ -14,7 +14,10 @@ from pathlib import Path
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli.instructions import glob_regex  # noqa: E402
+import hashlib
+import time
+
+from factory_cli.instructions import BLOB_CAP, glob_matcher, glob_regex  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 
@@ -96,6 +99,35 @@ class ScannerCoreTests(ScanBase):
         second = self.box.cli("instructions", "--ref", "HEAD")
         self.assertEqual(first.stdout, second.stdout)
         self.assertEqual(first.stdout, self.box.cli("instructions").stdout)
+
+    def test_symlink_to_an_uncatalogued_file_records_the_regular_target(self):
+        self.add({"docs/x.md": "# X\nrules\n"})
+        self.link("CLAUDE.md", "docs/x.md")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "link")
+        entries = self.entries()
+        self.assertEqual(list(entries), ["docs/x.md"])
+        self.assertEqual(entries["docs/x.md"]["aliases"], ["CLAUDE.md"])
+        digest = "sha256:" + hashlib.sha256(b"# X\nrules\n").hexdigest()
+        self.assertEqual(entries["docs/x.md"]["hash"], digest)
+        shown = self.box.git("show", f"HEAD:docs/x.md").encode()
+        self.assertEqual("sha256:" + hashlib.sha256(shown).hexdigest(), digest)
+
+    def test_file_over_the_read_cap_is_indexed_unparsed_with_a_note(self):
+        body = "# Big\n" + "x" * BLOB_CAP
+        self.add({"AGENTS.md": body, "CONVENTIONS.md": "# C\n@AGENTS.md\n"})
+        index = self.scan()
+        big = {e["path"]: e for e in index["entries"]}["AGENTS.md"]
+        data = body.encode()
+        self.assertEqual(big["size"], len(data))
+        self.assertEqual(big["hash"], "sha256:" + hashlib.sha256(data).hexdigest())
+        self.assertEqual(big["title"], "")
+        self.assertIn(f"over {BLOB_CAP} bytes, not parsed: AGENTS.md", index["notes"])
+
+    def test_ref_starting_with_a_dash_is_rejected(self):
+        out = self.box.cli("instructions", "--ref=--output=x")
+        self.assertEqual(out.returncode, 5)
+        self.assertIn("--output=x", out.stderr)
 
     def test_not_a_git_repository_exits_2(self):
         out = self.box.cli("instructions", cwd=self.box.dir)
@@ -391,6 +423,22 @@ class ConfigListTests(ScanBase):
         self.assertTrue(glob_regex("a?.md").match("ab.md"))
         self.assertFalse(glob_regex("a?.md").match("a/.md"))
 
+    def test_config_glob_matcher_agrees_with_glob_regex(self):
+        globs = ["conformance/**", "*.md", "**/x.md", "a?.md", "docs/**/*.md", "**", "a*b*c", "x/**/y"]
+        paths = ["conformance/a/b/AGENTS.md", "a.md", "docs/a.md", "x.md", "a/b/x.md", "ab.md", "a/.md",
+                 "docs/a/b/c.md", "docs/c.md", "abc", "aXbYc", "a/b/c", "x/y", "x/q/y", "x/q/r/y", "xy"]
+        for glob in globs:
+            for path in paths:
+                with self.subTest(glob=glob, path=path):
+                    self.assertEqual(bool(glob_matcher(glob).match(path)), bool(glob_regex(glob).match(path)))
+
+    def test_pathological_config_glob_matches_in_linear_time(self):
+        matcher = glob_matcher("*a*a*a*a*a*a*a*a*a*a*a*az")
+        started = time.monotonic()
+        self.assertFalse(matcher.match("a" * 400))
+        self.assertTrue(matcher.match("a" * 30 + "z"))
+        self.assertLess(time.monotonic() - started, 1.0)
+
     def test_malformed_config_notes_and_falls_back_to_the_catalogue(self):
         for text in ('{"instructions": 3}', '{"instructions": {"include": [1]}}', "{not json"):
             with self.subTest(text=text):
@@ -456,6 +504,13 @@ class RecordTests(RecordBase):
         self.assertEqual(result["counts"]["always"], 2)
         self.assertTrue(path.with_name(path.name.replace(".json", ".instructions.json")).is_file())
 
+    def test_new_run_is_not_an_adoption_whatever_its_file_name_says(self):
+        self.add({"AGENTS.md": "# A\n"})
+        self.pending("x-adopt-y")
+        result = json.loads(self.box.cli("instructions-record").stdout)
+        self.assertIsNone(result["error"])
+        self.assertEqual(result["counts"]["always"], 1)
+
     def test_worktree_run_commits_the_index_only_when_it_changed(self):
         self.add({"AGENTS.md": "# A\n"})
         wt = self.box.worktree_run("025-b", self.state())
@@ -464,8 +519,10 @@ class RecordTests(RecordBase):
         target = wt / "specs" / "025-b" / "factory" / "instructions.json"
         self.assertTrue(target.is_file())
         self.assertIn("factory: instructions recorded", self.box.git("log", "--oneline", "-1", cwd=wt))
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=wt), "")
         second = json.loads(self.box.cli("instructions-record", cwd=wt).stdout)
         self.assertIsNone(second["committed"])
+        self.assertEqual(self.box.git("status", "--porcelain", cwd=wt), "")
 
     def test_no_writable_run_exits_1_and_writes_nothing(self):
         self.add({"AGENTS.md": "# A\n"})
@@ -566,6 +623,18 @@ class DeltaAndWarningTests(RecordBase):
         self.assertIsNone(result["delta"])
         self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
 
+    def test_previous_index_that_is_not_an_index_object_gives_null_delta_and_a_note(self):
+        self.add({"AGENTS.md": "# A\n"})
+        path = self.pending("025-k")
+        sidecar = path.with_name(path.name.replace(".json", ".instructions.json"))
+        for text in ("[]", '{"entries": [{}]}', '{"entries": 3}'):
+            with self.subTest(text=text):
+                self.record()
+                sidecar.write_text(text)
+                result = self.record()
+                self.assertIsNone(result["delta"])
+                self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
+
 
 SKILL = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "SKILL.md"
 
@@ -606,6 +675,8 @@ class OrchestratorTextTests(unittest.TestCase):
         for phrase in (
             "every root-scope entry", "root catalogue agent files win",
             "setup-commands", "first in index order", "exactly `build` and `test`",
+            "whether or not the detector proposed anything",
+            "decisions-add grill setup-commands '<commands recorded>' --cruise-override",
         ):
             self.assertIn(phrase, item)
 

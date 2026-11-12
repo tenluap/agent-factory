@@ -15,7 +15,17 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, detect, feedback, improvements, instructions, lock, state, totals
+from factory_cli import (
+    budget,
+    checks,
+    detect,
+    feedback,
+    improvements,
+    instructions,
+    lock,
+    state,
+    totals,
+)
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -255,8 +265,12 @@ def find_matches(repo, name):
             matches.append((path, loaded, "pending"))
     # A pending copy of a branch that already has its worktree run is a leftover
     # (an adoption whose pending cleanup failed after its commit): the worktree wins.
-    started = {loaded.get("branch") for _, loaded, source in matches if source == "worktree"}
-    return [m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started]
+    started = {
+        loaded.get("branch") for _, loaded, source in matches if source == "worktree"
+    }
+    return [
+        m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started
+    ]
 
 
 def one_run(repo, name, hint=None):
@@ -475,14 +489,24 @@ def cmd_instructions_record(repo, cwd):
     path, loaded, source, run_worktree = resolve_target(repo, cwd)
     if source == "worktree":
         scan_repo, ref = Path(run_worktree), "HEAD"
-    elif "-adopt-" in path.name:
-        found = adopt._resolve(repo, loaded.get("branch"), loaded.get("base"))
-        scan_repo, ref = repo, found[2] if found else loaded.get("branch")
     else:
-        scan_repo, ref = repo, loaded.get("base")
+        # every state names a branch; only an adoption's exists already, a new run's does not
+        try:
+            found = adopt._resolve(repo, loaded.get("branch"), loaded.get("base"))
+        except CLIError:  # an unresolvable base is the scan's own error below
+            found = None
+        scan_repo, ref = repo, found[2] if found else loaded.get("base")
     result = {
-        "ref": None, "counts": None, "always_bytes": 0, "notes": [], "warning": None,
-        "empty": False, "delta": None, "index": None, "committed": None, "error": None,
+        "ref": None,
+        "counts": None,
+        "always_bytes": 0,
+        "notes": [],
+        "warning": None,
+        "empty": False,
+        "delta": None,
+        "index": None,
+        "committed": None,
+        "error": None,
     }
     try:
         index = instructions.scan(scan_repo, ref)
@@ -493,7 +517,11 @@ def cmd_instructions_record(repo, cwd):
     counts = {kind: 0 for kind in instructions.KIND_ORDER}
     for entry in index["entries"]:
         counts[entry["kind"]] += 1
-    summary = {"ref": index["ref"], "counts": counts, "combined_hash": index["combined_hash"]}
+    summary = {
+        "ref": index["ref"],
+        "counts": counts,
+        "combined_hash": index["combined_hash"],
+    }
 
     def mutate(s):
         s["instructions"] = summary
@@ -502,23 +530,34 @@ def cmd_instructions_record(repo, cwd):
     if source == "pending":
         folder, name = path.parent, path.name.replace(".json", ".instructions.json")
     else:
-        folder, name = Path(run_worktree) / loaded["spec_dir"] / "factory", "instructions.json"
+        folder, name = (
+            Path(run_worktree) / loaded["spec_dir"] / "factory",
+            "instructions.json",
+        )
     target = folder / name
     notes = list(index["notes"])
     previous = None
     if target.is_file():
         try:
             previous = json.loads(target.read_text())
+            if not _is_index(previous):
+                raise ValueError("not an instruction index")
         except ValueError:
+            previous = None
             notes.append(f"previous index unreadable: {target}")
 
-    write_run(path, loaded, mutate)
+    # a worktree re-record of unchanged content leaves state.json alone: only
+    # `ref` would move, and nothing would commit it
+    recorded = (loaded.get("instructions") or {}).get("combined_hash")
+    restate = source == "pending" or recorded != summary["combined_hash"]
+    if restate:
+        write_run(path, loaded, mutate)
     # `ref` moves with every commit, including this one: compare content only
     changed = previous is None or {**previous, "ref": None} != {**index, "ref": None}
     if changed or source == "pending":
         folder.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(index, sort_keys=True, indent=2) + "\n")
-    if changed and source == "worktree":
+    if (changed or restate) and source == "worktree":
         result["committed"] = commit_worktree(
             run_worktree, "factory: instructions recorded", loaded.get("spec_dir")
         )
@@ -534,11 +573,29 @@ def cmd_instructions_record(repo, cwd):
             "largest": [{"path": e["path"], "size": e["size"]} for e in always[:5]],
         }
     result.update(
-        ref=index["ref"], counts=counts, notes=sorted(notes), index=str(target),
-        always_bytes=always_bytes, empty=not index["entries"],
+        ref=index["ref"],
+        counts=counts,
+        notes=sorted(notes),
+        index=str(target),
+        always_bytes=always_bytes,
+        empty=not index["entries"],
         delta=None if previous is None else _index_delta(previous, index),
     )
     return result
+
+
+def _is_index(value):
+    """Whether `value` has the shape of a recorded instruction index."""
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("entries"), list)
+        and all(
+            isinstance(e, dict)
+            and {"path", "hash", "kind", "scope"} <= set(e)
+            and isinstance(e["scope"], list)
+            for e in value["entries"]
+        )
+    )
 
 
 def _index_delta(previous, current):
@@ -1448,7 +1505,10 @@ def cmd_wait_close(repo, cwd, wait_id):
 def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
-        die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+        die(
+            1,
+            "--cruise-override needs cruise mode on this run; run resume --cruise first",
+        )
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
@@ -1549,18 +1609,28 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     return result
 
 
-def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer", cruise_override=False):
+def cmd_decisions_add(
+    repo, cwd, stage, qid, answer, kind="answer", cruise_override=False
+):
     if kind not in state.DECISION_KINDS:
         die(
             1,
             f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
-    if cruise_override:  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
+    if (
+        cruise_override
+    ):  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
         if (loaded.get("mode") or {}).get("cruise") is not True:
-            die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+            die(
+                1,
+                "--cruise-override needs cruise mode on this run; run resume --cruise first",
+            )
         if kind == "approved" or (kind == "gate-override" and stage != "analyze"):
-            die(1, "--cruise-override never records an approval or a gate override outside analyze")
+            die(
+                1,
+                "--cruise-override never records an approval or a gate override outside analyze",
+            )
     now = now_iso()
 
     def mutate(s):
@@ -1601,7 +1671,10 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     """The verify record (FR-006, R3): the review gate reads the latest one."""
     command_results = [{"command": c, "status": st} for c, st in commands_payload]
     if passed and not checks.verify_commands_passed(command_results):
-        die(1, "verify --pass requires named commands with passing statuses (0 or 'pass')")
+        die(
+            1,
+            "verify --pass requires named commands with passing statuses (0 or 'pass')",
+        )
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"

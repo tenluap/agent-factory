@@ -10,6 +10,7 @@ import json
 import posixpath
 import re
 import subprocess
+from collections import namedtuple
 
 # One row per tool: (name, ((pattern, default kind), ...)). A pattern is a glob
 # (glob_regex) matched at any depth; the directory holding the match's first
@@ -98,6 +99,8 @@ SOURCE_ORDER = {"catalogue": 0, "governance": 0, "config": 0, "import": 1, "link
 SYMLINK_HOPS = 8
 IMPORT_HOPS = 4
 CONFIG_PATH = ".factory/config.json"
+# A blob above this is hashed by streaming and never held or parsed (ENG-24).
+BLOB_CAP = 1 << 20
 
 
 class ScanError(Exception):
@@ -118,6 +121,8 @@ def _git(repo, args, data=None):
 
 def resolve_ref(repo, ref):
     """The commit sha `ref` names; ScanError when it names no commit."""
+    if ref.startswith("-"):
+        raise ScanError(f"ref does not resolve to a commit: {ref}")
     try:
         out = _git(repo, ["rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"])
     except ScanError as err:
@@ -139,20 +144,50 @@ def read_tree(repo, sha):
     return tree
 
 
+Blob = namedtuple("Blob", "size digest data")
+
+
+def _stream_digest(repo, oid):
+    """sha256 digest of a blob read in chunks, so it is never held in memory."""
+    digest = hashlib.sha256()
+    try:
+        with subprocess.Popen(
+            ["git", "-C", str(repo), "cat-file", "blob", oid],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        ) as proc:
+            for chunk in iter(lambda: proc.stdout.read(1 << 16), b""):
+                digest.update(chunk)
+    except OSError as err:
+        raise ScanError("git not runnable") from err
+    if proc.returncode != 0:
+        raise ScanError(f"cannot read blob {oid}")
+    return "sha256:" + digest.hexdigest()
+
+
 def read_blobs(repo, oids):
-    """{oid: bytes} through one `git cat-file --batch` process."""
+    """{oid: Blob(size, digest, data)}; sizes come first from `git cat-file
+    --batch-check`, and `data` is None for a blob above BLOB_CAP."""
     wanted = sorted(set(oids))
     if not wanted:
         return {}
-    raw = _git(
-        repo, ["cat-file", "--batch"], data="".join(f"{o}\n" for o in wanted).encode()
-    )
-    blobs, pos = {}, 0
+    names = "".join(f"{o}\n" for o in wanted).encode()
+    sizes = {}
+    for line in _git(repo, ["cat-file", "--batch-check"], names).decode().splitlines():
+        oid, _, size = line.split()
+        sizes[oid] = int(size)
+    small = [o for o in wanted if sizes[o] <= BLOB_CAP]
+    blobs = {}
+    if small:
+        raw = _git(repo, ["cat-file", "--batch"], "".join(f"{o}\n" for o in small).encode())
+        pos = 0
+        for oid in small:
+            end = raw.index(b"\n", pos)
+            data = raw[end + 1 : end + 1 + sizes[oid]]
+            blobs[oid] = Blob(sizes[oid], "sha256:" + hashlib.sha256(data).hexdigest(), data)
+            pos = end + 1 + sizes[oid] + 1
     for oid in wanted:
-        end = raw.index(b"\n", pos)
-        size = int(raw[pos:end].split()[2])
-        blobs[oid] = raw[end + 1 : end + 1 + size]
-        pos = end + 1 + size + 1
+        if oid not in blobs:
+            blobs[oid] = Blob(sizes[oid], _stream_digest(repo, oid), None)
     return blobs
 
 
@@ -166,10 +201,11 @@ def _resolve_symlink(path, tree, blobs_of):
         if path in seen:
             return None
         seen.add(path)
+        link = blobs_of(oid).data
+        if link is None:
+            return None
         target = posixpath.normpath(
-            posixpath.join(
-                posixpath.dirname(path), blobs_of(oid).decode("utf-8", "replace")
-            )
+            posixpath.join(posixpath.dirname(path), link.decode("utf-8", "replace"))
         )
         if target.startswith("..") or target.startswith("/") or target not in tree:
             return None
@@ -198,6 +234,58 @@ def glob_regex(glob):
             out.append(re.escape(glob[i]))
             i += 1
     return re.compile("".join(out) + r"\Z")
+
+
+def glob_matcher(glob):
+    """An object whose `match(path)` agrees with `glob_regex(glob).match` but runs
+    a state-set simulation, linear in the path, so a hostile glob from the
+    repository's config cannot make a regex backtrack catastrophically."""
+    tokens, i = [], 0
+    while i < len(glob):
+        if glob.startswith("**/", i):
+            tokens += [("opt",), ("lit", "/")]
+            i += 3
+        elif glob.startswith("**", i):
+            tokens.append(("any",))
+            i += 2
+        else:
+            tokens.append(("star",) if glob[i] == "*" else ("one",) if glob[i] == "?" else ("lit", glob[i]))
+            i += 1
+    return _Glob(tuple(tokens))
+
+
+class _Glob:
+    def __init__(self, tokens):
+        self.tokens = tokens
+
+    def _close(self, states):
+        """`states` plus every position reached by skipping an optional token."""
+        pending, seen = list(states), set(states)
+        while pending:
+            at = pending.pop()
+            kind = self.tokens[at][0] if at < len(self.tokens) else None
+            for nxt in {"star": (at + 1,), "any": (at + 1,), "opt": (at + 1, at + 2)}.get(kind, ()):
+                if nxt not in seen:
+                    seen.add(nxt)
+                    pending.append(nxt)
+        return seen
+
+    def match(self, path):
+        states = self._close({0})
+        for ch in path:
+            step = set()
+            for at in states:
+                if at == len(self.tokens):
+                    continue
+                kind, *arg = self.tokens[at]
+                if kind in ("any", "opt") or (kind in ("star", "one") and ch != "/"):
+                    step.add(at if kind in ("star", "any", "opt") else at + 1)
+                elif kind == "lit" and ch == arg[0]:
+                    step.add(at + 1)
+            states = self._close(step)
+            if not states:
+                return False
+        return len(self.tokens) in states
 
 
 _ROWS = tuple(
@@ -388,14 +476,17 @@ def _config_globs(tree, blob, notes):
     if CONFIG_PATH not in tree:
         return lists
     try:
-        section = json.loads(blob(tree[CONFIG_PATH][1])).get("instructions", {})
+        raw = blob(tree[CONFIG_PATH][1]).data
+        if raw is None:
+            raise ValueError(f"file over {BLOB_CAP} bytes")
+        section = json.loads(raw).get("instructions", {})
         if not isinstance(section, dict):
             raise ValueError("section is not an object")
         for name in lists:
             globs = section.get(name, [])
             if not isinstance(globs, list) or not all(isinstance(g, str) for g in globs):
                 raise ValueError(f"{name} is not a list of strings")
-            lists[name] = [glob_regex(g) for g in globs]
+            lists[name] = [glob_matcher(g) for g in globs]
     except (ValueError, AttributeError) as err:
         notes.append(f"instructions config ignored: {err}")
         return {name: [] for name in lists}
@@ -419,21 +510,32 @@ def scan(repo, ref="HEAD"):
         return cache[oid]
 
     candidates = [p for p in sorted(tree) if classify_path(p)]
-    cache.update(read_blobs(repo, [tree[p][1] for p in candidates]))
+    links = [oid for mode, oid in tree.values() if mode == "120000"]
+    cache.update(read_blobs(repo, [tree[p][1] for p in candidates] + links))
+
+    def warm(paths):
+        """Read the blobs of `paths` (and their symlink targets) in one batch."""
+        reals = (_resolve_symlink(p, tree, blob) for p in paths)
+        oids = {tree[r][1] for r in reals if r} - set(cache)
+        cache.update(read_blobs(repo, oids))
 
     def read(path):
-        """(real path, content, text or None) of a tracked path; None for a
-        symlink that leaves the repository or reaches nothing."""
+        """(real path, Blob, text or None) of a tracked path; None for a
+        symlink that leaves the repository or reaches nothing. The text is None
+        for a blob that is not UTF-8 or is over the read cap (each noted)."""
         real = _resolve_symlink(path, tree, blob)
         if real is None:
             notes.append(f"symlink skipped: {path}")
             return None
-        content = blob(tree[real][1])
+        got = blob(tree[real][1])
+        if got.data is None:
+            notes.append(f"over {BLOB_CAP} bytes, not parsed: {path}")
+            return real, got, None
         try:
-            return real, content, content.decode("utf-8")
+            return real, got, got.data.decode("utf-8")
         except UnicodeDecodeError:
             notes.append(f"not UTF-8: {path}")
-            return real, content, None
+            return real, got, None
 
     config = _config_globs(tree, blob, notes)
 
@@ -462,7 +564,7 @@ def scan(repo, ref="HEAD"):
             kind, scope = _kind_scope(kind, where, globs)
             scope, source = tuple(scope), "catalogue"
         info[path] = {
-            "kind": kind, "scope": scope, "source": source, "content": content,
+            "kind": kind, "scope": scope, "source": source, "real": real, "blob": content,
             "body": body, "title": "" if text is None else _title(body, path, fields),
         }
 
@@ -481,16 +583,18 @@ def scan(repo, ref="HEAD"):
         got = read(path)
         if got is None:
             return False
-        content, text = got[1], got[2]
+        real, content, text = got
         fields, body = front_matter(text) if text is not None else ({}, "")
         info[path] = {
-            "kind": kind, "scope": tuple(scope), "source": source, "content": content,
+            "kind": kind, "scope": tuple(scope), "source": source, "real": real, "blob": content,
             "body": body if fields is not None else text,
             "title": "" if text is None else _title(body if fields is not None else text, path, fields),
         }
         return True
 
     for name, kind in (("include", "always"), ("reference", "reference")):
+        matched = [p for p in sorted(tree) if listed(name, p) and p not in info]
+        warm(matched)
         for path in sorted(tree):
             if listed(name, path):
                 merge(path, kind, ("/",), "config")
@@ -499,6 +603,10 @@ def scan(repo, ref="HEAD"):
     queue = sorted(depth)
     while queue:
         following, queue = queue, []
+        warm(
+            t for p in following for tok in _imports(info[p]["body"])
+            if (t := _locate(tok, p, tree)) is not None and t not in info
+        )
         for path in following:
             entry = info[path]
             for token in _imports(entry["body"]):
@@ -516,7 +624,12 @@ def scan(repo, ref="HEAD"):
                 elif target in info:
                     depth[target] = depth[path] + 1
                     queue.append(target)
-    for path in sorted(p for p, e in info.items() if e["kind"] != "reference"):
+    linking = sorted(p for p, e in info.items() if e["kind"] != "reference")
+    warm(
+        t for p in linking for tok in _links(info[p]["body"])
+        if (t := _locate(tok, p, tree, relative_only=True)) is not None and t not in info
+    )
+    for path in linking:
         for token in _links(info[path]["body"]):
             target = _locate(token, path, tree, relative_only=True)
             if target is not None:
@@ -524,22 +637,22 @@ def scan(repo, ref="HEAD"):
 
     groups = {}
     for path, e in info.items():
-        key = ("sha256:" + hashlib.sha256(e["content"]).hexdigest(), e["kind"], e["scope"], e["source"])
-        groups.setdefault(key, []).append((path, e["content"], e["title"]))
+        key = (e["blob"].digest, e["kind"], e["scope"], e["source"])
+        groups.setdefault(key, []).append((path, e))
 
     entries = []
     for (digest, kind, scope, source), members in groups.items():
-        regular = sorted(m for m in members if tree[m[0]][0] != "120000")
-        primary = (regular or sorted(members))[0]
+        # the regular file the content lives in, even when only a link reached it
+        primary = min(members, key=lambda m: (m[1]["real"], m[0]))
         entries.append(
             {
-                "path": primary[0],
+                "path": primary[1]["real"],
                 "kind": kind,
                 "scope": list(scope),
-                "size": len(primary[1]),
+                "size": primary[1]["blob"].size,
                 "hash": digest,
-                "title": primary[2],
-                "aliases": sorted(m[0] for m in members if m[0] != primary[0]),
+                "title": primary[1]["title"],
+                "aliases": sorted({m[0] for m in members} - {primary[1]["real"]}),
                 "source": source,
             }
         )

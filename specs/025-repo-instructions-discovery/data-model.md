@@ -31,7 +31,7 @@ Kind at a base directory below the root: a derived `always` becomes `scoped` to 
 | `path` | string | repository-relative POSIX path of the regular file |
 | `kind` | `always` \| `scoped` \| `reference` | FR-007, FR-012 |
 | `scope` | list of strings | `["/"]` = root; `["pkg/api/"]` = directory subtree (trailing `/`); otherwise globs as declared (prefixed per above); `reference` entries carry `["/"]` |
-| `size` | integer | blob bytes |
+| `size` | integer | blob bytes (above 1 MiB the content is hashed by streaming, never held or parsed; a note names the file) |
 | `hash` | string | `sha256:<hex>` of blob bytes |
 | `title` | string | first Markdown heading, else front-matter `description`, else file name; empty for non-UTF-8 |
 | `aliases` | list of strings | sorted other paths with the same content at the same scope (symlinks, identical copies) |
@@ -62,7 +62,7 @@ Optional like `profile`: states without it stay valid (FR-020). `factory validat
 
 ## Index delta
 
-`{ "added": [paths], "removed": [paths], "changed": [paths] }`, each sorted. Match by `path`; changed = different `hash`, `kind` or `scope`; alias-only and title-only differences are not changes. `null` on a first record or when the previous index is unreadable (a note says which).
+`{ "added": [paths], "removed": [paths], "changed": [paths] }`, each sorted. Match by `path`; changed = different `hash`, `kind` or `scope`; alias-only and title-only differences are not changes. `null` on a first record or when the previous index is unreadable: invalid JSON, not an object, or entries lacking `path`, `hash`, `kind` or `scope` (a note says which).
 
 ## Config lists (`<repo>/.factory/config.json` at the scanned ref)
 
