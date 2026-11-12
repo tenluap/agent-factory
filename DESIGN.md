@@ -285,6 +285,15 @@ Push the branch, then look up the Branch PR with `gh pr list --head <branch> --b
 - **Reported usage labelling**: a ledger entry's `reported` stays `null` unless a harness names a usage source; `show` and the totals line label reported usage separately from the `in_est`/`out_est` word-count estimates, never merged into one number (FR-010, R17).
 - **Pen rules in one reference**: `references/design-code-mapping.md` is the single home for the Pen design rules; the duplicated prose in `SKILL.md` (steps 6, 8, 9) and `references/state.md` is replaced by pointers, with every rule sentence accounted for in a checked list so nothing is lost (FR-021, R15).
 
+### Repo instructions discovery
+
+Spec 025, ADR 0020. The factory finds a consuming repository's own instructions itself, from git objects at the run's ref, and never relies on a harness auto-loading them.
+
+- **Scanner and report**: `factory instructions [--repo] [--ref]` is read-only and prints the instruction index (every tracked instruction file with kind `always`/`scoped`/`reference`, scope, size, hash, title, aliases, source). Only tracked files at the ref count.
+- **Writer**: `factory instructions-record` runs at every preflight, immediately after `profile-record` (new, resume, adopt). It writes the `instructions` state summary (`ref`, `counts`, `combined_hash`) and the `instructions.json` run-folder file (pending runs: a sidecar moved into the run folder at worktree creation or adoption), and reports delta, size warning and the empty case. It never stops a run.
+- **Consumption**: preflight reads every `always` entry in full at the recorded ref; documented build and test commands are sourced from every root-scope entry, root catalogue agent files winning (`commands` still holds exactly `build` and `test`).
+- **Catalogue as data**: the per-tool catalogue lives in `core/` (Principle II) because it describes consuming repositories' tools, not factory behaviour, and must be re-checked against each tool's documentation when it changes.
+
 ### Cost ledger
 
 - Every `SPAWN` (each role of a `SPAWN_PARALLEL` counts as one) appends one entry to `state.ledger` (schema: `state.md`): stage, role, harness, input/output token estimates, harness-reported usage when available, duration.
@@ -358,6 +367,10 @@ A real run keeps `analyze.baseline` across a recheck and an escalation (`analyze
 Cruise (ADR 0014), one cruise fixture run of a tiny feature: SC-001 no `questions` timeline entry is left waiting before the approver entry; SC-002 `git ls-remote` shows no branch and no PR exists before the user's Approve; SC-003 every cruise-made override sits in the veto list's cruise-override group. Run end-to-end on a tiny real feature in WayUnoMcpTool. Run with `--stop-at review`, then `/factory resume <branch>` in a fresh session to confirm review starts from the paused state. Separately, kill a session mid-implement and confirm resume continues from the right task. Stop at the approver without opening a PR. Repeat for each new adapter; once two adapters exist, start a run on one harness with `--stop-at implement` and resume it on the other.
 
 For the expanded engineering rules, also check that the plan captures applicable quality constraints, automatic fixing leaves guidance-only findings advisory, and concrete defects retain their justified severity. In particular, similar-looking code with different business meanings must not trigger mandatory abstraction; an exposed secret, duplicate consequential retry or violated performance requirement must not be dismissed as a style preference. Source/link checks and canonical renders validate packaging; they do not replace this role-behaviour validation.
+
+### Repo instructions validation
+
+Machine checks: `tools/tests/test_instructions.py` covers seams S1-S6 (scanner and report, writer and state summary, run-folder file life cycle, validation of the summary, drop, orchestrator text contract). Agent-driven checks after merge: a new run whose preflight records and discloses the index; a resume disclosing the delta; a fixture repository whose test command is documented only in `CONTRIBUTING.md` recorded as documented (SC-003, SC-006).
 
 ### Adoption validation
 
