@@ -357,6 +357,23 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T09:59:21.574426Z",
+      "stage": "implement",
+      "event": "verify-pass",
+      "commit": null,
+      "harness": "opencode",
+      "commands": [
+        {
+          "command": "build: render 5 harnesses + dist untracked + bash -n install.sh",
+          "status": "pass"
+        },
+        {
+          "command": "test: python3 -m unittest discover -s tools - 641 ran, 8 failures, all listed in factory/verify-baseline.md (user decision verify-baseline: no new failures)",
+          "status": "pass"
+        }
+      ]
     }
   ],
   "review": {
