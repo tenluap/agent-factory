@@ -1,0 +1,6 @@
+{
+  "instructions": {
+    "reference": ["DESIGN.md", "CONTEXT.md"],
+    "exclude": ["conformance/**"]
+  }
+}

@@ -71,7 +71,7 @@
   3. Verify: test file and full suite green.
   Done: all three lists behave per spec US3 scenarios 1-4.
 
-- [ ] T007 [US3] This repository's config lists (FR-015, SC-005). **Exempt: `.factory/config.json` - configuration only; its effect is asserted under S1.**
+- [x] T007 [US3] This repository's config lists (FR-015, SC-005). **Exempt: `.factory/config.json` - configuration only; its effect is asserted under S1.**
   1. Write `.factory/config.json`: `{"instructions": {"reference": ["DESIGN.md", "CONTEXT.md"], "exclude": ["conformance/**"]}}` (merge into any existing keys).
   2. Add to `T` an S1 assertion that copies this file's committed content into a sandbox with `DESIGN.md`, `CONTEXT.md` and `conformance/x/AGENTS.md`: both `reference`, nothing under `conformance/`. Exempt commit: no `Red:` line (ENG-2).
   3. Verify: after commit, quickstart step 2 prints `reference reference always` and `[]`.

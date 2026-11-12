@@ -398,6 +398,21 @@ class ConfigListTests(ScanBase):
                 self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
                 self.assertTrue([n for n in index["notes"] if n.startswith("instructions config ignored")])
 
+    def test_this_repositorys_config_lists(self):
+        repo = Path(__file__).resolve().parents[2]
+        self.add(
+            {
+                ".factory/config.json": (repo / ".factory" / "config.json").read_text(),
+                "AGENTS.md": "# A\n",
+                "DESIGN.md": "# D\n",
+                "CONTEXT.md": "# C\n",
+                "conformance/x/AGENTS.md": "# no\n",
+            }
+        )
+        got = self.entries()
+        self.assertEqual((got["DESIGN.md"]["kind"], got["CONTEXT.md"]["kind"]), ("reference", "reference"))
+        self.assertFalse([p for p in got if p.startswith("conformance/")])
+
 
 if __name__ == "__main__":
     unittest.main()
