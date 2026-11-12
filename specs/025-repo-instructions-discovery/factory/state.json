@@ -11,7 +11,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/025-repo-instructions-discovery",
   "spec_dir": "specs/025-repo-instructions-discovery",
   "status": "running",
-  "stage": "approver",
+  "stage": "fix",
   "halt_reason": "verify red: full suite fails 8 tests that fail identically on origin/main 0c3bf71 (main CI red since 7 Nov); the run adds 42 passing tests and 0 new failures; needs user decision",
   "stop_at": null,
   "mode": {
@@ -640,6 +640,13 @@
     {
       "at": "2026-11-12T07:47:39.381993Z",
       "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T07:50:46.355472Z",
+      "stage": "approver",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
