@@ -29,7 +29,7 @@
   3. Verify: `python3 -m unittest tools.tests.test_instructions -v` green; full suite green.
   Done: `factory instructions` prints the index JSON for the fixture; exits 2/5 as specified.
 
-- [ ] T003 [US1] Full catalogue, governance documents and ADR directories (FR-002, FR-003, FR-005). Seam **S1**; failure paths: none beyond T002.
+- [x] T003 [US1] Full catalogue, governance documents and ADR directories (FR-002, FR-003, FR-005). Seam **S1**; failure paths: none beyond T002.
   1. Test (red) in `T`: one fixture per data-model.md catalogue row (every listed path, including `.cursorrules`, `.devin/global_rules.md`, `.junie/guidelines/**/*.md`, `.roo/rules-<mode>/`, `.roorules-<mode>`, `.clinerules` file and directory forms) plus `CONTRIBUTING.md` at root, `.github/`, `docs/` and `pkg/a/CONTRIBUTING.md`, `.specify/memory/constitution.md`, a `constitution.md` elsewhere, `docs/adr/0001-x.md`, `architecture/decisions/a.md`, a bare `decisions/x.md`, a `.cursor/rules/x.md` (not `.mdc`), and root `README.md`. Assert the expected kind/scope/source table (governance `source: "governance"`; ADR `reference`); bare `decisions/x.md`, `.cursor/rules/x.md`, non-root constitution and `README.md` absent. Identical regular copies collapse to the first path with the other as alias.
   2. Implement the remaining `CATALOGUE` rows, governance matcher (`CONTRIBUTING*` always at root/`.github/`/`docs/`, else scoped to its directory; constitution root path only) and ADR rule from research R1 (`adr`/`adrs` any depth, case-insensitive; `decisions` under `doc`/`docs`/`architecture`; `*.md`, `*.markdown`).
   3. Verify: test file and full suite green.

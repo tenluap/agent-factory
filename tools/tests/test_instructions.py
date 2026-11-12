@@ -100,5 +100,105 @@ class ScannerCoreTests(ScanBase):
         self.assertIn("no-such-ref", out.stderr)
 
 
+CATALOGUE_FIXTURE = {
+    "AGENTS.md": "always",
+    "AGENTS.override.md": "always",
+    "AGENT.md": "always",
+    "CLAUDE.md": "always",
+    ".claude/CLAUDE.md": "always",
+    "CLAUDE.local.md": "always",
+    ".claude/rules/a/b.md": "always",
+    "GEMINI.md": "always",
+    ".github/copilot-instructions.md": "always",
+    ".github/instructions/x/y.instructions.md": "reference",
+    ".cursor/rules/x/y.mdc": "reference",
+    ".cursorrules": "always",
+    ".windsurf/rules/a.md": "always",
+    ".windsurf/global_rules.md": "always",
+    ".windsurfrules": "always",
+    ".devin/rules/a.md": "always",
+    ".devin/global_rules.md": "always",
+    ".clinerules": "always",
+    ".cline/rules/a.txt": "always",
+    ".roo/rules/a.md": "always",
+    ".roorules": "always",
+    ".roo/rules-code/a.md": "reference",
+    ".roorules-code": "reference",
+    ".junie/AGENTS.md": "always",
+    ".junie/rules/a.md": "always",
+    ".junie/playbook.md": "always",
+    ".junie/guidelines.md": "always",
+    ".junie/guidelines/sub/a.md": "always",
+    ".kiro/steering/a.md": "always",
+    "CONVENTIONS.md": "always",
+    ".rules": "always",
+    ".continue/rules/a.md": "always",
+}
+
+
+class CatalogueTests(ScanBase):
+    def test_every_catalogue_row_and_governance_rule(self):
+        self.add({p: f"# {p}\n" for p in CATALOGUE_FIXTURE})
+        index = self.entries()
+        for path, kind in CATALOGUE_FIXTURE.items():
+            if path == ".clinerules":  # file form; directory form is a separate repo
+                continue
+            self.assertIn(path, index, path)
+            self.assertEqual(index[path]["kind"], kind, path)
+            self.assertEqual(index[path]["scope"], ["/"], path)
+            self.assertEqual(index[path]["source"], "catalogue", path)
+
+    def test_clinerules_directory_form(self):
+        self.add({".clinerules/a.md": "# a\n", ".clinerules/b.txt": "# b\n"})
+        self.assertEqual(
+            sorted(self.entries()), [".clinerules/a.md", ".clinerules/b.txt"]
+        )
+
+    def test_governance_documents_and_adrs(self):
+        self.add(
+            {
+                "CONTRIBUTING.md": "# c1\n",
+                ".github/CONTRIBUTING.md": "# c2\n",
+                "docs/CONTRIBUTING.md": "# c3\n",
+                "pkg/a/CONTRIBUTING.md": "# c4\n",
+                ".specify/memory/constitution.md": "# const\n",
+                "other/constitution.md": "# no\n",
+                "docs/adr/0001-x.md": "# adr\n",
+                "architecture/decisions/a.md": "# adr2\n",
+                "decisions/x.md": "# no\n",
+                ".cursor/rules/x.md": "# no\n",
+                "README.md": "# readme\n",
+            }
+        )
+        index = self.entries()
+        for path in ("CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"):
+            self.assertEqual(
+                (index[path]["kind"], index[path]["scope"], index[path]["source"]),
+                ("always", ["/"], "governance"),
+                path,
+            )
+        nested = index["pkg/a/CONTRIBUTING.md"]
+        self.assertEqual((nested["kind"], nested["scope"]), ("scoped", ["pkg/a/"]))
+        const = index[".specify/memory/constitution.md"]
+        self.assertEqual((const["kind"], const["source"]), ("always", "governance"))
+        for path in ("docs/adr/0001-x.md", "architecture/decisions/a.md"):
+            self.assertEqual(
+                (index[path]["kind"], index[path]["source"]), ("reference", "governance")
+            )
+        for absent in (
+            "other/constitution.md",
+            "decisions/x.md",
+            ".cursor/rules/x.md",
+            "README.md",
+        ):
+            self.assertNotIn(absent, index)
+
+    def test_identical_copies_collapse_to_first_path(self):
+        self.add({"GEMINI.md": "# same\n", "CONVENTIONS.md": "# same\n"})
+        index = self.entries()
+        self.assertEqual(sorted(index), ["CONVENTIONS.md"])
+        self.assertEqual(index["CONVENTIONS.md"]["aliases"], ["GEMINI.md"])
+
+
 if __name__ == "__main__":
     unittest.main()

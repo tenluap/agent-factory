@@ -8,17 +8,90 @@ Standard library and git only. argv lists only, never a shell.
 import hashlib
 import json
 import posixpath
+import re
 import subprocess
 
-# One row per tool: (name, path patterns, default kind). A pattern is a file
-# name or a directory-relative path; each matches at any depth. Source URLs
-# live in specs/025-repo-instructions-discovery/research.md (R2).
+# One row per tool: (name, ((pattern, default kind), ...)). A pattern is a glob
+# (glob_regex) matched at any depth; the directory holding the match's first
+# segment is its base directory. Source URLs live in
+# specs/025-repo-instructions-discovery/research.md (R2).
 CATALOGUE = (
-    ("agents-md", ("AGENTS.md", "AGENTS.override.md", "AGENT.md"), "always"),
-    ("claude-code", ("CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"), "always"),
-    ("gemini", ("GEMINI.md",), "always"),
-    ("aider", ("CONVENTIONS.md",), "always"),
+    ("agents-md", (("AGENTS.md", "always"), ("AGENTS.override.md", "always"), ("AGENT.md", "always"))),
+    (
+        "claude-code",
+        (
+            ("CLAUDE.md", "always"),
+            (".claude/CLAUDE.md", "always"),
+            ("CLAUDE.local.md", "always"),
+            (".claude/rules/**/*.md", "always"),
+        ),
+    ),
+    ("gemini", (("GEMINI.md", "always"),)),
+    (
+        "copilot",
+        (
+            (".github/copilot-instructions.md", "always"),
+            (".github/instructions/**/*.instructions.md", "reference"),
+        ),
+    ),
+    (".cursor", ((".cursor/rules/**/*.mdc", "reference"), (".cursorrules", "always"))),
+    (
+        "windsurf-devin",
+        tuple(
+            (pattern, "always")
+            for pattern in (
+                ".windsurf/rules/*.md",
+                ".windsurf/global_rules.md",
+                ".windsurfrules",
+                ".devin/rules/*.md",
+                ".devin/global_rules.md",
+            )
+        ),
+    ),
+    (
+        "cline",
+        (
+            (".clinerules", "always"),
+            (".clinerules/**/*.md", "always"),
+            (".clinerules/**/*.txt", "always"),
+            (".cline/rules/**/*.md", "always"),
+            (".cline/rules/**/*.txt", "always"),
+        ),
+    ),
+    (
+        "roo",
+        (
+            (".roo/rules/**/*.md", "always"),
+            (".roo/rules/**/*.txt", "always"),
+            (".roorules", "always"),
+            (".roo/rules-*/**/*.md", "reference"),
+            (".roo/rules-*/**/*.txt", "reference"),
+            (".roorules-*", "reference"),
+        ),
+    ),
+    (
+        "junie",
+        tuple(
+            (pattern, "always")
+            for pattern in (
+                ".junie/AGENTS.md",
+                ".junie/rules/*.md",
+                ".junie/playbook.md",
+                ".junie/guidelines.md",
+                ".junie/guidelines/**/*.md",
+            )
+        ),
+    ),
+    ("kiro", ((".kiro/steering/*.md", "always"),)),
+    ("aider", (("CONVENTIONS.md", "always"),)),
+    ("zed", ((".rules", "always"),)),
+    ("continue", ((".continue/rules/*.md", "always"),)),
 )
+
+# Directories whose CONTRIBUTING* file applies to the whole repository.
+ROOT_GOVERNANCE_DIRS = ("", ".github", "docs")
+CONSTITUTION = ".specify/memory/constitution.md"
+ADR_PARENTS = ("doc", "docs", "architecture")
 
 KIND_ORDER = {"always": 0, "scoped": 1, "reference": 2}
 SYMLINK_HOPS = 8
@@ -101,12 +174,70 @@ def _resolve_symlink(path, tree, blobs_of):
     return None
 
 
-def _catalogue_match(path):
-    """The default kind of a catalogue file at `path`, or None."""
-    for _, patterns, kind in CATALOGUE:
-        for pattern in patterns:
-            if path == pattern or path.endswith("/" + pattern):
-                return kind
+def glob_regex(glob):
+    """An anchored regex for `glob`: `**/` zero or more directories, `**` any
+    characters, `*` any characters but `/`, `?` one non-`/` character."""
+    out, i = [], 0
+    while i < len(glob):
+        if glob.startswith("**/", i):
+            out.append("(?:.*/)?")
+            i += 3
+        elif glob.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif glob[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        elif glob[i] == "?":
+            out.append("[^/]")
+            i += 1
+        else:
+            out.append(re.escape(glob[i]))
+            i += 1
+    return re.compile("".join(out) + r"\Z")
+
+
+_ROWS = tuple(
+    (glob_regex(pattern), kind) for _, patterns in CATALOGUE for pattern, kind in patterns
+)
+
+
+def _suffixes(path):
+    """(base directory, rest) for every directory boundary of `path`."""
+    yield "", path
+    for i, ch in enumerate(path):
+        if ch == "/":
+            yield path[:i], path[i + 1 :]
+
+
+def _is_adr(path):
+    parts = path.lower().split("/")
+    if not parts[-1].endswith((".md", ".markdown")):
+        return False
+    dirs = parts[:-1]
+    return any(
+        d in ("adr", "adrs") or (d == "decisions" and i and dirs[i - 1] in ADR_PARENTS)
+        for i, d in enumerate(dirs)
+    )
+
+
+def classify_path(path):
+    """(kind, scope, source) of a tracked path by catalogue or governance, or None."""
+    for base, rest in _suffixes(path):
+        for regex, kind in _ROWS:
+            if regex.match(rest):
+                if base and kind == "always":
+                    return "scoped", [base + "/"], "catalogue"
+                return kind, ["/"] if not base else [base + "/"], "catalogue"
+    directory, _, name = path.rpartition("/")
+    if name.startswith("CONTRIBUTING"):
+        if directory in ROOT_GOVERNANCE_DIRS:
+            return "always", ["/"], "governance"
+        return "scoped", [directory + "/"], "governance"
+    if path == CONSTITUTION:
+        return "always", ["/"], "governance"
+    if _is_adr(path):
+        return "reference", ["/"], "governance"
     return None
 
 
@@ -133,7 +264,7 @@ def scan(repo, ref="HEAD"):
             cache.update(read_blobs(repo, [oid]))
         return cache[oid]
 
-    candidates = [p for p in sorted(tree) if _catalogue_match(p)]
+    candidates = [p for p in sorted(tree) if classify_path(p)]
     cache.update(read_blobs(repo, [tree[p][1] for p in candidates]))
 
     groups = {}
@@ -144,12 +275,13 @@ def scan(repo, ref="HEAD"):
             continue
         content = blob(tree[real][1])
         digest = "sha256:" + hashlib.sha256(content).hexdigest()
-        groups.setdefault((digest, _catalogue_match(path), "/"), []).append(
+        kind, scope, source = classify_path(path)
+        groups.setdefault((digest, kind, tuple(scope), source), []).append(
             (path, real, content)
         )
 
     entries = []
-    for (digest, kind, scope), members in groups.items():
+    for (digest, kind, scope, source), members in groups.items():
         regular = sorted(m for m in members if tree[m[0]][0] != "120000")
         primary = (regular or sorted(members))[0]
         text = primary[2].decode("utf-8", "replace")
@@ -157,12 +289,12 @@ def scan(repo, ref="HEAD"):
             {
                 "path": primary[0],
                 "kind": kind,
-                "scope": [scope],
+                "scope": list(scope),
                 "size": len(primary[2]),
                 "hash": digest,
                 "title": _title(text, primary[0]),
                 "aliases": sorted(m[0] for m in members if m[0] != primary[0]),
-                "source": "catalogue",
+                "source": source,
             }
         )
     entries.sort(key=lambda e: (KIND_ORDER[e["kind"]], e["path"]))
