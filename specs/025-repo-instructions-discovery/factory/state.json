@@ -54,6 +54,9 @@
           },
           {
             "id": "Q6"
+          },
+          {
+            "id": "Q7"
           }
         ],
         "answers": {
@@ -65,6 +68,11 @@
           "Q6": {
             "answer": "A: Follow from always/scoped only - imports and links are followed only from always and scoped entries (including imported ones); reference entries are leaves. Import = @ token at line start or after whitespace, outside code spans and fenced blocks; link = Markdown inline or reference-style link outside code, anchors stripped, resolved against the file's directory",
             "at": "2026-11-12T00:09:52.696147Z",
+            "auto": true
+          },
+          "Q7": {
+            "answer": "A: Root locations always, nested scoped - CONTRIBUTING* at the root, .github/ or docs/ is always with root scope; elsewhere scoped to its own directory subtree; the constitution is matched only at .specify/memory/constitution.md",
+            "at": "2026-11-12T00:09:52.941457Z",
             "auto": true
           }
         }
