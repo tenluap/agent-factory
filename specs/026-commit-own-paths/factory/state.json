@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "remediate",
+  "stage": "analyze",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -36,8 +36,8 @@
     "test": "python3 -m unittest discover -s tools"
   },
   "analyze": {
-    "pass": 2,
-    "loops": 1,
+    "pass": 3,
+    "loops": 2,
     "reports": [
       "factory/analyze-1.md",
       "factory/analyze-2.md"
@@ -315,6 +315,13 @@
     {
       "at": "2026-11-12T09:42:15.274085Z",
       "stage": "analyze",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T09:42:58.735019Z",
+      "stage": "remediate",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
