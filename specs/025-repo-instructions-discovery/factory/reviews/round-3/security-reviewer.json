@@ -1,0 +1,17 @@
+{
+  "reviewer": "security",
+  "round": 3,
+  "summary": "Round-2 security advisories SEC-5, SEC-6 and SEC-7 are fixed (adoption only on the exact pending_name stem with failures recorded as error; wildcard runs collapsed and globs over 256 characters skipped; 16 MiB held budget with one streamed cat-file --batch pass). One low advisory: import targets bypass the new config budget (pre-existing path).",
+  "findings": [
+    {
+      "id": "SEC-8",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 640,
+      "summary": "ENG-24: the new 16 MiB CONFIG_BUDGET covers only config-matched files. The import-following loop warms import targets through `warm(...)` with no `hold`, so a config-included file holding up to the budget in `@path` lines (or a catalogue file) can still make the scan hold every other tracked blob up to 1 MiB each, across up to IMPORT_HOPS levels. This path existed before this change, but it means one hop gets around the budget the SEC-7 fix adds.",
+      "evidence": "Delta 17d867e..HEAD: read_blobs(hold=...) and the config budget apply to config matches only; the import loop's warm(...) call passes no hold, so import targets are held up to BLOB_CAP each without counting against CONFIG_BUDGET. Checked and sound in the same delta: pending adoption detected only when path.stem == adopt.pending_name(repo, branch), every other pending run scans base, resolution failures recorded as error, a branch-less pending file refused with exit 1; wildcard collapse keeps glob_regex semantics and `**/` tokens; GLOB_CAP 256 skip with note; over-budget blobs cached with no data and hashed in one cat-file --batch pass via a temporary file read in 64 KiB chunks; IndexError/short read mapped to ScanError; Popen.__exit__ closes stdout before wait.",
+      "fix": "Pass the remaining `budget` to the import-loop `warm` call and subtract what it returns, so config and import targets share one total; targets past the budget are indexed unparsed with the existing note. Add a test where an included file imports a file that is not config-matched while CONFIG_BUDGET is patched small."
+    }
+  ]
+}
