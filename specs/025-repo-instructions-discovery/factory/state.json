@@ -44,7 +44,25 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "grill-with-docs",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q5"
+          }
+        ],
+        "answers": {
+          "Q5": {
+            "answer": "A: Self-contained Input line - drop the factory/brief.md pointer; say settled decisions are under Clarifications; name docs/repo-instructions-brief.md as background only, outside this change",
+            "at": "2026-11-12T00:09:52.447562Z",
+            "auto": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
