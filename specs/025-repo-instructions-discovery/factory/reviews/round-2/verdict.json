@@ -1,0 +1,48 @@
+{
+  "round": 2,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 492,
+      "summary": "FR-017 / ENG-25: a pending new run is now treated as an adoption whenever adopt._resolve finds a ref for its branch name: an exact local branch, origin's branch (as last fetched), or a local branch ending in `-<branch>`. In that case the scan reads that ref, not `base`, so `always` entries and documented build/test commands can come from unreviewed branch text. A pending file without `branch` raises an uncaught AttributeError. Reach is narrow: REQUIRED_FIELDS makes `branch` mandatory on every CLI write, profile-record writes state just before instructions-record, and branch naming skips local branches and spec numbers already in use. The likely collision is a branch of the same name on origin.",
+      "fix": "Detect a pending adoption by its exact file name `<repo-name>-adopt-<branch>.json` (adopt.py:251), built from the state's `repo` and `branch`, and call adopt._resolve only then; every other pending run scans `base`. Catch any resolution failure as the record's `error`. Add a test with a pending new run whose branch already exists as `refs/remotes/origin/<branch>` and assert the scan ref is `base`.",
+      "sources": ["SEC-5", "STD-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 239,
+      "summary": "ENG-24: glob_matcher is now linear in path length but still multiplies by glob token count, with no cap on glob length or repeated wildcards. A config glob near the 1 MiB config cap, matched against every tracked path, can still stall each preflight.",
+      "fix": "Collapse runs of `*`/`**` into one token. Reject a glob longer than a fixed limit (e.g. 256 characters), or with too many wildcards, with an 'instructions config ignored' note. Add a time-bounded test.",
+      "sources": ["SEC-6"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/instructions.py",
+      "line": 167,
+      "summary": "ENG-24: the per-blob 1 MiB cap is in place, but there is no total cap on bytes read through config matches. `include: [\"**\"]` caches every tracked blob up to 1 MiB and starts one git process per larger blob. Round 1's SEC-2 fix asked for a total cap.",
+      "fix": "Count bytes read for config-matched entries and stop adding entries past a total cap (e.g. 16 MiB), with a note naming the cap; or cap the number of config matches.",
+      "sources": ["SEC-7"]
+    },
+    {
+      "severity": "low",
+      "file": "fefb766 (SEC-4)",
+      "line": 0,
+      "summary": "ENG-2: the user-changes fix commit has no Red: line for the SEC-4 ref guard. The guard's test, test_ref_starting_with_a_dash_is_rejected, already passes before the guard, because `rev-parse --verify` on `-...^{commit}` fails and the CLI exits 5. The guard is defensive and its observable change is minimal.",
+      "fix": "Say in the PR text that SEC-4 is a defensive guard whose test cannot go red, or assert a behaviour that differs (e.g. no git process is started for a dash-prefixed ref).",
+      "sources": ["STD-5", "SPEC-6"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 18,
+      "summary": "ENG-7: the fix commit includes formatting-only hunks (the import block, find_matches, cmd_answer, cmd_decisions_add, cmd_verify) that are unrelated to the fixed findings and follow no documented formatter, while new instructions.py lines keep the long-line style.",
+      "fix": "Revert the formatting-only hunks, or apply one formatter to the module in a separate commit.",
+      "sources": ["STD-6"]
+    }
+  ],
+  "rejected": []
+}
