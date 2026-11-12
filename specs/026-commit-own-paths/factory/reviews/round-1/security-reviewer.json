@@ -1,0 +1,6 @@
+{
+  "reviewer": "security",
+  "round": 1,
+  "summary": "Change narrows every factory commit to its declared pathspec and adds explicit-path staging rules; no injection, secret, trust-boundary, unsafe-default, resource or dependency defect introduced.",
+  "findings": []
+}

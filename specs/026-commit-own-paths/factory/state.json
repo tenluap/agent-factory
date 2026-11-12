@@ -284,6 +284,18 @@
       "duration_ms": 578000,
       "started_at": "2026-11-12T09:43:52Z",
       "ended_at": "2026-11-12T09:53:30Z"
+    },
+    {
+      "at": "2026-11-12T10:03:57.309514Z",
+      "stage": "review",
+      "role": "security-reviewer",
+      "harness": "opencode",
+      "in_est": 34594,
+      "out_est": 44,
+      "reported": null,
+      "duration_ms": 269000,
+      "started_at": "2026-11-12T09:59:28Z",
+      "ended_at": "2026-11-12T10:03:57Z"
     }
   ],
   "issues": [
@@ -374,7 +386,7 @@
       "at": "2026-11-12T09:59:22.045417Z",
       "stage": "implement",
       "event": "verify-pass",
-      "commit": null,
+      "commit": "f2cc26a",
       "harness": "opencode",
       "commands": [
         {
