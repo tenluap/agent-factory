@@ -1,0 +1,181 @@
+{
+  "version": 5,
+  "started_at": "2026-11-12T09:28:10.359367Z",
+  "harness": "opencode",
+  "feature": "Story: As a factory user, I want every factory commit to contain only the files the run wrote, so that a run never commits, deletes or absorbs work that is not its own.\n\nAcceptance criteria\n1. Every state CLI command that commits (checkpoint, resume, adopt and the other writer commands) stages its declared paths and commits with exactly that pathspec, as `drop` already does.\n2. Given an unrelated staged change, such as a deleted pnpm-lock.yaml, when checkpoint, resume or adopt commits, then that change is not in the commit and is still staged afterwards.\n3. code-build, design-to-code and fixer stage files by explicit path, never with `git add -A`, `git add .` or `git commit -a`.\n4. code-build treats an uncommitted change as its interrupted work only when the task it resumes names that path; it neither commits nor discards any other uncommitted change.\n5. At the approver, every path `git status --porcelain` reports in the worktree is listed under \"📂 Uncommitted local changes the run didn't make\"; the run neither commits nor discards them.\n\nOut of scope: any other approver change.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "026-commit-own-paths",
+  "spec_dir": "specs/026-commit-own-paths",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "lite",
+    "fast": true,
+    "cruise": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "speckit-constitution": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-constitution/SKILL.md",
+    "grilling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "setup-commands",
+      "answer": "build: render five harnesses with tools/render.py + dist/ untracked check + bash -n install.sh; test: python3 -m unittest discover -s tools (README/DESIGN.md CI checks; no CLAUDE.md/AGENTS.md; detector found no stack)",
+      "auto": true,
+      "at": "2026-11-12T09:28:16.847562Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "verify-baseline",
+      "answer": "No new failures vs base: record the failing-test list on the run base commit once; verify passes when the run adds no new failures; the run never repairs base failures (7 on origin/main 0c3bf71 CI: test_render_models x3, test_skill_library x4); the approver lists them",
+      "auto": false,
+      "at": "2026-11-12T09:28:16.922618Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "A: pass the pathspec to git commit in the shared commit_worktree helper (covers checkpoint, resume, rebind, models-record, profile-record, analyze-record, ledger-add, issue-add, wait-open, wait-close, answer, set-status, decisions-add, verify) and in adopt's _commit_run, as drop does; no factory commit runs without a pathspec; no new abstraction",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "A: regression tests for exactly the commands AC2 names - checkpoint and resume (tools/tests/test_commands.py) and adopt (tools/tests/test_adopt.py) - each with an unrelated staged deletion (pnpm-lock.yaml): absent from the commit, still staged afterwards; the other writers are covered through the shared helper, no per-command tests",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "A: one sentence at the commit step of each of core/roles/code-build.md, design-to-code.md and fixer.md: stage by explicit path (git add -- <path>...), never git add -A, git add . or git commit -a; not an engineering.md rule (reviewers read that file too)",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "A: rewrite code-build.md Work step 1 only: an uncommitted change is interrupted work only when the task being resumed names its path; finish or discard only those paths; leave every other uncommitted change untouched (no stage, commit, stash or discard); no new envelope field; not extended to design-to-code or fixer (declined scope)",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q5",
+      "answer": "A: SKILL.md step 8 gains one item: run git status --porcelain in the worktree and list every reported path under '📂 Uncommitted local changes the run didn't make', shown only when non-empty; the run neither commits nor discards them; no new CLI command or field; no other approver change",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q6",
+      "answer": "A: verify the prose rules (AC3-AC5) with text-contract tests under tools/tests, as run 023 did; no live-harness run",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q7",
+      "answer": "A: docs limited to what the constitution requires: DESIGN.md (principle I) where it describes writer commits, role staging and the approver screen, plus any core reference line that would otherwise contradict the change; no ADR, no CONTEXT.md terms, no README change",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q8",
+      "answer": "A: leave the orchestrator's own factory: start commit (SKILL.md step 4.3) out - AC1 covers state CLI commands and that commit runs in a fresh worktree; declined scope, noted as a follow-up",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q9",
+      "answer": "A: lite chain",
+      "auto": true,
+      "at": "2026-11-12T09:31:27.299536Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "history": [
+    {
+      "at": "2026-11-12T09:31:27.299536Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "ended_at": null,
+  "pr_url": null,
+  "models": {
+    "resolved": {
+      "deep": "claude-code/claude-opus-5-5",
+      "standard": "claude-code/claude-sonnet-5-5"
+    },
+    "source": {
+      "deep": "user",
+      "standard": "user"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-12T09:28:10.559128Z",
+    "detected_by": "factory detect 017"
+  },
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/026-commit-own-paths"
+}
