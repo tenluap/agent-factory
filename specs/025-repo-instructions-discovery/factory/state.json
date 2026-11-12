@@ -255,6 +255,14 @@
       "at": "2026-11-12T07:41:59.092867Z",
       "kind": "answer",
       "cruise_override": true
+    },
+    {
+      "stage": "approver",
+      "question": "Q1",
+      "answer": "Request changes: fix advisories SPEC-2, SEC-1, SEC-2, STD-3/SPEC-4, SPEC-3, STD-2, SPEC-5, SEC-4 from round-1 verdict; SEC-3 left as a spec follow-up; STD-1 reasons go in the PR text",
+      "auto": false,
+      "at": "2026-11-12T07:50:46.107294Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
