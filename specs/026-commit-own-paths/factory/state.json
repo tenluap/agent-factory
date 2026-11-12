@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "plan",
+  "stage": "tasks",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -42,26 +42,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "plan",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A: Accept this scope - seams checkpoint, resume (worktree), adopt _commit_run (unrelated staged pnpm-lock.yaml deletion: absent from commit, still staged), commit_worktree no-declared-paths (returns None, HEAD unchanged, staged change kept), prose contract commit_scope_gaps in tools/tests/test_commit_scope.py (marker-removed); DESIGN.md exempt",
-            "at": "2026-11-12T09:36:08.855466Z",
-            "auto": true,
-            "cruise_override": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -152,6 +133,15 @@
       "auto": true,
       "at": "2026-11-12T09:31:27.299536Z",
       "kind": "answer"
+    },
+    {
+      "stage": "plan",
+      "question": "Q1",
+      "answer": "A: Accept this scope - seams checkpoint, resume (worktree), adopt _commit_run (unrelated staged pnpm-lock.yaml deletion: absent from commit, still staged), commit_worktree no-declared-paths (returns None, HEAD unchanged, staged change kept), prose contract commit_scope_gaps in tools/tests/test_commit_scope.py (marker-removed); DESIGN.md exempt",
+      "auto": true,
+      "at": "2026-11-12T09:36:37.013602Z",
+      "kind": "answer",
+      "cruise_override": true
     }
   ],
   "ledger": [
@@ -211,6 +201,13 @@
     {
       "at": "2026-11-12T09:33:29.455708Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T09:36:37.013602Z",
+      "stage": "plan",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
