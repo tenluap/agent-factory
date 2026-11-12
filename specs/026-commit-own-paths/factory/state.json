@@ -42,7 +42,26 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": null,
+  "relay": {
+    "stage": "plan",
+    "rounds": [
+      {
+        "questions": [
+          {
+            "id": "Q1"
+          }
+        ],
+        "answers": {
+          "Q1": {
+            "answer": "A: Accept this scope - seams checkpoint, resume (worktree), adopt _commit_run (unrelated staged pnpm-lock.yaml deletion: absent from commit, still staged), commit_worktree no-declared-paths (returns None, HEAD unchanged, staged change kept), prose contract commit_scope_gaps in tools/tests/test_commit_scope.py (marker-removed); DESIGN.md exempt",
+            "at": "2026-11-12T09:36:08.855466Z",
+            "auto": true,
+            "cruise_override": true
+          }
+        }
+      }
+    ]
+  },
   "timeline": [],
   "decisions": [
     {
