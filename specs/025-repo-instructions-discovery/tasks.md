@@ -50,7 +50,7 @@
   3. Verify: test file and full suite green.
   Done: every row's mapping yields the tabled kind and scope; notes sorted.
 
-- [ ] T005 [US2] Imports and links to a fixpoint (FR-004, FR-008). Seam **S1**; failure paths **F1.5, F1.6, F1.7**.
+- [x] T005 [US2] Imports and links to a fixpoint (FR-004, FR-008). Seam **S1**; failure paths **F1.5, F1.6, F1.7**.
   1. Test (red) in `T`: root `AGENTS.md` imports `@docs/style.md`, which imports `@docs/more.md` → both `always`, root scope, `source: "import"`; a scoped `pkg/AGENTS.md` import inherits `["pkg/"]`; `@` inside a fenced block or code span ignored; `user@example.com` ignored; a relative link `[g](docs/guide.md#x)` → `reference`, `source: "link"`, and links inside `docs/guide.md` not followed; links to URLs, `mailto:`, anchors only and `../../outside` ignored; a link to a catalogued file keeps its catalogue kind; a `reference` entry's imports not followed; an import reaching a link target promotes it to `always`. F1.5: `@missing.md` and an untracked target → note, importer kept. F1.6: `a.md` ↔ `b.md` cycle → each once. F1.7: chain of 6 → hops 1-4 indexed, note naming where the chain stopped.
   2. Implement research R6: seeds, per-round FR-012 precedence (strongest kind; ties catalogue/governance > import > link), import depth ≤ 4, link depth 1, visited set, fence and code-span stripping, anchor and query stripping, `/` root-relative, escape-the-root ignored.
   3. Verify: test file and full suite green; two scans byte-identical.

@@ -261,5 +261,82 @@ class ClassificationTests(ScanBase):
         self.assertIn("not UTF-8: AGENTS.md", index["notes"])
 
 
+class ImportAndLinkTests(ScanBase):
+    def test_imports_follow_to_a_fixpoint_and_inherit_kind_and_scope(self):
+        self.add(
+            {
+                "AGENTS.md": "# A\n@docs/style.md\n```\n@docs/fenced.md\n```\n"
+                "use `@docs/span.md` mail user@example.com\n",
+                "docs/style.md": "# Style\n@docs/more.md\n",
+                "docs/more.md": "# More\n",
+                "docs/fenced.md": "x\n",
+                "docs/span.md": "x\n",
+                "pkg/AGENTS.md": "# P\n@rules.md\n",
+                "pkg/rules.md": "# Rules\n",
+            }
+        )
+        got = self.entries()
+        for path in ("docs/style.md", "docs/more.md"):
+            self.assertEqual((got[path]["kind"], got[path]["scope"]), ("always", ["/"]))
+            self.assertEqual(got[path]["source"], "import")
+        self.assertEqual(got["pkg/rules.md"]["scope"], ["pkg/"])
+        self.assertEqual(got["pkg/rules.md"]["kind"], "scoped")
+        for path in ("docs/fenced.md", "docs/span.md"):
+            self.assertNotIn(path, got)
+
+    def test_links_are_one_hop_reference_entries(self):
+        self.add(
+            {
+                "AGENTS.md": "# A\n[g](docs/guide.md#x) [u](https://x.io) [m](mailto:a@b.c)\n"
+                "[a](#top) [o](../../outside.md) [c](CONVENTIONS.md)\n[ref]: docs/ref.md\n",
+                "CONVENTIONS.md": "# C\n",
+                "docs/guide.md": "# G\n[n](docs/next.md)\n@docs/imp.md\n",
+                "docs/next.md": "x\n",
+                "docs/imp.md": "x\n",
+                "docs/ref.md": "# Ref\n",
+                "README.md": "# Readme\n",
+            }
+        )
+        got = self.entries()
+        self.assertEqual((got["docs/guide.md"]["kind"], got["docs/guide.md"]["source"]), ("reference", "link"))
+        self.assertEqual(got["docs/ref.md"]["source"], "link")
+        self.assertEqual((got["CONVENTIONS.md"]["kind"], got["CONVENTIONS.md"]["source"]), ("always", "catalogue"))
+        for path in ("docs/next.md", "docs/imp.md", "README.md"):
+            self.assertNotIn(path, got)
+
+    def test_import_promotes_a_link_target(self):
+        self.add(
+            {
+                "AGENTS.md": "# A\n[p](docs/p.md)\n@docs/q.md\n",
+                "docs/q.md": "@docs/p.md\n",
+                "docs/p.md": "# P\n",
+            }
+        )
+        got = self.entries()
+        self.assertEqual((got["docs/p.md"]["kind"], got["docs/p.md"]["source"]), ("always", "import"))
+
+    def test_missing_and_untracked_import_targets_note_and_keep_importer(self):
+        self.add({"AGENTS.md": "# A\n@missing.md\n@local.md\n"})
+        (self.box.repo / "local.md").write_text("x\n")
+        index = self.scan()
+        self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
+        self.assertIn("import target not tracked: AGENTS.md -> missing.md", index["notes"])
+        self.assertIn("import target not tracked: AGENTS.md -> local.md", index["notes"])
+
+    def test_import_cycle_is_followed_once(self):
+        self.add({"AGENTS.md": "@a.md\n", "a.md": "@b.md\n", "b.md": "@a.md\n"})
+        paths = [e["path"] for e in self.scan()["entries"]]
+        self.assertEqual(sorted(paths), ["AGENTS.md", "a.md", "b.md"])
+
+    def test_import_chain_stops_after_four_hops_with_a_note(self):
+        files = {"AGENTS.md": "@c1.md\n"}
+        files.update({f"c{i}.md": f"@c{i + 1}.md\n" for i in range(1, 7)})
+        self.add(files)
+        index = self.scan()
+        paths = {e["path"] for e in index["entries"]}
+        self.assertEqual(paths, {"AGENTS.md", "c1.md", "c2.md", "c3.md", "c4.md"})
+        self.assertIn("import chain stopped at depth 4: c4.md -> c5.md", index["notes"])
+
+
 if __name__ == "__main__":
     unittest.main()

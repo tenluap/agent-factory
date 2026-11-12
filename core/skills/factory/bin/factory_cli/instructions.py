@@ -94,7 +94,9 @@ CONSTITUTION = ".specify/memory/constitution.md"
 ADR_PARENTS = ("doc", "docs", "architecture")
 
 KIND_ORDER = {"always": 0, "scoped": 1, "reference": 2}
+SOURCE_ORDER = {"catalogue": 0, "governance": 0, "config": 0, "import": 1, "link": 2}
 SYMLINK_HOPS = 8
+IMPORT_HOPS = 4
 
 
 class ScanError(Exception):
@@ -325,6 +327,59 @@ def _title(text, path, fields=None):
     return posixpath.basename(path)
 
 
+_IMPORT = re.compile(r"(?:^|\s)@(\S+)")
+_LINK = re.compile(r"\]\(<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\)|^\s*\[[^\]]+\]:\s*<?(\S+?)>?\s*$")
+_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def _prose(body):
+    """Body lines outside fenced blocks, with inline code spans removed."""
+    fenced = False
+    for line in body.splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        elif not fenced:
+            yield re.sub(r"`[^`\n]*`", "", line)
+
+
+def _imports(body):
+    """`@path` tokens (sorted, unique) of the prose in `body`; `@~/...` and
+    absolute paths are ignored."""
+    found = set()
+    for line in _prose(body):
+        for token in _IMPORT.findall(line):
+            token = token.rstrip(".,;:)")
+            if ("/" in token or "." in token) and not token.startswith(("~", "/")):
+                found.add(token)
+    return sorted(found)
+
+
+def _links(body):
+    """Relative link targets (sorted, unique) of the prose in `body`."""
+    found = set()
+    for line in _prose(body):
+        for match in _LINK.finditer(line):
+            target = (match.group(1) or match.group(2)).split("#")[0].split("?")[0]
+            if target and not _SCHEME.match(target):
+                found.add(target)
+    return sorted(found)
+
+
+def _locate(token, importer, tree, relative_only=False):
+    """The tracked path `token` names from `importer`: relative to its
+    directory, then (imports only) to the repository root; None when it
+    escapes the root or is not tracked."""
+    here = posixpath.dirname(importer)
+    roots = [token[1:]] if token.startswith("/") else [posixpath.join(here, token)]
+    if not relative_only and not token.startswith("/"):
+        roots.append(token)
+    for candidate in roots:
+        path = posixpath.normpath(candidate)
+        if not path.startswith("..") and path in tree:
+            return path
+    return None
+
+
 def _entry_json(entry):
     return {k: entry[k] for k in sorted(entry)}
 
@@ -344,37 +399,97 @@ def scan(repo, ref="HEAD"):
     candidates = [p for p in sorted(tree) if classify_path(p)]
     cache.update(read_blobs(repo, [tree[p][1] for p in candidates]))
 
-    groups = {}
-    for path in candidates:
+    def read(path):
+        """(real path, content, text or None) of a tracked path; None for a
+        symlink that leaves the repository or reaches nothing."""
         real = _resolve_symlink(path, tree, blob)
         if real is None:
             notes.append(f"symlink skipped: {path}")
-            continue
+            return None
         content = blob(tree[real][1])
-        digest = "sha256:" + hashlib.sha256(content).hexdigest()
-        kind, where, row = classify_path(path)
-        title_fields = None
         try:
-            text = content.decode("utf-8")
+            return real, content, content.decode("utf-8")
         except UnicodeDecodeError:
-            text = None
             notes.append(f"not UTF-8: {path}")
+            return real, content, None
+
+    info = {}
+    for path in candidates:
+        got = read(path)
+        if got is None:
+            continue
+        real, content, text = got
+        kind, where, row = classify_path(path)
+        fields = {}
         if row == "governance":
-            scope, source = tuple(where), "governance"
+            scope, source, body = tuple(where), "governance", text or ""
         else:
-            fields, text_body = front_matter(text) if text is not None else ({}, "")
+            fields, body = front_matter(text) if text is not None else ({}, "")
             if fields is None:
                 notes.append(f"front matter unparseable: {path}")
                 fields = {}
-            title_fields = fields
             mapped = _mapped(row, fields)
             kind, globs = mapped if mapped else (kind, [])
             kind, scope = _kind_scope(kind, where, globs)
             scope, source = tuple(scope), "catalogue"
-        title = "" if text is None else _title(text_body if row != "governance" else text, path, title_fields)
-        groups.setdefault((digest, kind, scope, source), []).append(
-            (path, real, content, title)
-        )
+        info[path] = {
+            "kind": kind, "scope": scope, "source": source, "content": content,
+            "body": body, "title": "" if text is None else _title(body, path, fields),
+        }
+
+    def merge(path, kind, scope, source):
+        """Add or strengthen `path` (FR-012); True when the index changed."""
+        if path in info:
+            cur = info[path]
+            if (KIND_ORDER[kind], SOURCE_ORDER[source]) >= (
+                KIND_ORDER[cur["kind"]], SOURCE_ORDER[cur["source"]]
+            ):
+                return False
+            cur.update(kind=kind, scope=tuple(scope), source=source)
+            return True
+        got = read(path)
+        if got is None:
+            return False
+        content, text = got[1], got[2]
+        fields, body = front_matter(text) if text is not None else ({}, "")
+        info[path] = {
+            "kind": kind, "scope": tuple(scope), "source": source, "content": content,
+            "body": body if fields is not None else text,
+            "title": "" if text is None else _title(body if fields is not None else text, path, fields),
+        }
+        return True
+
+    depth = {p: 0 for p, e in info.items() if e["kind"] != "reference"}
+    queue = sorted(depth)
+    while queue:
+        following, queue = queue, []
+        for path in following:
+            entry = info[path]
+            for token in _imports(entry["body"]):
+                target = _locate(token, path, tree)
+                if target is None:
+                    notes.append(f"import target not tracked: {path} -> {token}")
+                    continue
+                if depth[path] + 1 > IMPORT_HOPS:
+                    notes.append(f"import chain stopped at depth {IMPORT_HOPS}: {path} -> {target}")
+                    continue
+                changed = merge(target, entry["kind"], entry["scope"], "import")
+                if target in depth and depth[target] <= depth[path] + 1:
+                    if changed:
+                        queue.append(target)
+                elif target in info:
+                    depth[target] = depth[path] + 1
+                    queue.append(target)
+    for path in sorted(p for p, e in info.items() if e["kind"] != "reference"):
+        for token in _links(info[path]["body"]):
+            target = _locate(token, path, tree, relative_only=True)
+            if target is not None:
+                merge(target, "reference", ("/",), "link")
+
+    groups = {}
+    for path, e in info.items():
+        key = ("sha256:" + hashlib.sha256(e["content"]).hexdigest(), e["kind"], e["scope"], e["source"])
+        groups.setdefault(key, []).append((path, e["content"], e["title"]))
 
     entries = []
     for (digest, kind, scope, source), members in groups.items():
@@ -385,9 +500,9 @@ def scan(repo, ref="HEAD"):
                 "path": primary[0],
                 "kind": kind,
                 "scope": list(scope),
-                "size": len(primary[2]),
+                "size": len(primary[1]),
                 "hash": digest,
-                "title": primary[3],
+                "title": primary[2],
                 "aliases": sorted(m[0] for m in members if m[0] != primary[0]),
                 "source": source,
             }
