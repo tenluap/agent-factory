@@ -296,6 +296,18 @@
       "duration_ms": 269000,
       "started_at": "2026-11-12T09:59:28Z",
       "ended_at": "2026-11-12T10:03:57Z"
+    },
+    {
+      "at": "2026-11-12T10:03:57.571096Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 34929,
+      "out_est": 228,
+      "reported": null,
+      "duration_ms": 269000,
+      "started_at": "2026-11-12T09:59:28Z",
+      "ended_at": "2026-11-12T10:03:57Z"
     }
   ],
   "issues": [
