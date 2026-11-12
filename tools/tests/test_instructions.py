@@ -415,12 +415,15 @@ class ConfigListTests(ScanBase):
         self.assertFalse([p for p in got if p.startswith("conformance/")])
 
 
-class RecordTests(ScanBase):
+class RecordBase(ScanBase):
     def state(self, **extra):
         return dict(fixture("state-v5.json"), base="HEAD", **extra)
 
     def pending(self, name, **extra):
         return self.box.pending_run(name, self.state(**extra))
+
+
+class RecordTests(RecordBase):
 
     def test_pending_new_run_scans_base_and_writes_sidecar_and_summary(self):
         self.add({"AGENTS.md": "# A\n", "docs/x.md": "# X\n"})
@@ -493,6 +496,75 @@ class RecordTests(ScanBase):
         self.assertEqual(self.box.cli("validate", "--all").returncode, 0)
         self.pending("025-d")
         self.assertEqual(self.box.cli("validate", "--all").returncode, 0)
+
+
+class DeltaAndWarningTests(RecordBase):
+    def record(self):
+        out = self.box.cli("instructions-record")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_delta_lists_added_removed_and_changed_paths_sorted(self):
+        self.add({"AGENTS.md": "# A\n", "GEMINI.md": "# G\n", "CONVENTIONS.md": "# C\n", ".rules": "r\n"})
+        self.pending("025-e")
+        self.assertIsNone(self.record()["delta"])
+        self.box.git("rm", "-q", "GEMINI.md")
+        self.add({"CONVENTIONS.md": "# C2\n", "docs/adr/0001-x.md": "# x\n", ".rules": "r\n"})
+        self.assertEqual(
+            self.record()["delta"],
+            {"added": ["docs/adr/0001-x.md"], "removed": ["GEMINI.md"], "changed": ["CONVENTIONS.md"]},
+        )
+        # a kind change counts as changed; alias and title changes do not
+        self.add({".rules": "r\n", "AGENTS.md": "# Renamed title\n"})
+        self.assertEqual(self.record()["delta"], {"added": [], "removed": [], "changed": ["AGENTS.md"]})
+        self.add({"CLAUDE.md": "# Renamed title\n"})
+        self.assertEqual(self.record()["delta"], {"added": [], "removed": [], "changed": []})
+
+    def test_kind_change_is_a_change(self):
+        self.add({"DESIGN.md": "# D\n", "AGENTS.md": "# A\n", ".factory/config.json": config(reference=["DESIGN.md"])})
+        self.pending("025-f")
+        self.record()
+        self.add({".factory/config.json": config(include=["DESIGN.md"])})
+        self.assertIn("DESIGN.md", self.record()["delta"]["changed"])
+
+    def test_warning_above_32_kib_of_always_entries(self):
+        files = {"AGENTS.md": "a" * 20000, "GEMINI.md": "b" * 20000}
+        files.update({f"docs/adr/{i}.md": f"x{i}" for i in range(3)})
+        self.add(files)
+        self.pending("025-g")
+        result = self.record()
+        self.assertEqual(result["warning"]["limit"], 32768)
+        self.assertEqual(result["warning"]["always_bytes"], 40000)
+        self.assertEqual(result["warning"]["largest"], [{"path": "AGENTS.md", "size": 20000}, {"path": "GEMINI.md", "size": 20000}])
+        self.assertEqual(len(json.loads(Path(result["index"]).read_text())["entries"]), 5)
+
+    def test_empty_repository_flags_empty(self):
+        self.add({"README.md": "# r\n"})
+        self.pending("025-h")
+        result = self.record()
+        self.assertTrue(result["empty"])
+        self.assertEqual(result["counts"], {"always": 0, "scoped": 0, "reference": 0})
+
+    def test_unresolvable_base_reports_error_keeps_the_summary_and_writes_nothing(self):
+        self.add({"AGENTS.md": "# A\n"})
+        path = self.pending("025-i")
+        self.record()
+        before = path.read_text()
+        data = json.loads(before)
+        data["base"] = "no-such-ref"
+        path.write_text(json.dumps(data, indent=2) + "\n")
+        result = self.record()
+        self.assertIn("no-such-ref", result["error"])
+        self.assertEqual(json.loads(path.read_text())["instructions"], json.loads(before)["instructions"])
+
+    def test_unreadable_previous_index_gives_null_delta_and_a_note(self):
+        self.add({"AGENTS.md": "# A\n"})
+        path = self.pending("025-j")
+        self.record()
+        path.with_name(path.name.replace(".json", ".instructions.json")).write_text("{broken")
+        result = self.record()
+        self.assertIsNone(result["delta"])
+        self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
 
 
 if __name__ == "__main__":

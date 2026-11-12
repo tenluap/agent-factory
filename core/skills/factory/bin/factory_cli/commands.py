@@ -460,6 +460,9 @@ def cmd_instructions(repo, ref):
         die(5, str(err))
 
 
+ALWAYS_BYTES_LIMIT = 32768
+
+
 def cmd_instructions_record(repo, cwd):
     """Scan the run's ref and record the index into the one writable run (spec 025).
 
@@ -496,32 +499,63 @@ def cmd_instructions_record(repo, cwd):
         s["instructions"] = summary
         return s
 
-    write_run(path, loaded, mutate)
-    text = json.dumps(index, sort_keys=True, indent=2) + "\n"
     if source == "pending":
-        target = path.with_name(path.name.replace(".json", ".instructions.json"))
-        target.write_text(text)
+        folder, name = path.parent, path.name.replace(".json", ".instructions.json")
     else:
-        folder = Path(run_worktree) / loaded["spec_dir"] / "factory"
-        folder.mkdir(parents=True, exist_ok=True)
-        target = folder / "instructions.json"
-        # `ref` moves with every commit, including this one: compare content only
+        folder, name = Path(run_worktree) / loaded["spec_dir"] / "factory", "instructions.json"
+    target = folder / name
+    notes = list(index["notes"])
+    previous = None
+    if target.is_file():
         try:
             previous = json.loads(target.read_text())
-        except (OSError, ValueError):
-            previous = None
-        changed = previous is None or {**previous, "ref": None} != {**index, "ref": None}
-        if changed:
-            target.write_text(text)
-            result["committed"] = commit_worktree(
-                run_worktree, "factory: instructions recorded", loaded.get("spec_dir")
-            )
+        except ValueError:
+            notes.append(f"previous index unreadable: {target}")
+
+    write_run(path, loaded, mutate)
+    # `ref` moves with every commit, including this one: compare content only
+    changed = previous is None or {**previous, "ref": None} != {**index, "ref": None}
+    if changed or source == "pending":
+        folder.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(index, sort_keys=True, indent=2) + "\n")
+    if changed and source == "worktree":
+        result["committed"] = commit_worktree(
+            run_worktree, "factory: instructions recorded", loaded.get("spec_dir")
+        )
+    always = sorted(
+        (e for e in index["entries"] if e["kind"] == "always"),
+        key=lambda e: (-e["size"], e["path"]),
+    )
+    always_bytes = sum(e["size"] for e in always)
+    if always_bytes > ALWAYS_BYTES_LIMIT:
+        result["warning"] = {
+            "limit": ALWAYS_BYTES_LIMIT,
+            "always_bytes": always_bytes,
+            "largest": [{"path": e["path"], "size": e["size"]} for e in always[:5]],
+        }
     result.update(
-        ref=index["ref"], counts=counts, notes=index["notes"], index=str(target),
-        always_bytes=sum(e["size"] for e in index["entries"] if e["kind"] == "always"),
-        empty=not index["entries"],
+        ref=index["ref"], counts=counts, notes=sorted(notes), index=str(target),
+        always_bytes=always_bytes, empty=not index["entries"],
+        delta=None if previous is None else _index_delta(previous, index),
     )
     return result
+
+
+def _index_delta(previous, current):
+    """Paths added, removed and changed (hash, kind or scope) between two indexes."""
+
+    def keyed(index):
+        return {
+            e["path"]: (e["hash"], e["kind"], tuple(e["scope"]))
+            for e in index.get("entries", [])
+        }
+
+    old, new = keyed(previous), keyed(current)
+    return {
+        "added": sorted(set(new) - set(old)),
+        "removed": sorted(set(old) - set(new)),
+        "changed": sorted(p for p in set(old) & set(new) if old[p] != new[p]),
+    }
 
 
 def cmd_models_record(repo, cwd, block):

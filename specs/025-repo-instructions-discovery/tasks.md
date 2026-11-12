@@ -90,7 +90,7 @@
   3. Verify: test file, `tools.tests.test_state`, `tools.tests.test_profile_record` and full suite green.
   Done: each run type records the summary and index file in its place.
 
-- [ ] T009 [US4] Delta, 32 KiB warning, empty flag and scan error (FR-018, FR-019, R9). Seam **S2**; failure paths **F2.1, F2.4**.
+- [x] T009 [US4] Delta, 32 KiB warning, empty flag and scan error (FR-018, FR-019, R9). Seam **S2**; failure paths **F2.1, F2.4**.
   1. Test (red) in `T`: re-record after one file added, one removed, one changed (hash) → `delta` lists exactly those three paths, sorted (SC-004); a kind or scope change counts as changed; alias-only and title-only changes do not; first record `delta: null`. `always` entries totalling > 32768 bytes → `warning` `{limit: 32768, always_bytes, largest}` (up to 5, largest first); index not truncated. Empty repo → `empty: true`, counts zero. F2.1: pending run whose `base` does not resolve → exit 0, `error` set, nothing written, previous summary kept. F2.4: unreadable previous index file → `delta: null`, note saying so.
   2. Implement delta by path identity; warning, `always_bytes`, `empty`, `error` per contracts/cli.md.
   3. Verify: test file and full suite green.
