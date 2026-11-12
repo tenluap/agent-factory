@@ -16,7 +16,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 ## Phase 2: Foundational (design first, constitution principle I)
 
-- [ ] T001 [AC-1] [AC-3] [AC-4] [AC-5] Update `DESIGN.md` before any core edit.
+- [x] T001 [AC-1] [AC-3] [AC-4] [AC-5] Update `DESIGN.md` before any core edit.
   - Exempt: `DESIGN.md` - documentation only; behaviour it describes is tested through the plan's seams (plan.md "Test seams").
   - Edit: in the "Declared-file checkpoints" bullet, state that every state CLI writer command and `adopt` commit with exactly their declared pathspec (as `drop` does), and that an unrelated staged change is left out of the commit and stays staged. Add that code-build, design-to-code and fixer stage by explicit path, never `git add -A`, `git add .` or `git commit -a`, and that code-build claims uncommitted work only for paths its resumed task names. In "Approver", add the "📂 Uncommitted local changes the run didn't make" list from `git status --porcelain`, shown only when non-empty, never committed or discarded by the run.
   - Commit: `git add -- DESIGN.md specs/026-commit-own-paths/tasks.md`; `factory(implement): T001 Record commit-own-paths behaviour in DESIGN.md`. No `Red:` line (exempt).
