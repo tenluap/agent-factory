@@ -6,9 +6,15 @@ Fixture trees are built in Sandbox git repos, never tracked fixture directories.
 
 import json
 import os
+import sys
 import unittest
+from pathlib import Path
 
-from tests import Sandbox
+CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
+sys.path.insert(0, str(CORE_BIN))
+
+from factory_cli.instructions import glob_regex  # noqa: E402
+from tests import Sandbox  # noqa: E402
 
 
 class ScanBase(unittest.TestCase):
@@ -336,6 +342,61 @@ class ImportAndLinkTests(ScanBase):
         paths = {e["path"] for e in index["entries"]}
         self.assertEqual(paths, {"AGENTS.md", "c1.md", "c2.md", "c3.md", "c4.md"})
         self.assertIn("import chain stopped at depth 4: c4.md -> c5.md", index["notes"])
+
+
+def config(**lists):
+    return json.dumps({"instructions": lists})
+
+
+class ConfigListTests(ScanBase):
+    def test_include_reference_exclude_lists(self):
+        self.add(
+            {
+                ".factory/config.json": config(
+                    include=["docs/conventions.md", "AGENTS.md", "both.md"],
+                    reference=["DESIGN.md", "both.md"],
+                    exclude=["conformance/**"],
+                ),
+                "AGENTS.md": "# A\n@conformance/bench/x/AGENTS.md\n[l](conformance/y.md)\n",
+                "docs/conventions.md": "# Conv\n",
+                "DESIGN.md": "# Design\n",
+                "both.md": "# Both\n",
+                "conformance/bench/x/AGENTS.md": "# no\n",
+                "conformance/y.md": "# no\n",
+            }
+        )
+        got = self.entries()
+        self.assertEqual(
+            (got["docs/conventions.md"]["kind"], got["docs/conventions.md"]["scope"], got["docs/conventions.md"]["source"]),
+            ("always", ["/"], "config"),
+        )
+        self.assertEqual((got["DESIGN.md"]["kind"], got["DESIGN.md"]["source"]), ("reference", "config"))
+        self.assertEqual(got["both.md"]["kind"], "always")
+        self.assertEqual(got["AGENTS.md"]["source"], "catalogue")
+        self.assertFalse([p for p in got if p.startswith("conformance/")])
+
+    def test_config_is_read_at_the_ref_not_the_working_tree(self):
+        self.add({"AGENTS.md": "# A\n", "DESIGN.md": "# D\n"})
+        (self.box.repo / ".factory").mkdir()
+        (self.box.repo / ".factory" / "config.json").write_text(config(include=["DESIGN.md"]))
+        self.assertNotIn("DESIGN.md", self.entries())
+
+    def test_glob_translation(self):
+        self.assertTrue(glob_regex("conformance/**").match("conformance/a/b/AGENTS.md"))
+        self.assertFalse(glob_regex("*.md").match("docs/a.md"))
+        self.assertTrue(glob_regex("*.md").match("a.md"))
+        self.assertTrue(glob_regex("**/x.md").match("x.md"))
+        self.assertTrue(glob_regex("**/x.md").match("a/b/x.md"))
+        self.assertTrue(glob_regex("a?.md").match("ab.md"))
+        self.assertFalse(glob_regex("a?.md").match("a/.md"))
+
+    def test_malformed_config_notes_and_falls_back_to_the_catalogue(self):
+        for text in ('{"instructions": 3}', '{"instructions": {"include": [1]}}', "{not json"):
+            with self.subTest(text=text):
+                self.add({".factory/config.json": text, "AGENTS.md": "# A\n", "DESIGN.md": "# D\n"})
+                index = self.scan()
+                self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
+                self.assertTrue([n for n in index["notes"] if n.startswith("instructions config ignored")])
 
 
 if __name__ == "__main__":

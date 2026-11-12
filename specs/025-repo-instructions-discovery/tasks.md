@@ -65,7 +65,7 @@
 **Goal**: `instructions.include`, `.reference`, `.exclude` at the scanned ref.
 **Independent test**: one fixture with all three lists.
 
-- [ ] T006 [US3] Config lists and glob translator (FR-012, FR-013). Seam **S1**; failure path **F1.3**.
+- [x] T006 [US3] Config lists and glob translator (FR-012, FR-013). Seam **S1**; failure path **F1.3**.
   1. Test (red) in `T`: committed `.factory/config.json` with `include: ["docs/conventions.md"]` → `always`, `["/"]`, `source: "config"`; `reference: ["DESIGN.md"]` → `reference`; `exclude: ["conformance/**"]` drops `conformance/bench/x/AGENTS.md` and blocks it as import or link target; include beats reference for the same file; root `AGENTS.md` also in `include` keeps `source: "catalogue"`; a working-tree-only config edit has no effect (read at the ref). Glob cases: `conformance/**` matches nested, `*.md` does not cross `/`, `**/x.md` matches root and nested, `?` one non-`/` char. F1.3: section not an object, list of non-strings, unparseable JSON → note, catalogue alone applies, exit 0.
   2. Implement the translator per research R4 and the config read at the ref with precedence exclude > include > reference > derived.
   3. Verify: test file and full suite green.

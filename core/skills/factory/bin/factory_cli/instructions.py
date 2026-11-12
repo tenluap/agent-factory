@@ -97,6 +97,7 @@ KIND_ORDER = {"always": 0, "scoped": 1, "reference": 2}
 SOURCE_ORDER = {"catalogue": 0, "governance": 0, "config": 0, "import": 1, "link": 2}
 SYMLINK_HOPS = 8
 IMPORT_HOPS = 4
+CONFIG_PATH = ".factory/config.json"
 
 
 class ScanError(Exception):
@@ -380,6 +381,27 @@ def _locate(token, importer, tree, relative_only=False):
     return None
 
 
+def _config_globs(tree, blob, notes):
+    """{include, reference, exclude: [compiled glob]} from the committed
+    `instructions` config section; all empty (with a note) when it is unusable."""
+    lists = {"include": [], "reference": [], "exclude": []}
+    if CONFIG_PATH not in tree:
+        return lists
+    try:
+        section = json.loads(blob(tree[CONFIG_PATH][1])).get("instructions", {})
+        if not isinstance(section, dict):
+            raise ValueError("section is not an object")
+        for name in lists:
+            globs = section.get(name, [])
+            if not isinstance(globs, list) or not all(isinstance(g, str) for g in globs):
+                raise ValueError(f"{name} is not a list of strings")
+            lists[name] = [glob_regex(g) for g in globs]
+    except (ValueError, AttributeError) as err:
+        notes.append(f"instructions config ignored: {err}")
+        return {name: [] for name in lists}
+    return lists
+
+
 def _entry_json(entry):
     return {k: entry[k] for k in sorted(entry)}
 
@@ -413,8 +435,15 @@ def scan(repo, ref="HEAD"):
             notes.append(f"not UTF-8: {path}")
             return real, content, None
 
+    config = _config_globs(tree, blob, notes)
+
+    def listed(name, path):
+        return any(regex.match(path) for regex in config[name])
+
     info = {}
     for path in candidates:
+        if listed("exclude", path):
+            continue
         got = read(path)
         if got is None:
             continue
@@ -439,6 +468,8 @@ def scan(repo, ref="HEAD"):
 
     def merge(path, kind, scope, source):
         """Add or strengthen `path` (FR-012); True when the index changed."""
+        if listed("exclude", path):
+            return False
         if path in info:
             cur = info[path]
             if (KIND_ORDER[kind], SOURCE_ORDER[source]) >= (
@@ -458,6 +489,11 @@ def scan(repo, ref="HEAD"):
             "title": "" if text is None else _title(body if fields is not None else text, path, fields),
         }
         return True
+
+    for name, kind in (("include", "always"), ("reference", "reference")):
+        for path in sorted(tree):
+            if listed(name, path):
+                merge(path, kind, ("/",), "config")
 
     depth = {p: 0 for p, e in info.items() if e["kind"] != "reference"}
     queue = sorted(depth)
