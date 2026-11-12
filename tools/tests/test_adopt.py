@@ -4,6 +4,8 @@ Later units add the dry-run report, refusals and the write with rollback
 through the public `bin/factory adopt` command, over throwaway Sandbox repos.
 """
 
+import contextlib
+import io
 import json
 import os
 import sys
@@ -14,7 +16,7 @@ from unittest import mock
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import adopt, commands, state  # noqa: E402
+from factory_cli import adopt, cli, commands, state  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -107,18 +109,14 @@ class AdoptedStateTests(unittest.TestCase):
             run["adopted"]["source"]["spec_dir"] = ""
 
         problems = problems_for(mutate)
-        self.assertEqual(
-            [p["location"] for p in problems], ["adopted.source.spec_dir"]
-        )
+        self.assertEqual([p["location"] for p in problems], ["adopted.source.spec_dir"])
 
     def test_inferred_stage_outside_adopt_stages_is_one_problem(self):
         def mutate(run):
             run["adopted"]["inferred_stage"] = "implement"
 
         problems = problems_for(mutate)
-        self.assertEqual(
-            [p["location"] for p in problems], ["adopted.inferred_stage"]
-        )
+        self.assertEqual([p["location"] for p in problems], ["adopted.inferred_stage"])
 
     def test_chosen_stage_outside_adopt_stages_is_one_problem(self):
         def mutate(run):
@@ -155,9 +153,7 @@ class AdoptedStateTests(unittest.TestCase):
         self.assertEqual(
             state.ADOPT_SHAPES, ("branch", "remote-branch", "default-branch")
         )
-        self.assertEqual(
-            state.ADOPT_STAGES, ("specify", "plan", "tasks", "analyze")
-        )
+        self.assertEqual(state.ADOPT_STAGES, ("specify", "plan", "tasks", "analyze"))
 
 
 class ResumeHintTests(unittest.TestCase):
@@ -513,8 +509,15 @@ class OtherShapeTests(DryRunFixture):
         (other / "specs" / "013-r" / "plan.md").write_text("# P\n")
         self.box.git("add", "-A", cwd=other)
         self.box.git(
-            "-c", "user.email=a@example.com", "-c", "user.name=Other",
-            "commit", "-q", "-m", "ahead", cwd=other,
+            "-c",
+            "user.email=a@example.com",
+            "-c",
+            "user.name=Other",
+            "commit",
+            "-q",
+            "-m",
+            "ahead",
+            cwd=other,
         )
         self.box.git("push", "-q", "origin", "013-r", cwd=other)
         before = self.snapshot()
@@ -563,8 +566,12 @@ class AdoptWriteFixture(DryRunFixture):
         super().setUp()
         self.spec_branch("007-x", {"spec.md": "# Spec\n", "plan.md": "# Plan\n"})
         self.pending = self.box.pending_run("adopt-007-x", pending_state(self.box.repo))
-        self.brief = self.pending.with_name(self.pending.name.replace(".json", ".brief.md"))
-        self.profile = self.pending.with_name(self.pending.name.replace(".json", ".profile.md"))
+        self.brief = self.pending.with_name(
+            self.pending.name.replace(".json", ".brief.md")
+        )
+        self.profile = self.pending.with_name(
+            self.pending.name.replace(".json", ".profile.md")
+        )
         self.brief.write_text("# Brief\n")
         self.profile.write_text("# Profile\n")
         self.worktree = self.box.dir / "repo-factory" / "007-x"
@@ -619,7 +626,11 @@ class AdoptWriteTests(AdoptWriteFixture):
         self.assertEqual(
             run["adopted"],
             {
-                "source": {"shape": "branch", "branch": "007-x", "spec_dir": "specs/007-x"},
+                "source": {
+                    "shape": "branch",
+                    "branch": "007-x",
+                    "spec_dir": "specs/007-x",
+                },
                 "inferred_stage": "tasks",
                 "chosen_stage": "tasks",
                 "base_commit": head,
@@ -635,7 +646,36 @@ class AdoptWriteTests(AdoptWriteFixture):
         commits = self.box.git("log", "--format=%s", f"{head}..007-x").splitlines()
         self.assertEqual(commits, ["factory: adopt 007-x"])
         changed = self.box.git("diff", "--name-only", f"{head}..007-x").splitlines()
-        self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
+        self.assertTrue(
+            changed and all(p.startswith("specs/007-x/factory/") for p in changed)
+        )
+
+    def test_adopt_commit_leaves_an_unrelated_staged_deletion_out(self):
+        self.commit_on("007-x", {"../../pnpm-lock.yaml": "lock\n"}, "add lock")
+        original = adopt._record_worktree_run
+
+        def stage_deletion(worktree, *args, **kwargs):
+            result = original(worktree, *args, **kwargs)
+            self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=worktree)
+            return result
+
+        cwd = os.getcwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(self.box.repo)
+        env = {"FACTORY_HOME": str(self.box.home)}
+        with (
+            mock.patch.object(adopt, "_record_worktree_run", stage_deletion),
+            mock.patch.dict(os.environ, env),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            try:
+                cli.main(["factory", "adopt", "007-x"])
+            except SystemExit as exit_:
+                self.assertIn(exit_.code, (None, 0))
+        committed = self.box.git("show", "--name-only", "--format=", "007-x")
+        self.assertNotIn("pnpm-lock.yaml", committed)
+        staged = self.box.git("diff", "--cached", "--name-status", cwd=self.worktree)
+        self.assertIn("D\tpnpm-lock.yaml", staged)
 
     def test_stage_flag_records_the_chosen_stage(self):
         out = self.write_run("--stage", "plan")
@@ -715,7 +755,10 @@ class AdoptRollbackTests(AdoptWriteFixture):
         self.assertFalse(self.worktree.exists())
         self.assertEqual(self.box.git("worktree", "list", "--porcelain"), worktrees)
         self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
-        self.assertEqual(self.box.git("branch", "--format=%(refname:short)").split(), ["007-x", "main"])
+        self.assertEqual(
+            self.box.git("branch", "--format=%(refname:short)").split(),
+            ["007-x", "main"],
+        )
         self.assertTrue(self.pending.exists())
         self.assertEqual(self.brief.read_text(), brief)
         self.assertEqual(self.profile.read_text(), profile)
@@ -776,13 +819,23 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
         refs = self.remote_refs()
         out = self.write_run()
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        self.assertEqual(self.box.git("rev-parse", "--abbrev-ref", "007-x@{upstream}").strip(), "origin/007-x")
+        self.assertEqual(
+            self.box.git("rev-parse", "--abbrev-ref", "007-x@{upstream}").strip(),
+            "origin/007-x",
+        )
         run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
         self.assertEqual(run["adopted"]["source"]["shape"], "remote-branch")
         self.assertEqual(run["adopted"]["base_commit"], remote_head)
-        changed = self.box.git("diff", "--name-only", f"{remote_head}..007-x").splitlines()
-        self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
-        self.assertEqual(self.box.git("log", "--format=%s", f"{remote_head}..007-x").splitlines(), ["factory: adopt 007-x"])
+        changed = self.box.git(
+            "diff", "--name-only", f"{remote_head}..007-x"
+        ).splitlines()
+        self.assertTrue(
+            changed and all(p.startswith("specs/007-x/factory/") for p in changed)
+        )
+        self.assertEqual(
+            self.box.git("log", "--format=%s", f"{remote_head}..007-x").splitlines(),
+            ["factory: adopt 007-x"],
+        )
         self.assertEqual(self.remote_refs(), refs)
         self.assertFalse(self.pending.exists())
 
@@ -792,19 +845,30 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
         out = self.write_run()
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
         run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
-        self.assertEqual(run["adopted"]["source"], {"shape": "default-branch", "branch": "007-x", "spec_dir": "specs/007-x"})
+        self.assertEqual(
+            run["adopted"]["source"],
+            {"shape": "default-branch", "branch": "007-x", "spec_dir": "specs/007-x"},
+        )
         self.assertEqual(run["adopted"]["base_commit"], base)
-        self.assertEqual(self.box.git("log", "--format=%s", "origin/main..007-x").splitlines(), ["factory: adopt 007-x"])
+        self.assertEqual(
+            self.box.git("log", "--format=%s", "origin/main..007-x").splitlines(),
+            ["factory: adopt 007-x"],
+        )
         self.assertFalse(self.pending.exists())
 
     def test_rejected_commit_removes_the_remote_branch_it_created(self):
         self.publish_remote_only()
-        refs, pending_before = self.remote_refs(), files_under(self.box.home / "pending")
+        refs, pending_before = (
+            self.remote_refs(),
+            files_under(self.box.home / "pending"),
+        )
         self.reject_commits()
         out = self.write_run()
         self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
         self.assertFalse(self.worktree.exists())
-        self.assertNotIn("007-x", self.box.git("branch", "--format=%(refname:short)").split())
+        self.assertNotIn(
+            "007-x", self.box.git("branch", "--format=%(refname:short)").split()
+        )
         self.assertEqual(self.remote_refs(), refs)
         self.assertEqual(files_under(self.box.home / "pending"), pending_before)
 
@@ -815,7 +879,9 @@ class AdoptSourceShapeWriteTests(DryRunFixture):
         out = self.write_run()
         self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
         self.assertFalse(self.worktree.exists())
-        self.assertNotIn("007-x", self.box.git("branch", "--format=%(refname:short)").split())
+        self.assertNotIn(
+            "007-x", self.box.git("branch", "--format=%(refname:short)").split()
+        )
         self.assertEqual(self.remote_refs(), refs)
         self.assertTrue(self.pending.exists())
 
@@ -943,7 +1009,9 @@ class BaseDriftTests(DryRunFixture):
         self.box.git("commit", "-q", "-m", "spec 001-007 on main")
         self.box.git("push", "-q", "origin", "main")
         self.box.git("fetch", "-q", "origin")
-        self.box.pending_run("adopt-001-007", pending_state(self.box.repo, base="origin/master"))
+        self.box.pending_run(
+            "adopt-001-007", pending_state(self.box.repo, base="origin/master")
+        )
         names = self.box.git("branch", "--format=%(refname:short)")
         out = self.box.cli("adopt", "007")
         combined = out.stdout + out.stderr
@@ -972,7 +1040,8 @@ class SymlinkWriteTests(DryRunFixture):
         self.box.git("commit", "-q", "-m", "spec evil")
         self.box.git("checkout", "-q", "main")
         self.pending = self.box.pending_run(
-            "adopt-evil", pending_state(self.box.repo, branch="evil", spec_dir="specs/evil")
+            "adopt-evil",
+            pending_state(self.box.repo, branch="evil", spec_dir="specs/evil"),
         )
         self.brief = self.pending.with_name("repo-adopt-evil.brief.md")
         self.brief.write_text("# Brief from pending\n")
@@ -1015,7 +1084,9 @@ class SymlinkWriteTests(DryRunFixture):
         self.box.git("add", "-A")
         self.box.git("commit", "-q", "-m", "factory as a file")
         self.box.git("checkout", "-q", "main")
-        self.assert_refused_and_outside_untouched("specs/evil/factory is not a directory")
+        self.assert_refused_and_outside_untouched(
+            "specs/evil/factory is not a directory"
+        )
 
     def assert_checkout_link_not_written_through(self, link, target):
         """A post-checkout hook plants `link` -> `target`; the write exits 1 and never writes through it."""
@@ -1034,13 +1105,19 @@ class SymlinkWriteTests(DryRunFixture):
         self.assertFalse(self.worktree.exists())
         self.assertTrue(self.pending.exists())
 
-    def test_symlinked_factory_directory_created_in_the_checkout_is_not_written_through(self):
+    def test_symlinked_factory_directory_created_in_the_checkout_is_not_written_through(
+        self,
+    ):
         self.assert_checkout_link_not_written_through("factory", self.outside)
 
     def test_symlinked_profile_created_in_the_checkout_is_not_written_through(self):
         (self.outside / "profile.md").write_text("precious\n")
-        self.pending.with_name("repo-adopt-evil.profile.md").write_text("# Profile from pending\n")
-        self.assert_checkout_link_not_written_through("factory/profile.md", self.outside / "profile.md")
+        self.pending.with_name("repo-adopt-evil.profile.md").write_text(
+            "# Profile from pending\n"
+        )
+        self.assert_checkout_link_not_written_through(
+            "factory/profile.md", self.outside / "profile.md"
+        )
 
     def test_symlinked_state_json_created_in_the_checkout_is_not_written_through(self):
         outside = self.box.dir / "outside-state.json"
@@ -1081,7 +1158,9 @@ class WriteFailureTests(AdoptWriteFixture):
         head = self.box.git("rev-parse", "007-x").strip()
         worktrees = self.box.git("worktree", "list", "--porcelain")
         hook = self.box.repo / ".git" / "hooks" / "post-checkout"
-        hook.write_text("#!/bin/sh\necho 'checkout rejected by test hook' >&2\nexit 1\n")
+        hook.write_text(
+            "#!/bin/sh\necho 'checkout rejected by test hook' >&2\nexit 1\n"
+        )
         hook.chmod(0o755)
         out = self.write_run()
         combined = out.stdout + out.stderr
@@ -1128,7 +1207,9 @@ class WriteFailureTests(AdoptWriteFixture):
         os.chmod(pending_dir, 0o755)
         resumed = self.box.cli("resume", "007-x")
         self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
-        self.assertIn(str(self.worktree / "specs/007-x/factory/state.json"), resumed.stdout)
+        self.assertIn(
+            str(self.worktree / "specs/007-x/factory/state.json"), resumed.stdout
+        )
 
     def test_rollback_that_leaves_the_worktree_behind_names_it(self):
         hook = self.box.repo / ".git" / "hooks" / "post-checkout"
@@ -1182,6 +1263,7 @@ class WriteFailureTests(AdoptWriteFixture):
         self.assertEqual(self.box.git("rev-parse", "007-x").strip(), head)
         self.assertTrue(self.pending.exists())
         self.assertEqual(self.brief.read_bytes(), b"\xff\xfe# Brief\n")
+
 
 if __name__ == "__main__":
     unittest.main()

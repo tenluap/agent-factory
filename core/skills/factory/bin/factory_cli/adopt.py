@@ -72,7 +72,10 @@ def _resolve(repo, src, base):
     """
     if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{src}") is not None:
         return "branch", src, f"refs/heads/{src}"
-    if _try(repo, "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{src}") is not None:
+    if (
+        _try(repo, "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{src}")
+        is not None
+    ):
         return "remote-branch", src, f"refs/remotes/origin/{src}"
     name = src.removeprefix("specs/")
     branches = commands.git(
@@ -85,7 +88,9 @@ def _resolve(repo, src, base):
         return "branch", matches[0], f"refs/heads/{matches[0]}"
     dirs = [d for d in _entries(repo, base, "specs") if commands.name_matches(d, name)]
     if len(dirs) > 1:
-        commands.die(3, f"'{src}' matches several spec dirs on {base}: {', '.join(dirs)}")
+        commands.die(
+            3, f"'{src}' matches several spec dirs on {base}: {', '.join(dirs)}"
+        )
     if dirs:
         return "default-branch", dirs[0], base
     return None
@@ -95,8 +100,11 @@ def _unmatched(repo, src, base):
     """Why `src` matched nothing. A spec dir only on the local default branch gets its own reason (clarify Q2)."""
     name = src.removeprefix("specs/")
     local = base.removeprefix("origin/")
-    if _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{local}") is not None and any(
-        commands.name_matches(d, name) for d in _entries(repo, f"refs/heads/{local}", "specs")
+    if _try(
+        repo, "show-ref", "--verify", "--quiet", f"refs/heads/{local}"
+    ) is not None and any(
+        commands.name_matches(d, name)
+        for d in _entries(repo, f"refs/heads/{local}", "specs")
     ):
         return f"spec dir is on local '{local}' but not on '{base}'; push it or create its branch first"
     return f"no branch or spec dir matches '{src}'"
@@ -108,7 +116,13 @@ def _spec_dir(repo, ref, branch, base):
     if _entries(repo, ref, own):
         return own
     added = commands.git(repo, "diff", "--name-only", f"{base}...{ref}", "--", "specs/")
-    dirs = sorted({"/".join(path.split("/")[:2]) for path in added.splitlines() if path.count("/") >= 2})
+    dirs = sorted(
+        {
+            "/".join(path.split("/")[:2])
+            for path in added.splitlines()
+            if path.count("/") >= 2
+        }
+    )
     if len(dirs) > 1:
         commands.die(3, f"'{branch}' adds several spec dirs: {', '.join(dirs)}")
     return dirs[0] if dirs else own
@@ -152,7 +166,10 @@ def _no_link(worktree, path):
     for part in path.relative_to(worktree).parts:
         current = current / part
         if current.is_symlink():
-            commands.die(1, f"{current.relative_to(worktree)} is a symlink in the checkout; refusing to write through it")
+            commands.die(
+                1,
+                f"{current.relative_to(worktree)} is a symlink in the checkout; refusing to write through it",
+            )
 
 
 def _factory_problem(repo, ref, spec_dir):
@@ -166,7 +183,9 @@ def _factory_problem(repo, ref, spec_dir):
         if line.startswith("120000 ")
     ]
     if links:
-        return f"{links[0]} is a symlink on the branch; adopt never writes through links"
+        return (
+            f"{links[0]} is a symlink on the branch; adopt never writes through links"
+        )
     entry = commands.git(repo, "ls-tree", ref, "--", folder).split()
     if entry and entry[1] != "tree":
         return f"{folder} is not a directory on the branch"
@@ -177,7 +196,9 @@ def _refusal(repo, report, ref):
     """The first refusal reason in D5's order, or None; `dirty` already lists every path."""
     branch, spec_dir = report["branch"], report["spec_dir"]
     own = f"{report['pending']}.json"
-    others = [path.name for path, _ in commands.pending_states(repo) if path.name != own]
+    others = [
+        path.name for path, _ in commands.pending_states(repo) if path.name != own
+    ]
     if others:
         return f"another pending run '{others[0]}' exists for this repo; resume it or prune it first"
     if report["dirty"]:
@@ -268,9 +289,14 @@ def write(repo, src, stage=None):
         if error:
             commands.die(1, f"pending adoption '{name}' is unreadable: {error}")
         if loaded.get("status") in ("aborted", "pr-open"):
-            commands.die(1, f"pending adoption '{name}' is {loaded['status']} and has ended")
+            commands.die(
+                1, f"pending adoption '{name}' is {loaded['status']} and has ended"
+            )
         report = inspect(repo, src, loaded.get("base") or probe["base"])
-        if report["branch"] is not None and (report["branch"], report["pending"]) != (probe["branch"], probe["pending"]):
+        if report["branch"] is not None and (report["branch"], report["pending"]) != (
+            probe["branch"],
+            probe["pending"],
+        ):
             commands.die(
                 1,
                 f"'{src}' now resolves to '{report['branch']}' under the pending base '{report['base']}', "
@@ -300,21 +326,30 @@ def _adopt_worktree(repo, report, loaded, pending, stage):
         leftovers = _rollback(repo, worktree, created)
         reason = str(e) or type(e).__name__
         if leftovers:
-            commands.die(1, f"adopt failed: {reason}; rollback left {'; '.join(leftovers)}")
+            commands.die(
+                1, f"adopt failed: {reason}; rollback left {'; '.join(leftovers)}"
+            )
         commands.die(1, f"adopt failed and was rolled back: {reason}")
     sha = _short_sha(worktree)
     try:
         _clear_pending(pending)
     except OSError:
         label = f"committed {sha}" if sha else "committed"
-        commands.die(1, f"{label}; pending cleanup failed: resume {report['branch']}, do not retry")
+        commands.die(
+            1,
+            f"{label}; pending cleanup failed: resume {report['branch']}, do not retry",
+        )
     return summary
 
 
 def _created_branch(repo, report):
     """The branch this write creates (remote-branch, default-branch) when it does not exist yet, else None."""
     branch = report["branch"]
-    if report["shape"] == "branch" or _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}") is not None:
+    if (
+        report["shape"] == "branch"
+        or _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}")
+        is not None
+    ):
         return None
     return branch
 
@@ -323,9 +358,20 @@ def _add_worktree(repo, report, worktree):
     """D7 step 3: the worktree for the source shape."""
     branch, shape = report["branch"], report["shape"]
     if shape == "remote-branch":
-        commands.git(repo, "worktree", "add", "--track", "-b", branch, str(worktree), f"origin/{branch}")
+        commands.git(
+            repo,
+            "worktree",
+            "add",
+            "--track",
+            "-b",
+            branch,
+            str(worktree),
+            f"origin/{branch}",
+        )
     elif shape == "default-branch":
-        commands.git(repo, "worktree", "add", "-b", branch, str(worktree), report["base"])
+        commands.git(
+            repo, "worktree", "add", "-b", branch, str(worktree), report["base"]
+        )
     else:
         commands.git(repo, "worktree", "add", str(worktree), branch)
 
@@ -345,7 +391,11 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
         stage=chosen,
         status="running",
         adopted={
-            "source": {"shape": report["shape"], "branch": branch, "spec_dir": spec_dir},
+            "source": {
+                "shape": report["shape"],
+                "branch": branch,
+                "spec_dir": spec_dir,
+            },
             "inferred_stage": report["inferred_stage"],
             "chosen_stage": chosen,
             "base_commit": base_commit,
@@ -387,7 +437,15 @@ def _utf8(path):
 def _commit_run(worktree, report):
     """D7 step 5: the one adoption commit, staging only the run's factory folder (FR-014)."""
     commands.git(str(worktree), "add", "--", f"{report['spec_dir']}/factory")
-    commands.git(str(worktree), "commit", "-q", "-m", f"factory: adopt {report['branch']}")
+    commands.git(
+        str(worktree),
+        "commit",
+        "-q",
+        "-m",
+        f"factory: adopt {report['branch']}",
+        "--",
+        f"{report['spec_dir']}/factory",
+    )
 
 
 def _short_sha(worktree):
@@ -420,9 +478,17 @@ def _rollback(repo, worktree, created_branch):
     )
     if removed.returncode != 0 and worktree.exists():
         leftovers.append(f"worktree {worktree} ({removed.stderr.strip()})")
-    if created_branch and _try(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{created_branch}") is not None:
+    if (
+        created_branch
+        and _try(
+            repo, "show-ref", "--verify", "--quiet", f"refs/heads/{created_branch}"
+        )
+        is not None
+    ):
         deleted = subprocess.run(
-            ["git", "-C", repo, "branch", "-D", created_branch], capture_output=True, text=True
+            ["git", "-C", repo, "branch", "-D", created_branch],
+            capture_output=True,
+            text=True,
         )
         if deleted.returncode != 0:
             leftovers.append(f"branch {created_branch} ({deleted.stderr.strip()})")
