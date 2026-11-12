@@ -11,7 +11,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/025-repo-instructions-discovery",
   "spec_dir": "specs/025-repo-instructions-discovery",
   "status": "running",
-  "stage": "verify",
+  "stage": "review",
   "halt_reason": "verify red: full suite fails 8 tests that fail identically on origin/main 0c3bf71 (main CI red since 7 Nov); the run adds 42 passing tests and 0 new failures; needs user decision",
   "stop_at": null,
   "mode": {
@@ -63,52 +63,7 @@
       "at": "2026-11-12T00:25:48.575749Z"
     }
   },
-  "relay": {
-    "stage": "verify",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          },
-          {
-            "id": "Q2"
-          },
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "B: Fix the 8 baseline failures in this run as separate commits; intent for the opencode standard model, the retro tier and skills-lock handling is derived from git history by the orchestrator and recorded as cruise decisions for approver veto",
-            "at": "2026-11-12T07:19:26.443089Z",
-            "auto": false
-          },
-          "Q2": {
-            "answer": "opencode standard model: align core/skills/factory/bin/factory_cli/adapter_models.json and the expected table in test_shipped_model_policy_preserves_explicit_tiers to the committed adapters/opencode/adapter.json value claude-code/claude-sonnet-5-5[1m] (6e8caac changed it deliberately from openai/gpt-6.1-terra). The uncommitted claude-haiku-5-5[1m] edit in the main checkout is not adopted",
-            "at": "2026-11-12T07:21:02.893341Z",
-            "auto": true,
-            "cruise_override": true
-          },
-          "Q3": {
-            "answer": "retro tier: keep deep (6e8caac moved retro, security-reviewer, ui-reviewer and ux-reviewer to deep deliberately); update test_retro_role_renders_read_only_for_every_harness to expect ('retro', 'deep', 'read')",
-            "at": "2026-11-12T07:21:03.147043Z",
-            "auto": true,
-            "cruise_override": true
-          },
-          "Q4": {
-            "answer": "skills library: create-project-agents-file and prompt-optimiser are first-party in core/skills since 98eb656; drop their stale local entries from skills-lock.json and update test_skill_library to that layout; remove the stale graphify CASE_INSENSITIVE_ONLY exception (graphify ships SKILL.md since 0c3bf71)",
-            "at": "2026-11-12T07:21:03.396923Z",
-            "auto": true,
-            "cruise_override": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [
     {
       "at": "2026-11-12T01:18:33.205033Z",
@@ -255,6 +210,41 @@
       "answer": "A: Accept as declared - seams S1-S6 with exactly the declared failure paths: S1 factory instructions F1.1-F1.9; S2 factory instructions-record F2.1-F2.4; S3 factory adopt F3.1; S4 factory validate F4.1; S5 factory drop none; S6 SKILL.md text contract none; exempt: DESIGN.md, references/state.md, config README text in models.py, .factory/config.json, CONTEXT.md, the ADR",
       "auto": true,
       "at": "2026-11-12T00:18:35.710534Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "verify",
+      "question": "Q1",
+      "answer": "B: Fix the 8 baseline failures in this run as separate commits; intent for the opencode standard model, the retro tier and skills-lock handling is derived from git history by the orchestrator and recorded as cruise decisions for approver veto",
+      "auto": false,
+      "at": "2026-11-12T07:41:59.092867Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "verify",
+      "question": "Q2",
+      "answer": "opencode standard model: align core/skills/factory/bin/factory_cli/adapter_models.json and the expected table in test_shipped_model_policy_preserves_explicit_tiers to the committed adapters/opencode/adapter.json value claude-code/claude-sonnet-5-5[1m] (6e8caac changed it deliberately from openai/gpt-6.1-terra). The uncommitted claude-haiku-5-5[1m] edit in the main checkout is not adopted",
+      "auto": true,
+      "at": "2026-11-12T07:41:59.092867Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "verify",
+      "question": "Q3",
+      "answer": "retro tier: keep deep (6e8caac moved retro, security-reviewer, ui-reviewer and ux-reviewer to deep deliberately); update test_retro_role_renders_read_only_for_every_harness to expect ('retro', 'deep', 'read')",
+      "auto": true,
+      "at": "2026-11-12T07:41:59.092867Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "verify",
+      "question": "Q4",
+      "answer": "skills library: create-project-agents-file and prompt-optimiser are first-party in core/skills since 98eb656; drop their stale local entries from skills-lock.json and update test_skill_library to that layout; remove the stale graphify CASE_INSENSITIVE_ONLY exception (graphify ships SKILL.md since 0c3bf71)",
+      "auto": true,
+      "at": "2026-11-12T07:41:59.092867Z",
       "kind": "answer",
       "cruise_override": true
     }
@@ -567,7 +557,7 @@
       ]
     },
     {
-      "at": "2026-11-12T07:41:58.815906Z",
+      "at": "2026-11-12T07:41:59.092867Z",
       "stage": "verify",
       "event": "verify-pass",
       "commit": null,
