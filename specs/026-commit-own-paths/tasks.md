@@ -28,7 +28,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 **Independent test**: `python3 -m unittest tools.tests.test_commands tools.tests.test_adopt`.
 
-- [ ] T002 [US1] [AC-1] [AC-2] Commit `commit_worktree` with its declared pathspec in `core/skills/factory/bin/factory_cli/commands.py`.
+- [x] T002 [US1] [AC-1] [AC-2] Commit `commit_worktree` with its declared pathspec in `core/skills/factory/bin/factory_cli/commands.py`.
   - Seams and failure paths (plan.md): `factory checkpoint` -> `unrelated-staged-deletion`; `factory resume` (worktree) -> `unrelated-staged-deletion`; `commands.commit_worktree` -> `no-declared-paths`.
   - 1. Failing tests in `tools/tests/test_commands.py`:
     - checkpoint: commit `pnpm-lock.yaml` in the run worktree, stage its deletion (`git rm pnpm-lock.yaml`), run `checkpoint`; assert `git show --name-only --format= HEAD` does not list `pnpm-lock.yaml` and `git diff --cached --name-status` still shows `D	pnpm-lock.yaml`.

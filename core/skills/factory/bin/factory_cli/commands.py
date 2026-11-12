@@ -15,7 +15,16 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, detect, feedback, improvements, lock, state, totals
+from factory_cli import (
+    budget,
+    checks,
+    detect,
+    feedback,
+    improvements,
+    lock,
+    state,
+    totals,
+)
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -255,8 +264,12 @@ def find_matches(repo, name):
             matches.append((path, loaded, "pending"))
     # A pending copy of a branch that already has its worktree run is a leftover
     # (an adoption whose pending cleanup failed after its commit): the worktree wins.
-    started = {loaded.get("branch") for _, loaded, source in matches if source == "worktree"}
-    return [m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started]
+    started = {
+        loaded.get("branch") for _, loaded, source in matches if source == "worktree"
+    }
+    return [
+        m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started
+    ]
 
 
 def one_run(repo, name, hint=None):
@@ -788,14 +801,17 @@ def write_run(path, loaded, mutate):
 
 
 def commit_worktree(worktree, message, spec_dir=None, extra=()):
-    """Stage spec_dir (plus the checkpoint's declared extras) and commit.
-    Undeclared changes are never staged (FR-017)."""
+    """Stage spec_dir (plus the checkpoint's declared extras) and commit exactly
+    those paths. Undeclared changes are never staged (FR-017) and a change
+    already staged outside them is neither committed nor unstaged; with no
+    declared path nothing is committed."""
     if not worktree:
         return None
     add = [path for path in ([spec_dir] if spec_dir else []) if path] + list(extra)
-    if add:
-        git(worktree, "add", "--", *add)
-    git(worktree, "commit", "-q", "-m", message)
+    if not add:
+        return None
+    git(worktree, "add", "--", *add)
+    git(worktree, "commit", "-q", "-m", message, "--", *add)
     return git(worktree, "rev-parse", "--short", "HEAD").strip()
 
 
@@ -1342,7 +1358,10 @@ def cmd_wait_close(repo, cwd, wait_id):
 def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
-        die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+        die(
+            1,
+            "--cruise-override needs cruise mode on this run; run resume --cruise first",
+        )
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
 
@@ -1443,18 +1462,28 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     return result
 
 
-def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer", cruise_override=False):
+def cmd_decisions_add(
+    repo, cwd, stage, qid, answer, kind="answer", cruise_override=False
+):
     if kind not in state.DECISION_KINDS:
         die(
             1,
             f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
-    if cruise_override:  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
+    if (
+        cruise_override
+    ):  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
         if (loaded.get("mode") or {}).get("cruise") is not True:
-            die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+            die(
+                1,
+                "--cruise-override needs cruise mode on this run; run resume --cruise first",
+            )
         if kind == "approved" or (kind == "gate-override" and stage != "analyze"):
-            die(1, "--cruise-override never records an approval or a gate override outside analyze")
+            die(
+                1,
+                "--cruise-override never records an approval or a gate override outside analyze",
+            )
     now = now_iso()
 
     def mutate(s):
@@ -1495,7 +1524,10 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     """The verify record (FR-006, R3): the review gate reads the latest one."""
     command_results = [{"command": c, "status": st} for c, st in commands_payload]
     if passed and not checks.verify_commands_passed(command_results):
-        die(1, "verify --pass requires named commands with passing statuses (0 or 'pass')")
+        die(
+            1,
+            "verify --pass requires named commands with passing statuses (0 or 'pass')",
+        )
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"

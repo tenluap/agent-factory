@@ -8,11 +8,16 @@ import json
 import os
 import shutil
 import socket
+import sys
 import unittest
 from pathlib import Path
 from datetime import datetime, timezone
 
-from tests import Sandbox, fixture
+CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
+sys.path.insert(0, str(CORE_BIN))
+
+from factory_cli import commands  # noqa: E402
+from tests import Sandbox, fixture  # noqa: E402
 from tests import replay
 
 
@@ -846,6 +851,52 @@ class CheckpointStagingTests(unittest.TestCase):
         out = self.box.cli("checkpoint", "plan", "--envelope", path, cwd=self.wt)
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("docs/bare.md", json.loads(out.stdout)["declared"])
+
+
+class UnrelatedStagedChangeTests(unittest.TestCase):
+    """Writers commit with their declared pathspec: a staged change outside it
+    is neither committed nor unstaged (spec 026, AC-1, AC-2)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+        self.branch = "081-own"
+        self.wt = self.box.worktree_run(self.branch, writer_state(), commit=False)
+        (self.wt / "pnpm-lock.yaml").write_text("lock\n")
+        self.box.git("add", "-A", cwd=self.wt)
+        self.box.git("commit", "-q", "-m", f"factory: start {self.branch}", cwd=self.wt)
+        self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=self.wt)
+
+    def assert_left_staged(self):
+        committed = self.box.git(
+            "show", "--name-only", "--format=", "HEAD", cwd=self.wt
+        )
+        self.assertNotIn("pnpm-lock.yaml", committed)
+        staged = self.box.git("diff", "--cached", "--name-status", cwd=self.wt)
+        self.assertIn("D\tpnpm-lock.yaml", staged)
+
+    def test_checkpoint_leaves_an_unrelated_staged_deletion_out(self):
+        out = self.box.cli("checkpoint", "plan", cwd=self.wt)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assert_left_staged()
+
+    def test_resume_leaves_an_unrelated_staged_deletion_out(self):
+        out = self.box.cli("resume", self.branch)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn(
+            f"factory: resume {self.branch}",
+            self.box.git("log", "-1", "--format=%s", cwd=self.wt),
+        )
+        self.assert_left_staged()
+
+    def test_commit_worktree_without_declared_paths_makes_no_commit(self):
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        self.assertIsNone(commands.commit_worktree(str(self.wt), "factory: nothing"))
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+        self.assertIn(
+            "D\tpnpm-lock.yaml",
+            self.box.git("diff", "--cached", "--name-status", cwd=self.wt),
+        )
 
 
 class CheckpointCommitFailureTests(unittest.TestCase):
