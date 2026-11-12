@@ -60,6 +60,9 @@
           },
           {
             "id": "Q4"
+          },
+          {
+            "id": "Q5"
           }
         ],
         "answers": {
@@ -81,6 +84,11 @@
           "Q4": {
             "answer": "A: Exclude, then config, then strongest - instructions.exclude drops the file; else instructions.include (always, root scope) beats instructions.reference; else the strongest derived kind wins (always > scoped > reference), ties broken catalogue/governance > import > link",
             "at": "2026-11-12T00:06:27.396678Z",
+            "auto": true
+          },
+          "Q5": {
+            "answer": "A: instructions.json - one JSON file with ref, combined hash, notes and ordered entries (path, kind, scope, size, hash, title, aliases); sorted keys, stable entry order; beside the pending file before the worktree exists, then in <spec_dir>/factory/ beside profile.md",
+            "at": "2026-11-12T00:06:27.632031Z",
             "auto": true
           }
         }
