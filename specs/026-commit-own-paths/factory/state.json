@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "worktree",
+  "stage": "specify",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -141,6 +141,13 @@
     {
       "at": "2026-11-12T09:31:27.299536Z",
       "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T09:31:46.315881Z",
+      "stage": "worktree",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
