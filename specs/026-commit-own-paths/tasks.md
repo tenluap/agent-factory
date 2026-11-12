@@ -97,7 +97,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 ## Phase 7: Verification
 
-- [ ] T007 [AC-1] [AC-2] [AC-3] [AC-4] [AC-5] Run quickstart.md steps 1-4: `python3 -m unittest discover -s tools` (no failure beyond the base failures in `factory/verify-baseline.md`, SC-005) and `commands.build` (exit 0). Verification only: no file change, no commit beyond ticking this box (`git add -- specs/026-commit-own-paths/tasks.md`; `factory(implement): T007 Verify suite and build`). Done when both commands meet their expected result.
+- [x] T007 [AC-1] [AC-2] [AC-3] [AC-4] [AC-5] Run quickstart.md steps 1-4: `python3 -m unittest discover -s tools` (no failure beyond the base failures in `factory/verify-baseline.md`, SC-005) and `commands.build` (exit 0). Verification only: no file change, no commit beyond ticking this box (`git add -- specs/026-commit-own-paths/tasks.md`; `factory(implement): T007 Verify suite and build`). Done when both commands meet their expected result.
 
 ## Dependencies
 
