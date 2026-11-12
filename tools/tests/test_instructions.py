@@ -200,5 +200,66 @@ class CatalogueTests(ScanBase):
         self.assertEqual(index["CONVENTIONS.md"]["aliases"], ["GEMINI.md"])
 
 
+def fm(**fields):
+    lines = [f"{k}: {v}" for k, v in fields.items()]
+    return "---\n" + "\n".join(lines) + "\n---\nbody\n"
+
+
+class ClassificationTests(ScanBase):
+    def kinds(self, files):
+        self.add(files)
+        return {p: (e["kind"], e["scope"]) for p, e in self.entries().items()}
+
+    def test_front_matter_mappings_and_nested_scope(self):
+        got = self.kinds(
+            {
+                "packages/api/AGENTS.md": "# api\n",
+                ".cursor/rules/a.mdc": fm(alwaysApply="true"),
+                ".cursor/rules/b.mdc": fm(globs="src/**/*.ts"),
+                ".cursor/rules/c.mdc": fm(description="x"),
+                ".github/instructions/a.instructions.md": fm(applyTo='"a/**,b/**"'),
+                ".kiro/steering/k.md": fm(inclusion="fileMatch", fileMatchPattern="k/*"),
+                ".windsurf/rules/w.md": fm(trigger="model_decision"),
+                ".continue/rules/c.md": fm(alwaysApply="false"),
+                ".continue/rules/d.md": fm(globs='"**"'),
+                "pkg/.cursor/rules/g.mdc": fm(globs="x/*"),
+            }
+        )
+        self.assertEqual(got["packages/api/AGENTS.md"], ("scoped", ["packages/api/"]))
+        self.assertEqual(got[".cursor/rules/a.mdc"], ("always", ["/"]))
+        self.assertEqual(got[".cursor/rules/b.mdc"], ("scoped", ["src/**/*.ts"]))
+        self.assertEqual(got[".cursor/rules/c.mdc"][0], "reference")
+        self.assertEqual(
+            got[".github/instructions/a.instructions.md"], ("scoped", ["a/**", "b/**"])
+        )
+        self.assertEqual(got[".kiro/steering/k.md"], ("scoped", ["k/*"]))
+        self.assertEqual(got[".windsurf/rules/w.md"][0], "reference")
+        self.assertEqual(got[".continue/rules/c.md"][0], "reference")
+        self.assertEqual(got[".continue/rules/d.md"], ("always", ["/"]))
+        self.assertEqual(got["pkg/.cursor/rules/g.mdc"], ("scoped", ["pkg/x/*"]))
+
+    def test_title_falls_back_to_description_then_file_name(self):
+        self.add({".cursor/rules/a.mdc": fm(description="Desc"), ".rules": "plain\n"})
+        index = self.entries()
+        self.assertEqual(index[".cursor/rules/a.mdc"]["title"], "Desc")
+        self.assertEqual(index[".rules"]["title"], ".rules")
+
+    def test_unclosed_front_matter_keeps_row_default_with_note(self):
+        self.add({".cursor/rules/a.mdc": "---\nalwaysApply: true\nbody\n"})
+        index = self.scan()
+        self.assertEqual(index["entries"][0]["kind"], "reference")
+        self.assertIn("front matter unparseable: .cursor/rules/a.mdc", index["notes"])
+
+    def test_non_utf8_blob_is_indexed_with_note(self):
+        path = self.box.repo / "AGENTS.md"
+        path.write_bytes(b"\xff\xfe bad\n")
+        self.box.git("add", "-A")
+        self.box.git("commit", "-q", "-m", "bin")
+        index = self.scan()
+        entry = index["entries"][0]
+        self.assertEqual((entry["title"], entry["size"]), ("", 7))
+        self.assertIn("not UTF-8: AGENTS.md", index["notes"])
+
+
 if __name__ == "__main__":
     unittest.main()

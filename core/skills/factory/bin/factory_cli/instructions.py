@@ -34,7 +34,7 @@ CATALOGUE = (
             (".github/instructions/**/*.instructions.md", "reference"),
         ),
     ),
-    (".cursor", ((".cursor/rules/**/*.mdc", "reference"), (".cursorrules", "always"))),
+    ("cursor", ((".cursor/rules/**/*.mdc", "reference"), (".cursorrules", "always"))),
     (
         "windsurf-devin",
         tuple(
@@ -198,7 +198,9 @@ def glob_regex(glob):
 
 
 _ROWS = tuple(
-    (glob_regex(pattern), kind) for _, patterns in CATALOGUE for pattern, kind in patterns
+    (glob_regex(pattern), kind, name)
+    for name, patterns in CATALOGUE
+    for pattern, kind in patterns
 )
 
 
@@ -222,13 +224,12 @@ def _is_adr(path):
 
 
 def classify_path(path):
-    """(kind, scope, source) of a tracked path by catalogue or governance, or None."""
+    """(kind, base directory, row) of a tracked path by catalogue, or the
+    governance result (kind, scope list, "governance"); None when neither."""
     for base, rest in _suffixes(path):
-        for regex, kind in _ROWS:
+        for regex, kind, row in _ROWS:
             if regex.match(rest):
-                if base and kind == "always":
-                    return "scoped", [base + "/"], "catalogue"
-                return kind, ["/"] if not base else [base + "/"], "catalogue"
+                return kind, base, row
     directory, _, name = path.rpartition("/")
     if name.startswith("CONTRIBUTING"):
         if directory in ROOT_GOVERNANCE_DIRS:
@@ -241,10 +242,86 @@ def classify_path(path):
     return None
 
 
-def _title(text, path):
+def front_matter(text):
+    """({key: str | list}, body) of a leading `---` block; (None, text) when the
+    block is unclosed or malformed (research R5); ({}, text) when absent."""
+    lines = text.split("\n")
+    if lines[0].strip() != "---":
+        return {}, text
+    try:
+        end = next(i for i in range(1, len(lines)) if lines[i].strip() == "---")
+    except StopIteration:
+        return None, text
+    fields, key = {}, None
+    for line in lines[1:end]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- ") and key is not None and fields[key] == "":
+            fields[key] = []
+        if stripped.startswith("- ") and isinstance(fields.get(key), list):
+            fields[key].append(stripped[2:].strip().strip("\"'"))
+            continue
+        name, colon, value = stripped.partition(":")
+        if not colon or " " in name:
+            return None, text
+        key, value = name, value.strip()
+        if value.startswith("[") and value.endswith("]"):
+            fields[key] = [v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()]
+        else:
+            fields[key] = value.strip("\"'")
+    return fields, "\n".join(lines[end + 1 :])
+
+
+def _globs(value):
+    items = value if isinstance(value, list) else value.split(",")
+    return [g.strip() for g in items if g.strip()]
+
+
+def _mapped(row, fields):
+    """(kind, globs) the row's front matter implies, or None for the default."""
+    flag = fields.get("alwaysApply", "").lower() if isinstance(fields.get("alwaysApply"), str) else ""
+    if row in ("cursor", "continue"):
+        if flag == "true":
+            return "always", []
+        if fields.get("globs"):
+            return "scoped", _globs(fields["globs"])
+        return ("reference", []) if row == "continue" and flag == "false" else None
+    if row == "copilot" and fields.get("applyTo"):
+        return "scoped", _globs(fields["applyTo"])
+    if row in ("claude-code", "cline") and fields.get("paths"):
+        return "scoped", _globs(fields["paths"])
+    if row == "kiro":
+        inclusion = fields.get("inclusion")
+        if inclusion == "fileMatch" and fields.get("fileMatchPattern"):
+            return "scoped", _globs(fields["fileMatchPattern"])
+        return ("reference", []) if inclusion in ("manual", "auto") else None
+    if row == "windsurf-devin":
+        trigger = fields.get("trigger")
+        if trigger == "always_on":
+            return "always", []
+        if trigger == "glob" and fields.get("globs"):
+            return "scoped", _globs(fields["globs"])
+        return ("reference", []) if trigger in ("model_decision", "manual") else None
+    return None
+
+
+def _kind_scope(kind, base, globs):
+    """Final (kind, scope) of a catalogue match at `base` with derived `globs`."""
+    prefix = base + "/" if base else ""
+    if globs and not (not base and set(globs) <= {"**", "**/*"}):
+        return "scoped", [prefix + g for g in globs]
+    if kind == "scoped" or (kind == "always" and base):
+        return ("scoped", [prefix]) if base else ("always", ["/"])
+    return kind, ["/"] if kind == "always" or not base else [prefix]
+
+
+def _title(text, path, fields=None):
     for line in text.splitlines():
         if line.startswith("#"):
             return line.lstrip("#").strip()
+    if fields and isinstance(fields.get("description"), str) and fields["description"]:
+        return fields["description"]
     return posixpath.basename(path)
 
 
@@ -275,16 +352,34 @@ def scan(repo, ref="HEAD"):
             continue
         content = blob(tree[real][1])
         digest = "sha256:" + hashlib.sha256(content).hexdigest()
-        kind, scope, source = classify_path(path)
-        groups.setdefault((digest, kind, tuple(scope), source), []).append(
-            (path, real, content)
+        kind, where, row = classify_path(path)
+        title_fields = None
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            text = None
+            notes.append(f"not UTF-8: {path}")
+        if row == "governance":
+            scope, source = tuple(where), "governance"
+        else:
+            fields, text_body = front_matter(text) if text is not None else ({}, "")
+            if fields is None:
+                notes.append(f"front matter unparseable: {path}")
+                fields = {}
+            title_fields = fields
+            mapped = _mapped(row, fields)
+            kind, globs = mapped if mapped else (kind, [])
+            kind, scope = _kind_scope(kind, where, globs)
+            scope, source = tuple(scope), "catalogue"
+        title = "" if text is None else _title(text_body if row != "governance" else text, path, title_fields)
+        groups.setdefault((digest, kind, scope, source), []).append(
+            (path, real, content, title)
         )
 
     entries = []
     for (digest, kind, scope, source), members in groups.items():
         regular = sorted(m for m in members if tree[m[0]][0] != "120000")
         primary = (regular or sorted(members))[0]
-        text = primary[2].decode("utf-8", "replace")
         entries.append(
             {
                 "path": primary[0],
@@ -292,7 +387,7 @@ def scan(repo, ref="HEAD"):
                 "scope": list(scope),
                 "size": len(primary[2]),
                 "hash": digest,
-                "title": _title(text, primary[0]),
+                "title": primary[3],
                 "aliases": sorted(m[0] for m in members if m[0] != primary[0]),
                 "source": source,
             }

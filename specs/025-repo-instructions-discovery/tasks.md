@@ -44,7 +44,7 @@
 **Goal**: correct kind and scope for front matter, nesting, imports and links.
 **Independent test**: assert kinds and scopes of a fixture against an expected table.
 
-- [ ] T004 [US2] Front-matter reader, row mappings and nested scope (FR-007, FR-009). Seam **S1**; failure paths **F1.4, F1.8**.
+- [x] T004 [US2] Front-matter reader, row mappings and nested scope (FR-007, FR-009). Seam **S1**; failure paths **F1.4, F1.8**.
   1. Test (red) in `T`: `packages/api/AGENTS.md` → `scoped`, `["packages/api/"]`; `.cursor/rules/a.mdc` with `alwaysApply: true` → `always`; `globs: src/**/*.ts` → `scoped` with that glob; `description` only → `reference`; Copilot `applyTo: "a/**,b/**"` → `scoped` `["a/**","b/**"]`; Kiro `inclusion: fileMatch` + `fileMatchPattern` → `scoped`; Windsurf `trigger: model_decision` → `reference`; Continue `alwaysApply: false` no globs → `reference`; `globs: "**"` at root → `always`; nested `pkg/.cursor/rules/g.mdc` with `globs: x/*` → scope `["pkg/x/*"]`; title falls back to front-matter `description`, then file name. F1.4: unclosed front matter → row default kind, note `front matter unparseable: <path>`. F1.8: non-UTF-8 blob → indexed with size and hash, `title: ""`, note naming it.
   2. Implement one tolerant reader per research R5 (scalars, quoted strings, inline and block lists, comma lists); per-row mapping table from data-model.md; base-directory rule (derived `always` below root becomes `scoped` to `<base>/`; glob scopes prefixed with `<base>/`).
   3. Verify: test file and full suite green.
