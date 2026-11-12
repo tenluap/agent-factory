@@ -88,6 +88,14 @@
       "summary": "Approve 025-repo-instructions-discovery after user-changes round: round 2 pass, 5 advisory",
       "answered_at": "2026-11-12T08:21:40.406061Z",
       "latency_ms": 44144
+    },
+    {
+      "at": "2026-11-12T08:42:02.830548Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 025-repo-instructions-discovery after second user-changes round: round 3 pass, 1 low advisory",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
