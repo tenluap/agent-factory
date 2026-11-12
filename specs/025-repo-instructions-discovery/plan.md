@@ -111,6 +111,8 @@ Exempt: `CONTEXT.md` and the ADR - documentation only, already written.
 
 Overridden: none
 
+Confirmed: 2026-11-12 - Q1 accepted (cruise override) - seams: S1 `factory instructions`, S2 `factory instructions-record`, S3 `factory adopt`, S4 `factory validate`, S5 `factory drop`, S6 orchestrator text contract; failure paths: S1 F1.1-F1.9; S2 F2.1-F2.4; S3 F3.1; S4 F4.1; S5 none; S6 none
+
 ## Complexity Tracking
 
 No constitution violations; Principle II carries the justification line above.

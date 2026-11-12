@@ -10,11 +10,11 @@ A tuple of rows, one per tool. Every row matches at any depth; a match below the
 | claude-code | `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/**/*.md` | always | `paths` = scoped |
 | gemini | `GEMINI.md` | always | none |
 | copilot | `.github/copilot-instructions.md` (always); `.github/instructions/**/*.instructions.md` | reference | `applyTo` (comma list) = scoped |
-| cursor | `.cursor/rules/**/*.mdc`, `.cursor/rules/**/*.md`, `.cursorrules` (always) | reference | `alwaysApply: true` = always; `globs` = scoped; `description` only = reference |
-| windsurf-devin | `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules`, `.devin/rules/*.md` | always | `trigger`: `always_on` = always; `glob` + `globs` = scoped; `model_decision`, `manual` = reference |
+| cursor | `.cursor/rules/**/*.mdc`, `.cursorrules` (always) | reference | `alwaysApply: true` = always; `globs` = scoped; `description` only = reference |
+| windsurf-devin | `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules`, `.devin/rules/*.md`, `.devin/global_rules.md` | always | `trigger`: `always_on` = always; `glob` + `globs` = scoped; `model_decision`, `manual` = reference |
 | cline | `.clinerules` (file), `.clinerules/**`, `.cline/rules/**` (`.md`, `.txt`) | always | `paths` = scoped |
 | roo | `.roo/rules/**`, `.roorules` (always); `.roo/rules-<mode>/**`, `.roorules-<mode>` (reference) | per path | none |
-| junie | `.junie/AGENTS.md`, `.junie/rules/*.md`, `.junie/playbook.md`, `.junie/guidelines.md` | always | none |
+| junie | `.junie/AGENTS.md`, `.junie/rules/*.md`, `.junie/playbook.md`, `.junie/guidelines.md`, `.junie/guidelines/**/*.md` | always | none |
 | kiro | `.kiro/steering/*.md` | always | `inclusion`: `always` = always; `fileMatch` + `fileMatchPattern` = scoped; `manual`, `auto` = reference |
 | aider | `CONVENTIONS.md` | always | none |
 | zed | `.rules` | always | none |

@@ -16,7 +16,23 @@ Re-checked 2026-11-12 against the live docs:
 - **Kiro** (kiro.dev/docs/steering): `.kiro/steering/*.md`; `inclusion: always` (default) = `always`; `inclusion: fileMatch` with `fileMatchPattern` (string or list) = `scoped`; `manual` and `auto` = `reference`. Correction to the starting catalogue: the glob key is `fileMatchPattern`, not `fileMatch`.
 - **Continue** (docs.continue.dev/customize/deep-dives/rules): `.continue/rules/*.md`; `alwaysApply: true` = `always`; `globs` = `scoped`; `alwaysApply: false` without globs, or `regex` only, = `reference`; no fields = `always`.
 
-The other rows (AGENTS.md/Amp/Codex/OpenCode, Claude Code, Gemini, Copilot, Cursor, Windsurf/Devin, Roo, Junie, Aider, Zed) are carried from the source research of this month; their front-matter mappings are in data-model.md. Each row carries its source URL in a comment so the next re-check is mechanical.
+Second pass, same day, the remaining rows against their official sources (all fetched live; none left unverified):
+
+- **AGENTS.md format** (agents.md): `AGENTS.md` at any depth; nearest file wins. Confirmed, no change.
+- **Codex** (developers.openai.com/codex/guides/agents-md): per directory from the Git root down, `AGENTS.override.md`, then `AGENTS.md`, then `project_doc_fallback_filenames` (config, out of scope per clarify Q1). Confirmed `AGENTS.override.md` at any depth.
+- **Amp** (ampcode.com/docs/markdown/customize/agents-md): `AGENTS.md` in cwd, parents and subtrees; `AGENT.md` or `CLAUDE.md` when no `AGENTS.md` exists in that directory; `@`-mentions are relative to the mentioning file and may be globs (`@specs/**/*.md`). Confirmed; a glob `@`-mention is not expanded and yields the missing-target note (F1.5).
+- **OpenCode** (opencode.ai/docs/rules): `AGENTS.md`, `CLAUDE.md` as fallback; `opencode.json` `instructions` is config (out of scope). Confirmed.
+- **Claude Code** (code.claude.com/docs/en/memory): `./CLAUDE.md` or `./.claude/CLAUDE.md`, `CLAUDE.local.md`, nested `CLAUDE.md`, `.claude/rules/` with `paths:` front matter; `@path` imports relative to the importing file, maximum depth four hops (matches R6). Confirmed.
+- **Gemini CLI** (google-gemini/gemini-cli `docs/cli/gemini-md.md`): `GEMINI.md` at the root and in any directory (just-in-time); `@file.md` imports; `context.fileName` is config (out of scope). Confirmed.
+- **Copilot** (docs.github.com, add-repository-instructions): `.github/copilot-instructions.md`; `NAME.instructions.md` within or below `.github/instructions/` with `applyTo` globs (comma-separated); `excludeAgent` does not change the kind. Confirmed.
+- **Cursor** (cursor.com/docs/context/rules): project rules must be `.mdc`; a plain `.md` in `.cursor/rules/` is ignored by Cursor. **Correction**: `.cursor/rules/**/*.md` removed from the row (now matches FR-002's `.mdc` only). `.cursorrules` is not on this page; it stays on Cline's and Zed's live evidence.
+- **Windsurf/Devin** (docs.windsurf.com, rules page now served from Devin docs): `.devin/rules/*.md` with `trigger` (`always_on`, `glob` + `globs`, `model_decision`, `manual`); legacy `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules` still loaded. **Addition**: `.devin/global_rules.md` (single always-on file).
+- **Roo Code** (docs.roocode.com/features/custom-instructions): `.roo/rules/` and `.roorules` (workspace-wide), `.roo/rules-{modeSlug}/` and `.roorules-{modeSlug}` (mode-specific), `.md` and `.txt`; also reads root `AGENTS.md`/`AGENT.md`. Confirmed.
+- **Junie** (junie.jetbrains.com/docs/guidelines-and-memory.html): `.junie/AGENTS.md`; root `AGENTS.md` with `.junie/playbook.md` and `.junie/rules/*.md`; legacy `.junie/guidelines.md` or `.junie/guidelines/` folder. **Addition**: `.junie/guidelines/**/*.md`.
+- **Aider** (aider.chat/docs/usage/conventions.html): `CONVENTIONS.md` is the documented convention, loaded by `--read` or `read:` in `.aider.conf.yml` (config, out of scope). Confirmed.
+- **Zed** (zed-industries/zed `docs/src/ai/rules.md`; the zed.dev page returned 404): `.rules` remains a supported project instruction file; Zed also reads `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, `AGENT.md`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` (first match). Confirmed.
+
+Front-matter mappings are in data-model.md. Each row carries its source URL in a comment so the next re-check is mechanical.
 
 ## R3. Reading git objects
 
