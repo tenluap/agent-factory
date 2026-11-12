@@ -31,7 +31,7 @@ Kind at a base directory below the root: a derived `always` becomes `scoped` to 
 | `path` | string | repository-relative POSIX path of the regular file |
 | `kind` | `always` \| `scoped` \| `reference` | FR-007, FR-012 |
 | `scope` | list of strings | `["/"]` = root; `["pkg/api/"]` = directory subtree (trailing `/`); otherwise globs as declared (prefixed per above); `reference` entries carry `["/"]` |
-| `size` | integer | blob bytes (above 1 MiB the content is hashed by streaming, never held or parsed; a note names the file) |
+| `size` | integer | blob bytes (above 1 MiB the content is hashed by streaming, never held or parsed; a note names the file; the same holds for config-matched files past a 16 MiB total held, one `cat-file --batch` pass streaming them all, and a config glob over 256 characters is skipped with a note) |
 | `hash` | string | `sha256:<hex>` of blob bytes |
 | `title` | string | first Markdown heading, else front-matter `description`, else file name; empty for non-UTF-8 |
 | `aliases` | list of strings | sorted other paths with the same content at the same scope (symlinks, identical copies) |

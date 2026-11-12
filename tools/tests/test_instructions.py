@@ -16,8 +16,10 @@ sys.path.insert(0, str(CORE_BIN))
 
 import hashlib
 import time
+from unittest import mock
 
-from factory_cli.instructions import BLOB_CAP, glob_matcher, glob_regex  # noqa: E402
+from factory_cli import instructions  # noqa: E402
+from factory_cli.instructions import BLOB_CAP, GLOB_CAP, glob_matcher, glob_regex  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 
@@ -439,6 +441,55 @@ class ConfigListTests(ScanBase):
         self.assertTrue(matcher.match("a" * 30 + "z"))
         self.assertLess(time.monotonic() - started, 1.0)
 
+    def test_runs_of_wildcards_collapse_and_still_match(self):
+        started = time.monotonic()
+        self.assertFalse(glob_matcher("*" * 5000 + "z").match("a" * 3000))
+        self.assertTrue(glob_matcher("*" * 5000 + "z").match("a" * 3000 + "z"))
+        self.assertTrue(glob_matcher("a" + "**" * 500 + "/b").match("a/x/y/b"))
+        wide = "a" + "*" * 20 + "b"
+        for path in ("a/b", "axb", "a/x/b", "ab"):
+            self.assertEqual(bool(glob_matcher(wide).match(path)), bool(glob_regex(wide).match(path)))
+        self.assertLess(time.monotonic() - started, 1.0)
+
+    def test_over_long_config_glob_is_skipped_with_a_note_and_the_rest_work(self):
+        long_glob = "*a" * (GLOB_CAP // 2 + 1)
+        self.add({".factory/config.json": config(include=[long_glob, "DESIGN.md"]), "DESIGN.md": "# D\n"})
+        started = time.monotonic()
+        index = self.scan()
+        self.assertLess(time.monotonic() - started, 5.0)
+        self.assertEqual([e["path"] for e in index["entries"]], ["DESIGN.md"])
+        self.assertTrue([n for n in index["notes"] if n.startswith(f"instructions config glob skipped: over {GLOB_CAP} characters")])
+
+    def test_huge_config_glob_is_skipped_in_bounded_time(self):
+        self.add({".factory/config.json": config(include=["*a" * 200_000]), "AGENTS.md": "# A\n"})
+        started = time.monotonic()
+        index = self.scan()
+        self.assertLess(time.monotonic() - started, 5.0)
+        self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
+
+    def test_config_matches_past_the_byte_budget_are_indexed_unparsed_with_a_note(self):
+        self.add({".factory/config.json": config(include=["docs/*.md"]),
+                  "docs/a.md": "# A\n@docs/c.md\n", "docs/b.md": "# B\nbbbbbbbb\n", "docs/c.md": "# C\n"})
+        with mock.patch.object(instructions, "CONFIG_BUDGET", 20):
+            index = instructions.scan(self.box.repo)
+        got = {e["path"]: e for e in index["entries"]}
+        self.assertEqual(sorted(got), ["docs/a.md", "docs/b.md", "docs/c.md"])
+        data = b"# B\nbbbbbbbb\n"
+        self.assertEqual(got["docs/b.md"]["hash"], "sha256:" + hashlib.sha256(data).hexdigest())
+        self.assertEqual(got["docs/b.md"]["size"], len(data))
+        self.assertEqual(got["docs/b.md"]["title"], "")
+        self.assertEqual(got["docs/a.md"]["title"], "A")
+        self.assertIn("over 20 bytes, not parsed: docs/b.md", index["notes"])
+
+    def test_streamed_blobs_start_one_git_process_not_one_per_file(self):
+        self.add({".factory/config.json": config(include=["docs/*.md"]),
+                  **{f"docs/{n}.md": f"# {n}\n" * 4 for n in "abcdef"}})
+        with mock.patch.object(instructions, "CONFIG_BUDGET", 0), \
+                mock.patch.object(instructions, "_stream_digests", wraps=instructions._stream_digests) as stream:
+            index = instructions.scan(self.box.repo)
+        self.assertEqual(len(index["entries"]), 6)
+        self.assertEqual(len([c for c in stream.call_args_list if c.args[1]]), 1)
+
     def test_malformed_config_notes_and_falls_back_to_the_catalogue(self):
         for text in ('{"instructions": 3}', '{"instructions": {"include": [1]}}', "{not json"):
             with self.subTest(text=text):
@@ -503,6 +554,36 @@ class RecordTests(RecordBase):
         self.assertEqual(result["ref"], self.box.git("rev-parse", "feat").strip())
         self.assertEqual(result["counts"]["always"], 2)
         self.assertTrue(path.with_name(path.name.replace(".json", ".instructions.json")).is_file())
+
+    def test_pending_new_run_whose_branch_exists_on_origin_still_scans_base(self):
+        self.add({"AGENTS.md": "# A\n"})
+        base = self.box.git("rev-parse", "HEAD").strip()
+        self.box.git("checkout", "-q", "-b", "tmp")
+        self.add({"GEMINI.md": "# unreviewed\n"})
+        self.box.git("update-ref", "refs/remotes/origin/feat", "HEAD")
+        self.box.git("update-ref", "refs/heads/feat", "HEAD")
+        self.box.git("checkout", "-q", "-")
+        self.pending("025-a", branch="feat")
+        result = json.loads(self.box.cli("instructions-record").stdout)
+        self.assertEqual((result["ref"], result["counts"]["always"]), (base, 1))
+
+    def test_pending_file_without_a_branch_is_refused_not_a_crash(self):
+        self.add({"AGENTS.md": "# A\n"})
+        path = self.pending("025-a")
+        loaded = json.loads(path.read_text())
+        del loaded["branch"]
+        path.write_text(json.dumps(loaded))
+        out = self.box.cli("instructions-record")
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("branch: missing required field", out.stderr)
+        self.assertNotIn("Traceback", out.stderr)
+
+    def test_pending_adoption_that_resolves_to_nothing_records_an_error(self):
+        self.add({"AGENTS.md": "# A\n"})
+        self.pending("adopt-nope", branch="nope", spec_dir="specs/nope")
+        result = json.loads(self.box.cli("instructions-record").stdout)
+        self.assertIsNotNone(result["error"])
+        self.assertIsNone(result["index"])
 
     def test_new_run_is_not_an_adoption_whatever_its_file_name_says(self):
         self.add({"AGENTS.md": "# A\n"})

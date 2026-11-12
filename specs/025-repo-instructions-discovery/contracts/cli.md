@@ -9,7 +9,7 @@ Read-only. Needs no run; writes nothing.
 - Scans `--ref` (default `HEAD`) of `--repo` (default the current directory's main repository).
 - Stdout: the instruction index JSON (data-model.md), `sort_keys`, indent 2.
 - Exit 2: not a git repository. Exit 5: the ref does not resolve to a commit; the message names the ref.
-- Notes (malformed config, unparseable front matter, missing import target, import chain past 4 hops, non-UTF-8 content, content over 1 MiB, broken symlink) never change the exit code.
+- Notes (malformed config, unparseable front matter, missing import target, import chain past 4 hops, non-UTF-8 content, content over 1 MiB, config files past the 16 MiB held budget, a config glob over 256 characters, broken symlink) never change the exit code.
 
 ## `factory instructions-record [--repo <path>]`
 

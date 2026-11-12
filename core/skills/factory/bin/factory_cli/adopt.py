@@ -27,6 +27,11 @@ def _no_base(repo):
     )
 
 
+def pending_name(repo, branch):
+    """The pending adoption's file stem: `<repo-name>-adopt-<branch>`."""
+    return f"{Path(repo).name}-adopt-{branch}"
+
+
 def _try(repo, *args):
     """Stdout of a git probe, or None when git exits non-zero (an absent ref or path)."""
     out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
@@ -248,7 +253,7 @@ def inspect(repo, src, base):
         inferred_stage=_stage(artifacts),
         needs_clarification=_markers(repo, ref, spec_dir),
         worktree=str(Path(repo).parent / f"{name}-factory" / branch),
-        pending=f"{name}-adopt-{branch}",
+        pending=pending_name(repo, branch),
     )
     report["refusal"] = _refusal(repo, report, ref)
     return report

@@ -13,9 +13,9 @@
 ### Session 2026-11-12 (grill, settled under cruise)
 
 - Q1: Chain? → A: Full.
-- Q2: Which ADR number? → A: 0020, not 0019 (0019 is taken on `origin/024-windows-install`). If 0020 is also taken at implement time, use the next number free on `origin/main` and every remote branch.
-- Q3: Is the source design document added? → A: No. It stays outside the change; this spec and the plan are self-contained.
-- Q4: Scope? → A: Run 1 (discovery) only; consumption by roles and reviewers is a later feature. Open points (other tools' config, ADR directory patterns, index file name and format) settle at clarify or plan.
+- Q2: Which ADR number? → A: 0020, not 0019 (0019 is taken on `origin/024-windows-install`). If 0020 is also taken at implement time, use the next free number.
+- Q3: Is the source design document added? → A: No. It stays outside; this spec and plan are self-contained.
+- Q4: Scope? → A: Run 1 (discovery) only; consumption by roles and reviewers is a later feature.
 
 ### Session 2026-11-12 (clarify, settled under cruise)
 
@@ -152,7 +152,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 **Configuration**
 
 - **FR-012**: The scanner MUST read `instructions.include`, `instructions.reference` and `instructions.exclude` glob lists from `<repo>/.factory/config.json` at the scanned ref. Include makes files `always` with root scope; reference makes files `reference`; exclude drops files. When several sources match one file: exclude wins; else include beats reference; else the strongest derived kind wins (`always` > `scoped` > `reference`), ties going catalogue/governance > import > link.
-- **FR-013**: A missing config or missing section MUST mean empty lists. A malformed section MUST be reported as a note, never halt.
+- **FR-013**: A missing config or missing section MUST mean empty lists. A malformed section MUST be reported as a note, never halt. A config glob over 256 characters MUST be skipped with a note; config files past 16 MiB held in total MUST be indexed unparsed with a note.
 - **FR-014**: `factory init` MUST NOT seed these lists. The config documentation MUST describe them.
 - **FR-015**: This repository's tracked `.factory/config.json` MUST set `instructions.reference` to `DESIGN.md` and `CONTEXT.md`, and `instructions.exclude` to `conformance/**`.
 

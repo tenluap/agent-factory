@@ -10,6 +10,7 @@ import json
 import posixpath
 import re
 import subprocess
+import tempfile
 from collections import namedtuple
 
 # One row per tool: (name, ((pattern, default kind), ...)). A pattern is a glob
@@ -101,6 +102,11 @@ IMPORT_HOPS = 4
 CONFIG_PATH = ".factory/config.json"
 # A blob above this is hashed by streaming and never held or parsed (ENG-24).
 BLOB_CAP = 1 << 20
+# Config-matched files (`include`/`reference`) are held up to this many bytes in
+# total; past it they are indexed unparsed, their hash streamed (ENG-24).
+CONFIG_BUDGET = 16 << 20
+# A config glob longer than this is skipped with a note (ENG-24).
+GLOB_CAP = 256
 
 
 class ScanError(Exception):
@@ -147,27 +153,41 @@ def read_tree(repo, sha):
 Blob = namedtuple("Blob", "size digest data")
 
 
-def _stream_digest(repo, oid):
-    """sha256 digest of a blob read in chunks, so it is never held in memory."""
-    digest = hashlib.sha256()
-    try:
-        with subprocess.Popen(
-            ["git", "-C", str(repo), "cat-file", "blob", oid],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-        ) as proc:
-            for chunk in iter(lambda: proc.stdout.read(1 << 16), b""):
-                digest.update(chunk)
-    except OSError as err:
-        raise ScanError("git not runnable") from err
-    if proc.returncode != 0:
-        raise ScanError(f"cannot read blob {oid}")
-    return "sha256:" + digest.hexdigest()
+def _stream_digests(repo, oids):
+    """{oid: sha256 digest} of blobs hashed in chunks in one `cat-file --batch`
+    pass, so none is held in memory and one git process serves them all."""
+    digests = {}
+    if not oids:
+        return digests
+    with tempfile.TemporaryFile() as names:
+        names.write("".join(f"{o}\n" for o in oids).encode())
+        names.seek(0)
+        try:
+            with subprocess.Popen(
+                ["git", "-C", str(repo), "cat-file", "--batch"],
+                stdin=names, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            ) as proc:
+                for oid in oids:
+                    left, digest = int(proc.stdout.readline().split()[2]), hashlib.sha256()
+                    while left:
+                        chunk = proc.stdout.read(min(left, 1 << 16))
+                        if not chunk:
+                            raise ScanError(f"cannot read blob {oid}")
+                        digest.update(chunk)
+                        left -= len(chunk)
+                    proc.stdout.read(1)
+                    digests[oid] = "sha256:" + digest.hexdigest()
+        except (OSError, ValueError, IndexError) as err:
+            raise ScanError("cannot read blobs") from err
+    return digests
 
 
-def read_blobs(repo, oids):
+def read_blobs(repo, oids, hold=None):
     """{oid: Blob(size, digest, data)}; sizes come first from `git cat-file
-    --batch-check`, and `data` is None for a blob above BLOB_CAP."""
-    wanted = sorted(set(oids))
+    --batch-check`. `data` is None for a blob above BLOB_CAP and for any blob
+    that would take the bytes held past `hold` (in `oids` order); those are
+    hashed by streaming."""
+    wanted = list(dict.fromkeys(oids))
     if not wanted:
         return {}
     names = "".join(f"{o}\n" for o in wanted).encode()
@@ -175,7 +195,11 @@ def read_blobs(repo, oids):
     for line in _git(repo, ["cat-file", "--batch-check"], names).decode().splitlines():
         oid, _, size = line.split()
         sizes[oid] = int(size)
-    small = [o for o in wanted if sizes[o] <= BLOB_CAP]
+    small, held = [], 0
+    for oid in wanted:
+        if sizes[oid] <= BLOB_CAP and (hold is None or held + sizes[oid] <= hold):
+            small.append(oid)
+            held += sizes[oid]
     blobs = {}
     if small:
         raw = _git(repo, ["cat-file", "--batch"], "".join(f"{o}\n" for o in small).encode())
@@ -185,9 +209,9 @@ def read_blobs(repo, oids):
             data = raw[end + 1 : end + 1 + sizes[oid]]
             blobs[oid] = Blob(sizes[oid], "sha256:" + hashlib.sha256(data).hexdigest(), data)
             pos = end + 1 + sizes[oid] + 1
-    for oid in wanted:
-        if oid not in blobs:
-            blobs[oid] = Blob(sizes[oid], _stream_digest(repo, oid), None)
+    rest = [o for o in wanted if o not in blobs]
+    for oid, digest in _stream_digests(repo, rest).items():
+        blobs[oid] = Blob(sizes[oid], digest, None)
     return blobs
 
 
@@ -251,6 +275,10 @@ def glob_matcher(glob):
         else:
             tokens.append(("star",) if glob[i] == "*" else ("one",) if glob[i] == "?" else ("lit", glob[i]))
             i += 1
+        if len(tokens) > 1 and tokens[-1][0] in ("star", "any") and tokens[-2][0] in ("star", "any"):
+            # a run of wildcards matches what its widest member does: keep one token
+            widest = "any" if "any" in (tokens[-1][0], tokens[-2][0]) else "star"
+            tokens[-2:] = [(widest,)]
     return _Glob(tuple(tokens))
 
 
@@ -486,7 +514,10 @@ def _config_globs(tree, blob, notes):
             globs = section.get(name, [])
             if not isinstance(globs, list) or not all(isinstance(g, str) for g in globs):
                 raise ValueError(f"{name} is not a list of strings")
-            lists[name] = [glob_matcher(g) for g in globs]
+            for g in globs:
+                if len(g) > GLOB_CAP:
+                    notes.append(f"instructions config glob skipped: over {GLOB_CAP} characters: {g[:40]}...")
+            lists[name] = [glob_matcher(g) for g in globs if len(g) <= GLOB_CAP]
     except (ValueError, AttributeError) as err:
         notes.append(f"instructions config ignored: {err}")
         return {name: [] for name in lists}
@@ -513,11 +544,13 @@ def scan(repo, ref="HEAD"):
     links = [oid for mode, oid in tree.values() if mode == "120000"]
     cache.update(read_blobs(repo, [tree[p][1] for p in candidates] + links))
 
-    def warm(paths):
-        """Read the blobs of `paths` (and their symlink targets) in one batch."""
+    def warm(paths, hold=None):
+        """Read the blobs of `paths` (and their symlink targets) in one batch;
+        the bytes held, at most `hold`."""
         reals = (_resolve_symlink(p, tree, blob) for p in paths)
-        oids = {tree[r][1] for r in reals if r} - set(cache)
-        cache.update(read_blobs(repo, oids))
+        got = read_blobs(repo, [tree[r][1] for r in reals if r and tree[r][1] not in cache], hold)
+        cache.update(got)
+        return sum(len(b.data) for b in got.values() if b.data is not None)
 
     def read(path):
         """(real path, Blob, text or None) of a tracked path; None for a
@@ -529,7 +562,8 @@ def scan(repo, ref="HEAD"):
             return None
         got = blob(tree[real][1])
         if got.data is None:
-            notes.append(f"over {BLOB_CAP} bytes, not parsed: {path}")
+            cap = BLOB_CAP if got.size > BLOB_CAP else CONFIG_BUDGET
+            notes.append(f"over {cap} bytes, not parsed: {path}")
             return real, got, None
         try:
             return real, got, got.data.decode("utf-8")
@@ -592,9 +626,10 @@ def scan(repo, ref="HEAD"):
         }
         return True
 
+    budget = CONFIG_BUDGET
     for name, kind in (("include", "always"), ("reference", "reference")):
         matched = [p for p in sorted(tree) if listed(name, p) and p not in info]
-        warm(matched)
+        budget -= warm(matched, budget)
         for path in sorted(tree):
             if listed(name, path):
                 merge(path, kind, ("/",), "config")
