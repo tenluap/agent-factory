@@ -633,6 +633,18 @@
       "duration_ms": 36000,
       "started_at": "2026-11-12T08:41:26Z",
       "ended_at": "2026-11-12T08:42:02Z"
+    },
+    {
+      "at": "2026-11-12T09:29:40.888170Z",
+      "stage": "retro",
+      "role": "retro",
+      "harness": "opencode",
+      "in_est": 11537,
+      "out_est": 362,
+      "reported": null,
+      "duration_ms": 58000,
+      "started_at": "2026-11-12T09:28:42Z",
+      "ended_at": "2026-11-12T09:29:40Z"
     }
   ],
   "issues": [
