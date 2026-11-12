@@ -63,6 +63,9 @@
           },
           {
             "id": "Q9"
+          },
+          {
+            "id": "Q10"
           }
         ],
         "answers": {
@@ -89,6 +92,11 @@
           "Q9": {
             "answer": "A: Agent files first, then confirm - root catalogue agent files win over governance and include entries; a remaining same-tier conflict goes into the existing setup-commands confirmation (under cruise: first entry in index order, recorded with the existing setup-commands decision)",
             "at": "2026-11-12T00:09:53.403659Z",
+            "auto": true
+          },
+          "Q10": {
+            "answer": "A: Path identity; hash, kind, scope - entries match by path; changed = different hash, kind or scope; alias-only and title-only differences are not changes",
+            "at": "2026-11-12T00:09:53.633106Z",
             "auto": true
           }
         }
