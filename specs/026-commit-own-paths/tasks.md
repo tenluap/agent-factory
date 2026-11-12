@@ -56,7 +56,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 **Independent test**: `python3 -m unittest tools.tests.test_commit_scope`.
 
-- [ ] T004 [US2] [AC-3] Add the explicit-path staging sentence to `core/roles/code-build.md` (step 3 commit item), `core/roles/design-to-code.md` (step 4 commit-unit text) and `core/roles/fixer.md` (step 5), with the new contract test file `tools/tests/test_commit_scope.py`.
+- [x] T004 [US2] [AC-3] Add the explicit-path staging sentence to `core/roles/code-build.md` (step 3 commit item), `core/roles/design-to-code.md` (step 4 commit-unit text) and `core/roles/fixer.md` (step 5), with the new contract test file `tools/tests/test_commit_scope.py`.
   - Seam and failure path (plan.md): prose contract `commit_scope_gaps` -> `marker-removed`.
   - 1. Failing test: create `tools/tests/test_commit_scope.py` with `commit_scope_gaps(texts)` returning the missing markers, modelled on `tools/tests/test_pr_publication.py`. Markers for each of the three roles: explicit-path staging (`git add -- <path>`), and each forbidden bulk form (`git add -A`, `git add .`, `git commit -a`). Tests: real core text has no staging gap; each mutated copy with one marker removed reports exactly that gap. Run `python3 -m unittest tools.tests.test_commit_scope`; observe the real-text test fail.
   - 2. Implement: one sentence per role at the named commit step: stage by explicit path (`git add -- <path>...`), never `git add -A`, `git add .` or `git commit -a`.
