@@ -60,6 +60,9 @@
           },
           {
             "id": "Q8"
+          },
+          {
+            "id": "Q9"
           }
         ],
         "answers": {
@@ -81,6 +84,11 @@
           "Q8": {
             "answer": "A: Read at the recorded ref - the orchestrator reads each always entry at the index's recorded ref (git show <ref>:<path>) so content matches the recorded hash; after step 4 the worktree copy at HEAD is the same content",
             "at": "2026-11-12T00:09:53.171640Z",
+            "auto": true
+          },
+          "Q9": {
+            "answer": "A: Agent files first, then confirm - root catalogue agent files win over governance and include entries; a remaining same-tier conflict goes into the existing setup-commands confirmation (under cruise: first entry in index order, recorded with the existing setup-commands decision)",
+            "at": "2026-11-12T00:09:53.403659Z",
             "auto": true
           }
         }
