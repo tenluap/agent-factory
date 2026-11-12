@@ -22,7 +22,7 @@ Add a stdlib-only scanner module to the factory CLI that lists tracked files at 
 
 **Project Type**: CLI plus harness-neutral orchestrator skill.
 
-**Performance Goals**: two git processes per scan regardless of entry count; only matched or followed blobs are read (ENG-21).
+**Performance Goals**: three git processes per scan (`rev-parse`, `ls-tree`, `cat-file --batch`) regardless of entry count; only matched or followed blobs are read (ENG-21).
 
 **Constraints**: deterministic byte-identical output (SC-002); never reads the working tree; never stops a run; never truncates the index.
 
@@ -115,4 +115,6 @@ Confirmed: 2026-11-12 - Q1 accepted (cruise override) - seams: S1 `factory instr
 
 ## Complexity Tracking
 
-No constitution violations; Principle II carries the justification line above.
+| Item | Why needed | Simpler alternative rejected because |
+|---|---|---|
+| Principle II: the catalogue in `core/` names other tools' instruction file names | It is data about consuming repositories, identical on every harness (justification in Constitution Check II) | Omitting it leaves files of non-Claude tools undiscovered (FR-002) |

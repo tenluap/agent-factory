@@ -37,7 +37,7 @@ Kind at a base directory below the root: a derived `always` becomes `scoped` to 
 | `aliases` | list of strings | sorted other paths with the same content at the same scope (symlinks, identical copies) |
 | `source` | `catalogue` \| `governance` \| `config` \| `import` \| `link` | the winning source (precedence tie-break, FR-024 tiering) |
 
-Reason for `source` (Principle V): FR-024 ranks root catalogue agent files above governance and include entries, so the orchestrator needs the winning source per entry.
+Reason for `source` (Principle V): FR-024 ranks root catalogue agent files above governance and include entries, so the orchestrator needs the winning source per entry. A root catalogue agent file also matched by `instructions.include` keeps `source: "catalogue"` (its kind is already `always` at root scope), so an include never demotes it from the top FR-024 tier.
 
 ## Instruction index (`instructions.json`)
 

@@ -122,7 +122,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 
 ### Edge Cases
 
-- **Not a git repository, or the ref does not resolve**: the read-only report exits with a usage-style error naming the problem; the writer at preflight records nothing new and discloses the error as a note. Discovery never halts a run.
+- **Not a git repository, or the ref does not resolve**: the read-only report exits with a usage-style error naming the problem; the writer at preflight records nothing new and reports it in `error`; the orchestrator discloses it. Discovery never halts a run.
 - **Import cycle or import of a missing or untracked file**: the cycle is followed once; a missing target is reported as a note; the importer stays indexed.
 - **Imports deeper than 4 hops**: not followed; a note names where the chain stopped.
 - **Links to URLs, anchors or paths outside the repository**: ignored. A linked catalogued file keeps its catalogue kind.
@@ -194,7 +194,7 @@ At preflight and grill, the orchestrator reads every `always` entry in full. Bui
 - **SC-003**: Every preflight (new run, resume, adopt) records and discloses the index; 0 runs stop because of discovery.
 - **SC-004**: A re-record after one instruction file is added, one removed and one changed reports exactly those 3 changes.
 - **SC-005**: Indexing this repository after the change lists `DESIGN.md` and `CONTEXT.md` as `reference` entries and 0 entries under `conformance/`.
-- **SC-006**: A test command documented only in a root-scope file other than `CLAUDE.md` or `AGENTS.md` is recorded as documented in 100% of fixture checks.
+- **SC-006**: The orchestrator text records a test command documented only in a root-scope file other than `CLAUDE.md` or `AGENTS.md` as documented; the text-contract test asserts it.
 - **SC-007**: Tests pass; every harness renders; no build output is tracked.
 
 ## Assumptions
