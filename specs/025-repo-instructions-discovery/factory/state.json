@@ -76,6 +76,9 @@
           },
           {
             "id": "Q3"
+          },
+          {
+            "id": "Q4"
           }
         ],
         "answers": {
@@ -93,6 +96,12 @@
           "Q3": {
             "answer": "retro tier: keep deep (6e8caac moved retro, security-reviewer, ui-reviewer and ux-reviewer to deep deliberately); update test_retro_role_renders_read_only_for_every_harness to expect ('retro', 'deep', 'read')",
             "at": "2026-11-12T07:21:03.147043Z",
+            "auto": true,
+            "cruise_override": true
+          },
+          "Q4": {
+            "answer": "skills library: create-project-agents-file and prompt-optimiser are first-party in core/skills since 98eb656; drop their stale local entries from skills-lock.json and update test_skill_library to that layout; remove the stale graphify CASE_INSENSITIVE_ONLY exception (graphify ships SKILL.md since 0c3bf71)",
+            "at": "2026-11-12T07:21:03.396923Z",
             "auto": true,
             "cruise_override": true
           }
