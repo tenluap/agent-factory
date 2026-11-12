@@ -11,7 +11,7 @@
   "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/025-repo-instructions-discovery",
   "spec_dir": "specs/025-repo-instructions-discovery",
   "status": "running",
-  "stage": "clarify",
+  "stage": "grill-with-docs",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -44,57 +44,7 @@
     "remediations": [],
     "pending_clarify": []
   },
-  "relay": {
-    "stage": "clarify",
-    "rounds": [
-      {
-        "questions": [
-          {
-            "id": "Q1"
-          },
-          {
-            "id": "Q2"
-          },
-          {
-            "id": "Q3"
-          },
-          {
-            "id": "Q4"
-          },
-          {
-            "id": "Q5"
-          }
-        ],
-        "answers": {
-          "Q1": {
-            "answer": "A: No, config lists only - the scanner ignores other tools' config files (opencode.json instructions, Codex project_doc_fallback_filenames, Gemini context.fileName, Aider read:); owners add such files through instructions.include",
-            "at": "2026-11-12T00:06:26.675354Z",
-            "auto": true
-          },
-          "Q2": {
-            "answer": "A: Per-tool catalogue default - each catalogue row records the tool's documented default kind and its front-matter-to-kind mapping (always-apply flag = always; globs/paths/applyTo/fileMatch = scoped; description-only, manual, model-decision and mode-specific = reference); absent or unparseable front matter takes the row default",
-            "at": "2026-11-12T00:06:26.900936Z",
-            "auto": true
-          },
-          "Q3": {
-            "answer": "A: Regular file, others as aliases - same content at the same scope is one entry carrying the regular file's path (the symlink target); for identical regular copies the lexicographically first path; other paths go in the entry's aliases field",
-            "at": "2026-11-12T00:06:27.148081Z",
-            "auto": true
-          },
-          "Q4": {
-            "answer": "A: Exclude, then config, then strongest - instructions.exclude drops the file; else instructions.include (always, root scope) beats instructions.reference; else the strongest derived kind wins (always > scoped > reference), ties broken catalogue/governance > import > link",
-            "at": "2026-11-12T00:06:27.396678Z",
-            "auto": true
-          },
-          "Q5": {
-            "answer": "A: instructions.json - one JSON file with ref, combined hash, notes and ordered entries (path, kind, scope, size, hash, title, aliases); sorted keys, stable entry order; beside the pending file before the worktree exists, then in <spec_dir>/factory/ beside profile.md",
-            "at": "2026-11-12T00:06:27.632031Z",
-            "auto": true
-          }
-        }
-      }
-    ]
-  },
+  "relay": null,
   "timeline": [],
   "decisions": [
     {
@@ -136,6 +86,46 @@
       "answer": "Scope is run 1 (discovery) only; run 2 consumption items stay out; the brief open points (other tools config file names, ADR directory patterns, index file name and format) are settled at clarify/plan",
       "auto": true,
       "at": "2026-11-12T00:00:58.472544Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q1",
+      "answer": "A: No, config lists only - the scanner ignores other tools' config files (opencode.json instructions, Codex project_doc_fallback_filenames, Gemini context.fileName, Aider read:); owners add such files through instructions.include",
+      "auto": true,
+      "at": "2026-11-12T00:08:07.852564Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q2",
+      "answer": "A: Per-tool catalogue default - each catalogue row records the tool's documented default kind and its front-matter-to-kind mapping (always-apply flag = always; globs/paths/applyTo/fileMatch = scoped; description-only, manual, model-decision and mode-specific = reference); absent or unparseable front matter takes the row default",
+      "auto": true,
+      "at": "2026-11-12T00:08:07.852564Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q3",
+      "answer": "A: Regular file, others as aliases - same content at the same scope is one entry carrying the regular file's path (the symlink target); for identical regular copies the lexicographically first path; other paths go in the entry's aliases field",
+      "auto": true,
+      "at": "2026-11-12T00:08:07.852564Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q4",
+      "answer": "A: Exclude, then config, then strongest - instructions.exclude drops the file; else instructions.include (always, root scope) beats instructions.reference; else the strongest derived kind wins (always > scoped > reference), ties broken catalogue/governance > import > link",
+      "auto": true,
+      "at": "2026-11-12T00:08:07.852564Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "clarify",
+      "question": "Q5",
+      "answer": "A: instructions.json - one JSON file with ref, combined hash, notes and ordered entries (path, kind, scope, size, hash, title, aliases); sorted keys, stable entry order; beside the pending file before the worktree exists, then in <spec_dir>/factory/ beside profile.md",
+      "auto": true,
+      "at": "2026-11-12T00:08:07.852564Z",
       "kind": "answer"
     }
   ],
@@ -203,6 +193,13 @@
     {
       "at": "2026-11-12T00:05:04.300903Z",
       "stage": "specify",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    },
+    {
+      "at": "2026-11-12T00:08:07.852564Z",
+      "stage": "clarify",
       "event": "complete",
       "commit": null,
       "harness": "opencode"
