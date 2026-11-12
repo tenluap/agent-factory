@@ -282,6 +282,18 @@
       "duration_ms": 120000,
       "started_at": "2026-11-12T00:18:35Z",
       "ended_at": "2026-11-12T00:20:35Z"
+    },
+    {
+      "at": "2026-11-12T00:23:09.974237Z",
+      "stage": "analyze",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 24949,
+      "out_est": 2311,
+      "reported": null,
+      "duration_ms": 154000,
+      "started_at": "2026-11-12T00:20:35Z",
+      "ended_at": "2026-11-12T00:23:09Z"
     }
   ],
   "issues": [],
