@@ -286,6 +286,7 @@ class ModelsCLITests(unittest.TestCase):
         seeded = json.loads(raw)
         self.assertEqual(raw, json.dumps(seeded, indent=2, sort_keys=True) + "\n")
         self.assertEqual(set(seeded["models"]), set(before))
+        self.assertNotIn("instructions", seeded)  # FR-014: init seeds no instruction lists
         after = json.loads(self.cli("models", "--json").stdout)
         for harness, tiers in before.items():
             self.assertEqual(set(seeded["models"][harness]), {"deep", "standard"})

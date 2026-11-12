@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from factory_cli import budget, checks, detect, feedback, improvements, lock, state, totals
+from factory_cli import budget, checks, detect, feedback, improvements, instructions, lock, state, totals
 
 LARGE = ("relay", "timeline", "ledger", "history")  # summarized, never dumped whole
 
@@ -450,6 +450,141 @@ def now_iso():
 def cmd_detect(repo):
     """Detect the repo's stack profile; read-only, prints JSON."""
     return detect.detect(repo)
+
+
+def cmd_instructions(repo, ref):
+    """The repo's instruction index at `ref`; read-only, prints JSON (spec 025)."""
+    try:
+        return instructions.scan(repo, ref)
+    except instructions.ScanError as err:
+        die(5, str(err))
+
+
+ALWAYS_BYTES_LIMIT = 32768
+
+
+def cmd_instructions_record(repo, cwd):
+    """Scan the run's ref and record the index into the one writable run (spec 025).
+
+    Stores the `instructions` summary in state and the index file beside the
+    pending file (pending runs) or in the spec_dir's factory folder (worktree
+    runs, committed only when it changed). A scan failure writes nothing.
+    """
+    from factory_cli import adopt  # adopt imports this module
+
+    path, loaded, source, run_worktree = resolve_target(repo, cwd)
+    failure = None
+    if source == "worktree":
+        scan_repo, ref = Path(run_worktree), "HEAD"
+    else:
+        # only a pending adoption (its exact file name) scans an existing branch; any other run scans its base
+        scan_repo, ref = repo, loaded.get("base")
+        if path.stem == adopt.pending_name(loaded.get("repo") or repo, loaded.get("branch")):
+            try:
+                found = adopt._resolve(repo, loaded["branch"], loaded.get("base"))
+                ref = found[2] if found else loaded["branch"]
+            except CLIError as err:
+                failure = str(err)
+    result = {
+        "ref": None, "counts": None, "always_bytes": 0, "notes": [], "warning": None,
+        "empty": False, "delta": None, "index": None, "committed": None, "error": None,
+    }
+    try:
+        if failure:
+            raise instructions.ScanError(failure)
+        index = instructions.scan(scan_repo, ref)
+    except instructions.ScanError as err:
+        result["error"] = str(err)
+        return result
+
+    counts = {kind: 0 for kind in instructions.KIND_ORDER}
+    for entry in index["entries"]:
+        counts[entry["kind"]] += 1
+    summary = {"ref": index["ref"], "counts": counts, "combined_hash": index["combined_hash"]}
+
+    def mutate(s):
+        s["instructions"] = summary
+        return s
+
+    if source == "pending":
+        folder, name = path.parent, path.name.replace(".json", ".instructions.json")
+    else:
+        folder, name = Path(run_worktree) / loaded["spec_dir"] / "factory", "instructions.json"
+    target = folder / name
+    notes = list(index["notes"])
+    previous = None
+    if target.is_file():
+        try:
+            previous = json.loads(target.read_text())
+            if not _is_index(previous):
+                raise ValueError("not an instruction index")
+        except ValueError:
+            previous = None
+            notes.append(f"previous index unreadable: {target}")
+
+    # a worktree re-record of unchanged content leaves state.json alone: only
+    # `ref` would move, and nothing would commit it
+    recorded = (loaded.get("instructions") or {}).get("combined_hash")
+    restate = source == "pending" or recorded != summary["combined_hash"]
+    if restate:
+        write_run(path, loaded, mutate)
+    # `ref` moves with every commit, including this one: compare content only
+    changed = previous is None or {**previous, "ref": None} != {**index, "ref": None}
+    if changed or source == "pending":
+        folder.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(index, sort_keys=True, indent=2) + "\n")
+    if (changed or restate) and source == "worktree":
+        result["committed"] = commit_worktree(
+            run_worktree, "factory: instructions recorded", loaded.get("spec_dir")
+        )
+    always = sorted(
+        (e for e in index["entries"] if e["kind"] == "always"),
+        key=lambda e: (-e["size"], e["path"]),
+    )
+    always_bytes = sum(e["size"] for e in always)
+    if always_bytes > ALWAYS_BYTES_LIMIT:
+        result["warning"] = {
+            "limit": ALWAYS_BYTES_LIMIT,
+            "always_bytes": always_bytes,
+            "largest": [{"path": e["path"], "size": e["size"]} for e in always[:5]],
+        }
+    result.update(
+        ref=index["ref"], counts=counts, notes=sorted(notes), index=str(target),
+        always_bytes=always_bytes, empty=not index["entries"],
+        delta=None if previous is None else _index_delta(previous, index),
+    )
+    return result
+
+
+def _is_index(value):
+    """Whether `value` has the shape of a recorded instruction index."""
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("entries"), list)
+        and all(
+            isinstance(e, dict)
+            and {"path", "hash", "kind", "scope"} <= set(e)
+            and isinstance(e["scope"], list)
+            for e in value["entries"]
+        )
+    )
+
+
+def _index_delta(previous, current):
+    """Paths added, removed and changed (hash, kind or scope) between two indexes."""
+
+    def keyed(index):
+        return {
+            e["path"]: (e["hash"], e["kind"], tuple(e["scope"]))
+            for e in index.get("entries", [])
+        }
+
+    old, new = keyed(previous), keyed(current)
+    return {
+        "added": sorted(set(new) - set(old)),
+        "removed": sorted(set(old) - set(new)),
+        "changed": sorted(p for p in set(old) & set(new) if old[p] != new[p]),
+    }
 
 
 def cmd_models_record(repo, cwd, block):

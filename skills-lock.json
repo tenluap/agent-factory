@@ -331,11 +331,6 @@
       "skillPath": "skills/create-formal-verification-skill/SKILL.md",
       "computedHash": "c968cb41c00203d7818089ff9356126f0e25aa0d5cb35031206f2558208ddcee"
     },
-    "create-project-agents-file": {
-      "source": "./.agents/skills",
-      "sourceType": "local",
-      "computedHash": ""
-    },
     "create-skill": {
       "source": "dotnet/skills",
       "sourceType": "github",
@@ -1085,11 +1080,6 @@
       "sourceType": "github",
       "skillPath": "plugins/dotnet11/skills/process-api-net11/SKILL.md",
       "computedHash": "ee77158da33d53bc36d61119070eb50f0f06421cf7dfed2feb65acb1a5a8f70c"
-    },
-    "prompt-optimiser": {
-      "source": "./.agents/skills",
-      "sourceType": "local",
-      "computedHash": ""
     },
     "property-patterns": {
       "source": "dotnet/skills",

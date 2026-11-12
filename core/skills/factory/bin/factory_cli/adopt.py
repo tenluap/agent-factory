@@ -27,6 +27,11 @@ def _no_base(repo):
     )
 
 
+def pending_name(repo, branch):
+    """The pending adoption's file stem: `<repo-name>-adopt-<branch>`."""
+    return f"{Path(repo).name}-adopt-{branch}"
+
+
 def _try(repo, *args):
     """Stdout of a git probe, or None when git exits non-zero (an absent ref or path)."""
     out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
@@ -60,6 +65,14 @@ def _checkouts(repo):
         if path:
             found.append((path, branch))
     return found
+
+
+# pending sidecar suffix -> file name inside the run folder
+SIDECARS = (
+    (".brief.md", "brief.md"),
+    (".profile.md", "profile.md"),
+    (".instructions.json", "instructions.json"),
+)
 
 
 def _resolve(repo, src, base):
@@ -240,7 +253,7 @@ def inspect(repo, src, base):
         inferred_stage=_stage(artifacts),
         needs_clarification=_markers(repo, ref, spec_dir),
         worktree=str(Path(repo).parent / f"{name}-factory" / branch),
-        pending=f"{name}-adopt-{branch}",
+        pending=pending_name(repo, branch),
     )
     report["refusal"] = _refusal(repo, report, ref)
     return report
@@ -367,7 +380,7 @@ def _record_worktree_run(worktree, report, loaded, pending, stage):
     state_path = folder / "state.json"
     _no_link(worktree, state_path)
     written = state.write_state(state_path, run)
-    for suffix, target in ((".brief.md", "brief.md"), (".profile.md", "profile.md")):
+    for suffix, target in SIDECARS:
         sidecar = pending.with_name(pending.name.replace(".json", suffix))
         if sidecar.exists():
             text = _utf8(sidecar)
@@ -399,10 +412,10 @@ def _short_sha(worktree):
 
 
 def _clear_pending(pending):
-    """D7 step 6: delete the brief, profile and then the pending JSON once the adoption commit has landed.
+    """D7 step 6: delete the sidecars (brief, profile, instructions) and then the pending JSON once the adoption commit has landed.
 
     The JSON goes last so any failed delete keeps it (FR-013)."""
-    for suffix in (".brief.md", ".profile.md"):
+    for suffix, _ in SIDECARS:
         pending.with_name(pending.name.replace(".json", suffix)).unlink(missing_ok=True)
     pending.unlink()
 

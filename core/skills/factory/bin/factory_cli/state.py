@@ -198,6 +198,7 @@ def validate_state(state):
             bad("ended_at", "a pr-open run has ended")
 
     _check_mode(state, bad)
+    _check_instructions(state, bad)
     decisions = _check_decisions(state, bad)
     _check_history(state, decisions, bad)
     _check_adopted(state, bad)
@@ -207,6 +208,19 @@ def validate_state(state):
     _check_baseline(state, bad)
     _check_issues(state, bad)
     return problems
+
+
+def _check_instructions(state, bad):
+    """Instruction index summary (spec 025): optional; types only."""
+    summary = state.get("instructions")
+    if summary is None:
+        return
+    if not isinstance(summary, dict):
+        bad("instructions", "not an object")
+        return
+    for key, kind in (("ref", str), ("counts", dict), ("combined_hash", str)):
+        if not isinstance(summary.get(key), kind):
+            bad(f"instructions.{key}", f"not a {kind.__name__}")
 
 
 def _check_mode(state, bad):

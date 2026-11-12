@@ -27,6 +27,7 @@ class DropTests(unittest.TestCase):
         self.wt = self.box.worktree_run("011-drop", run)
         self.folder = self.wt / "specs/011-drop/factory"
         (self.folder / "brief.md").write_text("brief\n")
+        (self.folder / "instructions.json").write_text("{}\n")
         (self.folder / "nested").mkdir()
         (self.folder / "nested/file").write_text("nested\n")
         self.box.git("add", "-A", cwd=self.wt)
@@ -75,6 +76,11 @@ class DropTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("several", result.stderr)
         self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_drop_removes_the_instructions_index_with_the_run_folder(self):
+        result = self.box.cli("drop", cwd=self.wt)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.folder / "instructions.json").exists())
 
     def test_drop_commits_only_run_deletions_and_returns_summary(self):
         state = json.loads((self.folder / "state.json").read_text())
