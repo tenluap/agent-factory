@@ -1,0 +1,133 @@
+{
+  "version": 5,
+  "started_at": "2026-11-12T00:00:12.801662Z",
+  "ended_at": null,
+  "harness": "opencode",
+  "feature": "Give the factory its own discovery of repo instructions (see docs/repo-instructions-brief.md, run 1): add a deterministic, stdlib-only scanner to the factory CLI that reads git objects at the run's ref and indexes tracked agent instruction files at any depth from a table-driven catalogue, governance documents, @path imports and one-hop links; classify each entry as always, scoped or reference with its scope, size, hash and title; read instructions.include, instructions.reference and instructions.exclude from .factory/config.json; add the read-only `factory instructions` report and the `factory instructions-record` writer, which stores a summary in run state, writes the index file in the run folder and reports the delta on a re-record; call the writer at every preflight after profile-record and disclose counts, sizes, notes, the over-32-KiB warning and the no-instructions case; have the orchestrator read the always entries at preflight and grill and take documented build and test commands from every root-scope entry; record the new terms in CONTEXT.md and the decision as ADR 0019; add this repository's own config lists; and cover the scanner with unit tests over fixture trees.",
+  "repo": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory",
+  "default_branch": "main",
+  "base": "origin/main",
+  "branch": "025-repo-instructions-discovery",
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/025-repo-instructions-discovery",
+  "spec_dir": "specs/025-repo-instructions-discovery",
+  "status": "running",
+  "stage": "worktree",
+  "halt_reason": null,
+  "stop_at": null,
+  "mode": {
+    "chain": "full",
+    "fast": true,
+    "cruise": true
+  },
+  "skills": {
+    "speckit-specify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-specify/SKILL.md",
+    "speckit-clarify": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-clarify/SKILL.md",
+    "speckit-plan": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-plan/SKILL.md",
+    "speckit-tasks": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-tasks/SKILL.md",
+    "speckit-analyze": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-analyze/SKILL.md",
+    "speckit-implement": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-implement/SKILL.md",
+    "speckit-constitution": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/speckit-constitution/SKILL.md",
+    "grilling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/grilling/SKILL.md",
+    "domain-modeling": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/domain-modeling/SKILL.md",
+    "pr": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/pr/SKILL.md",
+    "ponytail": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/ponytail/SKILL.md",
+    "tdd": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory/.claude/skills/tdd/SKILL.md"
+  },
+  "commands": {
+    "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; test -z \"$(git ls-files -- dist/)\" && bash -n install.sh",
+    "test": "python3 -m unittest discover -s tools"
+  },
+  "analyze": {
+    "pass": 1,
+    "loops": 0,
+    "reports": [],
+    "remediations": [],
+    "pending_clarify": []
+  },
+  "relay": null,
+  "timeline": [],
+  "decisions": [
+    {
+      "stage": "grill",
+      "question": "setup-commands",
+      "answer": "No root CLAUDE.md/AGENTS.md; commands from README CI line + .github/workflows/ci.yml. build: render five harnesses with FACTORY_HOME=$(mktemp -d), fail if dist/ tracked, bash -n install.sh; test: python3 -m unittest discover -s tools",
+      "auto": true,
+      "at": "2026-11-12T00:00:43.090873Z",
+      "kind": "answer",
+      "cruise_override": true
+    },
+    {
+      "stage": "grill",
+      "question": "Q1",
+      "answer": "full chain (source brief Q27; its run-1 invocation is /factory --full)",
+      "auto": true,
+      "at": "2026-11-12T00:00:58.472544Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q2",
+      "answer": "ADR 0020, not 0019: origin/024-windows-install already adds docs/adr/0019-the-installer-is-a-python-module.md; if 0020 is taken at implement time, use the next number free on origin/main and every remote branch",
+      "auto": true,
+      "at": "2026-11-12T00:00:58.472544Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q3",
+      "answer": "docs/repo-instructions-brief.md is staged only in the main checkout and absent from origin/main; the run neither adds nor edits it; its full text is reproduced in brief.md; spec.md and plan.md stay self-contained",
+      "auto": true,
+      "at": "2026-11-12T00:00:58.472544Z",
+      "kind": "answer"
+    },
+    {
+      "stage": "grill",
+      "question": "Q4",
+      "answer": "Scope is run 1 (discovery) only; run 2 consumption items stay out; the brief open points (other tools config file names, ADR directory patterns, index file name and format) are settled at clarify/plan",
+      "auto": true,
+      "at": "2026-11-12T00:00:58.472544Z",
+      "kind": "answer"
+    }
+  ],
+  "ledger": [],
+  "issues": [],
+  "review": {
+    "round": 0,
+    "fix_rounds": 0,
+    "ui_diff": false,
+    "ui_reviewer_skipped": false
+  },
+  "pr_url": null,
+  "history": [
+    {
+      "at": "2026-11-12T00:00:58.472544Z",
+      "stage": "grill",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
+    }
+  ],
+  "models": {
+    "resolved": {
+      "deep": "claude-code/claude-opus-5-5",
+      "standard": "claude-code/claude-sonnet-5-5"
+    },
+    "source": {
+      "deep": "user",
+      "standard": "user"
+    }
+  },
+  "profile": {
+    "languages": [],
+    "frameworks": [],
+    "package_managers": [],
+    "ui": false,
+    "monorepo": false,
+    "projects": [],
+    "commands": {},
+    "unknown_markers": [],
+    "notes": [],
+    "detected_at": "2026-11-12T00:00:13.073816Z",
+    "detected_by": "factory detect 017"
+  }
+}
