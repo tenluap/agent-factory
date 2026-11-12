@@ -360,6 +360,10 @@ _Avoid_: skip, waiver, opt-out
 A consuming repository's own documented rule winning over a factory rule, recorded in `plan.md` as `Overridden: ENG-n - <repo rule that wins>`.
 _Avoid_: exception, opt-out, local rule
 
+**Unapplied rule**:
+A consuming repository's documented rule that loses to a factory mechanic, recorded in `plan.md` as `Not applied:`; the mirror of a rule override.
+_Avoid_: ignored rule, skipped instruction, conflict
+
 **Advisory finding**:
 An engineering finding based only on a design or style judgement, including `ENG-7`..`ENG-10`, rated at most MEDIUM and never blocking. A concrete requirement or safety defect is rated by its consequence instead. A fix round driven by a verdict performs no fix work on an advisory finding; it reaches the user in the verdict's advisory list (keeping its `ENG-n` id in that entry's `summary`) and on the approver screen, and the user sends it back into the run with the approver's "Request changes", which is implemented exactly as asked.
 _Avoid_: nit, suggestion, soft finding, warning
@@ -383,6 +387,28 @@ _Avoid_: duplication check, grep
 **Shared utility locations**:
 The bound of a reuse search beyond the module being changed: the directories the repository's own conventions name as shared (`helpers/`, `utils/`, `util/`, `common/`, `lib/`, `shared/` and the like), plus any module the module being changed already imports for helpers. The search over them is keyword-level text matching, not a review of the whole repository.
 _Avoid_: helpers, common code, the codebase
+
+## Repo instructions
+
+**Repo instructions**:
+The files tracked in a consuming repository that state how work there is done: agent instruction files of any tool, governance documents, and the files they import or link to.
+_Avoid_: rules files, memory files, context files, AGENTS files
+
+**Instruction index**:
+The per-run record of a repository's repo instructions at the run's ref, discovered by the factory itself rather than loaded by a harness.
+_Avoid_: instruction list, rules manifest, context map
+
+**Instruction entry**:
+One file in an instruction index, identified by its path and carrying its kind, scope, size, hash, title and aliases.
+_Avoid_: instruction file, rule, record
+
+**Entry kind**:
+How an instruction entry is followed: `always` (read in full at the start), `scoped` (read before touching a file in its scope) or `reference` (read when relevant).
+_Avoid_: priority, level, type
+
+**Instruction catalogue**:
+The table of each tool's instruction file naming conventions the factory matches, one row per tool, with that tool's default entry kind.
+_Avoid_: pattern list, known files
 
 ## Benchmark
 
