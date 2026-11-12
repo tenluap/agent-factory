@@ -57,6 +57,9 @@
           },
           {
             "id": "Q7"
+          },
+          {
+            "id": "Q8"
           }
         ],
         "answers": {
@@ -73,6 +76,11 @@
           "Q7": {
             "answer": "A: Root locations always, nested scoped - CONTRIBUTING* at the root, .github/ or docs/ is always with root scope; elsewhere scoped to its own directory subtree; the constitution is matched only at .specify/memory/constitution.md",
             "at": "2026-11-12T00:09:52.941457Z",
+            "auto": true
+          },
+          "Q8": {
+            "answer": "A: Read at the recorded ref - the orchestrator reads each always entry at the index's recorded ref (git show <ref>:<path>) so content matches the recorded hash; after step 4 the worktree copy at HEAD is the same content",
+            "at": "2026-11-12T00:09:53.171640Z",
             "auto": true
           }
         }
