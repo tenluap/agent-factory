@@ -222,6 +222,18 @@
       "duration_ms": 111000,
       "started_at": "2026-11-12T09:38:19Z",
       "ended_at": "2026-11-12T09:40:10Z"
+    },
+    {
+      "at": "2026-11-12T09:41:11.265580Z",
+      "stage": "remediate",
+      "role": "spec-builder",
+      "harness": "opencode",
+      "in_est": 13371,
+      "out_est": 217,
+      "reported": null,
+      "duration_ms": 53000,
+      "started_at": "2026-11-12T09:40:18Z",
+      "ended_at": "2026-11-12T09:41:11Z"
     }
   ],
   "issues": [],

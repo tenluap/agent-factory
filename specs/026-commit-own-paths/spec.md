@@ -113,7 +113,7 @@ At the approver, the user sees every uncommitted path in the worktree under "ðŸ“
 - **FR-005**: code-build's instructions MUST treat an uncommitted change as interrupted work only when the resumed task names its path, and MUST leave every other uncommitted change uncommitted and undiscarded. (AC-4)
 - **FR-006**: The orchestrator's approver step MUST list every path `git status --porcelain` reports in the worktree under "ðŸ“‚ Uncommitted local changes the run didn't make", and the run MUST neither commit nor discard those paths. (AC-5)
 - **FR-007**: Text-contract tests MUST verify FR-004, FR-005 and FR-006 in the instruction files. (AC-3, AC-4, AC-5)
-- **FR-008**: `DESIGN.md`, and any core reference line that would otherwise contradict FR-001, FR-004 or FR-006, MUST describe the changed behaviour (constitution principle I). (AC-1, AC-3, AC-5)
+- **FR-008**: `DESIGN.md`, and any core reference line that would otherwise contradict FR-001, FR-004, FR-005 or FR-006, MUST describe the changed behaviour (constitution principle I). (AC-1, AC-3, AC-4, AC-5)
 
 ## Success Criteria *(mandatory)*
 

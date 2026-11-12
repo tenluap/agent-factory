@@ -9,7 +9,7 @@
 ## R2. No declared paths (open point from specify, FR-001)
 
 - Decision: `commit_worktree` returns `None` and makes no commit when it has no declared path.
-- Rationale: FR-001 forbids any factory commit without a pathspec. Returning `None` matches the helper's existing `if not worktree: return None` branch, adds no error, exit code or field, and every current caller passes `spec_dir`.
+- Rationale: FR-001 forbids any factory commit without a pathspec. Returning `None` matches the helper's existing `if not worktree: return None` branch, adds no error, exit code or field, and every current caller passes `spec_dir` (`profile-record` passes `loaded.get("spec_dir")` unchanged; worktree-run state always carries `spec_dir`).
 - Alternatives considered: exit with an error (new failure mode for writer commands); commit with an empty pathspec (violates FR-001).
 
 ## R3. Where the prose rules go (AC-3, AC-4, AC-5)

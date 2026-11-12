@@ -43,7 +43,7 @@ None. Test runner exists (`python3 -m unittest discover -s tools`); no new depen
 
 - [ ] T003 [P] [US1] [AC-1] [AC-2] Commit adopt's run folder with its pathspec in `core/skills/factory/bin/factory_cli/adopt.py` (`_commit_run`).
   - Seam and failure path (plan.md): `factory adopt` write (through `_commit_run`) -> `unrelated-staged-deletion`.
-  - 1. Failing test in `tools/tests/test_adopt.py`: with `pnpm-lock.yaml` committed and its deletion staged in the adopted worktree before the commit step, run `adopt` (no `--dry-run`); assert the `factory: adopt <branch>` commit does not list `pnpm-lock.yaml` and `git diff --cached --name-status` still shows `D	pnpm-lock.yaml`. Run `python3 -m unittest tools.tests.test_adopt`; observe it fail.
+  - 1. Failing test in `tools/tests/test_adopt.py`: `adopt` refuses a dirty checkout and creates a fresh worktree, so inject inside the adopt write path: patch `adopt._record_worktree_run` (runs after `_add_worktree`, before `_commit_run`) with a wrapper that calls the original, then commits `pnpm-lock.yaml` in the new worktree and stages its deletion (`git rm pnpm-lock.yaml`); run `adopt` (no `--dry-run`); assert the `factory: adopt <branch>` commit does not list `pnpm-lock.yaml` and `git diff --cached --name-status` still shows `D	pnpm-lock.yaml`. Run `python3 -m unittest tools.tests.test_adopt`; observe it fail.
   - 2. Implement: `commands.git(str(worktree), "commit", "-q", "-m", f"factory: adopt {report['branch']}", "--", f"{report['spec_dir']}/factory")`.
   - 3. Passing check: `python3 -m unittest tools.tests.test_adopt` green; full suite no new failures.
   - Red proof: `Red: <adopt test name> failed as expected`.
