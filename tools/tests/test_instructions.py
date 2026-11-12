@@ -6,6 +6,7 @@ Fixture trees are built in Sandbox git repos, never tracked fixture directories.
 
 import json
 import os
+import socket
 import sys
 import unittest
 from pathlib import Path
@@ -14,7 +15,7 @@ CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" /
 sys.path.insert(0, str(CORE_BIN))
 
 from factory_cli.instructions import glob_regex  # noqa: E402
-from tests import Sandbox  # noqa: E402
+from tests import Sandbox, fixture  # noqa: E402
 
 
 class ScanBase(unittest.TestCase):
@@ -412,6 +413,86 @@ class ConfigListTests(ScanBase):
         got = self.entries()
         self.assertEqual((got["DESIGN.md"]["kind"], got["CONTEXT.md"]["kind"]), ("reference", "reference"))
         self.assertFalse([p for p in got if p.startswith("conformance/")])
+
+
+class RecordTests(ScanBase):
+    def state(self, **extra):
+        return dict(fixture("state-v5.json"), base="HEAD", **extra)
+
+    def pending(self, name, **extra):
+        return self.box.pending_run(name, self.state(**extra))
+
+    def test_pending_new_run_scans_base_and_writes_sidecar_and_summary(self):
+        self.add({"AGENTS.md": "# A\n", "docs/x.md": "# X\n"})
+        path = self.pending("025-a")
+        out = self.box.cli("instructions-record")
+        self.assertEqual(out.returncode, 0, out.stderr)
+        result = json.loads(out.stdout)
+        sidecar = path.with_name(path.name.replace(".json", ".instructions.json"))
+        self.assertEqual(result["index"], str(sidecar))
+        index = json.loads(sidecar.read_text())
+        self.assertEqual(index["ref"], self.box.git("rev-parse", "HEAD").strip())
+        summary = json.loads(path.read_text())["instructions"]
+        self.assertEqual(
+            summary,
+            {"ref": index["ref"], "counts": {"always": 1, "scoped": 0, "reference": 0}, "combined_hash": index["combined_hash"]},
+        )
+        self.assertEqual(result["counts"], summary["counts"])
+        self.assertEqual(result["always_bytes"], len("# A\n"))
+        self.assertIsNone(result["committed"])
+        self.assertIsNone(result["error"])
+
+    def test_pending_adoption_scans_the_adopted_branch(self):
+        self.add({"AGENTS.md": "# A\n"})
+        self.box.git("checkout", "-q", "-b", "feat")
+        self.add({"GEMINI.md": "# G\n"})
+        self.box.git("checkout", "-q", "-")
+        path = self.pending("adopt-feat", branch="feat", spec_dir="specs/feat")
+        result = json.loads(self.box.cli("instructions-record").stdout)
+        self.assertEqual(result["ref"], self.box.git("rev-parse", "feat").strip())
+        self.assertEqual(result["counts"]["always"], 2)
+        self.assertTrue(path.with_name(path.name.replace(".json", ".instructions.json")).is_file())
+
+    def test_worktree_run_commits_the_index_only_when_it_changed(self):
+        self.add({"AGENTS.md": "# A\n"})
+        wt = self.box.worktree_run("025-b", self.state())
+        first = json.loads(self.box.cli("instructions-record", cwd=wt).stdout)
+        self.assertTrue(first["committed"])
+        target = wt / "specs" / "025-b" / "factory" / "instructions.json"
+        self.assertTrue(target.is_file())
+        self.assertIn("factory: instructions recorded", self.box.git("log", "--oneline", "-1", cwd=wt))
+        second = json.loads(self.box.cli("instructions-record", cwd=wt).stdout)
+        self.assertIsNone(second["committed"])
+
+    def test_no_writable_run_exits_1_and_writes_nothing(self):
+        self.add({"AGENTS.md": "# A\n"})
+        out = self.box.cli("instructions-record")
+        self.assertEqual(out.returncode, 1)
+        self.assertEqual(list((self.box.home / "pending").glob("*")), [])
+
+    def test_live_lock_exits_1_and_writes_nothing(self):
+        self.add({"AGENTS.md": "# A\n"})
+        path = self.pending("025-c")
+        path.with_suffix(".lock.json").write_text(
+            json.dumps({"owner_pid": os.getpid(), "host": socket.gethostname(), "harness": "x", "acquired_at": "2026-01-01T00:00:00Z"})
+        )
+        out = self.box.cli("instructions-record")
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertNotIn("instructions", json.loads(path.read_text()))
+        self.assertFalse(path.with_name(path.name.replace(".json", ".instructions.json")).exists())
+
+    def test_validate_checks_the_instructions_summary_types(self):
+        good = {"ref": "a" * 40, "counts": {"always": 0, "scoped": 0, "reference": 0}, "combined_hash": "sha256:x"}
+        for bad in ({**good, "counts": 3}, {**good, "ref": 7}):
+            with self.subTest(bad=bad):
+                self.pending("025-d", instructions=bad)
+                out = self.box.cli("validate", "--all")
+                self.assertEqual(out.returncode, 1, out.stdout)
+                self.assertIn("instructions", out.stdout)
+        self.pending("025-d", instructions=good)
+        self.assertEqual(self.box.cli("validate", "--all").returncode, 0)
+        self.pending("025-d")
+        self.assertEqual(self.box.cli("validate", "--all").returncode, 0)
 
 
 if __name__ == "__main__":

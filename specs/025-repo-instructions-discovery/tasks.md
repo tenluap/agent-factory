@@ -84,7 +84,7 @@
 **Goal**: writer stores summary and index file; reports delta, warning, empty flag.
 **Independent test**: record twice against differing fixtures; check summary, file and delta.
 
-- [ ] T008 [US4] `factory instructions-record` writer and state summary (FR-017, FR-020). Seams **S2, S4**; failure paths **F2.2, F2.3, F4.1**.
+- [x] T008 [US4] `factory instructions-record` writer and state summary (FR-017, FR-020). Seams **S2, S4**; failure paths **F2.2, F2.3, F4.1**.
   1. Test (red) in `T`: pending new run → scans `base`, writes `<pending-name>.instructions.json` beside the pending file, state `instructions` = `{ref, counts, combined_hash}`; pending adoption → scans the ref `adopt._resolve` returns; worktree run → scans worktree `HEAD`, writes `<spec_dir>/factory/instructions.json`, commits `factory: instructions recorded` only when the file changed (second identical record: `committed: null`); stdout keys per contracts/cli.md. F2.2: no writable run → exit 1, nothing written. F2.3: live lock → exit 1, nothing written. S4/F4.1: `factory validate` on a state whose `instructions` has a non-object `counts` or non-string `ref` reports a violation; a state without the field validates.
   2. Implement `cmd_instructions_record` in `M/commands.py` reusing `resolve_target`, `write_run`, `commit_worktree`, the `.profile.md` sidecar pattern and `adopt._resolve`; usage and dispatch in `M/cli.py`; light optional-field validation in `M/state.py`.
   3. Verify: test file, `tools.tests.test_state`, `tools.tests.test_profile_record` and full suite green.

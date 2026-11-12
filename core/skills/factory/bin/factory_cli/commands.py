@@ -460,6 +460,70 @@ def cmd_instructions(repo, ref):
         die(5, str(err))
 
 
+def cmd_instructions_record(repo, cwd):
+    """Scan the run's ref and record the index into the one writable run (spec 025).
+
+    Stores the `instructions` summary in state and the index file beside the
+    pending file (pending runs) or in the spec_dir's factory folder (worktree
+    runs, committed only when it changed). A scan failure writes nothing.
+    """
+    from factory_cli import adopt  # adopt imports this module
+
+    path, loaded, source, run_worktree = resolve_target(repo, cwd)
+    if source == "worktree":
+        scan_repo, ref = Path(run_worktree), "HEAD"
+    elif "-adopt-" in path.name:
+        found = adopt._resolve(repo, loaded.get("branch"), loaded.get("base"))
+        scan_repo, ref = repo, found[2] if found else loaded.get("branch")
+    else:
+        scan_repo, ref = repo, loaded.get("base")
+    result = {
+        "ref": None, "counts": None, "always_bytes": 0, "notes": [], "warning": None,
+        "empty": False, "delta": None, "index": None, "committed": None, "error": None,
+    }
+    try:
+        index = instructions.scan(scan_repo, ref)
+    except instructions.ScanError as err:
+        result["error"] = str(err)
+        return result
+
+    counts = {kind: 0 for kind in instructions.KIND_ORDER}
+    for entry in index["entries"]:
+        counts[entry["kind"]] += 1
+    summary = {"ref": index["ref"], "counts": counts, "combined_hash": index["combined_hash"]}
+
+    def mutate(s):
+        s["instructions"] = summary
+        return s
+
+    write_run(path, loaded, mutate)
+    text = json.dumps(index, sort_keys=True, indent=2) + "\n"
+    if source == "pending":
+        target = path.with_name(path.name.replace(".json", ".instructions.json"))
+        target.write_text(text)
+    else:
+        folder = Path(run_worktree) / loaded["spec_dir"] / "factory"
+        folder.mkdir(parents=True, exist_ok=True)
+        target = folder / "instructions.json"
+        # `ref` moves with every commit, including this one: compare content only
+        try:
+            previous = json.loads(target.read_text())
+        except (OSError, ValueError):
+            previous = None
+        changed = previous is None or {**previous, "ref": None} != {**index, "ref": None}
+        if changed:
+            target.write_text(text)
+            result["committed"] = commit_worktree(
+                run_worktree, "factory: instructions recorded", loaded.get("spec_dir")
+            )
+    result.update(
+        ref=index["ref"], counts=counts, notes=index["notes"], index=str(target),
+        always_bytes=sum(e["size"] for e in index["entries"] if e["kind"] == "always"),
+        empty=not index["entries"],
+    )
+    return result
+
+
 def cmd_models_record(repo, cwd, block):
     """Record resolved models under the state lock and disclose the prior block."""
     tiers = {"deep", "standard"}
