@@ -63,7 +63,16 @@
     }
   },
   "relay": null,
-  "timeline": [],
+  "timeline": [
+    {
+      "at": "2026-11-12T10:05:00.800877Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "approver: verdict pass, 1 advisory (formatter churn), 0 fix rounds",
+      "answered_at": null,
+      "latency_ms": null
+    }
+  ],
   "decisions": [
     {
       "stage": "grill",
