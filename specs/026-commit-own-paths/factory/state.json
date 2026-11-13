@@ -203,6 +203,14 @@
       "auto": false,
       "at": "2026-11-13T09:21:31.770968Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "approve",
+      "answer": "Approve",
+      "auto": false,
+      "at": "2026-11-13T10:14:07.352604Z",
+      "kind": "approved"
     }
   ],
   "ledger": [
