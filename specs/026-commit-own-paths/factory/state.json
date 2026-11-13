@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "approver",
+  "stage": "pr",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -706,6 +706,14 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-13T10:14:07.666245Z",
+      "stage": "approver",
+      "event": "approved",
+      "commit": null,
+      "harness": "opencode",
+      "decision": "approve"
     }
   ],
   "review": {
