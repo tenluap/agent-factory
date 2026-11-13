@@ -1,0 +1,6 @@
+{
+  "reviewer": "security",
+  "round": 2,
+  "summary": "Pathspec-limited commits in commit_worktree and adopt plus explicit-path staging rules narrow commit scope and introduce no injection, secret, trust-boundary, resource or dependency defect.",
+  "findings": []
+}
