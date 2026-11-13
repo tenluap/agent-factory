@@ -22,7 +22,9 @@ REVIEWER_ROLES = {
 def resolve(role, config, full=False):
     """Seconds allowed for `role`: `budget.roles[<role>]` when a positive
     integer, else `budget.default_s` when a positive integer, else 300.
-    Malformed entries fall back per entry; this never raises."""
+    With `full` a reviewer role gets at least `budget.review_full_s` (a
+    positive integer, else 600). Malformed entries fall back per entry; this
+    never raises."""
     section = config.get("budget") if isinstance(config, dict) else None
     if not isinstance(section, dict):
         section = {}

@@ -1034,6 +1034,12 @@ def cmd_checkpoint(
         stage != "review" or target != "fix" or not worktree
     ):
         die(1, "--design-fix requires checkpoint review --next fix in a worktree")
+    if design_fix is not None and (
+        not design_fix
+        or Path(design_fix).is_absolute()
+        or ".." in Path(design_fix).parts
+    ):
+        die(1, "--design-fix must be a non-empty worktree-relative path without '..'")
     # Every refusal point passes before the state write, so a refused
     # checkpoint leaves the stage, history, relay and worktree untouched.
     declared = list(files or [])
@@ -1526,7 +1532,17 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
+RELAY_NAME = r"[A-Za-z0-9_-]+"  # stage and question id of a relay record file
+
+
 def render_relay_record(stage, qid, question, answer, origin, now):
+    for key in ("title", "text"):
+        if question.get(key) is not None and not isinstance(question[key], str):
+            die(1, f"question {key} must be a string")
+    if question.get("options") is not None and not isinstance(
+        question["options"], list
+    ):
+        die(1, "question options must be a list")
     title = question.get("title") or question.get("text") or qid
     lines = [
         f"# {stage}-{qid} (requires_user)",
@@ -1571,6 +1587,30 @@ def cmd_answer(
             die(1, f"invalid --question JSON: {e}")
         if not isinstance(question, dict) or question.get("id") != qid:
             die(1, "--question must be an object whose id matches the question id")
+    # One run lock covers the record check, the state write and the record
+    # creation; the commit follows the release so lock.json is never staged.
+    try:
+        lock.acquire(path, loaded.get("harness") or "unknown")
+    except lock.LockHeld as e:
+        die(1, str(e))
+    try:
+        current, error = state.read_state(path)
+        if error or not isinstance(current, dict):
+            die(1, f"cannot re-read {path} under the lock: {error}")
+        result, commit = answer_locked(
+            path, current, worktree, qid, answer, auto, stage, cruise_override, question
+        )
+    finally:
+        lock.release(path)
+    if commit:
+        commit_worktree(worktree, f"factory: answer {qid}", current.get("spec_dir"))
+    return result
+
+
+def answer_locked(
+    path, loaded, worktree, qid, answer, auto, stage, cruise_override, question
+):
+    """The locked part of `answer`: (result, whether a commit is due)."""
     relay = loaded.get("relay") if isinstance(loaded.get("relay"), dict) else {}
     rounds = rounds_of(relay)
     questions = (rounds[-1].get("questions") or []) if rounds else []
@@ -1585,14 +1625,17 @@ def cmd_answer(
         and isinstance(resolved, dict)
         and resolved.get("requires_user") is True
     ):
-        if not re.fullmatch(r"[A-Za-z0-9_-]+", qid) or not re.fullmatch(
-            r"[A-Za-z0-9_-]+", record_stage
+        if not re.fullmatch(RELAY_NAME, qid) or not re.fullmatch(
+            RELAY_NAME, record_stage
         ):
-            die(1, "relay record stage and question id must match [A-Za-z0-9_-]+")
+            die(1, f"relay record stage and question id must match {RELAY_NAME}")
         record = (
             Path(loaded["spec_dir"]) / "factory" / "relay" / f"{record_stage}-{qid}.md"
         )
         record_path = Path(worktree) / record
+        spec_root = (Path(worktree) / loaded["spec_dir"]).resolve()
+        if not record_path.resolve().is_relative_to(spec_root):
+            die(1, f"relay record {record} resolves outside {loaded['spec_dir']}")
         if record_path.exists():
             content = record_path.read_text()
             lines = content.split("\n", 5)
@@ -1604,27 +1647,28 @@ def cmd_answer(
                 if previous.count("\n- Origin: ") != 1:
                     die(1, f"relay record {record} has an ambiguous legacy answer")
                 same = previous.partition("\n- Origin: ")[0] == answer
-            if same:
-                state_path = str(Path(path).relative_to(worktree))
-                tracked = git(
-                    worktree, "ls-tree", "--name-only", "HEAD", "--", str(record)
-                )
-                dirty = git(
-                    worktree, "status", "--porcelain", "--", str(record), state_path
-                )
-                if tracked.strip() and not dirty.strip():
-                    return {"answered": qid, "unchanged": True}
-                commit_worktree(
-                    worktree, f"factory: answer {qid}", loaded.get("spec_dir")
-                )
-                return {
-                    "answered": qid,
-                    "auto": bool(auto or cruise_override),
-                    "record": str(record),
-                }
-            die(1, f"relay record {record} already holds a different answer")
+            if not same:
+                die(1, f"relay record {record} already holds a different answer")
+            state_path = str(Path(path).relative_to(worktree))
+            tracked = git(worktree, "ls-tree", "--name-only", "HEAD", "--", str(record))
+            if tracked.strip():
+                if git(worktree, "status", "--porcelain", "--", str(record)).strip():
+                    die(1, f"relay record {record} differs from HEAD; restore it first")
+                if not git(worktree, "status", "--porcelain", "--", state_path).strip():
+                    return {"answered": qid, "unchanged": True}, False
+            return {
+                "answered": qid,
+                "auto": bool(auto or cruise_override),
+                "record": str(record),
+            }, True
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
+    rendered = None
+    if record is not None:
+        origin = (
+            "cruise_override" if cruise_override else "auto" if auto else "explicit"
+        )
+        rendered = render_relay_record(record_stage, qid, resolved, answer, origin, now)
 
     def mutate(s):
         relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
@@ -1655,21 +1699,17 @@ def cmd_answer(
         }
         return s
 
-    write_run(path, loaded, mutate)
-    if record is not None:
-        record_path.parent.mkdir(parents=True, exist_ok=True)
-        origin = (
-            "cruise_override" if cruise_override else "auto" if auto else "explicit"
-        )
-        with record_path.open("x") as stream:
-            stream.write(
-                render_relay_record(record_stage, qid, resolved, answer, origin, now)
-            )
-    commit_worktree(worktree, f"factory: answer {qid}", loaded.get("spec_dir"))
+    try:
+        state.write_state(path, loaded, mutate=mutate, locked=True)
+    except state.StateError as e:
+        die(1, str(e))
     result = {"answered": qid, "auto": bool(auto)}
     if record is not None:
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        with record_path.open("x") as stream:
+            stream.write(rendered)
         result["record"] = str(record)
-    return result
+    return result, True
 
 
 def worktree_work_commit(worktree):

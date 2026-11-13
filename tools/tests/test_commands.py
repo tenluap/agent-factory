@@ -943,6 +943,23 @@ class ReviewCounterTests(unittest.TestCase):
         self.assertEqual(pending.read_bytes(), before)
         self.assertEqual(pending_box.git("rev-parse", "HEAD"), head)
 
+    def test_unsafe_design_fix_values_refused_before_write(self):
+        box = Sandbox()
+        self.addCleanup(box.close)
+        wt = box.worktree_run("077-unsafe", v4_state(stage="review"))
+        path = wt / "specs/077-unsafe/factory/state.json"
+        before = path.read_bytes()
+        head = box.git("rev-parse", "HEAD", cwd=wt)
+        for value in ("", "/etc/verdict.json", "../verdict.json", "a/../b.json"):
+            with self.subTest(value=value):
+                out = box.cli(
+                    "checkpoint", "review", "--next", "fix", "--design-fix", value,
+                    cwd=wt,
+                )  # fmt: skip
+                self.assertEqual(out.returncode, 1, out.stderr)
+                self.assertEqual(path.read_bytes(), before)
+                self.assertEqual(box.git("rev-parse", "HEAD", cwd=wt), head)
+
     def test_design_reservation_set_and_cleared_by_checkpoints(self):
         box = Sandbox()
         self.addCleanup(box.close)
@@ -1235,6 +1252,151 @@ class RelayRecordTests(unittest.TestCase):
             cwd=self.wt,
         )
         self.assert_refused_without_write(out, code=5)
+
+    PROTECTED = json.dumps({"id": "R2-Q1", "requires_user": True})
+
+    def test_answer_file_stores_shell_metacharacters_exactly(self):
+        answer = "it's; $(touch pwned) `x`"
+        path = self.box.write_temp("a.txt", answer + "\n")
+        out = self.box.cli(
+            "answer", "R2-Q1", "--answer-file", path, "--question", self.PROTECTED,
+            cwd=self.wt,
+        )  # fmt: skip
+        self.assertEqual(out.returncode, 0, out.stderr)
+        round_ = json.loads(self.path.read_text())["relay"]["rounds"][-1]
+        self.assertEqual(round_["answers"]["R2-Q1"]["answer"], answer)
+        record = self.root / "relay" / "review-R2-Q1.md"
+        self.assertIn(f"- Answer: {answer}", record.read_text())
+        self.assertFalse((self.wt / "pwned").exists())
+
+    def test_answer_file_from_stdin(self):
+        out = self.box.cli(
+            "answer", "R2-Q1", "--answer-file", "-", cwd=self.wt, input="a'b; $(id)\n"
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        round_ = json.loads(self.path.read_text())["relay"]["rounds"][-1]
+        self.assertEqual(round_["answers"]["R2-Q1"]["answer"], "a'b; $(id)")
+
+    def test_answer_file_missing_exits_1_with_nothing_written(self):
+        self.snapshot()
+        out = self.box.cli(
+            "answer", "R2-Q1", "--answer-file", str(self.box.dir / "nope.txt"),
+            cwd=self.wt,
+        )  # fmt: skip
+        self.assert_refused_without_write(out)
+
+    def test_positional_answer_with_answer_file_is_usage_error(self):
+        self.snapshot()
+        path = self.box.write_temp("a.txt", "B")
+        out = self.box.cli("answer", "R2-Q1", "A", "--answer-file", path, cwd=self.wt)
+        self.assert_refused_without_write(out, code=5)
+
+    def test_answer_file_and_question_file_both_stdin_is_usage_error(self):
+        self.snapshot()
+        out = self.box.cli(
+            "answer", "R2-Q1", "--answer-file", "-", "--question-file", "-",
+            cwd=self.wt, input="A",
+        )  # fmt: skip
+        self.assert_refused_without_write(out, code=5)
+
+    def answered_with_record(self, answer="A"):
+        out = self.box.cli(
+            "answer", "R2-Q1", answer, "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return self.root / "relay" / "review-R2-Q1.md"
+
+    def hold_live_lock(self):
+        (self.root / "lock.json").write_text(
+            json.dumps(
+                {
+                    "owner_pid": os.getpid(),
+                    "host": socket.gethostname(),
+                    "harness": "test",
+                    "at": "2026-11-13T00:00:00Z",
+                }
+            )
+        )
+
+    def test_tracked_record_differing_from_head_is_refused(self):
+        record = self.answered_with_record()
+        record.write_text(record.read_text() + "tampered\n")
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        out = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+        self.assertIn("tampered", record.read_text())
+
+    def test_identical_retry_under_live_lock_is_refused(self):
+        lock = self.box.repo / ".git/worktrees/wt-074-relay/index.lock"
+        lock.write_text("")
+        first = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertNotEqual(first.returncode, 0)
+        lock.unlink()
+        self.hold_live_lock()
+        head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+        out = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("run locked", out.stderr)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
+
+    def test_record_check_runs_under_the_run_lock(self):
+        record = self.answered_with_record()
+        text, before = record.read_text(), self.path.read_bytes()
+        self.hold_live_lock()
+        out = self.box.cli(
+            "answer", "R2-Q1", "B", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("run locked", out.stderr)
+        self.assertEqual(record.read_text(), text)
+        self.assertEqual(self.path.read_bytes(), before)
+        (self.root / "lock.json").unlink()
+        out = self.box.cli(
+            "answer", "R2-Q1", "B", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("different answer", out.stderr)
+        self.assertFalse((self.root / "lock.json").exists())
+
+    def test_malformed_question_fields_refused_before_write(self):
+        for field, value in (
+            ("title", 5),
+            ("text", ["x"]),
+            ("title", "T"),
+            ("options", "not a list"),
+        ):
+            with self.subTest(field=field, value=value):
+                question = {"id": "R2-Q1", "requires_user": True, field: value}
+                if field == "text":
+                    question["title"] = "T"
+                if field == "title" and value == "T":
+                    question["text"] = {"a": 1}
+                self.snapshot()
+                out = self.box.cli(
+                    "answer", "R2-Q1", "A", "--question", json.dumps(question),
+                    cwd=self.wt,
+                )  # fmt: skip
+                self.assert_refused_without_write(out)
+
+    def test_relay_directory_outside_spec_dir_is_refused(self):
+        outside = self.box.dir / "outside"
+        outside.mkdir()
+        os.symlink(outside, self.root / "relay")
+        self.snapshot()
+        out = self.box.cli(
+            "answer", "R2-Q1", "A", "--question", self.PROTECTED, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 1, out.stderr)
+        self.assertEqual(self.path.read_bytes(), self.before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), self.head)
+        self.assertEqual(list(outside.iterdir()), [])
 
     def test_unsafe_stage_without_protected_question_stores_answer(self):
         out = self.box.cli(

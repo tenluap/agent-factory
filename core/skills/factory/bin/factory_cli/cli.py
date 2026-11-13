@@ -56,7 +56,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   feedback [<branch>] [--repo <path>]  refresh archived runs' PR outcomes and feedback entries
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
   wait-close <wait-id>                              close it
-  answer <qid> '<answer>' [--auto] [--stage <stage>] [--question-file <path>|-]
+  answer <qid> ('<answer>' | --answer-file <path>|-) [--auto] [--stage <stage>] [--question-file <path>|-]
                                                     settle one relay answer
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
@@ -83,6 +83,7 @@ def parse_flags(
     bool_flags=(),
     allow_all=False,
     repeat_flags=(),
+    empty_flags=(),
 ):
     """Split `rest` into (positional, flags); usage errors exit 5."""
     positional, flags = [], {}
@@ -106,7 +107,7 @@ def parse_flags(
         if flag not in value_flags:
             die_usage(f"{command}: unknown argument '{flag}'")
         value = next(rest, None)
-        if not value:
+        if not value and not (value == "" and flag in empty_flags):
             die_usage(f"{command}: {flag} needs a value")
         flags[flag] = value
     return positional, flags
@@ -240,6 +241,7 @@ def main(argv):
                 command,
                 value_flags=("--repo", "--next", "--envelope", "--design-fix"),
                 repeat_flags=("--files",),
+                empty_flags=("--design-fix",),  # an empty value is refused with exit 1
             )
             if len(positional) != 1:
                 die_usage("checkpoint needs exactly one <stage>")
@@ -415,32 +417,46 @@ def main(argv):
             positional, flags = parse_flags(
                 rest,
                 command,
-                value_flags=("--repo", "--stage", "--question", "--question-file"),
+                value_flags=(
+                    "--repo",
+                    "--stage",
+                    "--question",
+                    "--question-file",
+                    "--answer-file",
+                ),
                 bool_flags=("--auto", "--cruise-override"),
             )
-            if len(positional) != 2:
-                die_usage("answer needs <qid> <answer>")
             question = flags.get("--question")
             source = flags.get("--question-file")
-            if source is not None:
-                if question is not None:
-                    die_usage("answer takes --question or --question-file, not both")
+            answer_source = flags.get("--answer-file")
+            if len(positional) != (1 if answer_source is not None else 2):
+                die_usage("answer needs <qid> and one of <answer> or --answer-file")
+            if source is not None and question is not None:
+                die_usage("answer takes --question or --question-file, not both")
+            if source == "-" and answer_source == "-":
+                die_usage("answer reads stdin for only one of its two files")
+
+            def read_input(name):
                 try:
-                    question = (
+                    return (
                         sys.stdin.read()
-                        if source == "-"
-                        else Path(source).read_text(encoding="utf-8")
+                        if name == "-"
+                        else Path(name).read_text(encoding="utf-8")
                     )
                 except OSError as error:
-                    raise CLIError(
-                        1, f"answer: cannot read {source}: {error}"
-                    ) from error
+                    raise CLIError(1, f"answer: cannot read {name}: {error}") from error
+
+            if source is not None:
+                question = read_input(source)
+            answer = positional[1] if answer_source is None else read_input(answer_source)
+            if answer_source is not None:
+                answer = answer.removesuffix("\n")  # the file's one final newline is not part of the answer
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_answer(
                 repo,
                 Path.cwd(),
                 positional[0],
-                positional[1],
+                answer,
                 auto=bool(flags.get("--auto")),
                 stage=flags.get("--stage"),
                 cruise_override=bool(flags.get("--cruise-override")),
