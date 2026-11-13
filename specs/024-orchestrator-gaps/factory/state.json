@@ -443,6 +443,18 @@
       "duration_ms": 908000,
       "started_at": "2026-11-13T10:44:10Z",
       "ended_at": "2026-11-13T10:59:18Z"
+    },
+    {
+      "at": "2026-11-13T10:59:19.261881Z",
+      "stage": "review",
+      "role": "code-standards",
+      "harness": "opencode",
+      "in_est": 60000,
+      "out_est": 3000,
+      "reported": null,
+      "duration_ms": 908000,
+      "started_at": "2026-11-13T10:44:10Z",
+      "ended_at": "2026-11-13T10:59:18Z"
     }
   ],
   "issues": [
@@ -563,6 +575,17 @@
       "role": "security-reviewer",
       "cause": "unreported",
       "detail": "security-reviewer ran 908s past its 300s budget without a self-report",
+      "duration_ms": 908000,
+      "commit": "68063b81",
+      "partial_return": false
+    },
+    {
+      "at": "2026-11-13T10:59:19.262191Z",
+      "kind": "overrun",
+      "stage": "review",
+      "role": "code-standards",
+      "cause": "unreported",
+      "detail": "code-standards ran 908s past its 300s budget without a self-report",
       "duration_ms": 908000,
       "commit": "68063b81",
       "partial_return": false
