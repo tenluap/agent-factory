@@ -619,6 +619,18 @@
       "duration_ms": 58000,
       "started_at": "2026-11-13T11:32:35Z",
       "ended_at": "2026-11-13T11:33:33Z"
+    },
+    {
+      "at": "2026-11-13T12:37:16.182462Z",
+      "stage": "fix",
+      "role": "fixer",
+      "harness": "opencode",
+      "in_est": 70000,
+      "out_est": 15000,
+      "reported": null,
+      "duration_ms": 836000,
+      "started_at": "2026-11-13T12:23:20Z",
+      "ended_at": "2026-11-13T12:37:16Z"
     }
   ],
   "issues": [
