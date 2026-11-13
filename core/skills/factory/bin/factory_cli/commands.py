@@ -923,14 +923,17 @@ def write_run(path, loaded, mutate):
 
 
 def commit_worktree(worktree, message, spec_dir=None, extra=()):
-    """Stage spec_dir (plus the checkpoint's declared extras) and commit.
-    Undeclared changes are never staged (FR-017)."""
+    """Stage spec_dir (plus the checkpoint's declared extras) and commit exactly
+    those paths. Undeclared changes are never staged (FR-017) and a change
+    already staged outside them is neither committed nor unstaged; with no
+    declared path nothing is committed."""
     if not worktree:
         return None
     add = [path for path in ([spec_dir] if spec_dir else []) if path] + list(extra)
-    if add:
-        git(worktree, "add", "--", *add)
-    git(worktree, "commit", "-q", "-m", message)
+    if not add:
+        return None
+    git(worktree, "add", "--", *add)
+    git(worktree, "commit", "-q", "-m", message, "--", *add)
     return git(worktree, "rev-parse", "--short", "HEAD").strip()
 
 

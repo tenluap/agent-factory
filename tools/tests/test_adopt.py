@@ -4,6 +4,8 @@ Later units add the dry-run report, refusals and the write with rollback
 through the public `bin/factory adopt` command, over throwaway Sandbox repos.
 """
 
+import contextlib
+import io
 import json
 import os
 import sys
@@ -14,7 +16,7 @@ from unittest import mock
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import adopt, commands, state  # noqa: E402
+from factory_cli import adopt, cli, commands, state  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -655,6 +657,33 @@ class AdoptWriteTests(AdoptWriteFixture):
         self.assertEqual(run["stage"], "plan")
         self.assertEqual(run["adopted"]["chosen_stage"], "plan")
         self.assertEqual(run["adopted"]["inferred_stage"], "tasks")
+
+    def test_adopt_commit_leaves_an_unrelated_staged_deletion_out(self):
+        self.commit_on("007-x", {"../../pnpm-lock.yaml": "lock\n"}, "add lock")
+        original = adopt._record_worktree_run
+
+        def stage_deletion(worktree, *args, **kwargs):
+            result = original(worktree, *args, **kwargs)
+            self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=worktree)
+            return result
+
+        cwd = os.getcwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(self.box.repo)
+        env = {"FACTORY_HOME": str(self.box.home)}
+        with (
+            mock.patch.object(adopt, "_record_worktree_run", stage_deletion),
+            mock.patch.dict(os.environ, env),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            try:
+                cli.main(["factory", "adopt", "007-x"])
+            except SystemExit as exit_:
+                self.assertIn(exit_.code, (None, 0))
+        committed = self.box.git("show", "--name-only", "--format=", "007-x")
+        self.assertNotIn("pnpm-lock.yaml", committed)
+        staged = self.box.git("diff", "--cached", "--name-status", cwd=self.worktree)
+        self.assertIn("D\tpnpm-lock.yaml", staged)
 
     def test_commit_made_after_the_dry_run_is_the_recorded_base(self):
         self.commit_on("007-x", {"notes.md": "later\n"}, "spec 007-x follow-up")

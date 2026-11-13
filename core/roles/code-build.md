@@ -23,7 +23,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
 
 ## Work
 
-1. `cd <worktree> && git status`. Uncommitted changes belong to an interrupted task: finish that task, or discard its partial changes and redo it.
+1. `cd <worktree> && git status`. An uncommitted change is interrupted work only when the task being resumed names its path: finish that task, or discard only those paths and redo it. Leave every other uncommitted change untouched: never stage, commit, stash or discard it.
 2. Follow `<F>/references/engineering.md` while implementing: per behaviour-changing task, ENG-1; before any new code, ENG-6. Read `ponytail` and `tdd` — that read is the skills' activation, with `ponytail` at its full level for this whole role — and apply their guidance inside the approved spec; where skill guidance conflicts with `<F>/references/engineering.md`, the skill wins except on ENG-1..ENG-5, ENG-11, ENG-17 and ENG-23..ENG-26, where engineering.md wins; apply ENG-7..ENG-10 and ENG-13..ENG-16 only to the code the unit changes.
 3. Read the `speckit-implement` file and follow it against `<spec_dir>/tasks.md`, with these overrides:
    - Run every shell command as `cd <worktree> && SPECIFY_FEATURE=<branch> SPECIFY_FEATURE_DIRECTORY=<spec_dir> ...`.
@@ -34,7 +34,7 @@ Gather initial runtime, mapping, and rendered-comparison results in the recorded
    - Use only the seams `plan.md`'s "Test seams" section lists, never the plan's `Confirmed:` line (that is the user's seam confirmation, not a seam source) (ENG-4); a task needing an undeclared seam/failure path or lacking current explicit scope confirmation: stop and return `failed` naming the task and missing path or stale confirmation per engineering.md's "Confirmed test scope". Never ask the user directly and never invent a seam.
    - When the repository has a test runner but its test command cannot be run: stop the same way, per engineering.md's "When the red step cannot be observed at all" definition. Return `failed` naming the task, the un-runnable command and the error it produced.
    - Skip a test only per ENG-5, and state the exemption.
-   - After each passing unit: tick its checkbox (both entries for a legacy pair) and commit test, implementation and `tasks.md` together as `factory(implement): <task id(s)> <task title>`.
+   - After each passing unit: tick its checkbox (both entries for a legacy pair) and commit test, implementation and `tasks.md` together as `factory(implement): <task id(s)> <task title>`. Stage by explicit path (`git add -- <path>...`), never `git add -A`, `git add .` or `git commit -a`.
 4. Complete applicable `commands.build` and `commands.test`, or preserve exact pending checks through protocol.md's "Verification handoff". Red: fix and re-run until green. For Pen work this build-repair path grants no extra visual repair rounds; follow the shared mapping contract for those results.
 
 Done = every box in the assigned range checked (or every box in `tasks.md` when no range was supplied), every assigned implementation unit actually completed, every passing unit committed, applicable build/tests green. Return `done`. A design verification task may be checked with an explicit scoped waiver and its recorded decision, never a claim of successful verification.

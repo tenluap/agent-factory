@@ -400,7 +400,7 @@ def _utf8(path):
 def _commit_run(worktree, report):
     """D7 step 5: the one adoption commit, staging only the run's factory folder (FR-014)."""
     commands.git(str(worktree), "add", "--", f"{report['spec_dir']}/factory")
-    commands.git(str(worktree), "commit", "-q", "-m", f"factory: adopt {report['branch']}")
+    commands.git(str(worktree), "commit", "-q", "-m", f"factory: adopt {report['branch']}", "--", f"{report['spec_dir']}/factory")
 
 
 def _short_sha(worktree):
