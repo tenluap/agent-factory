@@ -490,5 +490,14 @@
     "detected_at": "2026-11-13T08:29:35.216471Z",
     "detected_by": "factory detect 017"
   },
-  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/026-commit-own-paths"
+  "worktree": "/Users/tenluap/Desktop/SourceCode/Personal/claude-factory-factory/026-commit-own-paths",
+  "instructions": {
+    "ref": "5769bb3a8b8545c9532f37ab90a5c62c83153aa7",
+    "counts": {
+      "always": 1,
+      "scoped": 2,
+      "reference": 18
+    },
+    "combined_hash": "sha256:2500dc5c0fee411e7ebf29b9f23a7266f00de3b00208873a118629f44e54f0cb"
+  }
 }
