@@ -187,6 +187,14 @@
       "auto": false,
       "at": "2026-11-13T08:40:01.437074Z",
       "kind": "answer"
+    },
+    {
+      "stage": "approver",
+      "question": "Q2",
+      "answer": "Request changes: move test_adopt_commit_leaves_an_unrelated_staged_deletion_out in tools/tests/test_adopt.py to directly after test_stage_flag_records_the_chosen_stage, unchanged, so the branch merges with origin/main without a conflict",
+      "auto": false,
+      "at": "2026-11-13T09:21:31.770968Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
