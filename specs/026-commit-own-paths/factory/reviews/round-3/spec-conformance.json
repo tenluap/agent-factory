@@ -1,0 +1,6 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 3,
+  "summary": "User-changes fix moved the adopt test to directly after test_stage_flag_records_the_chosen_stage with its body unchanged, merges cleanly with origin/main, and every AC/FR (FR-001..FR-008) stays met.",
+  "findings": []
+}
