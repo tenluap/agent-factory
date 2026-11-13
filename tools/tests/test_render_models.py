@@ -131,7 +131,7 @@ class ModelPolicyTests(unittest.TestCase):
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
             "opencode": {
                 "deep": "claude-code/claude-opus-5-5[1m]",
-                "standard": "openai/gpt-6.1-terra",
+                "standard": "claude-code/claude-sonnet-5-5[1m]",
             },
         }
         shipped = []
@@ -442,14 +442,14 @@ class ReadOnlyConformanceTests(unittest.TestCase):
         source = role.read_text()
         meta, _ = render_mod.frontmatter(source)
         self.assertEqual(
-            (meta["name"], meta["tier"], meta["access"]), ("retro", "standard", "read")
+            (meta["name"], meta["tier"], meta["access"]), ("retro", "deep", "read")
         )
         for harness in HARNESSES:
             with self.subTest(harness=harness):
                 render(harness)
                 adapter = json.loads((ADAPTERS / harness / "adapter.json").read_text())
                 text = self.agent_path(harness, meta).read_text()
-                model = adapter["models"].get("standard")
+                model = adapter["models"].get(meta["tier"])
                 if model:
                     self.assertIn(model, text)
                 if harness in ("claude-code", "zcode", "copilot"):
@@ -725,6 +725,20 @@ class ReadOnlyConformanceTests(unittest.TestCase):
             with self.subTest(harness=harness):
                 self.assertIn("WEB_SEARCH", text)
                 self.assertIn("WEB_FETCH", text)
+
+    def test_every_harness_speckit_init_uses_the_integration_flag(self):
+        # SpecKit 1.1 removed --ai/--ai-skills; --force lets `specify init --here`
+        # run in a non-empty repo with no TTY, which is how agents run it.
+        for harness in HARNESSES:
+            text = (ADAPTERS / harness / "harness.md").read_text()
+            line = re.search(r"^- `speckit_init`: `(.+)`$", text, re.M)
+            with self.subTest(harness=harness):
+                self.assertIsNotNone(line)
+                args = shlex.split(line.group(1))
+                self.assertNotIn("--ai", args)
+                self.assertNotIn("--ai-skills", args)
+                self.assertEqual(args[:1], ["--integration"])
+                self.assertIn("--force", args)
 
 
 if __name__ == "__main__":

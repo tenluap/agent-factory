@@ -1,6 +1,6 @@
 # First-party skills render into the distribution
 
-2026-11-01: the `design-to-code` skill and its `pen-design` dependency moved back to the vendored library (`skills/`, with `SOURCES.md` provenance rows) and are linked from the checkout again; this ADR now covers the remaining first-party skill set.
+2026-11-07: `design-to-code` and `pen-design` are first-party skills in `core/skills/` again. The 2026-11-01 move back to the vendored `skills/` folder ended when that folder was replaced by the CLI-managed `.agents/skills/`, whose `skills-lock.json` only describes third-party sources ([ADR 0018](0018-vendored-skills-are-managed-by-the-skills-cli.md)).
 
 The factory previously had exactly one skill of its own: the orchestrator, rendered into `dist/` (ADR 0005). Everything else in the skill library was vendored (`skills/`, tracked in `skills/SOURCES.md`) or per-user. The `design-to-code` skill — the write role's engine, with its modes, framework rules, scripts, tests and evals — and its `pen-design` dependency were homegrown but lived in the vendored layer, so the factory's core capability depended on folders `skills/SOURCES.md` does not own.
 

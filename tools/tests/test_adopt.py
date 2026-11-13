@@ -4,6 +4,8 @@ Later units add the dry-run report, refusals and the write with rollback
 through the public `bin/factory adopt` command, over throwaway Sandbox repos.
 """
 
+import contextlib
+import io
 import json
 import os
 import sys
@@ -14,7 +16,7 @@ from unittest import mock
 CORE_BIN = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "bin"
 sys.path.insert(0, str(CORE_BIN))
 
-from factory_cli import adopt, commands, state  # noqa: E402
+from factory_cli import adopt, cli, commands, state  # noqa: E402
 from tests import Sandbox, fixture  # noqa: E402
 
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
@@ -637,6 +639,17 @@ class AdoptWriteTests(AdoptWriteFixture):
         changed = self.box.git("diff", "--name-only", f"{head}..007-x").splitlines()
         self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
 
+    def test_instructions_sidecar_moves_into_the_run_folder_and_is_committed(self):
+        sidecar = self.pending.with_name(self.pending.name.replace(".json", ".instructions.json"))
+        sidecar.write_text('{"entries": []}\n')
+        out = self.write_run()
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        moved = self.worktree / "specs" / "007-x" / "factory" / "instructions.json"
+        self.assertEqual(moved.read_text(), '{"entries": []}\n')
+        self.assertFalse(sidecar.exists())
+        changed = self.box.git("show", "--format=", "--name-only", "007-x").splitlines()
+        self.assertIn("specs/007-x/factory/instructions.json", changed)
+
     def test_stage_flag_records_the_chosen_stage(self):
         out = self.write_run("--stage", "plan")
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
@@ -644,6 +657,33 @@ class AdoptWriteTests(AdoptWriteFixture):
         self.assertEqual(run["stage"], "plan")
         self.assertEqual(run["adopted"]["chosen_stage"], "plan")
         self.assertEqual(run["adopted"]["inferred_stage"], "tasks")
+
+    def test_adopt_commit_leaves_an_unrelated_staged_deletion_out(self):
+        self.commit_on("007-x", {"../../pnpm-lock.yaml": "lock\n"}, "add lock")
+        original = adopt._record_worktree_run
+
+        def stage_deletion(worktree, *args, **kwargs):
+            result = original(worktree, *args, **kwargs)
+            self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=worktree)
+            return result
+
+        cwd = os.getcwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(self.box.repo)
+        env = {"FACTORY_HOME": str(self.box.home)}
+        with (
+            mock.patch.object(adopt, "_record_worktree_run", stage_deletion),
+            mock.patch.dict(os.environ, env),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            try:
+                cli.main(["factory", "adopt", "007-x"])
+            except SystemExit as exit_:
+                self.assertIn(exit_.code, (None, 0))
+        committed = self.box.git("show", "--name-only", "--format=", "007-x")
+        self.assertNotIn("pnpm-lock.yaml", committed)
+        staged = self.box.git("diff", "--cached", "--name-status", cwd=self.worktree)
+        self.assertIn("D\tpnpm-lock.yaml", staged)
 
     def test_commit_made_after_the_dry_run_is_the_recorded_base(self):
         self.commit_on("007-x", {"notes.md": "later\n"}, "spec 007-x follow-up")
@@ -719,6 +759,13 @@ class AdoptRollbackTests(AdoptWriteFixture):
         self.assertTrue(self.pending.exists())
         self.assertEqual(self.brief.read_text(), brief)
         self.assertEqual(self.profile.read_text(), profile)
+
+    def test_refused_adoption_keeps_the_instructions_sidecar(self):
+        sidecar = self.pending.with_name(self.pending.name.replace(".json", ".instructions.json"))
+        sidecar.write_text('{"entries": []}\n')
+        self.reject_commits()
+        self.assertEqual(self.write_run().returncode, 1)
+        self.assertEqual(sidecar.read_text(), '{"entries": []}\n')
 
     def test_retry_after_the_hook_is_removed_reuses_the_pending_file(self):
         head = self.box.git("rev-parse", "007-x").strip()

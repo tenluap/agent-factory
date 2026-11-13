@@ -5,7 +5,7 @@
 - Recognise it by: you are running in OpenCode V2; you have the `subagent`, `skill`, `shell`, `read` and `edit` tools, directly or through `execute`'s tool catalog.
 - Required before starting: `subagent` and `shell`. If either is unavailable, do not create pending state or a worktree. Tell the user which capability is missing, then guide them to run `./install.sh --harness opencode`, resolve any conflicting install path reported by the installer, and start a fresh OpenCode session. If `/factory` itself is unavailable, this skill did not load; install and reload before invoking it again.
 - Capability tier: **1** (native subagents).
-- `speckit_init`: `--ai opencode --ai-skills`
+- `speckit_init`: `--integration opencode --force`
 - `impeccable_provider`: `opencode` (confirm the name with `npx impeccable install --help` before installing)
 
 ## Verbs

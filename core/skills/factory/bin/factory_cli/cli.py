@@ -25,6 +25,8 @@ read:
   models [--json]                   effective models and sources
   improvements                      backlogs, kind counts and suggested features, JSON
   detect [--repo <path>]            the repo's stack profile, JSON (spec 017)
+  instructions [--repo <path>] [--ref <ref>]
+                                    the repo's tracked instruction files at a ref, JSON
   adopt <branch|spec_dir> [--stage <s>] [--dry-run]
                                     adopt a spec factory did not start: the report with
                                     --dry-run (JSON), else the worktree run's resume digest
@@ -40,6 +42,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
   analyze-record <envelope> [--fresh-baseline]
                                     validate and record an analysis outcome; the
                                     first record sets the baseline
+  instructions-record               scan the run's ref and record the instruction index
+                                    into the one writable run (spec 025)
   profile-record                    detect the repo and record the profile into
                                     the one writable run; discloses a changed stack
   ledger-add <stage> <role> [--started-at a] [--ended-at e]
@@ -252,6 +256,14 @@ def main(argv):
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_detect(repo)
+        elif command == "instructions":
+            _, flags = parse_flags(rest, command, value_flags=("--repo", "--ref"))
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_instructions(repo, flags.get("--ref") or "HEAD")
+        elif command == "instructions-record":
+            _, flags = parse_flags(rest, command)
+            repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
+            result = commands.cmd_instructions_record(repo, Path.cwd())
         elif command == "profile-record":
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
