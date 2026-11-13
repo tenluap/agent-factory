@@ -71,6 +71,14 @@
       "summary": "approver: verdict pass, 1 advisory (formatter churn), 0 fix rounds",
       "answered_at": "2026-11-13T08:40:00.309885Z",
       "latency_ms": 81299509
+    },
+    {
+      "at": "2026-11-13T09:20:38.947126Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "approver after user-changes round: round 2 pass, 0 advisory; test_adopt.py conflict with main",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
