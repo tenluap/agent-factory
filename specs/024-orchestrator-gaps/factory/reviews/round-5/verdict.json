@@ -1,0 +1,104 @@
+{
+  "round": 5,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/references/protocol.md",
+      "line": 112,
+      "summary": "ENG-25: the answer value is still placed inside shell single quotes ('<answer>' in Relay step 4, '<recommended>' at protocol.md:110 and SKILL.md:53/78/86, '<answer>' at SKILL.md:146) with no escaping rule. An apostrophe in a user reply or a recommendation breaks the quoting. The '<recommended>' form already existed on origin/main. Decision SEC1-SCOPE limited the round-4 fix to question JSON, which is now fixed through --question-file, so this stays advisory.",
+      "fix": "If the user requests it, add an --answer-file <path>|- form (or read the answer from the question file under --auto/--cruise-override), or state a POSIX single-quote escaping rule in protocol.md Relay. Add a CLI test with ' and $() in the answer.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1617,
+      "summary": "ENG-26: an identical-answer retry commits any edits to an already-tracked relay record, because only the Answer JSON line (lines[4]) is compared before commit_worktree. Unchanged since round 4.",
+      "fix": "When the record is tracked at HEAD and its working copy differs, refuse with exit 1. Finish a pending commit only for an untracked record that matches render_relay_record output.",
+      "sources": ["SEC-2"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1617,
+      "summary": "ENG-23: the retry commit path runs git ls-tree, git status and commit_worktree without taking the run lock. Unchanged since round 4.",
+      "fix": "Take the run lock around the clean/dirty check and the commit, and refuse when a live owner holds the lock.",
+      "sources": ["SEC-3"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1596,
+      "summary": "ENG-23/ENG-26: the record existence check runs before write_run and the exclusive create runs after it, so two concurrent answers to one qid can leave the state and the committed record in disagreement. The single orchestrator answers one at a time, so this is hardening.",
+      "fix": "Do the record check, the state write and the exclusive record creation under one run lock.",
+      "sources": ["SEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1572,
+      "summary": "ENG-17/ENG-26: question validation checks only the type and the id. A malformed title, text or options field fails rendering after the state write and leaves an empty record that blocks retries. --question-file feeds the same validation.",
+      "fix": "Validate title and text as strings and options as a list, and render the record in memory before write_run. Open the file only after rendering succeeds.",
+      "sources": ["SEC-5"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1660,
+      "summary": "ENG-25: a symlinked relay directory in the worktree sends the record outside the worktree, because only the qid and stage name parts are validated. Exposure is limited because the repository belongs to the user.",
+      "fix": "Refuse when record_path.parent.resolve() is not under the resolved worktree spec_dir.",
+      "sources": ["SEC-6"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 259,
+      "summary": "ENG-29: formatting-only re-wraps of unrelated code widen the diff beyond 024. Affected: commands.py find_matches, cmd_answer cruise die, cmd_decisions_add and cmd_verify; cli.py verify --commands and adopt --stage; test_commands.py UnrelatedStagedChangeTests at about lines 1435-1462. Verified on the find_matches hunk. No repository formatter config supports the re-wraps. This is a judgement call, capped at medium.",
+      "fix": "Restore those hunks to origin/main's form and keep only the 024 behaviour changes.",
+      "sources": ["STD-1", "SPEC-2"]
+    },
+    {
+      "severity": "medium",
+      "file": "37e224fae5bca0fe0a9016338e1db96e8abee561",
+      "line": 0,
+      "summary": "ENG-2: the fifth Red line (test_question_and_question_file_together_is_usage_error 'passed before the change only through the unknown-flag exit 5...') matches neither accepted form. Not blocking: the other four Red lines parse and cover the --question-file behaviour. The both-flags case already exited 5 with nothing written before the change, so no red step existed for it, and the line says so truthfully.",
+      "fix": "In later fix commits, put such notes in the commit body prose, not on a Red: line. Optionally assert the usage message 'answer takes --question or --question-file, not both' so the test pins the explicit check.",
+      "sources": ["SPEC-1"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/budget.py",
+      "line": 25,
+      "summary": "ENG-7: the resolve() docstring does not mention the new full parameter or the review_full_s rule (with full=True a reviewer role gets max(normal, review_full_s, default 600)).",
+      "fix": "Add one sentence to the docstring that describes the full=True reviewer rule.",
+      "sources": ["STD-2"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1052,
+      "summary": "ENG-25: the --design-fix value is stored as review.pending_design_fix.verdict with no path-shape check. The input comes from the orchestrator, and no failure has been shown.",
+      "fix": "Before the state write, reject an empty, absolute or '..'-containing value with exit 1.",
+      "sources": ["SEC-7", "STD-3"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1588,
+      "summary": "ENG-6/ENG-7: the relay-name pattern [A-Za-z0-9_-]+ appears twice inline in cmd_answer and a third time in its error message. Naming and duplication nit.",
+      "fix": "Hoist one module-level compiled pattern (for example RELAY_NAME), use it for both checks, and build the message from it.",
+      "sources": ["STD-4"]
+    },
+    {
+      "severity": "low",
+      "file": "specs/024-orchestrator-gaps/contracts/cli.md",
+      "line": 3,
+      "summary": "The contract header says usage errors exit 2, but its answer entry says exit 5 for --question together with --question-file. The code agrees with the answer entry: die_usage raises CLIError(5). Only the --round/--full checks use exit 2. Documentation mismatch.",
+      "fix": "State in the header that exit 2 covers invalid --round/--full selection and exit 5 covers other usage errors, as state.md already does.",
+      "sources": ["SPEC-3"]
+    }
+  ],
+  "rejected": []
+}
