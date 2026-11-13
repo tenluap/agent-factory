@@ -64,6 +64,14 @@
       "summary": "Approve 024 after round 4 (SEC-1 blocking, cap reached)",
       "answered_at": "2026-11-13T11:02:18.064321Z",
       "latency_ms": 63036
+    },
+    {
+      "at": "2026-11-13T11:33:34.145287Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 024 after round 5 pass",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
