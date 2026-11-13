@@ -1,6 +1,0 @@
-{
-  "reviewer": "security",
-  "round": 3,
-  "summary": "Full review of origin/main...HEAD found no security, injection, secret, trust-boundary or resource defect; pathspec-limited commits narrow commit scope and git calls stay argv-based with `--` separators.",
-  "findings": []
-}

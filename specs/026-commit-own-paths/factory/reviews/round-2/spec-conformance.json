@@ -1,6 +1,0 @@
-{
-  "reviewer": "spec-conformance",
-  "round": 2,
-  "summary": "All AC-1..AC-5 and FR-001..FR-008 are met; fix commit 2a489fc reverted exactly the formatting-only hunks and kept pathspec changes and tests.",
-  "findings": []
-}
