@@ -153,6 +153,14 @@
       "auto": false,
       "at": "2026-11-13T11:02:18.429795Z",
       "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "ADVISORY-SCOPE",
+      "answer": "User accepted (approver, Request changes, round-5 advisories): (1) answer-file: add factory answer --answer-file <path>|- and switch every inline answer/recommended call site in SKILL.md and protocol.md to it; failure paths S2 (l) answer with apostrophe, semicolon and $() via file stored exactly, (m) --answer-file - from stdin, (n) missing or unreadable answer file exits 1 nothing written, (o) positional answer together with --answer-file is a usage error exit 5 nothing written, (p) --answer-file - together with --question-file - is a usage error exit 5 nothing written. (2) cmd_answer hardening SEC-2..SEC-6: (q) tracked record whose working copy differs from HEAD exits 1 nothing committed, (r) identical-answer retry under a live run lock is refused nothing committed, (s) record check, state write and record creation run under one run lock and a conflicting answer is refused before any write, (t) malformed question title, text or options exits 1 before any write with no record file, (u) relay directory resolving outside spec_dir exits 1 nothing written. (3) low: (v) --design-fix value empty, absolute or containing .. exits 1 nothing written; budget.resolve docstring; one shared relay-name pattern; contracts/cli.md exit-code header. Excluded: formatting reverts. Runner: python3 -m unittest discover -s tools.",
+      "auto": false,
+      "at": "2026-11-13T12:23:17.050740Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
