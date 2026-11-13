@@ -54,8 +54,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 024-orchestrator-gaps (round-3 pass; 3 merge conflicts with main)",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-13T10:24:50.937807Z",
+      "latency_ms": 76635
     }
   ],
   "decisions": [
