@@ -48,6 +48,14 @@
       "summary": "024-orchestrator-gaps approval after round 3: verdict pass, SPEC-2 fixed (1ea1357), one medium advisory (plan.md:125 S1 declaration)",
       "answered_at": null,
       "latency_ms": null
+    },
+    {
+      "at": "2026-11-13T10:23:34.302672Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 024-orchestrator-gaps (round-3 pass; 3 merge conflicts with main)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
