@@ -1,0 +1,27 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 5,
+  "summary": "S2 (h)-(k) are declared in plan.md, accepted via SEC1-SCOPE, covered by tests and consistent across spec artifacts; the fix commit has one unparseable Red: line and one formatting-only test hunk.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "37e224fae5bca0fe0a9016338e1db96e8abee561",
+      "line": 0,
+      "summary": "ENG-2: the commit body's fifth Red line matches neither accepted form, so the proof for the both-flags refusal (S2 (k)) is unparseable.",
+      "evidence": "ENG-2 accepts only `Red: <test> failed as expected` or `Red: not applicable - <existing test> already covers this`. The commit body has `Red: test_question_and_question_file_together_is_usage_error passed before the change only through the unknown-flag exit 5; the refusal now comes from the explicit both-flags check`. The user-changes fix round rule applies: the explicit both-flags check in cli.py (`die_usage(\"answer takes --question or --question-file, not both\")`) is a behaviour-changing fix, so its Red line must parse.",
+      "fix": "Reword the line to one accepted form. Either `Red: test_question_and_question_file_together_is_usage_error failed as expected`, which needs a test or assertion that fails before the explicit check, or the not-applicable form. Put the explanation in the commit body prose, not on the Red line."
+    },
+    {
+      "id": "SPEC-2",
+      "severity": "low",
+      "blocking": false,
+      "file": "tools/tests/test_commands.py",
+      "line": 1435,
+      "summary": "ENG-29: formatting-only re-wraps of unrelated tests (UnrelatedStagedChangeTests `assert_left_staged`, `test_resume_leaves_an_unrelated_staged_deletion_out`, `test_commit_worktree_without_declared_paths_makes_no_commit`) widen the fix diff beyond the SEC-1 scope.",
+      "evidence": "The hunks at lines ~1435, ~1450 and ~1462 change only line wrapping of pre-existing assertions. No spec, plan or task artifact asks for them, and the commit's `Adjacent:` lines do not name them.",
+      "fix": "Restore those three hunks to their ef05f116 form."
+    }
+  ]
+}
