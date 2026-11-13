@@ -450,6 +450,13 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-13T08:28:24.390237Z",
+      "stage": "approver",
+      "event": "resumed",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "review": {
