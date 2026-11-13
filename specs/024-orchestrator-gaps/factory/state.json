@@ -56,6 +56,14 @@
       "summary": "Approve 024-orchestrator-gaps (round-3 pass; 3 merge conflicts with main)",
       "answered_at": "2026-11-13T10:24:50.937807Z",
       "latency_ms": 76635
+    },
+    {
+      "at": "2026-11-13T11:01:15.027375Z",
+      "kind": "approver",
+      "stage": "approver",
+      "summary": "Approve 024 after round 4 (SEC-1 blocking, cap reached)",
+      "answered_at": null,
+      "latency_ms": null
     }
   ],
   "decisions": [
