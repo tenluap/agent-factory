@@ -137,6 +137,14 @@
       "auto": false,
       "at": "2026-11-05T04:59:21.342865Z",
       "kind": "answer"
+    },
+    {
+      "stage": "fix",
+      "question": "SEC1-SCOPE",
+      "answer": "User accepted (approver, Request changes): fix round-4 SEC-1. Add `factory answer ... --question-file <path>` and `--question-file -` (stdin) mirroring models-record --from; switch every protocol.md and SKILL.md answer call site from inline --question JSON to the file form, and state that question JSON is never inlined in shell. Test seam S2 extension: (h) question title/text containing apostrophe, semicolon and $() via --question-file stores the answer and a matching relay record; (i) missing/unreadable file exits 1 with nothing written; (j) invalid JSON in file refused before any write; (k) --question and --question-file together is a usage error with nothing written. Runner: python3 -m unittest discover -s tools.",
+      "auto": false,
+      "at": "2026-11-13T11:02:18.429795Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
