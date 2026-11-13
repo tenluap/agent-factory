@@ -868,9 +868,7 @@ class UnrelatedStagedChangeTests(unittest.TestCase):
         self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=self.wt)
 
     def assert_left_staged(self):
-        committed = self.box.git(
-            "show", "--name-only", "--format=", "HEAD", cwd=self.wt
-        )
+        committed = self.box.git("show", "--name-only", "--format=", "HEAD", cwd=self.wt)
         self.assertNotIn("pnpm-lock.yaml", committed)
         staged = self.box.git("diff", "--cached", "--name-status", cwd=self.wt)
         self.assertIn("D\tpnpm-lock.yaml", staged)
@@ -883,20 +881,14 @@ class UnrelatedStagedChangeTests(unittest.TestCase):
     def test_resume_leaves_an_unrelated_staged_deletion_out(self):
         out = self.box.cli("resume", self.branch)
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn(
-            f"factory: resume {self.branch}",
-            self.box.git("log", "-1", "--format=%s", cwd=self.wt),
-        )
+        self.assertIn(f"factory: resume {self.branch}", self.box.git("log", "-1", "--format=%s", cwd=self.wt))
         self.assert_left_staged()
 
     def test_commit_worktree_without_declared_paths_makes_no_commit(self):
         head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
         self.assertIsNone(commands.commit_worktree(str(self.wt), "factory: nothing"))
         self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
-        self.assertIn(
-            "D\tpnpm-lock.yaml",
-            self.box.git("diff", "--cached", "--name-status", cwd=self.wt),
-        )
+        self.assertIn("D\tpnpm-lock.yaml", self.box.git("diff", "--cached", "--name-status", cwd=self.wt))
 
 
 class CheckpointCommitFailureTests(unittest.TestCase):
