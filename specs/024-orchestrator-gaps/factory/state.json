@@ -727,16 +727,23 @@
       "event": "complete",
       "commit": null,
       "harness": "opencode"
+    },
+    {
+      "at": "2026-11-13T10:23:04.141114Z",
+      "stage": "approver",
+      "event": "resumed",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "models": {
     "resolved": {
       "deep": "claude-code/claude-opus-5-5",
-      "standard": "openai/gpt-6.1-terra"
+      "standard": "claude-code/claude-sonnet-5-5"
     },
     "source": {
       "deep": "user",
-      "standard": "adapter"
+      "standard": "user"
     }
   },
   "profile": {
