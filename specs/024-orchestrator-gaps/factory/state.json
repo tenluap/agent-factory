@@ -762,5 +762,14 @@
   "commands": {
     "build": "export FACTORY_HOME=\"$(mktemp -d)\"; for h in claude-code opencode codex copilot zcode; do python3 tools/render.py \"$h\" || exit 1; done; bash -n install.sh",
     "test": "python3 -m unittest discover -s tools"
+  },
+  "instructions": {
+    "ref": "92f82943feb0f028fc45d90348680287dccd5962",
+    "counts": {
+      "always": 1,
+      "scoped": 2,
+      "reference": 17
+    },
+    "combined_hash": "sha256:55e7d3a5ee4d2d081a5646dfd2e62ecd392687686a3245a437b097aaeea6ffd4"
   }
 }
