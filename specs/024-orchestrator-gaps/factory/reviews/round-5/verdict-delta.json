@@ -1,0 +1,35 @@
+{
+  "round": 5,
+  "verdict": "pass",
+  "confirmed_blocking": [],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/references/protocol.md",
+      "line": 110,
+      "summary": "ENG-25: the answer value is still interpolated inside shell single quotes ('<recommended>' / '<answer>') at protocol.md:110/:112 and SKILL.md:37/53/78/86/146; a recommended value holding an apostrophe breaks the quoting. Pre-existing on origin/main (cruise path); this diff neither introduces nor worsens it, and the user's SEC1-SCOPE decision limited the fix to question JSON only.",
+      "fix": "If the user requests it: add an `--answer-file <path>|-` form (or take the recommended value from the question file under --auto/--cruise-override), switch the call sites, and add a CLI test with `'` and `$()` in the answer value; otherwise state a POSIX single-quote escaping rule at protocol.md Relay steps 2 and 4.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "medium",
+      "file": "37e224fae5bca0fe0a9016338e1db96e8abee561",
+      "line": 0,
+      "summary": "ENG-2: the fifth Red line (test_question_and_question_file_together_is_usage_error 'passed before the change only through the unknown-flag exit 5...') matches neither accepted form. Not blocking: the behaviour-changing fix (--question-file) has four valid `Red: ... failed as expected` lines; the both-flags case (exit 5, nothing written) held before the change via the unknown-flag path, so no red step existed for it, and the line reports that honestly rather than hiding missing proof. Rewording it as 'failed as expected' would be false.",
+      "fix": "Put such notes in the commit body prose, not on a Red: line. Optionally assert the new usage message ('answer takes --question or --question-file, not both') so the test pins the explicit check.",
+      "sources": ["SPEC-1"]
+    },
+    {
+      "severity": "low",
+      "file": "tools/tests/test_commands.py",
+      "line": 1435,
+      "summary": "ENG-29: the fix commit re-wraps three unrelated UnrelatedStagedChangeTests statements (assert_left_staged, test_resume_leaves_an_unrelated_staged_deletion_out, test_commit_worktree_without_declared_paths_makes_no_commit) with no behaviour change and no Adjacent line; verified in hunks @@ -1354 and @@ -1367.",
+      "fix": "Restore those three hunks to their ef05f116 form.",
+      "sources": ["STD-1", "SPEC-2"]
+    }
+  ],
+  "rejected": [],
+  "escalate": {
+    "reason": "Fix commit 37e224fa touches core/skills/factory/bin/factory_cli/cli.py and tools/tests/test_commands.py, which neither the round-4 confirmed_blocking file (core/skills/factory/references/protocol.md) nor any Adjacent: line names. Their substantive content (the --question-file flag and five RelayRecordTests for S2 (h)-(k)) is within the round-4 fix text and decision SEC1-SCOPE, but test_commands.py also carries formatting-only re-wraps outside that scope (STD-1/SPEC-2). The other changed paths are Adjacent-listed, or are bookkeeping commits (factory/state.json, round-5 reports)."
+  }
+}

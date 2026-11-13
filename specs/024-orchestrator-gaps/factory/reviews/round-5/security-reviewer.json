@@ -1,17 +1,77 @@
 {
   "reviewer": "security",
   "round": 5,
-  "summary": "SEC-1 is fixed: answer takes --question-file <path>|-, every SKILL.md/protocol.md call site uses it, the never-interpolated rule is stated, and tests prove metacharacter-safe storage; the fix introduces no new defect, but the inline '<recommended>'/'<answer>' argument from the round-4 fix text remains unaddressed (pre-existing, non-blocking).",
+  "summary": "Full review: the round-4 blocker (inline --question JSON in shell) is removed by --question-file <path>|- and every protocol.md/SKILL.md call site now uses it; no new blocking defect, but the inline '<answer>'/'<recommended>' argument remains shell-interpolated and the round-4 relay-record advisories are unchanged.",
   "findings": [
     {
       "id": "SEC-1",
       "severity": "medium",
       "blocking": false,
       "file": "core/skills/factory/references/protocol.md",
-      "line": 110,
-      "summary": "ENG-25: the answer value is still interpolated inside shell single quotes ('<recommended>' / '<answer>'), although the new never-interpolated rationale (text from agent output over repository content) applies equally to the cruise and fast-mode recommended value.",
-      "evidence": "protocol.md:110 `factory answer <qid> '<recommended>' --question-file <temp-file> --auto` and `... --cruise-override`; protocol.md:112 `'<answer>'`; SKILL.md:37, 53, 78, 86 and 146 use the same form. `recommended` is a field of the agent-produced question JSON, which this diff now treats as untrusted. A value such as `the factory's default` breaks the quoting, and `x'; cmd; '` runs a command. The round-4 verdict fix asked for 'the same file form or an explicit shell-escape rule' for this argument; cli.py:418-437 adds only --question-file. The same inline pattern exists on origin/main (cruise path), so this diff does not introduce it or make it worse; it is a gap left open from the prior fix text.",
-      "fix": "Add an `--answer-file <path>|-` form (or read the answer from the question file's chosen/recommended field when --auto/--cruise-override is set), and change the call sites to use it. Otherwise, state an explicit POSIX single-quote escaping rule (' -> '\\'') at protocol.md Relay step 2/4. Add a CLI test with `'` and `$()` in the answer value."
+      "line": 112,
+      "summary": "The answer text is still placed inside shell single quotes with no escaping rule, and this diff makes that the documented form for every relay reply, so an apostrophe in a user reply or an agent-generated recommendation breaks the command or injects shell.",
+      "evidence": "ENG-25. protocol.md:112 (new in this diff) has 'Write each answer immediately with `factory answer <qid> '<answer>' --question-file <temp-file>`'. On origin/main, step 4 had no shell form, so this extends the pattern to every user reply. protocol.md:110 and SKILL.md:53, :78 and :86 interpolate '<recommended>', which comes from agent output over repository content, the same threat model that SKILL.md:60 cites for question JSON. SKILL.md:146 adds '<answer>' for verdict questions. A reply such as \"don't\" closes the quote. The '<recommended>' form already existed on origin/main, and SEC1-SCOPE covered only the question JSON, so this is advisory.",
+      "fix": "Give the answer the same file/stdin form (for example --answer-file <path>|-, or read both answer and question from one JSON file), or add one explicit shell-escape rule in protocol.md Relay (each ' becomes '\\''). Add a test with an apostrophe in the answer."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1617,
+      "summary": "An identical-answer retry commits any edits to a relay record that is already tracked, as long as its Answer JSON line is unchanged.",
+      "evidence": "ENG-26 / FR-008 (records are immutable). Lines 1596-1625 compare only lines[4]. When the record is tracked but dirty, they call commit_worktree('factory: answer <qid>'), so changed Origin, question or option lines are committed. The code has not changed since round 4.",
+      "fix": "When the record is tracked at HEAD and its working copy differs, refuse with exit 1. Finish a pending commit only for an untracked record that matches render_relay_record output."
+    },
+    {
+      "id": "SEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1617,
+      "summary": "The retry commit path calls commit_worktree without taking the run lock.",
+      "evidence": "ENG-23 / ENG-26. Lines 1607-1625 run git ls-tree, git status and commit_worktree with no write_run or lock acquisition. Only the first-answer path goes through write_run. The code has not changed since round 4.",
+      "fix": "Take the run lock around the clean/dirty check and the commit, and refuse when a live owner holds the lock."
+    },
+    {
+      "id": "SEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1596,
+      "summary": "The record existence check runs before write_run and the exclusive create runs after it, so two concurrent answers to one qid can leave the state and the committed record in disagreement.",
+      "evidence": "ENG-23 / ENG-26. The check at line 1596 and record_path.open('x') at about line 1663 are both outside the lock that write_run takes. The code has not changed since round 4.",
+      "fix": "Do the record check, the state write and the exclusive record creation under one run lock."
+    },
+    {
+      "id": "SEC-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1572,
+      "summary": "Question validation checks only the type and the id, so a malformed text or options field fails rendering after the state write and leaves an empty record that blocks retries.",
+      "evidence": "ENG-17 / ENG-26. Line 1572 checks only isinstance(question, dict) and the id. render_relay_record iterates question['options'] and formats the title and text inside record_path.open('x') after write_run (lines 1658-1666). --question-file now feeds the same validation. The code has not changed since round 4.",
+      "fix": "Validate title and text as strings and options as a list, and render into memory before write_run. Open the file only after rendering succeeds."
+    },
+    {
+      "id": "SEC-6",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1660,
+      "summary": "A symlinked relay directory in the worktree sends the record outside the worktree, because only the qid and stage name parts are validated.",
+      "evidence": "ENG-25. record_path.parent.mkdir(...) and open('x') follow symlinks in parent directories. The regex at lines 1586-1590 checks only the file-name parts. The code has not changed since round 4. The exposure is limited because the repository belongs to the user.",
+      "fix": "Refuse when record_path.parent.resolve() is not under the resolved worktree spec_dir."
+    },
+    {
+      "id": "SEC-7",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1063,
+      "summary": "The --design-fix value is stored as review.pending_design_fix.verdict with no shape check.",
+      "evidence": "ENG-25. Lines 1060-1064 store design_fix verbatim. The input comes from the orchestrator, and no harmful use has been shown.",
+      "fix": "Reject an empty, absolute or '..'-containing value with exit 1 before the state write."
     }
   ]
 }
