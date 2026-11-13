@@ -12,9 +12,10 @@ Exit codes follow the existing CLI: 0 success, 1 refusal (nothing written), 2 us
 
 Also present on the `commit_error` result.
 
-## `factory answer <qid> '<answer>' [--auto] [--stage s] [--cruise-override] [--question '<json>']`
+## `factory answer <qid> '<answer>' [--auto] [--stage s] [--cruise-override] [--question '<json>' | --question-file <path>|-]`
 
 - `--question` (new): protocol question object; `id` must equal `<qid>`, else exit 1.
+- `--question-file <path>|-` (SEC-1): same object read from a file or stdin, so question text is never interpolated into shell syntax. Unreadable file or invalid JSON: exit 1, nothing written. With `--question`: usage error (exit 5), nothing written.
 - `requires_user` question on a worktree run: writes `<spec_dir>/factory/relay/<stage>-<qid>.md`, committed with the answer. Result adds `"record": "<path>"`.
 - Existing record, same answer: exit 0, `{"answered": qid, "unchanged": true}`, no write when the record is in HEAD and record and state are clean; otherwise commit the pending state and record.
 - Existing record, different answer: exit 1 `relay record <path> already holds a different answer`.

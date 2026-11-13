@@ -82,7 +82,7 @@ core/skills/factory/references/design-code-mapping.md  # §5: verify, then check
 core/skills/factory/bin/factory_cli/
 ├── budget.py        # REVIEWER_ROLES, resolve(role, config, full=False)
 ├── commands.py      # cmd_checkpoint, cmd_answer (+ record render), cmd_budget, cmd_ledger_add, overrun_issue
-└── cli.py           # --round/--full on budget and ledger-add; --question on answer
+└── cli.py           # --round/--full on budget and ledger-add; --question/--question-file on answer
 tools/tests/
 ├── test_budget.py   # budget and overrun seams
 ├── test_commands.py # checkpoint counters, answer relay record
@@ -99,6 +99,7 @@ tools/tests/
 - `budget.review_full_s` config key - abstraction - FR-013 round-1 reviewer budget must be configurable next to `default_s`.
 - `render_relay_record` helper in `commands.py` - abstraction - one renderer for the FR-006 layout, used only by `cmd_answer`.
 - `answer --question` flag - abstraction - FR-005: store the full question so the record can render it.
+- `answer --question-file <path>|-` flag - abstraction - SEC-1: question text is agent output over repository content, so the orchestrator passes it by file or stdin, never interpolated into shell syntax; inline `--question` stays (removing it would touch every existing test and caller).
 - `budget`/`ledger-add` `--round <n>` flag - abstraction - FR-013/FR-016: select round-1 or delta reviewer budget.
 - `budget`/`ledger-add` `--full` flag - abstraction - FR-013: escalated full-mode re-run uses the round-1 budget.
 - `review` result field on `checkpoint review|fix` - abstraction - FR-004: cap state readable without opening `state.json`.
@@ -123,7 +124,7 @@ No new source module: the renderer is small and has one caller, so it stays in `
 Declarations (public seams; tests drive the CLI through `Sandbox.cli` in `tools/tests`):
 
 - **S1 `factory checkpoint review|fix`** (`commands.cmd_checkpoint`) - FR-001..FR-004, FR-021. Required injected failure paths: (a) commit failure after the state write, then retry → `fix_rounds` incremented once; (b) no `round-<n>/verdict.json` present → `review.round` unchanged; (c) active `review.pending_design_fix` with `attempt` equal to the counter → no increment; (d) repeated `checkpoint fix` after the stage moved on → no increment. Fix-round extension: `checkpoint review --next fix --design-fix <verdict-path>` writes the reservation on entry from a stored stage other than `fix`, including `implement`, `verify` or `review`; a retry at stored stage `fix` preserves it. `checkpoint fix` atomically counts and clears it, including legacy resume. `--design-fix` refuses, exiting 1 with nothing written, when (e) the completed-stage argument is other than `review`, (f) the target (`--next`) is other than `fix`, or (g) the pending run has no worktree.
-- **S2 `factory answer [--question]`** (`commands.cmd_answer`) - FR-005..FR-009. Required injected failure paths: (a) existing record with a different answer → exit 1 naming the path, state and files unchanged; (b) malformed `--question` JSON or `id` mismatch → exit 1, nothing written; (c) unsafe qid/stage characters with a record due (`requires_user: true` question on a worktree run) → exit 1, nothing written; the same characters with no record due → answered as today (FR-009); (d) pending run without worktree → answer stored, no record. Fix-round extension: answer commit failure after state and record writes, then identical retry commits both.
+- **S2 `factory answer [--question | --question-file]`** (`commands.cmd_answer`, `cli.py` flag parsing) - FR-005..FR-009. Round-4 SEC-1 extension (accepted by the user, decision `SEC1-SCOPE`): (h) a question title/text holding an apostrophe, a semicolon and `$()` passed via `--question-file` stores the answer and a matching relay record; (i) a missing/unreadable file exits 1, nothing written; (j) invalid JSON in the file is refused before any write; (k) `--question` with `--question-file` is a usage error (exit 5), nothing written. Required injected failure paths: (a) existing record with a different answer → exit 1 naming the path, state and files unchanged; (b) malformed `--question` JSON or `id` mismatch → exit 1, nothing written; (c) unsafe qid/stage characters with a record due (`requires_user: true` question on a worktree run) → exit 1, nothing written; the same characters with no record due → answered as today (FR-009); (d) pending run without worktree → answer stored, no record. Fix-round extension: answer commit failure after state and record writes, then identical retry commits both.
 - **S3 `factory budget <role> [--round n | --full]`** (`commands.cmd_budget` / `budget.resolve`) - FR-013..FR-015, FR-017. Required injected failure paths: (a) missing or malformed `review_full_s` / config → 600 fallback without failure; (b) non-positive or non-integer `--round` → usage exit 2.
 - **S4 `factory ledger-add [--round n | --full]` overrun detection** (`commands.overrun_issue`) - FR-011, FR-012, FR-016. Required injected failure paths: (a) duration 1 ms over budget → excess rounds up to 1 s; (b) self-reported overrun → detail unchanged.
 

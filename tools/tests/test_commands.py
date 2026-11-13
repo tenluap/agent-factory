@@ -1158,6 +1158,84 @@ class RelayRecordTests(unittest.TestCase):
         )
         self.assertEqual(out.returncode, 0, out.stderr)
 
+    def assert_refused_without_write(self, out, code=1):
+        self.assertEqual(out.returncode, code, out.stderr)
+        self.assertEqual(self.path.read_bytes(), self.before)
+        self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), self.head)
+        self.assertFalse((self.root / "relay").exists())
+
+    def snapshot(self):
+        self.before = self.path.read_bytes()
+        self.head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
+
+    def test_question_file_with_shell_metacharacters_stores_answer_and_record(self):
+        question = {
+            "id": "R2-Q1",
+            "title": "it's $(touch pwned); done",
+            "text": "a; b `c` 'd'",
+            "requires_user": True,
+        }
+        qfile = self.box.write_temp("q.json", json.dumps(question))
+        out = self.box.cli(
+            "answer", "R2-Q1", "A", "--question-file", qfile, cwd=self.wt
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        round_ = json.loads(self.path.read_text())["relay"]["rounds"][-1]
+        self.assertIn(question, round_["questions"])
+        self.assertEqual(round_["answers"]["R2-Q1"]["answer"], "A")
+        record = self.root / "relay" / "review-R2-Q1.md"
+        self.assertIn("it's $(touch pwned); done", record.read_text())
+        self.assertFalse((self.wt / "pwned").exists())
+
+    def test_question_file_from_stdin_stores_answer(self):
+        question = {"id": "R2-Q1", "title": "x'; $(id)", "requires_user": True}
+        out = self.box.cli(
+            "answer",
+            "R2-Q1",
+            "A",
+            "--question-file",
+            "-",
+            cwd=self.wt,
+            input=json.dumps(question),
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        round_ = json.loads(self.path.read_text())["relay"]["rounds"][-1]
+        self.assertIn(question, round_["questions"])
+        self.assertTrue((self.root / "relay" / "review-R2-Q1.md").exists())
+
+    def test_question_file_missing_exits_1_with_nothing_written(self):
+        self.snapshot()
+        out = self.box.cli(
+            "answer",
+            "R2-Q1",
+            "A",
+            "--question-file",
+            str(self.box.dir / "nope.json"),
+            cwd=self.wt,
+        )
+        self.assert_refused_without_write(out)
+
+    def test_question_file_invalid_json_refused_before_write(self):
+        self.snapshot()
+        bad = self.box.write_temp("bad.json", "{")
+        out = self.box.cli("answer", "R2-Q1", "A", "--question-file", bad, cwd=self.wt)
+        self.assert_refused_without_write(out)
+
+    def test_question_and_question_file_together_is_usage_error(self):
+        self.snapshot()
+        path = self.box.write_temp("q.json", '{"id":"R2-Q1","requires_user":true}')
+        out = self.box.cli(
+            "answer",
+            "R2-Q1",
+            "A",
+            "--question",
+            '{"id":"R2-Q1"}',
+            "--question-file",
+            path,
+            cwd=self.wt,
+        )
+        self.assert_refused_without_write(out, code=5)
+
     def test_unsafe_stage_without_protected_question_stores_answer(self):
         out = self.box.cli(
             "answer",
@@ -1354,7 +1432,9 @@ class UnrelatedStagedChangeTests(unittest.TestCase):
         self.box.git("rm", "-q", "pnpm-lock.yaml", cwd=self.wt)
 
     def assert_left_staged(self):
-        committed = self.box.git("show", "--name-only", "--format=", "HEAD", cwd=self.wt)
+        committed = self.box.git(
+            "show", "--name-only", "--format=", "HEAD", cwd=self.wt
+        )
         self.assertNotIn("pnpm-lock.yaml", committed)
         staged = self.box.git("diff", "--cached", "--name-status", cwd=self.wt)
         self.assertIn("D\tpnpm-lock.yaml", staged)
@@ -1367,14 +1447,20 @@ class UnrelatedStagedChangeTests(unittest.TestCase):
     def test_resume_leaves_an_unrelated_staged_deletion_out(self):
         out = self.box.cli("resume", self.branch)
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn(f"factory: resume {self.branch}", self.box.git("log", "-1", "--format=%s", cwd=self.wt))
+        self.assertIn(
+            f"factory: resume {self.branch}",
+            self.box.git("log", "-1", "--format=%s", cwd=self.wt),
+        )
         self.assert_left_staged()
 
     def test_commit_worktree_without_declared_paths_makes_no_commit(self):
         head = self.box.git("rev-parse", "HEAD", cwd=self.wt)
         self.assertIsNone(commands.commit_worktree(str(self.wt), "factory: nothing"))
         self.assertEqual(self.box.git("rev-parse", "HEAD", cwd=self.wt), head)
-        self.assertIn("D\tpnpm-lock.yaml", self.box.git("diff", "--cached", "--name-status", cwd=self.wt))
+        self.assertIn(
+            "D\tpnpm-lock.yaml",
+            self.box.git("diff", "--cached", "--name-status", cwd=self.wt),
+        )
 
 
 class CheckpointCommitFailureTests(unittest.TestCase):

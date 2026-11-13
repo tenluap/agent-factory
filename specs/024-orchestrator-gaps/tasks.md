@@ -57,6 +57,7 @@ None: every unit extends an existing command and test module.
   - Implement: parse and validate before any `write_run`; replace an id-only stored question, never a full one (FR-005); qid/stage pattern check before any write, applied only when a record is due.
   - Pass: runner green.
   - Done: tests pass; `answer` without `--question` tests unchanged and green.
+  - Round-4 SEC-1 extension (done): `answer --question-file <path>|-` in `cli.py`; orchestrator docs (SKILL.md, protocol.md Relay) pass questions by temp file, never interpolated into shell syntax; inline `--question` kept. Seam S2, failure paths (h) metacharacter title via file stores answer and record, (i) unreadable file exits 1, (j) invalid JSON refused before write, (k) both flags is a usage error; tests in `RelayRecordTests` (decision `SEC1-SCOPE`).
 
 - [x] T005 [US2] Render the relay record for `requires_user` answers, in `commands.py` (new `render_relay_record`, called only by `cmd_answer`); tests in `RelayRecordTests` (depends on T004).
   - Seam: S2. Failure paths: S2(a) existing record with a different answer exits 1 naming the path, state and files unchanged; S2(d) pending run without worktree stores the answer and writes no record.
