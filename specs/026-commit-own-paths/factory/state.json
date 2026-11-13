@@ -9,7 +9,7 @@
   "branch": "026-commit-own-paths",
   "spec_dir": "specs/026-commit-own-paths",
   "status": "running",
-  "stage": "fix",
+  "stage": "approver",
   "halt_reason": null,
   "stop_at": null,
   "mode": {
@@ -565,6 +565,13 @@
           "status": "pass"
         }
       ]
+    },
+    {
+      "at": "2026-11-13T09:20:28.825634Z",
+      "stage": "review",
+      "event": "complete",
+      "commit": null,
+      "harness": "opencode"
     }
   ],
   "review": {
