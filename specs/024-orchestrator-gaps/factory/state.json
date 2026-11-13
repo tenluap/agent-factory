@@ -78,8 +78,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "Approve 024 after round 6 pass",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-13T12:59:51.379908Z",
+      "latency_ms": 601550
     }
   ],
   "decisions": [
