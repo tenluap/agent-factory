@@ -85,8 +85,8 @@
       "kind": "approver",
       "stage": "approver",
       "summary": "approver after 2nd user-changes round: round 3 pass, merges cleanly",
-      "answered_at": null,
-      "latency_ms": null
+      "answered_at": "2026-11-13T10:14:06.271621Z",
+      "latency_ms": 2445745
     }
   ],
   "decisions": [
