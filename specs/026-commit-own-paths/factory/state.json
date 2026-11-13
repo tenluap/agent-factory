@@ -171,6 +171,14 @@
       "at": "2026-11-12T09:36:37.013602Z",
       "kind": "answer",
       "cruise_override": true
+    },
+    {
+      "stage": "approver",
+      "question": "Q1",
+      "answer": "Request changes: revert the formatting-only hunks (advisory ENG-29, STD-1/SPEC-1) in adopt.py, commands.py, test_adopt.py and test_commands.py to their base form, keeping the pathspec changes and their tests; this also clears the commands.py import conflict with main",
+      "auto": false,
+      "at": "2026-11-13T08:40:01.437074Z",
+      "kind": "answer"
     }
   ],
   "ledger": [
