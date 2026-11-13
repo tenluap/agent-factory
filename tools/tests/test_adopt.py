@@ -639,6 +639,14 @@ class AdoptWriteTests(AdoptWriteFixture):
         changed = self.box.git("diff", "--name-only", f"{head}..007-x").splitlines()
         self.assertTrue(changed and all(p.startswith("specs/007-x/factory/") for p in changed))
 
+    def test_stage_flag_records_the_chosen_stage(self):
+        out = self.write_run("--stage", "plan")
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
+        self.assertEqual(run["stage"], "plan")
+        self.assertEqual(run["adopted"]["chosen_stage"], "plan")
+        self.assertEqual(run["adopted"]["inferred_stage"], "tasks")
+
     def test_adopt_commit_leaves_an_unrelated_staged_deletion_out(self):
         self.commit_on("007-x", {"../../pnpm-lock.yaml": "lock\n"}, "add lock")
         original = adopt._record_worktree_run
@@ -665,14 +673,6 @@ class AdoptWriteTests(AdoptWriteFixture):
         self.assertNotIn("pnpm-lock.yaml", committed)
         staged = self.box.git("diff", "--cached", "--name-status", cwd=self.worktree)
         self.assertIn("D\tpnpm-lock.yaml", staged)
-
-    def test_stage_flag_records_the_chosen_stage(self):
-        out = self.write_run("--stage", "plan")
-        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        run = json.loads((self.worktree / "specs/007-x/factory/state.json").read_text())
-        self.assertEqual(run["stage"], "plan")
-        self.assertEqual(run["adopted"]["chosen_stage"], "plan")
-        self.assertEqual(run["adopted"]["inferred_stage"], "tasks")
 
     def test_commit_made_after_the_dry_run_is_the_recorded_base(self):
         self.commit_on("007-x", {"notes.md": "later\n"}, "spec 007-x follow-up")
