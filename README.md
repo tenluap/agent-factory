@@ -61,6 +61,9 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 - Required skills, resolved at preflight for every run: `grilling`, `domain-modeling`, `pr`, and — before any code-delivery work starts — `ponytail` and `tdd`. They must be in a skill directory your harness reads (`~/.agents/skills/` is read by OpenCode, Codex and Copilot; Claude Code reads `~/.claude/skills/`, which OpenCode also reads). The bundled skill library provides all of them.
 - Conditionally resolved skills:
   - `brainstorming` when a run starts from an exploratory idea.
+  - `ponytail-review` for the code-standards review; when missing, that reviewer falls back to its own correctness checks and says so.
+  - `csharp-expert` for the code-standards review of C#/.NET changes; it routes to the matching installed .NET specialist, read-only. When missing, that reviewer says so.
+  - `verification-before-completion` for the review judge; when missing, the judge applies the same evidence rule and says the skill was unavailable.
   - `impeccable` for UI reviews; the factory offers to install it the first time a run touches UI files.
   - `pen-design` when a run creates, references or updates a Pen design used as an implementation reference. Missing capabilities are reported, never installed or assumed. The `design-to-code` role reaches a Pen source only through the pen CLI, never a Pen MCP backend.
   - A `figma` skill, or an available Figma MCP inspection capability, when the design source is Figma.
