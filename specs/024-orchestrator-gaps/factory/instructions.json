@@ -1,0 +1,247 @@
+{
+  "combined_hash": "sha256:55e7d3a5ee4d2d081a5646dfd2e62ecd392687686a3245a437b097aaeea6ffd4",
+  "entries": [
+    {
+      "aliases": [],
+      "hash": "sha256:99f108f4e126a482a1ddf25931e3fc9a0b8059264f2cd4252797d6838dd193b5",
+      "kind": "always",
+      "path": ".specify/memory/constitution.md",
+      "scope": [
+        "/"
+      ],
+      "size": 3337,
+      "source": "governance",
+      "title": "Agent Factory Constitution"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:d68d9ab66d6c182a16175cfe495e01ec9a6304512f3e6f67d02a24512d594bfb",
+      "kind": "scoped",
+      "path": "conformance/bench/greet-001/overlay/AGENTS.md",
+      "scope": [
+        "conformance/bench/greet-001/overlay/"
+      ],
+      "size": 439,
+      "source": "catalogue",
+      "title": "Benchmark fixture"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:8dd496acfd7c7b048041f1a226d706f8be039f4db1745ae3c61353a830eef60b",
+      "kind": "scoped",
+      "path": "conformance/bench/greet-001/overlay/CLAUDE.md",
+      "scope": [
+        "conformance/bench/greet-001/overlay/"
+      ],
+      "size": 63,
+      "source": "catalogue",
+      "title": "CLAUDE.md"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:11a95ca7aab202e732c1c82ae93b1da8adea5dfb58507fafaeef03ed603a7f9f",
+      "kind": "reference",
+      "path": "docs/adr/0001-factory-owns-its-engineering-rules.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2716,
+      "source": "governance",
+      "title": "The factory owns its engineering rules; `tdd` and `ponytail` contribute technique under its orchestration"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:9ed392a3b50e9ee66d3cb6d3c417223609184208fb078a0bbff1b7aa4fb45d2b",
+      "kind": "reference",
+      "path": "docs/adr/0002-red-proof-lives-in-the-task-commit-body.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2138,
+      "source": "governance",
+      "title": "Red proof lives in the task's commit body, verified by spec-conformance"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:e8eac4ada0a2fa340c6f9c193930ba0ea4cd9a7d55b694c6b8a00e8c4bd7d9c0",
+      "kind": "reference",
+      "path": "docs/adr/0003-test-seams-are-settled-at-plan-time.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1092,
+      "source": "governance",
+      "title": "Test seams are settled at plan time; implementation never invents one"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:a91ebb20739e84f16a1208d9989ce918e2b68e66c5bac59c2d81b2f10ac4a2e7",
+      "kind": "reference",
+      "path": "docs/adr/0004-judgement-call-rules-advise-they-never-block.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2717,
+      "source": "governance",
+      "title": "Judgement-call engineering rules advise; they never block"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:aa31372262d1effc52ba116800bf447128332d293162b435fdcb5299656cf79d",
+      "kind": "reference",
+      "path": "docs/adr/0005-the-rendered-distribution-is-tracked-in-git.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1926,
+      "source": "governance",
+      "title": "The rendered distribution is tracked in git"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:a4d46769e3981f80d64a0988197267093637fd395de1d759e501d488f04f4a3d",
+      "kind": "reference",
+      "path": "docs/adr/0006-no-manual-write-fallback-for-run-state.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1115,
+      "source": "governance",
+      "title": "No manual write fallback for run state"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:d19ee9f847f11b6e304ba9cb3aa92184fc27cc69bd416a5d9ac9da665041783b",
+      "kind": "reference",
+      "path": "docs/adr/0007-agents-stop-cooperatively-at-their-deadline.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1597,
+      "source": "governance",
+      "title": "Agents stop cooperatively at their deadline"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:282ac0d68c764405f4604bbd5a9ccd2f8daa3cd6400d0e4358ff68fa552550cc",
+      "kind": "reference",
+      "path": "docs/adr/0008-run-artifacts-leave-the-branch-at-pr-open.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1248,
+      "source": "governance",
+      "title": "Run artifacts leave the branch at PR open"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:399317ff272c0e893cd1c2c87a2995b0e539fe561c6539892b5049c1e713db6d",
+      "kind": "reference",
+      "path": "docs/adr/0009-library-skills-are-linked-not-rendered.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1871,
+      "source": "governance",
+      "title": "Library skills are linked from their source folders, not rendered"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:a3d13acf0ecb01b337872f9bbb9c8bbc85dad90503fd180b9eef251e5566266d",
+      "kind": "reference",
+      "path": "docs/adr/0010-ui-design-work-gets-its-own-write-role.md",
+      "scope": [
+        "/"
+      ],
+      "size": 1651,
+      "source": "governance",
+      "title": "UI design work gets its own write role"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:233f886bf826ca6c6306137065d286c1f1184314064add2fa403d8e2e0910600",
+      "kind": "reference",
+      "path": "docs/adr/0011-facets-advisor-is-a-main-agent-with-research-access.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2326,
+      "source": "governance",
+      "title": "FACETS advisor is a main agent with research access"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:dc34356d55bc23089c77935d7fb0c40f65503b342b4ba3015f7c4f20b0032710",
+      "kind": "reference",
+      "path": "docs/adr/0012-first-party-skills-live-in-core-skills.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2779,
+      "source": "governance",
+      "title": "First-party skills render into the distribution"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:548fa0256d5acf1194100add24657a6f41205ea8d502f4ba4be9ada4a5f27b7b",
+      "kind": "reference",
+      "path": "docs/adr/0013-ponytail-governs-change-size.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2563,
+      "source": "governance",
+      "title": "`ponytail` governs change size; `engineering.md` keeps the process and hard-defect rules"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:ecce8dcd67f3edcca22a1ff4a56e8f8ebf1d02ffcc0f87c866b15ef7c9164dcf",
+      "kind": "reference",
+      "path": "docs/adr/0014-cruise-mode-overrides-protections-but-never-publishes.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2556,
+      "source": "governance",
+      "title": "Cruise mode overrides protected decisions but never publishes"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:17d1f9f2ab988431b78494b3f068e61afeb10158603e731932fa20ea4fa5b379",
+      "kind": "reference",
+      "path": "docs/adr/0015-post-pr-outcomes-live-beside-the-run-archive.md",
+      "scope": [
+        "/"
+      ],
+      "size": 2111,
+      "source": "governance",
+      "title": "Post-PR outcomes live beside the run archive and feed the backlog per run"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:dc1c71ef0242aa8f5bba996da8939e3e001d701f87104b8d787e8a561ba32e15",
+      "kind": "reference",
+      "path": "docs/adr/0016-analyze-acceptance-targets.md",
+      "scope": [
+        "/"
+      ],
+      "size": 5986,
+      "source": "governance",
+      "title": "Analyze acceptance targets are baseline-relative, capped at two repair cycles, and amendments need an approved hash"
+    },
+    {
+      "aliases": [],
+      "hash": "sha256:4578ce6a73a24c022c880eb417aa83bddfa3fea79b916f77b4c6a17c2aff4ba2",
+      "kind": "reference",
+      "path": "docs/adr/0017-adopted-runs-enter-at-most-at-analyze.md",
+      "scope": [
+        "/"
+      ],
+      "size": 3960,
+      "source": "governance",
+      "title": "Adopted runs are created by an explicit verb, enter at most at analyze, and exempt pre-adoption work only from factory-only rules"
+    }
+  ],
+  "notes": [],
+  "ref": "92f82943feb0f028fc45d90348680287dccd5962"
+}

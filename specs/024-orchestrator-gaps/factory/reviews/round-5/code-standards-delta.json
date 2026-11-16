@@ -1,0 +1,17 @@
+{
+  "reviewer": "code-standards",
+  "round": 5,
+  "summary": "Round-4 SEC-1 is fixed with a --question-file form, updated call sites and honest Red: lines; one low scope finding for formatting-only test re-wraps.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "tools/tests/test_commands.py",
+      "line": 1435,
+      "summary": "ENG-29: the fix commit re-wraps three unrelated UnrelatedStagedChangeTests statements (assert_left_staged, test_resume_leaves_an_unrelated_staged_deletion_out, test_commit_worktree_without_declared_paths_makes_no_commit) with no behaviour change.",
+      "evidence": "git diff ef05f116..HEAD -- tools/tests/test_commands.py hunks at @@ -1354 and @@ -1367 only split long lines (`committed = self.box.git(...)`, `self.assertIn(f\"factory: resume ...\", ...)`, `self.assertIn(\"D\\tpnpm-lock.yaml\", ...)`). Neither the Red: nor the Adjacent: lines mention them. This is the same pattern as the round-4 STD-1 formatting advisory, now extended into the fix commit. No repo formatter config (.editorconfig, pyproject.toml, ruff.toml) requires it.",
+      "fix": "Restore those three hunks to their ef05f116 form so the fix commit holds only the --question-file tests and code."
+    }
+  ]
+}

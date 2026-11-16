@@ -1,0 +1,47 @@
+{
+  "reviewer": "code-standards",
+  "round": 5,
+  "summary": "No blocking standards defects; the SEC-1 fix is implemented and tested, but the diff still carries formatting-only re-wraps of unrelated lines (no repo formatter supports them) and one stale docstring.",
+  "findings": [
+    {
+      "id": "STD-1",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 259,
+      "summary": "The diff still re-wraps lines no 024 behaviour touches, in commands.py and cli.py.",
+      "evidence": "ENG-29. The repo has no ruff/black/editorconfig line-length config (grep of pyproject, setup.cfg, tox.ini, .pre-commit-config.yaml, .github found none), so no documented rule supports the re-wraps. Unrelated hunks: commands.py find_matches `started`/return (~259); cmd_answer `--cruise-override needs cruise mode` die() (~1550); cmd_decisions_add signature, the `if (cruise_override):  # spec 021` split that leaves the comment after a bare `):`, and two die() calls (~1748-1770); cmd_verify die() (~1810); cli.py verify `--commands` payload check and comprehension (~507-521); cli.py adopt `--stage` die_usage (~555). Same class main reverted in 020a1d5e under ENG-29. Judgement-call rule, capped at MEDIUM. Carried from round 4 (STD-1, advisory).",
+      "fix": "Restore those hunks to origin/main's form; keep only the 024 behaviour changes in commands.py and cli.py."
+    },
+    {
+      "id": "STD-2",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/budget.py",
+      "line": 25,
+      "summary": "resolve()'s docstring still describes only the normal resolution and omits the new `full` parameter and the `review_full_s` rule.",
+      "evidence": "ENG-7 (update comments when behaviour changes). Docstring reads: 'Seconds allowed for `role`: budget.roles[<role>] ..., else budget.default_s ..., else 300.' The function now also returns max(normal, review_full_s, default 600) when full and role in REVIEWER_ROLES.",
+      "fix": "Add one sentence to the docstring: with full=True a reviewer role gets the greater of its normal budget and budget.review_full_s (default 600)."
+    },
+    {
+      "id": "STD-3",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1052,
+      "summary": "`--design-fix` value is stored in review.pending_design_fix.verdict with no shape check.",
+      "evidence": "ENG-25/ENG-15. cmd_checkpoint validates stage, target and worktree for design_fix but persists the raw string as `verdict`, which state.md documents as a worktree-relative verdict path the fixer later reads. An empty, absolute or `..` value is accepted. No failure shown; input comes from the orchestrator. Carried from round 4.",
+      "fix": "Reject an empty, absolute or `..`-containing value with exit 1 before the state write, beside the existing die."
+    },
+    {
+      "id": "STD-4",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1588,
+      "summary": "The relay-name pattern `[A-Za-z0-9_-]+` is written twice inline in cmd_answer, and its error message repeats it a third time.",
+      "evidence": "ENG-6/ENG-7. `re.fullmatch(r\"[A-Za-z0-9_-]+\", qid)` and the same call on record_stage, plus the literal in the die() message. One concept (a safe record-name segment) with three copies; a later change to the rule must edit all three. No existing helper fits (git grep found none), so this is a naming/duplication nit, not a missing-reuse defect.",
+      "fix": "Hoist one module-level compiled pattern (for example RELAY_NAME) and use it for both checks; build the message from its constant."
+    }
+  ]
+}

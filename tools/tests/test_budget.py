@@ -56,6 +56,44 @@ class BudgetCommandTests(unittest.TestCase):
     def cli(self, *args):
         return self.box.cli("budget", *args)
 
+    def test_full_review_budgets_and_validation(self):
+        for flags, seconds, full in (
+            (("--round", "1"), 600, True),
+            (("--full",), 600, True),
+            (("--round", "2"), 300, False),
+        ):
+            out = self.cli("spec-conformance", *flags)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(
+                (json.loads(out.stdout)["seconds"], json.loads(out.stdout)["full"]),
+                (seconds, full),
+            )
+        for config, expected in (
+            ({"budget": {"review_full_s": 900}}, 900),
+            ({"budget": {"roles": {"spec-conformance": 1200}}}, 1200),
+            ({"budget": {"review_full_s": "x"}}, 600),
+            ({"budget": {"review_full_s": 0}}, 600),
+            ({"budget": {"review_full_s": -5}}, 600),
+            ({}, 600),
+            ([], 600),
+        ):
+            self.config.write_text(json.dumps(config))
+            out = self.cli("spec-conformance", "--round", "1")
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(json.loads(out.stdout)["seconds"], expected)
+        for role, flags in (
+            ("review-judge", ("--round", "1")),
+            ("code-build", ("--full",)),
+        ):
+            self.assertEqual(json.loads(self.cli(role, *flags).stdout)["seconds"], 300)
+        for flags in (
+            ("--round", "0"),
+            ("--round", "-1"),
+            ("--round", "x"),
+            ("--round", "1", "--full"),
+        ):
+            self.assertEqual(self.cli("spec-conformance", *flags).returncode, 2)
+
     def test_reports_role_seconds_and_absolute_deadline(self):
         self.config.write_text(json.dumps({"budget": {"roles": {"code-build": 240}}}))
         out = self.cli("code-build")
@@ -129,6 +167,75 @@ class OverrunDetectionTests(unittest.TestCase):
         self.assertEqual(issues[0]["detail"], "red loop 41s past")
         self.assertEqual(issues[0]["duration_ms"], 200000)
         self.assertIs(issues[0]["partial_return"], False)
+
+    def test_detected_detail_reports_rounded_excess_and_total(self):
+        for end, expected in (
+            ("2026-10-23T10:05:19Z", "19s past its 300s budget (319s total)"),
+            ("2026-10-23T10:05:00.001Z", "1s past its 300s budget (301s total)"),
+        ):
+            out = self.box.cli(
+                "ledger-add",
+                "review",
+                "spec-conformance",
+                "--started-at",
+                "2026-10-23T10:00:00Z",
+                "--ended-at",
+                end,
+                cwd=self.wt,
+            )
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(
+                self.issues()[-1]["detail"],
+                f"spec-conformance ran {expected} without a self-report",
+            )
+
+    def test_reviewer_overruns_use_selected_round_budget(self):
+        def add(end, *flags):
+            return self.box.cli(
+                "ledger-add",
+                "review",
+                "security-reviewer",
+                "--started-at",
+                "2026-10-23T10:00:00Z",
+                "--ended-at",
+                end,
+                *flags,
+                cwd=self.wt,
+            )
+
+        first = add("2026-10-23T10:09:50Z", "--round", "1")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(self.issues(), [])
+        for end, flags, expected in (
+            (
+                "2026-10-23T10:10:01Z",
+                ("--round", "1"),
+                "1s past its 600s budget (601s total)",
+            ),
+            (
+                "2026-10-23T10:10:00.001Z",
+                ("--full",),
+                "1s past its 600s budget (601s total)",
+            ),
+            (
+                "2026-10-23T10:05:10Z",
+                ("--round", "2"),
+                "10s past its 300s budget (310s total)",
+            ),
+        ):
+            out = add(end, *flags)
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertIn(expected, self.issues()[-1]["detail"])
+        out = add(
+            "2026-10-23T10:10:01Z",
+            "--full",
+            "--overrun",
+            json.dumps({"cause": "tool-slow", "detail": "exact detail"}),
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(self.issues()[-1]["detail"], "exact detail")
+        for flags in (("--round", "0"), ("--round", "1", "--full")):
+            self.assertEqual(add("2026-10-23T10:10:01Z", *flags).returncode, 2)
 
     def test_detection_yields_unreported(self):
         out = self.ledger_add()

@@ -1,0 +1,17 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 6,
+  "summary": "All FR-001..FR-021, S1-S4 and plan declarations (l)-(v) under ADVISORY-SCOPE are implemented and tested, the Red lines parse, and artifacts agree, except one stale rejected-alternative note in research.md.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "specs/024-orchestrator-gaps/research.md",
+      "line": 21,
+      "summary": "research.md still lists `--question-file` as a rejected alternative, but SEC1-SCOPE adopted it and it is implemented and documented elsewhere.",
+      "evidence": "research.md:21: `Alternatives considered: a --question-file path (adds a file to manage)`. plan.md:102 and :127, tasks.md:60, contracts/cli.md and cli.py (`--question-file`, `--answer-file`) all ship the file flags. research.md and data-model.md:15 mention only `--question`.",
+      "fix": "Amend the research.md decision note to say `--question-file` and `--answer-file` were added later (SEC1-SCOPE, ADVISORY-SCOPE) so question and answer text never pass through shell syntax; optionally name them in data-model.md:15."
+    }
+  ]
+}

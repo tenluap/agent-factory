@@ -1,0 +1,64 @@
+{
+  "round": 2,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "specs/024-orchestrator-gaps/plan.md",
+      "line": 140,
+      "summary": "ENG-4 / Confirmed test scope: the fix-round scope extension (S1 --design-fix writer and atomic clear, S2 answer commit-failure retry, fix-stage resume order) has no recorded acceptance.",
+      "evidence": "engineering.md 'Confirmed test scope': confirmation is separate evidence of explicit acceptance, a cruise-override answer counts only when recorded, and expanding a seam or failure path invalidates prior confirmation (HIGH). state.json decisions hold cruise-override answers only for grill (setup-commands, setup-speckit, intake), plan Q1 and remediate Q1. There is no fix-stage decision, the relay is null, and no factory/relay/ directory exists. plan.md:140 reads only 'orchestrator reports cruise override at fix stage' and cites no answer. The remediate Q1 acceptance at plan.md:138 predates the extension and does not name it. Implementation of the extension (8d939be) therefore ran without accepted scope.",
+      "fix": "Through the orchestrator, record a protected acceptance of the complete current S1-S4 scope, including both extensions and the narrowed S2(c). Under cruise, use decisions-add or answer with --cruise-override at stage fix. Declare the --design-fix refusal paths in that scope too (see advisory STD-3). Then cite that decision (stage/qid/time) and its scope snapshot on the plan.md 'Confirmed fix-round extension' line.",
+      "sources": ["SPEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 930,
+      "summary": "ENG-26 / FR-003: on the documented first-fix flow, checkpoint review --next fix --design-fix silently skips the reservation but still moves the stage to fix.",
+      "evidence": "The reservation is written only when the stored stage is already 'review' (line 930). SKILL.md step 7 has no checkpoint into review before the first verdict. This run went implement (3e81adc, after verify-pass) straight to fix through the first checkpoint review --next fix. With --design-fix on that flow, line 930 is false, no pending_design_fix is stored, and target 'fix' is still written. The command exits 0, so the orchestrator believes the reservation exists. FR-003 says the flag 'creates a reservation', and design-code-mapping.md:102 says it 'atomically sets stage: fix and review.pending_design_fix'. The only test (test_commands.py:862) starts from stage review. The retry-idempotence intent is served just as well by skipping only when the stored stage is already 'fix'.",
+      "fix": "Write the reservation whenever the stored stage is not already 'fix' (or on any legitimate transition into fix from review/implement/verify), and keep the retry no-op once the stage is fix. Add a CLI test that starts at stage implement with a recorded verify-pass and a round-1 verdict, runs checkpoint review --next fix --design-fix, and asserts the reservation {attempt: fix_rounds+1, round, verdict}. Also assert that a retry does not rewrite it.",
+      "sources": ["SPEC-2"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1478,
+      "summary": "ENG-26: the identical-answer retry commits whatever is dirty in spec_dir, including a hand-modified record already in HEAD, under a 'factory: answer' message.",
+      "fix": "When the record is tracked in HEAD, compare the working copy with HEAD. Refuse with exit 1 when they differ. Complete a pending commit only for an untracked record or for a clean committed record with dirty state. Add a regression test that edits a line outside 'Answer JSON'.",
+      "sources": ["SEC-2", "STD-1"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1488,
+      "summary": "ENG-23: the retry branch calls commit_worktree without taking the run lock, so under a concurrent live writer it can commit partial state and the live factory/lock.json.",
+      "fix": "Acquire the run lock (as write_run does) around the clean/dirty check and the retry commit, refuse a live owner, and keep lock.json out of the staged paths. Add a held-lock retry test.",
+      "sources": ["SEC-3", "STD-2"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/references/protocol.md",
+      "line": 110,
+      "summary": "ENG-25: the new `--question '<full question json>'` call sites interpolate agent-produced JSON inside shell single quotes, so an apostrophe breaks the command and crafted text can inject. This conflicts with SKILL.md:60, which forbids inline repository-derived JSON.",
+      "fix": "Tell the orchestrator to shell-escape the serialized JSON (each ' becomes '\\'') at every --question call site. Alternatively, as a separately scoped follow-up, add a --question-file/stdin form mirroring models-record --from. The same applies to the pre-existing '<answer>' argument.",
+      "sources": ["SEC-1"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 904,
+      "summary": "ENG-1: the new --design-fix refusal (non-review stage, target other than fix, no worktree) has no asserting test of exit 1 with state, history and commits unchanged.",
+      "fix": "Declare these refusal paths in the S1 extension scope that SPEC-1's fresh acceptance covers, then add CLI tests asserting exit 1 and no state, history or commit change. The fix for the SPEC-2 guard touches this code anyway.",
+      "sources": ["STD-3"]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "SPEC-3",
+      "reason": "Not introduced by this delta. Round 1 told the design path to use the ordinary order (fixer done, verify, checkpoint fix --next review), and that is what was done. The design sequence's 'verify (SKILL.md step 6)' is the same wording the ordinary fix path at SKILL.md:147 already uses. The verify-history writer is documented at state.md:215 and the orchestrator used it in this run (3e81adc, e843026 'factory: verify-pass'). Any wish for step 6 to name `factory verify --pass|--fail` explicitly concerns pre-existing text, not a defect this fix added."
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "round": 4,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/references/protocol.md",
+      "line": 110,
+      "summary": "ENG-25: this diff routes every answer through `factory answer <qid> '<answer>' --question '<full question json>'`, putting agent- and repository-derived JSON inside shell single quotes with no escaping; this breaks the skill's own no-shell-interpolation rule for repository-controlled JSON.",
+      "evidence": "Introduced by this diff: protocol.md:110 (fast and cruise fill) and :112 (Relay step 4), and SKILL.md:37, :53, :78, :86, :100 and :146 add `--question '<full question json>'` to every answer call site. On origin/main only the short `'<answer>'`/`'<recommended>'` strings were exposed. The question text comes from spec-builder, reviewer and judge frontiers that read repository files, including recorded instruction files and adopted spec text. json.dumps does not escape `'`, so any prose apostrophe (for example \"factory's\") splits the argument, and crafted text such as `x'; touch /tmp/p; #` runs a command; round 2 reproduced this. SKILL.md:60 already rules that repository-controlled JSON 'must never be interpolated into shell syntax' and gives models-record a `--from <file>`/stdin form. cli.py:417 accepts `--question` only inline, and no escaping rule exists in protocol.md, SKILL.md or the harness files. Round 2's judge kept this advisory. It is confirmed here because the diff makes the pattern mandatory on every answer, the failure occurs on benign input and not only on attacks, and it contradicts a stated project rule.",
+      "fix": "Add a `--question-file <path>` form (and stdin) to `factory answer`, mirroring `models-record --from`. Change every protocol.md and SKILL.md call site to write the question JSON to a temp file and pass the path, and state at SKILL.md:60 / protocol.md Relay that question JSON is never inlined. Add a CLI test whose question title and text contain `'`, `;` and `$()`, and assert that the stored answer and the relay record match. The `'<answer>'` argument has the same pre-existing exposure; give it the same file form or an explicit shell-escape rule. The new flag and its failure paths need declared, accepted test scope through the orchestrator before implementation (ENG-4).",
+      "sources": ["SEC-1"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1615,
+      "summary": "ENG-26: an identical-answer retry commits edits to an already-committed relay record whenever only its Answer JSON line is unchanged.",
+      "fix": "When the record is tracked at HEAD and its working copy differs, refuse with exit 1. Finish a pending commit only for an untracked record that matches render_relay_record output.",
+      "sources": ["SEC-2"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1618,
+      "summary": "ENG-23: the retry commit path calls commit_worktree without taking the run lock.",
+      "fix": "Take the run lock around the clean/dirty check and the commit, refuse when a live owner holds it, and keep lock.json out of the staged paths.",
+      "sources": ["SEC-3"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1596,
+      "summary": "ENG-23/ENG-26: the record existence check runs outside the state lock, so concurrent answers to one qid can disagree with the committed record. The single orchestrator answers sequentially, so this is hardening.",
+      "fix": "Do the record check, the state write and the exclusive record creation under one run lock.",
+      "sources": ["SEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1572,
+      "summary": "ENG-17/ENG-26: --question validation checks only the type and the id, so malformed text or options fail rendering after the state write and leave an empty record that blocks retries.",
+      "fix": "Validate title, text and options, and render the record in memory before write_run. Open the file only after rendering succeeds.",
+      "sources": ["SEC-5"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1662,
+      "summary": "ENG-25: a symlinked relay directory in the worktree sends the record outside the worktree. The threat is limited because the repository is the user's own.",
+      "fix": "Refuse when record_path.parent.resolve() is not under the resolved worktree spec_dir, or when any path component under spec_dir is a symlink.",
+      "sources": ["SEC-6"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 259,
+      "summary": "ENG-29: formatting-only re-wraps of unrelated code (find_matches, cmd_answer cruise die, cmd_decisions_add, cmd_verify, cli.py verify --commands and adopt --stage) widen the diff beyond 024. Verified on the find_matches hunk.",
+      "fix": "Restore those hunks to origin/main's form, keeping only the 024 behaviour changes.",
+      "sources": ["STD-1", "SPEC-1"]
+    },
+    {
+      "severity": "low",
+      "file": "tools/tests/test_commands.py",
+      "line": 1342,
+      "summary": "ENG-1: no test asserts that the new answer-record commit and its retry commit leave an unrelated staged change out. The behaviour comes from commit_worktree, which already has coverage.",
+      "fix": "Add an UnrelatedStagedChangeTests case for a requires_user answer and its identical retry.",
+      "sources": ["STD-2"]
+    },
+    {
+      "severity": "low",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1052,
+      "summary": "ENG-25: the --design-fix value is stored as review.pending_design_fix.verdict with no path-shape check. The input comes from the orchestrator, and no failure has been shown.",
+      "fix": "Before the state write, reject an empty, absolute or `..`-containing value with exit 1, or require the value to sit under the run's factory/reviews folder.",
+      "sources": ["STD-3"]
+    }
+  ],
+  "rejected": []
+}

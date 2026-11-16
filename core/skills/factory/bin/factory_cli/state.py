@@ -270,9 +270,10 @@ def _check_decisions(state, bad):
                 bad(f"decisions[{i}].{field}", "missing required field")
         if entry.get("kind") not in DECISION_KINDS:
             bad(f"decisions[{i}].kind", f"{entry.get('kind')!r} is off-vocabulary")
-        cruise_gate = entry.get("kind") == "gate-override" and entry.get(
-            "cruise_override"
-        ) is True  # analyze-exhaustion auto-proceed; scope is the decisions-add guard
+        cruise_gate = (
+            entry.get("kind") == "gate-override"
+            and entry.get("cruise_override") is True
+        )  # analyze-exhaustion auto-proceed; scope is the decisions-add guard
         if (
             entry.get("kind") in ("approved", "gate-override")
             and entry.get("auto") is not False
@@ -614,7 +615,7 @@ def _with_interval(entry):
     return entry
 
 
-def write_state(path, state, mutate=None):
+def write_state(path, state, mutate=None, locked=False):
     """Validate, guard the append-only decisions, upgrade and replace atomically.
 
     With `mutate`, the lock is taken first and the mutation is re-applied to
@@ -622,10 +623,12 @@ def write_state(path, state, mutate=None):
     change that landed while the caller worked; without it, `state` is the
     full record to write. Returns the upgraded state actually written.
     Raises StateError, leaving the file untouched, on any violation or on a
-    decisions rewrite.
+    decisions rewrite. `locked` means the caller already holds the run lock
+    and releases it itself.
     """
     path = Path(path)
-    lock.acquire(path, harness=state.get("harness") or "unknown")
+    if not locked:
+        lock.acquire(path, harness=state.get("harness") or "unknown")
     try:
         if mutate is not None:
             current, error = read_state(path)
@@ -662,5 +665,6 @@ def write_state(path, state, mutate=None):
             tmp.unlink(missing_ok=True)
             raise
     finally:
-        lock.release(path)
+        if not locked:
+            lock.release(path)
     return state

@@ -1,0 +1,117 @@
+{
+  "round": 1,
+  "verdict": "fix",
+  "confirmed_blocking": [
+    {
+      "severity": "high",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1465,
+      "summary": "ENG-26: after a failed answer commit, an identical retry returns unchanged: true without committing state or the relay record (FR-007).",
+      "evidence": "cmd_answer runs write_run (1500), then creates the record with open('x') (1506), then commit_worktree (1510). If the commit fails, state.json is modified and the record is untracked. On retry, lines 1454-1466 see the existing record with the same answer and return {answered, unchanged: true} with no commit. FR-007 requires the record in the same commit as the answer; FR-008's no-op assumes a completed record. Three reviewers reproduced this independently with a held index.lock.",
+      "fix": "Return unchanged only when the matching record and state are committed, for example when the record is tracked at HEAD and clean. Otherwise stage and commit the pending state and record (message 'factory: answer <qid>'), mirroring the checkpoint FR-011 retry. Add a commit-failure-then-retry test. That failure path is not in confirmed S2 scope, so get fresh scope acceptance through the orchestrator first (ENG-4).",
+      "sources": ["STD-1", "SEC-2", "SPEC-3"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/references/design-code-mapping.md",
+      "line": 102,
+      "summary": "ENG-26: the documented design sequence clears a legacy reservation before checkpoint fix, so the FR-003 legacy no-double-count rule can never fire.",
+      "evidence": "design-code-mapping.md:102, state.md:155/243 and SKILL.md:147 all say: clear review.pending_design_fix, then run checkpoint fix --next review. commands.py:925-930 skips the increment only when the reservation is still present with attempt == fix_rounds. After clearing, a legacy attempt=1/count=1 run advances to 2 and uses up a cap slot. The S1(c) test passes the marker directly to checkpoint and does not follow the documented order.",
+      "fix": "Have checkpoint fix itself inspect and clear review.pending_design_fix in the same locked write. It applies the legacy rule (attempt == counter: no increment) or the new rule (increment). Drop the separate clear step from the docs. Test the documented legacy resume sequence through the CLI under S1(c).",
+      "sources": ["STD-2", "SPEC-1"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 147,
+      "summary": "ENG-15/ENG-26: the rewritten reservation protocol requires setting and clearing review.pending_design_fix, but no CLI writer touches that field.",
+      "evidence": "The only CLI reference is the read in commands.py:928, and origin/main has no writer either. The new SKILL.md:147, design-code-mapping.md:102 and state.md:155 text tells the orchestrator to persist the reservation (attempt = counter + 1) and to clear it. state.md 'CLI' and SKILL.md 'State writes' forbid hand edits, and spec.md:13 says no review-loop bookkeeping needs a hand edit after this feature. Active design runs therefore cannot follow the protocol.",
+      "fix": "Extend an existing writer to set the reservation, for example a flag on checkpoint review --next fix that stores {attempt, round, verdict}. Clear it inside checkpoint fix, as in the entry above. Name the exact commands in SKILL.md, design-code-mapping.md §5 and state.md. A new flag or failure path needs declared seam scope and fresh confirmation before implementation (ENG-4).",
+      "sources": ["STD-5", "SPEC-2"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/references/state.md",
+      "line": 243,
+      "summary": "ENG-26: resume at stage fix with no reservation verifies and counts the fix round without running or finishing the fixer (FR-002: completed fix rounds only).",
+      "evidence": "SKILL.md:147 now runs checkpoint review --next fix before spawning the fixer. If the run is interrupted before the fixer starts or during a partial return, the new state.md:243 branch re-runs verify and then checkpoint fix --next review. commands.py:925-930 increments fix_rounds because the stage is fix. The unfixed or partly fixed code is re-reviewed, and one cap slot is used up.",
+      "fix": "On resume at stage fix, re-spawn the fixer with the saved verdict path (the latest round folder's verdict.json) and the current work. Run verify and checkpoint fix --next review only after the fixer returns done. Document this in state.md and SKILL.md.",
+      "sources": ["STD-3", "SPEC-5"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/references/design-code-mapping.md",
+      "line": 102,
+      "summary": "ENG-26: the design sequence checkpoints fix into review before verification, so the review gate checks a stale verify record and refuses after a verify-fail.",
+      "evidence": "design-code-mapping.md:102 and state.md:243 order the design path as clear, then checkpoint fix --next review, then verification. cmd_checkpoint calls checks.gate_violation('review') (commands.py:912-916; checks.py:304-319), which requires the latest verify record to be a pass. Before verification the gate reads the pre-fix verify-pass, so it does not guard the fix. After a fixer verify-fail, the checkpoint is refused and the documented resume order deadlocks. The ordinary path in SKILL.md:147 verifies first.",
+      "fix": "Use the ordinary order for design runs too: fixer completes, then verify, then checkpoint fix --next review (which clears the reservation), then re-review.",
+      "sources": ["SPEC-6"]
+    },
+    {
+      "severity": "high",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 146,
+      "summary": "ENG-26: only verdict-raised questions are told to pass --question, so requires_user answers in other stages (plan test-scope confirmations) get no relay record (FR-006, SC-003).",
+      "evidence": "No CLI writer stores the full frontier; answer stores only {id} stubs. cmd_answer finds requires_user only from a stored full question or from --question (lines 1421-1445). SKILL.md:146 passes --question only for review. The SKILL.md:78 brainstorm cruise path and protocol.md Relay steps 2 and 4 call answer without it. This run's own plan and remediate answers (1307674, 425f018) stored only {id: Q1}. spec.md:156 states that records cover requires_user questions in any stage, the plan test-scope case included.",
+      "fix": "In protocol.md Relay (steps 2 and 4) and in every SKILL.md answer call site that can carry a requires_user question, pass --question '<full question json>'. Add a test that answers a non-review (plan) requires_user question through --question and asserts the plan-<qid>.md record.",
+      "sources": ["STD-4"]
+    },
+    {
+      "severity": "high",
+      "file": "tools/tests/test_commands.py",
+      "line": 980,
+      "summary": "ENG-1/ENG-4: confirmed failure path S2(c), unsafe stage characters with no record due, has no test.",
+      "evidence": "plan.md Confirmed scope S2(c): 'the same characters with no record due are answered as today'. test_invalid_question_and_unsafe_record_paths_refused_before_write covers the no-record-due case only for qid '../x' (lines 980-983). No test runs --stage a/b without requires_user. engineering.md 'Confirmed test scope': missing coverage of a confirmed failure path is HIGH.",
+      "fix": "Add a CLI test: answer Q1 A --stage a/b with a question that lacks requires_user. Assert exit 0, the answer is stored as today, and no relay directory or record exists.",
+      "sources": ["SPEC-8"]
+    }
+  ],
+  "advisory": [
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1454,
+      "summary": "ENG-23: the record existence check runs outside the state lock, so two concurrent answers to one qid can commit a record that contradicts the stored answer.",
+      "fix": "Do the record check, state write and exclusive record creation under one run lock, and refuse a conflicting answer before writing. The one orchestrator calls answer sequentially, so this is a hardening item rather than a demonstrated flow failure.",
+      "sources": ["SEC-1", "SPEC-4"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1430,
+      "summary": "ENG-17: --question checks only the object type and id. Malformed title/text/options make render_relay_record fail after the state write and leave an empty record that blocks retries.",
+      "fix": "Render the record before write_run, or validate that title and text are strings and options is a list of strings or dicts. Refuse malformed input with exit 1 before any write. Write the record only after a successful render.",
+      "sources": ["SEC-4", "STD-7"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1453,
+      "summary": "ENG-25: a symlinked factory/relay directory in the worktree sends the record outside the worktree. The repository is the user's own, so the threat is limited.",
+      "fix": "Refuse when record_path.parent.resolve() is outside the resolved worktree spec_dir, or when a path component is a symlink.",
+      "sources": ["SEC-3"]
+    },
+    {
+      "severity": "medium",
+      "file": "core/skills/factory/SKILL.md",
+      "line": 147,
+      "summary": "ENG-7: step 5 reads the cap from the checkpoint result review.fix_rounds before any review or fix checkpoint has produced one on round 1.",
+      "fix": "Read review.fix_rounds from the show/resume digest, or from the latest checkpoint fix result when one exists. A fresh run's value is 0, and after each fix the checkpoint returns it, so SC-002's cap still holds; the wording is ambiguous, not broken.",
+      "sources": ["STD-6", "SPEC-7"]
+    },
+    {
+      "severity": "low",
+      "file": "specs/024-orchestrator-gaps/tasks.md",
+      "line": 33,
+      "summary": "ENG-28: the documented independent test command 'python3 -m unittest tools.tests.test_commands -v' fails with an import error (reproduced: FAILED errors=1).",
+      "fix": "Use 'PYTHONPATH=tools python3 -m unittest tests.test_commands -v' or 'python3 -m unittest discover -s tools'.",
+      "sources": ["STD-8"]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "SPEC-9",
+      "reason": "8c5704d does not duplicate the completed T005 unit. It is a separate passing commit that fixes a found defect (multiline answer comparison), with its own regression test and a valid Red: line. ENG-3 is met per commit, and ENG-19 calls for regression tests on consequential fixes. History is preserved, and the proposed fix is bookkeeping only."
+    }
+  ]
+}

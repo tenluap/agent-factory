@@ -36,7 +36,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   models-record [--from <path>]     record run models from a file or stdin;
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
-  checkpoint <stage> [--next <stage>] [--files <path>... | --envelope <file>]
+  checkpoint <stage> [--next <stage>] [--design-fix <verdict>] [--files <path>... | --envelope <file>]
   amendment-check <draft> [--sha256 <hex>]
                                     hash a constitution draft; refuses a changed draft
   analyze-record <envelope> [--fresh-baseline]
@@ -56,7 +56,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
   feedback [<branch>] [--repo <path>]  refresh archived runs' PR outcomes and feedback entries
   wait-open <kind> <stage> <summary> -> wait-id     open a user wait
   wait-close <wait-id>                              close it
-  answer <qid> '<answer>' [--auto] [--stage <stage>]  settle one relay answer
+  answer <qid> ('<answer>' | --answer-file <path>|-) [--auto] [--stage <stage>] [--question-file <path>|-]
+                                                    settle one relay answer
   set-status <status> [--halt-reason <text>] [--pr-url <url>]
   decisions-add <stage> <qid> '<answer>' [--kind answer|approved|gate-override]
   envelope check <file>                             validate the final fenced json block\n  verify --pass|--fail --commands '<json>'          record the build/test verify pair
@@ -82,6 +83,7 @@ def parse_flags(
     bool_flags=(),
     allow_all=False,
     repeat_flags=(),
+    empty_flags=(),
 ):
     """Split `rest` into (positional, flags); usage errors exit 5."""
     positional, flags = [], {}
@@ -105,7 +107,7 @@ def parse_flags(
         if flag not in value_flags:
             die_usage(f"{command}: unknown argument '{flag}'")
         value = next(rest, None)
-        if not value:
+        if not value and not (value == "" and flag in empty_flags):
             die_usage(f"{command}: {flag} needs a value")
         flags[flag] = value
     return positional, flags
@@ -116,6 +118,20 @@ def int_or_usage(value, flag):
         return int(value)
     except (TypeError, ValueError):
         die_usage(f"{flag} needs an integer")
+
+
+def review_full(flags):
+    if "--round" in flags and "--full" in flags:
+        raise CLIError(2, "--round and --full are mutually exclusive")
+    if "--round" in flags:
+        try:
+            number = int(flags["--round"])
+        except ValueError:
+            raise CLIError(2, "--round needs a positive integer")
+        if number <= 0:
+            raise CLIError(2, "--round needs a positive integer")
+        return number == 1
+    return bool(flags.get("--full"))
 
 
 def json_or_usage(value, flag):
@@ -223,8 +239,9 @@ def main(argv):
             positional, flags = parse_flags(
                 rest,
                 command,
-                value_flags=("--repo", "--next", "--envelope"),
+                value_flags=("--repo", "--next", "--envelope", "--design-fix"),
                 repeat_flags=("--files",),
+                empty_flags=("--design-fix",),  # an empty value is refused with exit 1
             )
             if len(positional) != 1:
                 die_usage("checkpoint needs exactly one <stage>")
@@ -236,6 +253,7 @@ def main(argv):
                 next_stage=flags.get("--next"),
                 files=flags.get("--files"),
                 envelope=flags.get("--envelope"),
+                design_fix=flags.get("--design-fix"),
             )
         elif command == "detect":
             _, flags = parse_flags(rest, command)
@@ -283,8 +301,9 @@ def main(argv):
                     "--out-est",
                     "--reported",
                     "--overrun",
+                    "--round",
                 ),
-                bool_flags=("--partial-return",),
+                bool_flags=("--partial-return", "--full"),
             )
             if len(positional) != 2:
                 die_usage("ledger-add needs <stage> <role>")
@@ -313,6 +332,7 @@ def main(argv):
                 if "--overrun" in flags
                 else None,
                 partial_return=bool(flags.get("--partial-return")),
+                full=review_full(flags),
             )
         elif command == "issue-add":
             positional, flags = parse_flags(
@@ -347,10 +367,12 @@ def main(argv):
                 partial_return=bool(flags.get("--partial-return")),
             )
         elif command == "budget":
-            positional, flags = parse_flags(rest, command)
+            positional, flags = parse_flags(
+                rest, command, value_flags=("--repo", "--round"), bool_flags=("--full",)
+            )
             if len(positional) != 1:
                 die_usage("budget needs exactly one <role>")
-            result = commands.cmd_budget(positional[0])
+            result = commands.cmd_budget(positional[0], full=review_full(flags))
         elif command == "improvements":
             positional, flags = parse_flags(
                 rest, command, value_flags=("--repo", "--from", "--run")
@@ -395,20 +417,50 @@ def main(argv):
             positional, flags = parse_flags(
                 rest,
                 command,
-                value_flags=("--repo", "--stage"),
+                value_flags=(
+                    "--repo",
+                    "--stage",
+                    "--question",
+                    "--question-file",
+                    "--answer-file",
+                ),
                 bool_flags=("--auto", "--cruise-override"),
             )
-            if len(positional) != 2:
-                die_usage("answer needs <qid> <answer>")
+            question = flags.get("--question")
+            source = flags.get("--question-file")
+            answer_source = flags.get("--answer-file")
+            if len(positional) != (1 if answer_source is not None else 2):
+                die_usage("answer needs <qid> and one of <answer> or --answer-file")
+            if source is not None and question is not None:
+                die_usage("answer takes --question or --question-file, not both")
+            if source == "-" and answer_source == "-":
+                die_usage("answer reads stdin for only one of its two files")
+
+            def read_input(name):
+                try:
+                    return (
+                        sys.stdin.read()
+                        if name == "-"
+                        else Path(name).read_text(encoding="utf-8")
+                    )
+                except OSError as error:
+                    raise CLIError(1, f"answer: cannot read {name}: {error}") from error
+
+            if source is not None:
+                question = read_input(source)
+            answer = positional[1] if answer_source is None else read_input(answer_source)
+            if answer_source is not None:
+                answer = answer.removesuffix("\n")  # the file's one final newline is not part of the answer
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_answer(
                 repo,
                 Path.cwd(),
                 positional[0],
-                positional[1],
+                answer,
                 auto=bool(flags.get("--auto")),
                 stage=flags.get("--stage"),
                 cruise_override=bool(flags.get("--cruise-override")),
+                question=question,
             )
         elif command == "set-status":
             positional, flags = parse_flags(
@@ -471,8 +523,10 @@ def main(argv):
                 if "--commands" in flags
                 else []
             )
-            if not isinstance(payload, list) or not payload or not all(
-                isinstance(command, dict) for command in payload
+            if (
+                not isinstance(payload, list)
+                or not payload
+                or not all(isinstance(command, dict) for command in payload)
             ):
                 die_usage("--commands needs a JSON list of {command, status} objects")
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
@@ -480,10 +534,7 @@ def main(argv):
                 repo,
                 Path.cwd(),
                 passed=bool(flags.get("--pass")),
-                commands_payload=[
-                    (c.get("command"), c.get("status"))
-                    for c in payload
-                ],
+                commands_payload=[(c.get("command"), c.get("status")) for c in payload],
             )
         elif command == "lock":
             sub = rest[:1]
@@ -520,7 +571,9 @@ def main(argv):
             if len(positional) != 1:
                 die_usage("adopt needs exactly one <src>")
             if flags.get("--stage") not in (None, *state.ADOPT_STAGES):
-                die_usage(f"adopt: --stage must be one of {', '.join(state.ADOPT_STAGES)}")
+                die_usage(
+                    f"adopt: --stage must be one of {', '.join(state.ADOPT_STAGES)}"
+                )
             repo = commands.main_repo(Path.cwd())
             if flags.get("--dry-run"):
                 result = adopt.inspect(repo, positional[0], adopt.default_base(repo))

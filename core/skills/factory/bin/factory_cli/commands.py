@@ -9,6 +9,7 @@ import filecmp
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -255,8 +256,12 @@ def find_matches(repo, name):
             matches.append((path, loaded, "pending"))
     # A pending copy of a branch that already has its worktree run is a leftover
     # (an adoption whose pending cleanup failed after its commit): the worktree wins.
-    started = {loaded.get("branch") for _, loaded, source in matches if source == "worktree"}
-    return [m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started]
+    started = {
+        loaded.get("branch") for _, loaded, source in matches if source == "worktree"
+    }
+    return [
+        m for m in matches if m[2] == "worktree" or m[1].get("branch") not in started
+    ]
 
 
 def one_run(repo, name, hint=None):
@@ -372,14 +377,15 @@ def read_config():
         return {}
 
 
-def cmd_budget(role):
+def cmd_budget(role, full=False):
     """The role's resolved budget and derived deadline (FR-001); a missing or
     malformed config falls back to the default and never fails."""
-    seconds = budget.resolve(role, read_config())
+    seconds = budget.resolve(role, read_config(), full=full)
     return {
         "role": role,
         "seconds": seconds,
         "deadline": budget.deadline_for(seconds),
+        "full": full,
     }
 
 
@@ -1011,7 +1017,9 @@ def dirty_paths(worktree):
     return [line[3:].strip().strip('"') for line in status.splitlines() if line.strip()]
 
 
-def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None):
+def cmd_checkpoint(
+    repo, cwd, stage, next_stage=None, files=None, envelope=None, design_fix=None
+):
     if stage not in state.STAGES:
         die(
             1,
@@ -1022,6 +1030,16 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     target = next_stage or successor(stage)
+    if design_fix is not None and (
+        stage != "review" or target != "fix" or not worktree
+    ):
+        die(1, "--design-fix requires checkpoint review --next fix in a worktree")
+    if design_fix is not None and (
+        not design_fix
+        or Path(design_fix).is_absolute()
+        or ".." in Path(design_fix).parts
+    ):
+        die(1, "--design-fix must be a non-empty worktree-relative path without '..'")
     # Every refusal point passes before the state write, so a refused
     # checkpoint leaves the stage, history, relay and worktree untouched.
     declared = list(files or [])
@@ -1037,6 +1055,28 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
             violation = checks.gate_violation(s, target)
             if violation:
                 die(1, f"gate refusal into '{target}': {violation}")
+        if stage == "review" and worktree:
+            review = dict(s.get("review") or {})
+            reviews = Path(worktree) / s["spec_dir"] / "factory" / "reviews"
+            for verdict in reviews.glob("round-*/verdict.json"):
+                number = verdict.parent.name.removeprefix("round-")
+                if number.isascii() and number.isdigit() and verdict.is_file():
+                    review["round"] = max(review.get("round", 0), int(number))
+            if design_fix is not None and s.get("stage") != "fix":
+                review["pending_design_fix"] = {
+                    "attempt": review.get("fix_rounds", 0) + 1,
+                    "round": review.get("round", 0),
+                    "verdict": design_fix,
+                }
+            s["review"] = review
+        if stage == "fix" and s.get("stage") == "fix":
+            review = dict(s.get("review") or {})
+            count = review.get("fix_rounds", 0)
+            reservation = review.get("pending_design_fix")
+            if not isinstance(reservation, dict) or reservation.get("attempt") != count:
+                review["fix_rounds"] = count + 1
+            review.pop("pending_design_fix", None)
+            s["review"] = review
         if stage == "remediate" and s.get("stage") == "remediate":
             # ADR 0006 / FR-014: the only writer of the repair-cycle counters; a
             # repeated checkpoint after the stage advanced sees a different stage
@@ -1079,6 +1119,16 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         return s
 
     updated = write_run(path, loaded, mutate)
+    review_result = (
+        {
+            "review": {
+                key: (updated.get("review") or {}).get(key, 0)
+                for key in ("round", "fix_rounds")
+            }
+        }
+        if stage in ("review", "fix")
+        else {}
+    )
     undeclared = []
     commit = None
     if worktree:
@@ -1104,6 +1154,7 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
                 "declared": declared,
                 "undeclared": undeclared,
                 "source": source,
+                **review_result,
             }
         # FR-011: a retried checkpoint fills the reused pending entry with the
         # commit that finally landed (a fresh checkpoint appends a new entry)
@@ -1124,6 +1175,7 @@ def cmd_checkpoint(repo, cwd, stage, next_stage=None, files=None, envelope=None)
         "declared": declared,
         "undeclared": undeclared,
         "source": source,
+        **review_result,
     }
 
 
@@ -1335,6 +1387,7 @@ def cmd_ledger_add(
     reported=None,
     overrun=None,
     partial_return=False,
+    full=False,
 ):
     path, loaded, source, worktree = resolve_target(
         repo, cwd, allow_pr_open=stage == "retro"
@@ -1345,7 +1398,7 @@ def cmd_ledger_add(
         int((state.parse_iso(end) - state.parse_iso(start)).total_seconds() * 1000), 0
     )
     issue = overrun_issue(
-        loaded, worktree, stage, role, duration, overrun, partial_return
+        loaded, worktree, stage, role, duration, overrun, partial_return, full
     )
 
     def mutate(s):
@@ -1379,7 +1432,9 @@ def cmd_ledger_add(
     return result
 
 
-def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_return):
+def overrun_issue(
+    loaded, worktree, stage, role, duration, overrun, partial_return, full=False
+):
     """The one issue a ledger-add records (FR-006), or None: the self-report
     wins; else a duration over the role's budget yields cause `unreported`;
     neither signal records nothing. `--partial-return` marks the spawn as a
@@ -1405,13 +1460,13 @@ def overrun_issue(loaded, worktree, stage, role, duration, overrun, partial_retu
         if not isinstance(detail, str) or not detail:
             die(1, "--overrun needs a non-empty detail")
     else:
-        seconds = budget.resolve(role, read_config())
+        seconds = budget.resolve(role, read_config(), full=full)
         if duration <= seconds * 1000:
             return None
         cause = "unreported"
         detail = (
-            f"{role} ran {duration // 1000}s past its {seconds}s budget "
-            "without a self-report"
+            f"{role} ran {(duration - seconds * 1000 + 999) // 1000}s past its "
+            f"{seconds}s budget ({(duration + 999) // 1000}s total) without a self-report"
         )
     record = {
         "at": now_iso(),
@@ -1477,20 +1532,161 @@ def cmd_wait_close(repo, cwd, wait_id):
     return {"closed": wait_id}
 
 
-def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False):
+RELAY_NAME = r"[A-Za-z0-9_-]+"  # stage and question id of a relay record file
+
+
+def render_relay_record(stage, qid, question, answer, origin, now):
+    for key in ("title", "text"):
+        if question.get(key) is not None and not isinstance(question[key], str):
+            die(1, f"question {key} must be a string")
+    if question.get("options") is not None and not isinstance(
+        question["options"], list
+    ):
+        die(1, "question options must be a list")
+    title = question.get("title") or question.get("text") or qid
+    lines = [
+        f"# {stage}-{qid} (requires_user)",
+        "",
+        f"- Stage: {stage}",
+        f"- Question: {qid}",
+        f"- Answer JSON: {json.dumps(answer)}",
+        f"- Answer: {answer}",
+        f"- Origin: {origin}",
+        f"- Answered at: {now}",
+        "",
+        f"## {title}",
+    ]
+    if question.get("title") and question.get("text"):
+        lines.extend(["", question["text"]])
+    if question.get("options"):
+        lines.extend(["", "### Options"])
+        for option in question["options"]:
+            if isinstance(option, dict):
+                line = f"- **{option.get('id', '')}** · {option.get('label', '')}"
+                if option.get("description"):
+                    line += f" - {option['description']}"
+                lines.append(line)
+            else:
+                lines.append(f"- {option}")
+    return "\n".join(lines) + "\n"
+
+
+def cmd_answer(
+    repo, cwd, qid, answer, auto=False, stage=None, cruise_override=False, question=None
+):
     path, loaded, source, worktree = resolve_target(repo, cwd)
     if cruise_override and (loaded.get("mode") or {}).get("cruise") is not True:
-        die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+        die(
+            1,
+            "--cruise-override needs cruise mode on this run; run resume --cruise first",
+        )
+    if question is not None:
+        try:
+            question = json.loads(question)
+        except ValueError as e:
+            die(1, f"invalid --question JSON: {e}")
+        if not isinstance(question, dict) or question.get("id") != qid:
+            die(1, "--question must be an object whose id matches the question id")
+    # One run lock covers the record check, the state write and the record
+    # creation; the commit follows the release so lock.json is never staged.
+    try:
+        lock.acquire(path, loaded.get("harness") or "unknown")
+    except lock.LockHeld as e:
+        die(1, str(e))
+    try:
+        current, error = state.read_state(path)
+        if error or not isinstance(current, dict):
+            die(1, f"cannot re-read {path} under the lock: {error}")
+        result, commit = answer_locked(
+            path, current, worktree, qid, answer, auto, stage, cruise_override, question
+        )
+    finally:
+        lock.release(path)
+    if commit:
+        commit_worktree(worktree, f"factory: answer {qid}", current.get("spec_dir"))
+    return result
+
+
+def answer_locked(
+    path, loaded, worktree, qid, answer, auto, stage, cruise_override, question
+):
+    """The locked part of `answer`: (result, whether a commit is due)."""
+    relay = loaded.get("relay") if isinstance(loaded.get("relay"), dict) else {}
+    rounds = rounds_of(relay)
+    questions = (rounds[-1].get("questions") or []) if rounds else []
+    existing = next(
+        (q for q in questions if isinstance(q, dict) and q.get("id") == qid), None
+    )
+    resolved = question if existing is None or set(existing) == {"id"} else existing
+    record_stage = stage or relay.get("stage") or loaded.get("stage")
+    record = None
+    if (
+        worktree
+        and isinstance(resolved, dict)
+        and resolved.get("requires_user") is True
+    ):
+        if not re.fullmatch(RELAY_NAME, qid) or not re.fullmatch(
+            RELAY_NAME, record_stage
+        ):
+            die(1, f"relay record stage and question id must match {RELAY_NAME}")
+        record = (
+            Path(loaded["spec_dir"]) / "factory" / "relay" / f"{record_stage}-{qid}.md"
+        )
+        record_path = Path(worktree) / record
+        spec_root = (Path(worktree) / loaded["spec_dir"]).resolve()
+        if not record_path.resolve().is_relative_to(spec_root):
+            die(1, f"relay record {record} resolves outside {loaded['spec_dir']}")
+        if record_path.exists():
+            content = record_path.read_text()
+            lines = content.split("\n", 5)
+            if len(lines) > 4 and lines[4].startswith("- Answer JSON: "):
+                same = lines[4] == f"- Answer JSON: {json.dumps(answer)}"
+            else:
+                # Old records lack an unambiguous encoding; refuse ambiguous ones.
+                previous = content.partition("\n- Answer: ")[2]
+                if previous.count("\n- Origin: ") != 1:
+                    die(1, f"relay record {record} has an ambiguous legacy answer")
+                same = previous.partition("\n- Origin: ")[0] == answer
+            if not same:
+                die(1, f"relay record {record} already holds a different answer")
+            state_path = str(Path(path).relative_to(worktree))
+            tracked = git(worktree, "ls-tree", "--name-only", "HEAD", "--", str(record))
+            if tracked.strip():
+                if git(worktree, "status", "--porcelain", "--", str(record)).strip():
+                    die(1, f"relay record {record} differs from HEAD; restore it first")
+                if not git(worktree, "status", "--porcelain", "--", state_path).strip():
+                    return {"answered": qid, "unchanged": True}, False
+            return {
+                "answered": qid,
+                "auto": bool(auto or cruise_override),
+                "record": str(record),
+            }, True
     now = now_iso()
     auto = bool(auto or cruise_override)  # the marker implies an automatic answer
+    rendered = None
+    if record is not None:
+        origin = (
+            "cruise_override" if cruise_override else "auto" if auto else "explicit"
+        )
+        rendered = render_relay_record(record_stage, qid, resolved, answer, origin, now)
 
     def mutate(s):
         relay = s.get("relay") if isinstance(s.get("relay"), dict) else {}
         rounds = rounds_of(relay) or [{"questions": [], "answers": {}}]
         last = dict(rounds[-1])
         questions = list(last.get("questions") or [])
-        if not any(isinstance(q, dict) and q.get("id") == qid for q in questions):
-            questions.append({"id": qid})
+        existing_index = next(
+            (
+                i
+                for i, q in enumerate(questions)
+                if isinstance(q, dict) and q.get("id") == qid
+            ),
+            None,
+        )
+        if existing_index is None:
+            questions.append(question or {"id": qid})
+        elif question is not None and set(questions[existing_index]) == {"id"}:
+            questions[existing_index] = question
         last["questions"] = questions
         answers = dict(last.get("answers") or {})
         answers[qid] = {"answer": answer, "at": now, "auto": bool(auto)}
@@ -1503,9 +1699,17 @@ def cmd_answer(repo, cwd, qid, answer, auto=False, stage=None, cruise_override=F
         }
         return s
 
-    write_run(path, loaded, mutate)
-    commit_worktree(worktree, f"factory: answer {qid}", loaded.get("spec_dir"))
-    return {"answered": qid, "auto": bool(auto)}
+    try:
+        state.write_state(path, loaded, mutate=mutate, locked=True)
+    except state.StateError as e:
+        die(1, str(e))
+    result = {"answered": qid, "auto": bool(auto)}
+    if record is not None:
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        with record_path.open("x") as stream:
+            stream.write(rendered)
+        result["record"] = str(record)
+    return result, True
 
 
 def worktree_work_commit(worktree):
@@ -1581,18 +1785,28 @@ def cmd_set_status(repo, cwd, status, halt_reason=None, pr_url=None):
     return result
 
 
-def cmd_decisions_add(repo, cwd, stage, qid, answer, kind="answer", cruise_override=False):
+def cmd_decisions_add(
+    repo, cwd, stage, qid, answer, kind="answer", cruise_override=False
+):
     if kind not in state.DECISION_KINDS:
         die(
             1,
             f"'{kind}' is off-vocabulary; expected one of: {', '.join(state.DECISION_KINDS)}",
         )
     path, loaded, source, worktree = resolve_target(repo, cwd)
-    if cruise_override:  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
+    if (
+        cruise_override
+    ):  # spec 021: cruise-only, never an approval, analyze-exhaustion only as a gate
         if (loaded.get("mode") or {}).get("cruise") is not True:
-            die(1, "--cruise-override needs cruise mode on this run; run resume --cruise first")
+            die(
+                1,
+                "--cruise-override needs cruise mode on this run; run resume --cruise first",
+            )
         if kind == "approved" or (kind == "gate-override" and stage != "analyze"):
-            die(1, "--cruise-override never records an approval or a gate override outside analyze")
+            die(
+                1,
+                "--cruise-override never records an approval or a gate override outside analyze",
+            )
     now = now_iso()
 
     def mutate(s):
@@ -1633,7 +1847,10 @@ def cmd_verify(repo, cwd, passed, commands_payload):
     """The verify record (FR-006, R3): the review gate reads the latest one."""
     command_results = [{"command": c, "status": st} for c, st in commands_payload]
     if passed and not checks.verify_commands_passed(command_results):
-        die(1, "verify --pass requires named commands with passing statuses (0 or 'pass')")
+        die(
+            1,
+            "verify --pass requires named commands with passing statuses (0 or 'pass')",
+        )
     path, loaded, source, worktree = resolve_target(repo, cwd)
     now = now_iso()
     event = "verify-pass" if passed else "verify-fail"

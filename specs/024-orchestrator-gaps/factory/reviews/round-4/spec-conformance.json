@@ -1,0 +1,17 @@
+{
+  "reviewer": "spec-conformance",
+  "round": 4,
+  "summary": "All 024 requirements (FR-001..FR-021) and test seams are intact after the origin/main merge, SPEC-1 is resolved in plan.md S1, the full suite passes (717 tests), and only one low unspecified-reformatting advisory remains.",
+  "findings": [
+    {
+      "id": "SPEC-1",
+      "severity": "low",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 259,
+      "summary": "Unspecified behaviour-neutral reformatting of unrelated code (find_matches, cmd_decisions_add, cmd_verify, the cli.py verify --commands block and the adopt --stage message) that no spec, plan or task asks for.",
+      "evidence": "Diff hunks for find_matches (`started = {...}` rewrapped), cmd_decisions_add (signature and die() calls rewrapped), cmd_verify (die() rewrapped) and cli.py `--commands` payload/adopt usage message touch no 024 requirement (FR-001..FR-021) and no task in tasks.md names them.",
+      "fix": "Optionally revert the unrelated formatting hunks to keep the diff scoped to the four writers; no behaviour change either way."
+    }
+  ]
+}

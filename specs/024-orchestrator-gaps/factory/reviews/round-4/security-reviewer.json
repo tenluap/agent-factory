@@ -1,0 +1,67 @@
+{
+  "reviewer": "security",
+  "round": 4,
+  "summary": "Full review: the merge of origin/main and the plan.md-only change add no new defects, and the conflict-resolved files keep main's path-limited commit and instructions wording; six defects first reported in earlier rounds are still in the diff, including an unescaped shell interpolation of question JSON that the merge carried into more call sites.",
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "high",
+      "blocking": true,
+      "file": "core/skills/factory/references/protocol.md",
+      "line": 110,
+      "summary": "Every answer call site interpolates question JSON written by agents or derived from the repository inside shell single quotes, with no escaping, so an apostrophe in question text can break the command or inject shell commands.",
+      "evidence": "ENG-25. protocol.md:110 and :112 tell the orchestrator to run `factory answer <qid> '<recommended>' --question '<full question json>'` for every answer, including plan and remediate confirmations. SKILL.md:37, :53, :78, :86, :100 and :146 repeat the same pattern. The merge resolution of 8b73f5ed kept it in the adoption grill (SKILL.md:53) and the grill (SKILL.md:86). Questions come from spec-builder or reviewer frontiers that read repository files (and, since the merge, repository instruction files). json.dumps does not escape `'`, so a title such as `x'; touch /tmp/p; #` closes the argument and runs a command; round 2 reproduced this. SKILL.md:60 already forbids this exact pattern for models JSON ('must never be interpolated into shell syntax (the CLI rejects inline JSON)'), but no such rule or escaping guidance covers `--question`, and the CLI accepts it inline (cli.py value_flags `--question`). The pre-existing `'<answer>'` argument has the same exposure.",
+      "fix": "Add a `--question-file <path>` (or stdin) form that mirrors `models-record --from`, and change every call site to use it. Failing that, require every interpolated JSON or answer string to be shell-escaped (each `'` becomes `'\\''`) and state it once in protocol.md Relay. Add a test with apostrophes and shell metacharacters in the question title."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1615,
+      "summary": "An identical-answer retry commits any edits to a relay record that is already committed, as long as its Answer JSON line is unchanged.",
+      "evidence": "ENG-26 / FR-008 (records are never overwritten). Lines 1596-1625 compare only `lines[4]` (Answer JSON). If the record is tracked but dirty, they call commit_worktree with the message 'factory: answer <qid>', so changed Origin, question or option lines get committed as a retry. Round 2 reproduced this, and the code is unchanged.",
+      "fix": "When the record is tracked at HEAD, refuse with exit 1 if the working copy differs from HEAD. Finish a pending commit only for an untracked record whose full content matches what render_relay_record produces from the stored state."
+    },
+    {
+      "id": "SEC-3",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1618,
+      "summary": "The retry commit path calls commit_worktree without taking the run lock, so it can commit another writer's half-written state.",
+      "evidence": "ENG-23 / ENG-26. Lines 1610-1625 run git ls-tree and git status, then commit_worktree, with no write_run or lock acquisition. Only the first-answer path goes through write_run (line 1659 area). Round 2 reproduced this with a live lock held.",
+      "fix": "Take the run lock around the clean/dirty check and the commit, refuse when a live owner holds it, and keep lock.json out of the staged paths."
+    },
+    {
+      "id": "SEC-4",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1596,
+      "summary": "The record existence check runs outside the state lock, so two concurrent answers to one qid can leave the stored answer and the committed record in disagreement.",
+      "evidence": "ENG-23 / ENG-26. The check at line 1596 happens before write_run, and the exclusive create at line 1664 happens after write_run has released the lock. Round 1 reproduced the interleaving: caller A commits record A while the state holds B. The code is unchanged.",
+      "fix": "Do the record check, the state write and the exclusive record creation under one run lock, and refuse a conflicting answer before anything is written."
+    },
+    {
+      "id": "SEC-5",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1572,
+      "summary": "--question validation checks only the type and the id, so malformed text or options make rendering fail after the state write and leave an empty record that blocks retries.",
+      "evidence": "ENG-25 / ENG-26. Line 1572 checks only `isinstance(question, dict)` and the id. render_relay_record assumes `text` is a string and `options` is iterable, but it runs inside `record_path.open(\"x\")` at line 1664, after write_run. Round 1 reproduced a TypeError followed by a permanent 'ambiguous legacy answer' refusal. The code is unchanged.",
+      "fix": "Validate title and text as strings and options as a list of strings or objects, before any write. Render the record into memory before write_run and open the file only after rendering succeeds."
+    },
+    {
+      "id": "SEC-6",
+      "severity": "medium",
+      "blocking": false,
+      "file": "core/skills/factory/bin/factory_cli/commands.py",
+      "line": 1662,
+      "summary": "A symlinked relay directory controlled by the repository sends the record outside the worktree; only the final filename is validated.",
+      "evidence": "ENG-25. The regex at lines 1586-1590 checks qid and stage. `record_path.parent.mkdir(...)` and `record_path.open(\"x\")` at lines 1662-1664 follow symlinks in parent directories. Round 1 reproduced a write outside the worktree while answer reported success. The code is unchanged.",
+      "fix": "Before creating the record, refuse when `record_path.parent.resolve()` is not under the resolved worktree spec_dir, or when any path component under spec_dir is a symlink."
+    }
+  ]
+}
