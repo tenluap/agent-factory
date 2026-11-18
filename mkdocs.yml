@@ -1,0 +1,97 @@
+site_name: Agent Factory
+site_description: A software factory for coding-agent harnesses. Guide and reference.
+docs_dir: docs
+site_dir: site
+repo_url: https://github.com/tenluap/claude-factory
+site_url: https://tenluap.github.io/claude-factory/
+
+hooks:
+  - tools/mkdocs_hooks.py
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Working notes, plans and research stay out of the published site.
+exclude_docs: |
+  superpowers/
+  research/
+  *.excalidraw
+
+not_in_nav: |
+  /Harness-agnostic factory design and plan.md
+  /product-brief.md
+  /repo-instructions-brief.md
+  /review-gaps-brief.md
+  /scope-discipline-brief.md
+  /stability-brief.md
+  /benchmark.md
+  /factory-overview.md
+
+nav:
+  - Home: index.md
+  - Guide:
+      - What the factory is: guide/what-is-the-factory.md
+      - Install and first run: guide/install-and-first-run.md
+      - The run, stage by stage: guide/run-lifecycle.md
+      - The spec chain: guide/spec-chain.md
+      - Roles and who does what: guide/roles.md
+      - Review and the fix loop: guide/review.md
+      - Example run, end to end: guide/example-run.md
+      - Run state and the CLI: guide/state-and-cli.md
+      - Harnesses and adapters: guide/harnesses.md
+      - Configuration: guide/configuration.md
+      - Skills, design and self-improvement: guide/skills-design-improve.md
+      - Glossary: guide/glossary.md
+  - Reference:
+      - Overview diagrams: factory-overview.md
+      - Benchmark: benchmark.md
+      - Product brief: product-brief.md
+  - Decisions (ADRs):
+      - adr/0001-factory-owns-its-engineering-rules.md
+      - adr/0002-red-proof-lives-in-the-task-commit-body.md
+      - adr/0003-test-seams-are-settled-at-plan-time.md
+      - adr/0004-judgement-call-rules-advise-they-never-block.md
+      - adr/0005-the-rendered-distribution-is-tracked-in-git.md
+      - adr/0006-no-manual-write-fallback-for-run-state.md
+      - adr/0007-agents-stop-cooperatively-at-their-deadline.md
+      - adr/0008-run-artifacts-leave-the-branch-at-pr-open.md
+      - adr/0009-library-skills-are-linked-not-rendered.md
+      - adr/0010-ui-design-work-gets-its-own-write-role.md
+      - adr/0011-facets-advisor-is-a-main-agent-with-research-access.md
+      - adr/0012-first-party-skills-live-in-core-skills.md
+      - adr/0013-ponytail-governs-change-size.md
+      - adr/0014-cruise-mode-overrides-protections-but-never-publishes.md
+      - adr/0015-post-pr-outcomes-live-beside-the-run-archive.md
+      - adr/0016-analyze-acceptance-targets.md
+      - adr/0017-adopted-runs-enter-at-most-at-analyze.md
+      - adr/0018-vendored-skills-are-managed-by-the-skills-cli.md
+      - adr/0020-the-factory-discovers-repo-instructions-itself.md
