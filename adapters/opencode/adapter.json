@@ -40,5 +40,5 @@
       ]
     }
   },
-  "models": {"deep": "claude-code/claude-opus-5-5[1m]", "standard": "claude-code/claude-haiku-5-5[1m]" }
+  "models": {"deep": "claude-code/claude-opus-5-5#medium", "standard": "claude-code/Haiku-5-5#max" }
 }

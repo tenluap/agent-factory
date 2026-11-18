@@ -2,14 +2,15 @@
 
 ## Instruction catalogue (`instructions.CATALOGUE`)
 
-A tuple of rows, one per tool. Every row matches at any depth; a match below the root has the directory holding the file (or holding the tool directory, such as `.cursor/`) as its base directory.
+A tuple of rows, one per tool plus the factory's own catch-all row. Every row matches at any depth; a match below the root has the directory holding the file (or holding the tool directory, such as `.cursor/`) as its base directory.
 
 | Row | Paths (relative to the base directory) | Default kind | Front-matter mapping |
 |---|---|---|---|
 | agents-md | `AGENTS.md`, `AGENTS.override.md`, `AGENT.md` | always | none |
 | claude-code | `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/**/*.md` | always | `paths` = scoped |
 | gemini | `GEMINI.md` | always | none |
-| copilot | `.github/copilot-instructions.md` (always); `.github/instructions/**/*.instructions.md` | reference | `applyTo` (comma list) = scoped |
+| copilot | `.github/copilot-instructions.md`, `.github/instructions/**/*.instructions.md` | always | `applyTo` (comma list) = scoped |
+| instructions-md | `**/*.instructions.md` | always | none |
 | cursor | `.cursor/rules/**/*.mdc`, `.cursorrules` (always) | reference | `alwaysApply: true` = always; `globs` = scoped; `description` only = reference |
 | windsurf-devin | `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules`, `.devin/rules/*.md`, `.devin/global_rules.md` | always | `trigger`: `always_on` = always; `glob` + `globs` = scoped; `model_decision`, `manual` = reference |
 | cline | `.clinerules` (file), `.clinerules/**`, `.cline/rules/**` (`.md`, `.txt`) | always | `paths` = scoped |
@@ -19,6 +20,8 @@ A tuple of rows, one per tool. Every row matches at any depth; a match below the
 | aider | `CONVENTIONS.md` | always | none |
 | zed | `.rules` | always | none |
 | continue | `.continue/rules/*.md` | always | `alwaysApply: true` = always; `globs` = scoped; `alwaysApply: false` without globs, or `regex` only = reference |
+
+The `instructions-md` row is a factory extension, not a tool: every `*.instructions.md` file defaults to `always`, wherever it lives. The copilot row is checked first, so files under `.github/instructions/` keep their `applyTo` front-matter handling.
 
 Governance (not catalogue rows, same tier for precedence): `CONTRIBUTING*` (always at root, `.github/`, `docs/`; else scoped to its directory); `.specify/memory/constitution.md` (always, root only); ADR files (reference; research.md R1).
 
