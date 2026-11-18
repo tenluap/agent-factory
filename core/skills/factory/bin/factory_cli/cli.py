@@ -36,7 +36,7 @@ write (the single writer; each stamps its time, validates, writes atomically):
   models-record [--from <path>]     record run models from a file or stdin;
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
-  checkpoint <stage> [--next <stage>] [--design-fix <verdict>] [--files <path>... | --envelope <file>]
+  checkpoint <stage> [--next <stage>] [--design-fix <verdict>] [--files <path> [--files <path>]... | --envelope <file>]
   amendment-check <draft> [--sha256 <hex>]
                                     hash a constitution draft; refuses a changed draft
   analyze-record <envelope> [--fresh-baseline]

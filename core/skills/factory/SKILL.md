@@ -98,7 +98,7 @@ From here every `SHELL` command runs as `cd <worktree> && ...`, and every agent 
 Run each stage as a fresh `SPAWN` of `spec-builder` with: `worktree`, `branch`, `spec_dir` (`specs/<branch>`), the `state.json` path, the brief path, the resolved skill paths, and the stage. `analyze` and `remediate` also get the pass number `analyze.pass`. Each spawn ends with an envelope (protocol.md):
 
 - `needs_input`: run the relay (protocol.md), passing `--question-file <temp-file>` and `--answer-file <answer-file>` to every `answer`, including plan test-scope and remediate confirmations; it spawns a fresh spec-builder for the same stage once every question is answered.
-- `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>] --files <declared path>...` (state.md, "Checkpoint"; declare every file the stage's outputs changed, or `--envelope <role output>` to take the envelope's `files` list — the checkpoint commits the spec directory plus exactly the declared files and reports the rest), then spawn the next stage.
+- `done`: `SHELL: python3 <F>/bin/factory checkpoint <completed-stage> [--next <stage>] --files <declared path> [--files <declared path>]...` (one `--files` per path; state.md, "Checkpoint"; declare every file the stage's outputs changed, or `--envelope <role output>` to take the envelope's `files` list — the checkpoint commits the spec directory plus exactly the declared files and reports the rest), then spawn the next stage.
 - `failed`: failure policy (below).
 
 For a plan failure due to an unsupported UI framework, stop before tasks and UI edits; report the detected framework from `state.profile` and the supported list rather than proceeding to implementation.
