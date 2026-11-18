@@ -295,6 +295,57 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(self.box.cli("runs", "--repo").returncode, 5)
 
 
+class CommitLintTests(unittest.TestCase):
+    """`commit-lint` refuses a role's commit message that misses the grammar (#44)."""
+
+    def setUp(self):
+        self.box = Sandbox()
+        self.addCleanup(self.box.close)
+
+    def lint(self, message, *args):
+        path = self.box.dir / "msg.txt"
+        path.write_text(message)
+        return self.box.cli("commit-lint", str(path), *args, cwd=self.box.repo)
+
+    def test_accepts_the_defined_forms(self):
+        message = (
+            "factory(implement): T001 add parser\n\n"
+            "Red: test_parse failed as expected\n"
+            "Red: not applicable - test_parse already covers this\n"
+            "New: core/parse.py - no existing parser fits\n"
+            "Adjacent: core/util.py - shared helper\n"
+        )
+        out = self.lint(message, "--kind", "implement")
+        self.assertEqual(out.returncode, 0, out.stderr)
+
+    def test_accepts_the_fix_subject(self):
+        out = self.lint("factory(fix): user changes\n", "--kind", "fix")
+        self.assertEqual(out.returncode, 0, out.stderr)
+
+    def test_refuses_a_wrong_subject(self):
+        for subject in ("Add parser", "factory(fix): F1"):
+            out = self.lint(subject + "\n", "--kind", "implement")
+            self.assertEqual(out.returncode, 1, subject)
+            self.assertIn("subject", out.stderr)
+
+    def test_refuses_a_malformed_body_line(self):
+        for line in (
+            "Red: test_parse",
+            "Red: not applicable",
+            "red: test_parse failed as expected",
+            "- Red: test_parse failed as expected",
+            "New: core/parse.py",
+            "Adjacent: core/util.py",
+        ):
+            out = self.lint(f"factory(implement): T1 x\n\n{line}\n")
+            self.assertEqual(out.returncode, 1, line)
+            self.assertIn("line 3", out.stderr)
+
+    def test_rejects_an_unknown_kind(self):
+        out = self.lint("factory(fix): x\n", "--kind", "other")
+        self.assertEqual(out.returncode, 5, out.stderr)
+
+
 class EndedPendingRunTests(unittest.TestCase):
     """FR-009: the ended-status skip applies to pending-run selection too;
     an ended pending run can never be mutated."""

@@ -37,6 +37,8 @@ write (the single writer; each stamps its time, validates, writes atomically):
                                      never inline JSON on the command line
   drop                              archive and remove a completed run
   checkpoint <stage> [--next <stage>] [--design-fix <verdict>] [--files <path> [--files <path>]... | --envelope <file>]
+  commit-lint <message-file|-> [--kind implement|fix]
+                                    refuse a commit message off the subject/Red/New/Adjacent grammar
   amendment-check <draft> [--sha256 <hex>]
                                     hash a constitution draft; refuses a changed draft
   analyze-record <envelope> [--fresh-baseline]
@@ -271,6 +273,11 @@ def main(argv):
             _, flags = parse_flags(rest, command)
             repo = commands.main_repo(Path(flags.get("--repo") or Path.cwd()))
             result = commands.cmd_profile_record(repo, Path.cwd())
+        elif command == "commit-lint":
+            positional, flags = parse_flags(rest, command, value_flags=("--kind",))
+            if len(positional) != 1:
+                die_usage("commit-lint needs exactly one <message-file|->")
+            result = commands.cmd_commit_lint(positional[0], flags.get("--kind"))
         elif command == "amendment-check":
             positional, flags = parse_flags(rest, command, value_flags=("--sha256",))
             if len(positional) != 1:

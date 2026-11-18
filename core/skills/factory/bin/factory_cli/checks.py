@@ -381,3 +381,41 @@ def permitting_decision(state_dict, into):
     else:
         return None
     return max(candidates, key=lambda d: d.get("at") or "", default=None)
+
+
+_COMMIT_SUBJECT = {
+    "implement": re.compile(r"^factory\(implement\): \S"),
+    "fix": re.compile(r"^factory\(fix\): \S"),
+}
+# Exactly the forms engineering.md defines: ENG-2 (Red), ENG-6 (New), the fixer's Adjacent.
+_COMMIT_LINES = {
+    "Red": re.compile(
+        r"^Red: (\S.* failed as expected|not applicable - \S.* already covers this)$"
+    ),
+    "New": re.compile(r"^New: \S.* - \S.*$"),
+    "Adjacent": re.compile(r"^Adjacent: \S.* - \S.*$"),
+}
+_COMMIT_KEYED = re.compile(r"^[\s>*-]*(red|new|adjacent)\s*:", re.IGNORECASE)
+
+
+def commit_message_problems(message, kind=None):
+    """Every way a role's commit message misses the grammar, as readable strings.
+
+    `kind` pins the subject to `implement` or `fix`; None accepts either. Red,
+    New and Adjacent lines must match their one form exactly, at column 0.
+    """
+    lines = message.splitlines()
+    subject = lines[0] if lines else ""
+    kinds = [kind] if kind else list(_COMMIT_SUBJECT)
+    problems = []
+    if not any(_COMMIT_SUBJECT[k].match(subject) for k in kinds):
+        wanted = " or ".join(f"factory({k}): <...>" for k in kinds)
+        problems.append(f"subject {subject!r} must read {wanted}")
+    for number, line in enumerate(lines[1:], start=2):
+        keyed = _COMMIT_KEYED.match(line)
+        if not keyed:
+            continue
+        word = keyed.group(1).capitalize()
+        if not _COMMIT_LINES[word].match(line):
+            problems.append(f"line {number} is not a valid {word}: line: {line!r}")
+    return problems

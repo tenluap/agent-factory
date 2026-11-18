@@ -1207,6 +1207,20 @@ def cmd_checkpoint(
     }
 
 
+def cmd_commit_lint(source, kind=None):
+    """Check a commit message (a file, or `-` for stdin) before it is committed."""
+    if kind not in (None, "implement", "fix"):
+        die(5, "commit-lint --kind must be implement or fix")
+    try:
+        text = sys.stdin.read() if source == "-" else Path(source).read_text()
+    except OSError as e:
+        die(1, f"commit-lint: cannot read {source}: {e}")
+    problems = checks.commit_message_problems(text, kind)
+    if problems:
+        die(1, "commit message refused: " + "; ".join(problems))
+    return {"commit_lint": "ok"}
+
+
 def cmd_analyze_record(repo, cwd, envelope, fresh_baseline=False):
     """Persist a validated analysis result without bypassing transition gates.
 
