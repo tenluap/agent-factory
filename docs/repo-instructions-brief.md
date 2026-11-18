@@ -213,6 +213,7 @@ From the same research. The tracked-only rule (Q3) applies to every row. Re-chec
 | Claude Code | `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/**/*.md` | Yes | Always-on; rules scoped by `paths` | <https://code.claude.com/docs/en/memory> |
 | Gemini CLI | `GEMINI.md` | Yes | Always-on | <https://geminicli.com/docs/cli/gemini-md/> |
 | Copilot | `.github/copilot-instructions.md`, `.github/instructions/**/*.instructions.md` | Subfolders | Always-on; scoped by `applyTo` | <https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions> |
+| Factory extension | `**/*.instructions.md` | Yes | Always (default); no front matter | — |
 | Cursor | `.cursor/rules/**/*.mdc` (`.cursorrules` unverified in current docs) | Yes | `alwaysApply`, `globs`, `description`, manual | <https://cursor.com/docs/context/rules> |
 | Windsurf (now Devin) | `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, `.windsurfrules`, `.devin/rules/*.md` | Yes | `trigger`: `always_on`, `glob`, `model_decision`, `manual` | <https://docs.devin.ai/cli/extensibility/rules.md> |
 | Cline | `.clinerules/`, `.cline/rules/` | Not documented | Always-on; scoped by `paths` | <https://docs.cline.bot/features/cline-rules> |

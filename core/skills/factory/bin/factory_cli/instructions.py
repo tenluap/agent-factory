@@ -18,7 +18,14 @@ from collections import namedtuple
 # segment is its base directory. Source URLs live in
 # specs/025-repo-instructions-discovery/research.md (R2).
 CATALOGUE = (
-    ("agents-md", (("AGENTS.md", "always"), ("AGENTS.override.md", "always"), ("AGENT.md", "always"))),
+    (
+        "agents-md",
+        (
+            ("AGENTS.md", "always"),
+            ("AGENTS.override.md", "always"),
+            ("AGENT.md", "always"),
+        ),
+    ),
     (
         "claude-code",
         (
@@ -33,9 +40,11 @@ CATALOGUE = (
         "copilot",
         (
             (".github/copilot-instructions.md", "always"),
-            (".github/instructions/**/*.instructions.md", "reference"),
+            (".github/instructions/**/*.instructions.md", "always"),
         ),
     ),
+    # Factory extension (no tool source): every *.instructions.md file, anywhere.
+    ("instructions-md", (("**/*.instructions.md", "always"),)),
     ("cursor", ((".cursor/rules/**/*.mdc", "reference"), (".cursorrules", "always"))),
     (
         "windsurf-devin",
@@ -165,10 +174,15 @@ def _stream_digests(repo, oids):
         try:
             with subprocess.Popen(
                 ["git", "-C", str(repo), "cat-file", "--batch"],
-                stdin=names, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                stdin=names,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
             ) as proc:
                 for oid in oids:
-                    left, digest = int(proc.stdout.readline().split()[2]), hashlib.sha256()
+                    left, digest = (
+                        int(proc.stdout.readline().split()[2]),
+                        hashlib.sha256(),
+                    )
                     while left:
                         chunk = proc.stdout.read(min(left, 1 << 16))
                         if not chunk:
@@ -202,12 +216,16 @@ def read_blobs(repo, oids, hold=None):
             held += sizes[oid]
     blobs = {}
     if small:
-        raw = _git(repo, ["cat-file", "--batch"], "".join(f"{o}\n" for o in small).encode())
+        raw = _git(
+            repo, ["cat-file", "--batch"], "".join(f"{o}\n" for o in small).encode()
+        )
         pos = 0
         for oid in small:
             end = raw.index(b"\n", pos)
             data = raw[end + 1 : end + 1 + sizes[oid]]
-            blobs[oid] = Blob(sizes[oid], "sha256:" + hashlib.sha256(data).hexdigest(), data)
+            blobs[oid] = Blob(
+                sizes[oid], "sha256:" + hashlib.sha256(data).hexdigest(), data
+            )
             pos = end + 1 + sizes[oid] + 1
     rest = [o for o in wanted if o not in blobs]
     for oid, digest in _stream_digests(repo, rest).items():
@@ -273,9 +291,19 @@ def glob_matcher(glob):
             tokens.append(("any",))
             i += 2
         else:
-            tokens.append(("star",) if glob[i] == "*" else ("one",) if glob[i] == "?" else ("lit", glob[i]))
+            tokens.append(
+                ("star",)
+                if glob[i] == "*"
+                else ("one",)
+                if glob[i] == "?"
+                else ("lit", glob[i])
+            )
             i += 1
-        if len(tokens) > 1 and tokens[-1][0] in ("star", "any") and tokens[-2][0] in ("star", "any"):
+        if (
+            len(tokens) > 1
+            and tokens[-1][0] in ("star", "any")
+            and tokens[-2][0] in ("star", "any")
+        ):
             # a run of wildcards matches what its widest member does: keep one token
             widest = "any" if "any" in (tokens[-1][0], tokens[-2][0]) else "star"
             tokens[-2:] = [(widest,)]
@@ -292,7 +320,11 @@ class _Glob:
         while pending:
             at = pending.pop()
             kind = self.tokens[at][0] if at < len(self.tokens) else None
-            for nxt in {"star": (at + 1,), "any": (at + 1,), "opt": (at + 1, at + 2)}.get(kind, ()):
+            for nxt in {
+                "star": (at + 1,),
+                "any": (at + 1,),
+                "opt": (at + 1, at + 2),
+            }.get(kind, ()):
                 if nxt not in seen:
                     seen.add(nxt)
                     pending.append(nxt)
@@ -386,7 +418,9 @@ def front_matter(text):
             return None, text
         key, value = name, value.strip()
         if value.startswith("[") and value.endswith("]"):
-            fields[key] = [v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()]
+            fields[key] = [
+                v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()
+            ]
         else:
             fields[key] = value.strip("\"'")
     return fields, "\n".join(lines[end + 1 :])
@@ -399,7 +433,11 @@ def _globs(value):
 
 def _mapped(row, fields):
     """(kind, globs) the row's front matter implies, or None for the default."""
-    flag = fields.get("alwaysApply", "").lower() if isinstance(fields.get("alwaysApply"), str) else ""
+    flag = (
+        fields.get("alwaysApply", "").lower()
+        if isinstance(fields.get("alwaysApply"), str)
+        else ""
+    )
     if row in ("cursor", "continue"):
         if flag == "true":
             return "always", []
@@ -445,7 +483,9 @@ def _title(text, path, fields=None):
 
 
 _IMPORT = re.compile(r"(?:^|\s)@(\S+)")
-_LINK = re.compile(r"\]\(<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\)|^\s*\[[^\]]+\]:\s*<?(\S+?)>?\s*$")
+_LINK = re.compile(
+    r"\]\(<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\)|^\s*\[[^\]]+\]:\s*<?(\S+?)>?\s*$"
+)
 _SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 
 
@@ -512,11 +552,15 @@ def _config_globs(tree, blob, notes):
             raise ValueError("section is not an object")
         for name in lists:
             globs = section.get(name, [])
-            if not isinstance(globs, list) or not all(isinstance(g, str) for g in globs):
+            if not isinstance(globs, list) or not all(
+                isinstance(g, str) for g in globs
+            ):
                 raise ValueError(f"{name} is not a list of strings")
             for g in globs:
                 if len(g) > GLOB_CAP:
-                    notes.append(f"instructions config glob skipped: over {GLOB_CAP} characters: {g[:40]}...")
+                    notes.append(
+                        f"instructions config glob skipped: over {GLOB_CAP} characters: {g[:40]}..."
+                    )
             lists[name] = [glob_matcher(g) for g in globs if len(g) <= GLOB_CAP]
     except (ValueError, AttributeError) as err:
         notes.append(f"instructions config ignored: {err}")
@@ -548,7 +592,9 @@ def scan(repo, ref="HEAD"):
         """Read the blobs of `paths` (and their symlink targets) in one batch;
         the bytes held, at most `hold`."""
         reals = (_resolve_symlink(p, tree, blob) for p in paths)
-        got = read_blobs(repo, [tree[r][1] for r in reals if r and tree[r][1] not in cache], hold)
+        got = read_blobs(
+            repo, [tree[r][1] for r in reals if r and tree[r][1] not in cache], hold
+        )
         cache.update(got)
         return sum(len(b.data) for b in got.values() if b.data is not None)
 
@@ -598,8 +644,13 @@ def scan(repo, ref="HEAD"):
             kind, scope = _kind_scope(kind, where, globs)
             scope, source = tuple(scope), "catalogue"
         info[path] = {
-            "kind": kind, "scope": scope, "source": source, "real": real, "blob": content,
-            "body": body, "title": "" if text is None else _title(body, path, fields),
+            "kind": kind,
+            "scope": scope,
+            "source": source,
+            "real": real,
+            "blob": content,
+            "body": body,
+            "title": "" if text is None else _title(body, path, fields),
         }
 
     def merge(path, kind, scope, source):
@@ -609,7 +660,8 @@ def scan(repo, ref="HEAD"):
         if path in info:
             cur = info[path]
             if (KIND_ORDER[kind], SOURCE_ORDER[source]) >= (
-                KIND_ORDER[cur["kind"]], SOURCE_ORDER[cur["source"]]
+                KIND_ORDER[cur["kind"]],
+                SOURCE_ORDER[cur["source"]],
             ):
                 return False
             cur.update(kind=kind, scope=tuple(scope), source=source)
@@ -620,9 +672,15 @@ def scan(repo, ref="HEAD"):
         real, content, text = got
         fields, body = front_matter(text) if text is not None else ({}, "")
         info[path] = {
-            "kind": kind, "scope": tuple(scope), "source": source, "real": real, "blob": content,
+            "kind": kind,
+            "scope": tuple(scope),
+            "source": source,
+            "real": real,
+            "blob": content,
             "body": body if fields is not None else text,
-            "title": "" if text is None else _title(body if fields is not None else text, path, fields),
+            "title": ""
+            if text is None
+            else _title(body if fields is not None else text, path, fields),
         }
         return True
 
@@ -639,7 +697,9 @@ def scan(repo, ref="HEAD"):
     while queue:
         following, queue = queue, []
         warm(
-            t for p in following for tok in _imports(info[p]["body"])
+            t
+            for p in following
+            for tok in _imports(info[p]["body"])
             if (t := _locate(tok, p, tree)) is not None and t not in info
         )
         for path in following:
@@ -650,7 +710,9 @@ def scan(repo, ref="HEAD"):
                     notes.append(f"import target not tracked: {path} -> {token}")
                     continue
                 if depth[path] + 1 > IMPORT_HOPS:
-                    notes.append(f"import chain stopped at depth {IMPORT_HOPS}: {path} -> {target}")
+                    notes.append(
+                        f"import chain stopped at depth {IMPORT_HOPS}: {path} -> {target}"
+                    )
                     continue
                 changed = merge(target, entry["kind"], entry["scope"], "import")
                 if target in depth and depth[target] <= depth[path] + 1:
@@ -661,8 +723,11 @@ def scan(repo, ref="HEAD"):
                     queue.append(target)
     linking = sorted(p for p, e in info.items() if e["kind"] != "reference")
     warm(
-        t for p in linking for tok in _links(info[p]["body"])
-        if (t := _locate(tok, p, tree, relative_only=True)) is not None and t not in info
+        t
+        for p in linking
+        for tok in _links(info[p]["body"])
+        if (t := _locate(tok, p, tree, relative_only=True)) is not None
+        and t not in info
     )
     for path in linking:
         for token in _links(info[path]["body"]):

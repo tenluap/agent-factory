@@ -151,7 +151,9 @@ CATALOGUE_FIXTURE = {
     ".claude/rules/a/b.md": "always",
     "GEMINI.md": "always",
     ".github/copilot-instructions.md": "always",
-    ".github/instructions/x/y.instructions.md": "reference",
+    ".github/instructions/x/y.instructions.md": "always",
+    "docs/team.instructions.md": "always",
+    "deep/nest/guide.instructions.md": "always",
     ".cursor/rules/x/y.mdc": "reference",
     ".cursorrules": "always",
     ".windsurf/rules/a.md": "always",
@@ -212,7 +214,11 @@ class CatalogueTests(ScanBase):
             }
         )
         index = self.entries()
-        for path in ("CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"):
+        for path in (
+            "CONTRIBUTING.md",
+            ".github/CONTRIBUTING.md",
+            "docs/CONTRIBUTING.md",
+        ):
             self.assertEqual(
                 (index[path]["kind"], index[path]["scope"], index[path]["source"]),
                 ("always", ["/"], "governance"),
@@ -224,7 +230,8 @@ class CatalogueTests(ScanBase):
         self.assertEqual((const["kind"], const["source"]), ("always", "governance"))
         for path in ("docs/adr/0001-x.md", "architecture/decisions/a.md"):
             self.assertEqual(
-                (index[path]["kind"], index[path]["source"]), ("reference", "governance")
+                (index[path]["kind"], index[path]["source"]),
+                ("reference", "governance"),
             )
         for absent in (
             "other/constitution.md",
@@ -259,7 +266,9 @@ class ClassificationTests(ScanBase):
                 ".cursor/rules/b.mdc": fm(globs="src/**/*.ts"),
                 ".cursor/rules/c.mdc": fm(description="x"),
                 ".github/instructions/a.instructions.md": fm(applyTo='"a/**,b/**"'),
-                ".kiro/steering/k.md": fm(inclusion="fileMatch", fileMatchPattern="k/*"),
+                ".kiro/steering/k.md": fm(
+                    inclusion="fileMatch", fileMatchPattern="k/*"
+                ),
                 ".windsurf/rules/w.md": fm(trigger="model_decision"),
                 ".continue/rules/c.md": fm(alwaysApply="false"),
                 ".continue/rules/d.md": fm(globs='"**"'),
@@ -339,9 +348,15 @@ class ImportAndLinkTests(ScanBase):
             }
         )
         got = self.entries()
-        self.assertEqual((got["docs/guide.md"]["kind"], got["docs/guide.md"]["source"]), ("reference", "link"))
+        self.assertEqual(
+            (got["docs/guide.md"]["kind"], got["docs/guide.md"]["source"]),
+            ("reference", "link"),
+        )
         self.assertEqual(got["docs/ref.md"]["source"], "link")
-        self.assertEqual((got["CONVENTIONS.md"]["kind"], got["CONVENTIONS.md"]["source"]), ("always", "catalogue"))
+        self.assertEqual(
+            (got["CONVENTIONS.md"]["kind"], got["CONVENTIONS.md"]["source"]),
+            ("always", "catalogue"),
+        )
         for path in ("docs/next.md", "docs/imp.md", "README.md"):
             self.assertNotIn(path, got)
 
@@ -354,15 +369,21 @@ class ImportAndLinkTests(ScanBase):
             }
         )
         got = self.entries()
-        self.assertEqual((got["docs/p.md"]["kind"], got["docs/p.md"]["source"]), ("always", "import"))
+        self.assertEqual(
+            (got["docs/p.md"]["kind"], got["docs/p.md"]["source"]), ("always", "import")
+        )
 
     def test_missing_and_untracked_import_targets_note_and_keep_importer(self):
         self.add({"AGENTS.md": "# A\n@missing.md\n@local.md\n"})
         (self.box.repo / "local.md").write_text("x\n")
         index = self.scan()
         self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
-        self.assertIn("import target not tracked: AGENTS.md -> missing.md", index["notes"])
-        self.assertIn("import target not tracked: AGENTS.md -> local.md", index["notes"])
+        self.assertIn(
+            "import target not tracked: AGENTS.md -> missing.md", index["notes"]
+        )
+        self.assertIn(
+            "import target not tracked: AGENTS.md -> local.md", index["notes"]
+        )
 
     def test_import_cycle_is_followed_once(self):
         self.add({"AGENTS.md": "@a.md\n", "a.md": "@b.md\n", "b.md": "@a.md\n"})
@@ -402,10 +423,17 @@ class ConfigListTests(ScanBase):
         )
         got = self.entries()
         self.assertEqual(
-            (got["docs/conventions.md"]["kind"], got["docs/conventions.md"]["scope"], got["docs/conventions.md"]["source"]),
+            (
+                got["docs/conventions.md"]["kind"],
+                got["docs/conventions.md"]["scope"],
+                got["docs/conventions.md"]["source"],
+            ),
             ("always", ["/"], "config"),
         )
-        self.assertEqual((got["DESIGN.md"]["kind"], got["DESIGN.md"]["source"]), ("reference", "config"))
+        self.assertEqual(
+            (got["DESIGN.md"]["kind"], got["DESIGN.md"]["source"]),
+            ("reference", "config"),
+        )
         self.assertEqual(got["both.md"]["kind"], "always")
         self.assertEqual(got["AGENTS.md"]["source"], "catalogue")
         self.assertFalse([p for p in got if p.startswith("conformance/")])
@@ -413,7 +441,9 @@ class ConfigListTests(ScanBase):
     def test_config_is_read_at_the_ref_not_the_working_tree(self):
         self.add({"AGENTS.md": "# A\n", "DESIGN.md": "# D\n"})
         (self.box.repo / ".factory").mkdir()
-        (self.box.repo / ".factory" / "config.json").write_text(config(include=["DESIGN.md"]))
+        (self.box.repo / ".factory" / "config.json").write_text(
+            config(include=["DESIGN.md"])
+        )
         self.assertNotIn("DESIGN.md", self.entries())
 
     def test_glob_translation(self):
@@ -426,13 +456,41 @@ class ConfigListTests(ScanBase):
         self.assertFalse(glob_regex("a?.md").match("a/.md"))
 
     def test_config_glob_matcher_agrees_with_glob_regex(self):
-        globs = ["conformance/**", "*.md", "**/x.md", "a?.md", "docs/**/*.md", "**", "a*b*c", "x/**/y"]
-        paths = ["conformance/a/b/AGENTS.md", "a.md", "docs/a.md", "x.md", "a/b/x.md", "ab.md", "a/.md",
-                 "docs/a/b/c.md", "docs/c.md", "abc", "aXbYc", "a/b/c", "x/y", "x/q/y", "x/q/r/y", "xy"]
+        globs = [
+            "conformance/**",
+            "*.md",
+            "**/x.md",
+            "a?.md",
+            "docs/**/*.md",
+            "**",
+            "a*b*c",
+            "x/**/y",
+        ]
+        paths = [
+            "conformance/a/b/AGENTS.md",
+            "a.md",
+            "docs/a.md",
+            "x.md",
+            "a/b/x.md",
+            "ab.md",
+            "a/.md",
+            "docs/a/b/c.md",
+            "docs/c.md",
+            "abc",
+            "aXbYc",
+            "a/b/c",
+            "x/y",
+            "x/q/y",
+            "x/q/r/y",
+            "xy",
+        ]
         for glob in globs:
             for path in paths:
                 with self.subTest(glob=glob, path=path):
-                    self.assertEqual(bool(glob_matcher(glob).match(path)), bool(glob_regex(glob).match(path)))
+                    self.assertEqual(
+                        bool(glob_matcher(glob).match(path)),
+                        bool(glob_regex(glob).match(path)),
+                    )
 
     def test_pathological_config_glob_matches_in_linear_time(self):
         matcher = glob_matcher("*a*a*a*a*a*a*a*a*a*a*a*az")
@@ -448,55 +506,107 @@ class ConfigListTests(ScanBase):
         self.assertTrue(glob_matcher("a" + "**" * 500 + "/b").match("a/x/y/b"))
         wide = "a" + "*" * 20 + "b"
         for path in ("a/b", "axb", "a/x/b", "ab"):
-            self.assertEqual(bool(glob_matcher(wide).match(path)), bool(glob_regex(wide).match(path)))
+            self.assertEqual(
+                bool(glob_matcher(wide).match(path)), bool(glob_regex(wide).match(path))
+            )
         self.assertLess(time.monotonic() - started, 1.0)
 
     def test_over_long_config_glob_is_skipped_with_a_note_and_the_rest_work(self):
         long_glob = "*a" * (GLOB_CAP // 2 + 1)
-        self.add({".factory/config.json": config(include=[long_glob, "DESIGN.md"]), "DESIGN.md": "# D\n"})
+        self.add(
+            {
+                ".factory/config.json": config(include=[long_glob, "DESIGN.md"]),
+                "DESIGN.md": "# D\n",
+            }
+        )
         started = time.monotonic()
         index = self.scan()
         self.assertLess(time.monotonic() - started, 5.0)
         self.assertEqual([e["path"] for e in index["entries"]], ["DESIGN.md"])
-        self.assertTrue([n for n in index["notes"] if n.startswith(f"instructions config glob skipped: over {GLOB_CAP} characters")])
+        self.assertTrue(
+            [
+                n
+                for n in index["notes"]
+                if n.startswith(
+                    f"instructions config glob skipped: over {GLOB_CAP} characters"
+                )
+            ]
+        )
 
     def test_huge_config_glob_is_skipped_in_bounded_time(self):
-        self.add({".factory/config.json": config(include=["*a" * 200_000]), "AGENTS.md": "# A\n"})
+        self.add(
+            {
+                ".factory/config.json": config(include=["*a" * 200_000]),
+                "AGENTS.md": "# A\n",
+            }
+        )
         started = time.monotonic()
         index = self.scan()
         self.assertLess(time.monotonic() - started, 5.0)
         self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
 
     def test_config_matches_past_the_byte_budget_are_indexed_unparsed_with_a_note(self):
-        self.add({".factory/config.json": config(include=["docs/*.md"]),
-                  "docs/a.md": "# A\n@docs/c.md\n", "docs/b.md": "# B\nbbbbbbbb\n", "docs/c.md": "# C\n"})
+        self.add(
+            {
+                ".factory/config.json": config(include=["docs/*.md"]),
+                "docs/a.md": "# A\n@docs/c.md\n",
+                "docs/b.md": "# B\nbbbbbbbb\n",
+                "docs/c.md": "# C\n",
+            }
+        )
         with mock.patch.object(instructions, "CONFIG_BUDGET", 20):
             index = instructions.scan(self.box.repo)
         got = {e["path"]: e for e in index["entries"]}
         self.assertEqual(sorted(got), ["docs/a.md", "docs/b.md", "docs/c.md"])
         data = b"# B\nbbbbbbbb\n"
-        self.assertEqual(got["docs/b.md"]["hash"], "sha256:" + hashlib.sha256(data).hexdigest())
+        self.assertEqual(
+            got["docs/b.md"]["hash"], "sha256:" + hashlib.sha256(data).hexdigest()
+        )
         self.assertEqual(got["docs/b.md"]["size"], len(data))
         self.assertEqual(got["docs/b.md"]["title"], "")
         self.assertEqual(got["docs/a.md"]["title"], "A")
         self.assertIn("over 20 bytes, not parsed: docs/b.md", index["notes"])
 
     def test_streamed_blobs_start_one_git_process_not_one_per_file(self):
-        self.add({".factory/config.json": config(include=["docs/*.md"]),
-                  **{f"docs/{n}.md": f"# {n}\n" * 4 for n in "abcdef"}})
-        with mock.patch.object(instructions, "CONFIG_BUDGET", 0), \
-                mock.patch.object(instructions, "_stream_digests", wraps=instructions._stream_digests) as stream:
+        self.add(
+            {
+                ".factory/config.json": config(include=["docs/*.md"]),
+                **{f"docs/{n}.md": f"# {n}\n" * 4 for n in "abcdef"},
+            }
+        )
+        with (
+            mock.patch.object(instructions, "CONFIG_BUDGET", 0),
+            mock.patch.object(
+                instructions, "_stream_digests", wraps=instructions._stream_digests
+            ) as stream,
+        ):
             index = instructions.scan(self.box.repo)
         self.assertEqual(len(index["entries"]), 6)
         self.assertEqual(len([c for c in stream.call_args_list if c.args[1]]), 1)
 
     def test_malformed_config_notes_and_falls_back_to_the_catalogue(self):
-        for text in ('{"instructions": 3}', '{"instructions": {"include": [1]}}', "{not json"):
+        for text in (
+            '{"instructions": 3}',
+            '{"instructions": {"include": [1]}}',
+            "{not json",
+        ):
             with self.subTest(text=text):
-                self.add({".factory/config.json": text, "AGENTS.md": "# A\n", "DESIGN.md": "# D\n"})
+                self.add(
+                    {
+                        ".factory/config.json": text,
+                        "AGENTS.md": "# A\n",
+                        "DESIGN.md": "# D\n",
+                    }
+                )
                 index = self.scan()
                 self.assertEqual([e["path"] for e in index["entries"]], ["AGENTS.md"])
-                self.assertTrue([n for n in index["notes"] if n.startswith("instructions config ignored")])
+                self.assertTrue(
+                    [
+                        n
+                        for n in index["notes"]
+                        if n.startswith("instructions config ignored")
+                    ]
+                )
 
     def test_this_repositorys_config_lists(self):
         repo = Path(__file__).resolve().parents[2]
@@ -510,7 +620,10 @@ class ConfigListTests(ScanBase):
             }
         )
         got = self.entries()
-        self.assertEqual((got["DESIGN.md"]["kind"], got["CONTEXT.md"]["kind"]), ("reference", "reference"))
+        self.assertEqual(
+            (got["DESIGN.md"]["kind"], got["CONTEXT.md"]["kind"]),
+            ("reference", "reference"),
+        )
         self.assertFalse([p for p in got if p.startswith("conformance/")])
 
 
@@ -523,7 +636,6 @@ class RecordBase(ScanBase):
 
 
 class RecordTests(RecordBase):
-
     def test_pending_new_run_scans_base_and_writes_sidecar_and_summary(self):
         self.add({"AGENTS.md": "# A\n", "docs/x.md": "# X\n"})
         path = self.pending("025-a")
@@ -537,7 +649,11 @@ class RecordTests(RecordBase):
         summary = json.loads(path.read_text())["instructions"]
         self.assertEqual(
             summary,
-            {"ref": index["ref"], "counts": {"always": 1, "scoped": 0, "reference": 0}, "combined_hash": index["combined_hash"]},
+            {
+                "ref": index["ref"],
+                "counts": {"always": 1, "scoped": 0, "reference": 0},
+                "combined_hash": index["combined_hash"],
+            },
         )
         self.assertEqual(result["counts"], summary["counts"])
         self.assertEqual(result["always_bytes"], len("# A\n"))
@@ -553,7 +669,9 @@ class RecordTests(RecordBase):
         result = json.loads(self.box.cli("instructions-record").stdout)
         self.assertEqual(result["ref"], self.box.git("rev-parse", "feat").strip())
         self.assertEqual(result["counts"]["always"], 2)
-        self.assertTrue(path.with_name(path.name.replace(".json", ".instructions.json")).is_file())
+        self.assertTrue(
+            path.with_name(path.name.replace(".json", ".instructions.json")).is_file()
+        )
 
     def test_pending_new_run_whose_branch_exists_on_origin_still_scans_base(self):
         self.add({"AGENTS.md": "# A\n"})
@@ -599,7 +717,10 @@ class RecordTests(RecordBase):
         self.assertTrue(first["committed"])
         target = wt / "specs" / "025-b" / "factory" / "instructions.json"
         self.assertTrue(target.is_file())
-        self.assertIn("factory: instructions recorded", self.box.git("log", "--oneline", "-1", cwd=wt))
+        self.assertIn(
+            "factory: instructions recorded",
+            self.box.git("log", "--oneline", "-1", cwd=wt),
+        )
         self.assertEqual(self.box.git("status", "--porcelain", cwd=wt), "")
         second = json.loads(self.box.cli("instructions-record", cwd=wt).stdout)
         self.assertIsNone(second["committed"])
@@ -615,15 +736,28 @@ class RecordTests(RecordBase):
         self.add({"AGENTS.md": "# A\n"})
         path = self.pending("025-c")
         path.with_suffix(".lock.json").write_text(
-            json.dumps({"owner_pid": os.getpid(), "host": socket.gethostname(), "harness": "x", "acquired_at": "2026-01-01T00:00:00Z"})
+            json.dumps(
+                {
+                    "owner_pid": os.getpid(),
+                    "host": socket.gethostname(),
+                    "harness": "x",
+                    "acquired_at": "2026-01-01T00:00:00Z",
+                }
+            )
         )
         out = self.box.cli("instructions-record")
         self.assertEqual(out.returncode, 1, out.stderr)
         self.assertNotIn("instructions", json.loads(path.read_text()))
-        self.assertFalse(path.with_name(path.name.replace(".json", ".instructions.json")).exists())
+        self.assertFalse(
+            path.with_name(path.name.replace(".json", ".instructions.json")).exists()
+        )
 
     def test_validate_checks_the_instructions_summary_types(self):
-        good = {"ref": "a" * 40, "counts": {"always": 0, "scoped": 0, "reference": 0}, "combined_hash": "sha256:x"}
+        good = {
+            "ref": "a" * 40,
+            "counts": {"always": 0, "scoped": 0, "reference": 0},
+            "combined_hash": "sha256:x",
+        }
         for bad in ({**good, "counts": 3}, {**good, "ref": 7}):
             with self.subTest(bad=bad):
                 self.pending("025-d", instructions=bad)
@@ -643,23 +777,47 @@ class DeltaAndWarningTests(RecordBase):
         return json.loads(out.stdout)
 
     def test_delta_lists_added_removed_and_changed_paths_sorted(self):
-        self.add({"AGENTS.md": "# A\n", "GEMINI.md": "# G\n", "CONVENTIONS.md": "# C\n", ".rules": "r\n"})
+        self.add(
+            {
+                "AGENTS.md": "# A\n",
+                "GEMINI.md": "# G\n",
+                "CONVENTIONS.md": "# C\n",
+                ".rules": "r\n",
+            }
+        )
         self.pending("025-e")
         self.assertIsNone(self.record()["delta"])
         self.box.git("rm", "-q", "GEMINI.md")
-        self.add({"CONVENTIONS.md": "# C2\n", "docs/adr/0001-x.md": "# x\n", ".rules": "r\n"})
+        self.add(
+            {"CONVENTIONS.md": "# C2\n", "docs/adr/0001-x.md": "# x\n", ".rules": "r\n"}
+        )
         self.assertEqual(
             self.record()["delta"],
-            {"added": ["docs/adr/0001-x.md"], "removed": ["GEMINI.md"], "changed": ["CONVENTIONS.md"]},
+            {
+                "added": ["docs/adr/0001-x.md"],
+                "removed": ["GEMINI.md"],
+                "changed": ["CONVENTIONS.md"],
+            },
         )
         # a kind change counts as changed; alias and title changes do not
         self.add({".rules": "r\n", "AGENTS.md": "# Renamed title\n"})
-        self.assertEqual(self.record()["delta"], {"added": [], "removed": [], "changed": ["AGENTS.md"]})
+        self.assertEqual(
+            self.record()["delta"],
+            {"added": [], "removed": [], "changed": ["AGENTS.md"]},
+        )
         self.add({"CLAUDE.md": "# Renamed title\n"})
-        self.assertEqual(self.record()["delta"], {"added": [], "removed": [], "changed": []})
+        self.assertEqual(
+            self.record()["delta"], {"added": [], "removed": [], "changed": []}
+        )
 
     def test_kind_change_is_a_change(self):
-        self.add({"DESIGN.md": "# D\n", "AGENTS.md": "# A\n", ".factory/config.json": config(reference=["DESIGN.md"])})
+        self.add(
+            {
+                "DESIGN.md": "# D\n",
+                "AGENTS.md": "# A\n",
+                ".factory/config.json": config(reference=["DESIGN.md"]),
+            }
+        )
         self.pending("025-f")
         self.record()
         self.add({".factory/config.json": config(include=["DESIGN.md"])})
@@ -673,8 +831,16 @@ class DeltaAndWarningTests(RecordBase):
         result = self.record()
         self.assertEqual(result["warning"]["limit"], 32768)
         self.assertEqual(result["warning"]["always_bytes"], 40000)
-        self.assertEqual(result["warning"]["largest"], [{"path": "AGENTS.md", "size": 20000}, {"path": "GEMINI.md", "size": 20000}])
-        self.assertEqual(len(json.loads(Path(result["index"]).read_text())["entries"]), 5)
+        self.assertEqual(
+            result["warning"]["largest"],
+            [
+                {"path": "AGENTS.md", "size": 20000},
+                {"path": "GEMINI.md", "size": 20000},
+            ],
+        )
+        self.assertEqual(
+            len(json.loads(Path(result["index"]).read_text())["entries"]), 5
+        )
 
     def test_empty_repository_flags_empty(self):
         self.add({"README.md": "# r\n"})
@@ -693,18 +859,27 @@ class DeltaAndWarningTests(RecordBase):
         path.write_text(json.dumps(data, indent=2) + "\n")
         result = self.record()
         self.assertIn("no-such-ref", result["error"])
-        self.assertEqual(json.loads(path.read_text())["instructions"], json.loads(before)["instructions"])
+        self.assertEqual(
+            json.loads(path.read_text())["instructions"],
+            json.loads(before)["instructions"],
+        )
 
     def test_unreadable_previous_index_gives_null_delta_and_a_note(self):
         self.add({"AGENTS.md": "# A\n"})
         path = self.pending("025-j")
         self.record()
-        path.with_name(path.name.replace(".json", ".instructions.json")).write_text("{broken")
+        path.with_name(path.name.replace(".json", ".instructions.json")).write_text(
+            "{broken"
+        )
         result = self.record()
         self.assertIsNone(result["delta"])
-        self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
+        self.assertTrue(
+            [n for n in result["notes"] if n.startswith("previous index unreadable")]
+        )
 
-    def test_previous_index_that_is_not_an_index_object_gives_null_delta_and_a_note(self):
+    def test_previous_index_that_is_not_an_index_object_gives_null_delta_and_a_note(
+        self,
+    ):
         self.add({"AGENTS.md": "# A\n"})
         path = self.pending("025-k")
         sidecar = path.with_name(path.name.replace(".json", ".instructions.json"))
@@ -714,7 +889,13 @@ class DeltaAndWarningTests(RecordBase):
                 sidecar.write_text(text)
                 result = self.record()
                 self.assertIsNone(result["delta"])
-                self.assertTrue([n for n in result["notes"] if n.startswith("previous index unreadable")])
+                self.assertTrue(
+                    [
+                        n
+                        for n in result["notes"]
+                        if n.startswith("previous index unreadable")
+                    ]
+                )
 
 
 SKILL = Path(__file__).resolve().parents[2] / "core" / "skills" / "factory" / "SKILL.md"
@@ -736,11 +917,18 @@ class OrchestratorTextTests(unittest.TestCase):
 
     def test_preflight_records_and_discloses_the_index(self):
         item = self.line("5. Run the detector once")
-        self.assertLess(item.index("factory profile-record"), item.index("factory instructions-record"))
+        self.assertLess(
+            item.index("factory profile-record"),
+            item.index("factory instructions-record"),
+        )
         for phrase in (
             "immediately after it at every preflight (new run, resume and adoption)",
-            "counts per kind", "`delta`", "`notes`", "32 KiB",
-            "`create-project-agents-file`", "never stops a run",
+            "counts per kind",
+            "`delta`",
+            "`notes`",
+            "32 KiB",
+            "`create-project-agents-file`",
+            "never stops a run",
         ):
             self.assertIn(phrase, item)
 
@@ -754,8 +942,11 @@ class OrchestratorTextTests(unittest.TestCase):
     def test_commands_come_from_every_root_scope_entry(self):
         item = self.line("5. Run the detector once")
         for phrase in (
-            "every root-scope entry", "root catalogue agent files win",
-            "setup-commands", "first in index order", "exactly `build` and `test`",
+            "every root-scope entry",
+            "root catalogue agent files win",
+            "setup-commands",
+            "first in index order",
+            "exactly `build` and `test`",
             "whether or not the detector proposed anything",
             "decisions-add grill setup-commands '<commands recorded>' --cruise-override",
         ):
@@ -765,7 +956,9 @@ class OrchestratorTextTests(unittest.TestCase):
         worktree = self.line("3. Create `<worktree>/specs/<branch>/factory/`")
         self.assertIn("<pending-name>.instructions.json", worktree)
         self.assertIn("factory/instructions.json", worktree)
-        self.assertIn("instructions-record", self.line("1. Preflight steps 1-5 run with"))
+        self.assertIn(
+            "instructions-record", self.line("1. Preflight steps 1-5 run with")
+        )
 
 
 if __name__ == "__main__":
