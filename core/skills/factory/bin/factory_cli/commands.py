@@ -1017,6 +1017,24 @@ def dirty_paths(worktree):
     return [line[3:].strip().strip('"') for line in status.splitlines() if line.strip()]
 
 
+def ignored_paths(worktree, paths):
+    """The subset of `paths` git ignores in `worktree` (tracked files never count)."""
+    if not paths:
+        return []
+    try:
+        out = subprocess.run(
+            ["git", "-C", worktree, "check-ignore", "--stdin", "-z"],
+            input="\0".join(paths) + "\0",
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        die(2, "git not runnable")
+    if out.returncode not in (0, 1):  # 1 means nothing was ignored
+        die(2, out.stderr.strip() or "git check-ignore failed")
+    return [p for p in out.stdout.split("\0") if p]
+
+
 def cmd_checkpoint(
     repo, cwd, stage, next_stage=None, files=None, envelope=None, design_fix=None
 ):
@@ -1045,7 +1063,15 @@ def cmd_checkpoint(
     declared = list(files or [])
     if envelope:
         declared = declared + declared_from_envelope(envelope)
+    ignored = []
     if worktree:
+        ignored = ignored_paths(worktree, declared)
+        if ignored:
+            print(
+                f"factory: skipping gitignored declared files: {', '.join(ignored)}",
+                file=sys.stderr,
+            )
+            declared = [f for f in declared if f not in ignored]
         missing = [f for f in declared if not (Path(worktree) / f).exists()]
         if missing:
             die(1, f"declared files do not exist in the worktree: {', '.join(missing)}")
@@ -1152,6 +1178,7 @@ def cmd_checkpoint(
                 "commit": None,
                 "commit_error": reason,
                 "declared": declared,
+                "ignored": ignored,
                 "undeclared": undeclared,
                 "source": source,
                 **review_result,
@@ -1173,6 +1200,7 @@ def cmd_checkpoint(
         "stage": updated["stage"],
         "commit": commit,
         "declared": declared,
+        "ignored": ignored,
         "undeclared": undeclared,
         "source": source,
         **review_result,

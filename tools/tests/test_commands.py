@@ -794,6 +794,30 @@ class CheckpointStagingTests(unittest.TestCase):
         )
         self.assertEqual(self.dirty(), ["scratch.txt"])
 
+    def test_checkpoint_skips_a_gitignored_declared_file(self):
+        (self.wt / ".gitignore").write_text("ignored.txt\n")
+        self.box.git("add", ".gitignore", cwd=self.wt)
+        self.box.git("commit", "-q", "-m", "ignore", cwd=self.wt)
+        (self.wt / "ignored.txt").write_text("local\n")
+        (self.wt / "kept.txt").write_text("kept\n")
+        out = self.box.cli(
+            "checkpoint",
+            "plan",
+            "--files",
+            "ignored.txt",
+            "--files",
+            "kept.txt",
+            cwd=self.wt,
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        report = json.loads(out.stdout)
+        self.assertEqual(report["ignored"], ["ignored.txt"])
+        self.assertEqual(report["declared"], ["kept.txt"])
+        self.assertIn("ignored.txt", out.stderr)
+        self.assertEqual(
+            self.committed(), ["kept.txt", f"specs/{self.branch}/factory/state.json"]
+        )
+
     def test_checkpoint_envelope_reads_the_declared_list(self):
         envelope = {
             "status": "done",
