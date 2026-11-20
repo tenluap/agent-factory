@@ -8,7 +8,7 @@ checklists live in `golden-run/<harness>.md`.
 |---|---|---|---|---|---|
 | claude-code | enforcing | see per-leg table | not yet run | / | live trials recorded in the per-leg table below |
 | opencode | enforcing | see per-leg table | not yet run | / | live trials recorded in the per-leg table below |
-| copilot | enforcing | _after merge_ | not yet run | / | |
+| copilot | disclosing | 2026-11-04 | partial | 6/9 | headless only; Start needs a SKILL.md-path prompt; Preflight fails on specify 1.1.0; Grill fails under `-p`; cross-harness resume keeps `harness: copilot`. See [copilot.md](golden-run/copilot.md); evidence on `tenluap/factory-golden-run-2026-11-04` branch `evidence/copilot-2026-11-04`. |
 | zcode | enforcing | _after merge_ | not yet run | / | |
 | codex | disclosing | _after merge_ | not yet run | / | read-only by instruction only |
 
