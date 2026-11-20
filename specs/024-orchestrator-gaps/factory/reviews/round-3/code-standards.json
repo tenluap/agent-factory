@@ -1,6 +1,0 @@
-{
-  "reviewer": "code-standards",
-  "round": 3,
-  "summary": "Delta fixes SPEC-2, records acceptance of the expanded scope, and adds passing reservation and refusal tests. No new standards defects found.",
-  "findings": []
-}

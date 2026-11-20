@@ -1,6 +1,0 @@
-{
-  "reviewer": "security",
-  "round": 3,
-  "summary": "No security, resource-limit, or data-integrity defects found in the delta; tests were not rerun.",
-  "findings": []
-}

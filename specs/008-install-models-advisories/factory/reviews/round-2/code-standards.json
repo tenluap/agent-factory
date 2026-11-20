@@ -1,1 +1,0 @@
-{"reviewer":"code-standards","round":2,"summary":"Delta fixes resolve both round-1 blocking findings (config_models shape/parse guard, cmd_rebind ended-status refusal) with asserting tests; no new defects in the touched code.","findings":[]}
