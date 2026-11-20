@@ -94,4 +94,5 @@ nav:
       - adr/0016-analyze-acceptance-targets.md
       - adr/0017-adopted-runs-enter-at-most-at-analyze.md
       - adr/0018-vendored-skills-are-managed-by-the-skills-cli.md
+      - adr/0019-factory-skills-are-local-library-entries.md
       - adr/0020-the-factory-discovers-repo-instructions-itself.md

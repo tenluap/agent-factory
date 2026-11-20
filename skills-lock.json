@@ -331,6 +331,10 @@
       "skillPath": "skills/create-formal-verification-skill/SKILL.md",
       "computedHash": "c968cb41c00203d7818089ff9356126f0e25aa0d5cb35031206f2558208ddcee"
     },
+    "create-project-agents-file": {
+      "source": ".agents/skills",
+      "sourceType": "local"
+    },
     "create-skill": {
       "source": "dotnet/skills",
       "sourceType": "github",
@@ -396,6 +400,10 @@
       "sourceType": "github",
       "skillPath": "skills/taste-skill/SKILL.md",
       "computedHash": "b10eab0a9684cd09cf34c31ef04a3bf530a5f4404422f9c520d42372d670c7fc"
+    },
+    "design-to-code": {
+      "source": ".agents/skills",
+      "sourceType": "local"
     },
     "deslop": {
       "source": "cursor/plugins",
@@ -871,6 +879,10 @@
       "skillPath": "orchestrate/skills/orchestrate/SKILL.md",
       "computedHash": "8e8d09ac43fdefe6b6bc60ca7cb0fba3c21a1e8cc09191c6ffc74414d56a78b9"
     },
+    "pen-design": {
+      "source": ".agents/skills",
+      "sourceType": "local"
+    },
     "performance-optimization": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
@@ -1080,6 +1092,10 @@
       "sourceType": "github",
       "skillPath": "plugins/dotnet11/skills/process-api-net11/SKILL.md",
       "computedHash": "ee77158da33d53bc36d61119070eb50f0f06421cf7dfed2feb65acb1a5a8f70c"
+    },
+    "prompt-optimiser": {
+      "source": ".agents/skills",
+      "sourceType": "local"
     },
     "property-patterns": {
       "source": "dotnet/skills",

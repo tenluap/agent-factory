@@ -7,12 +7,12 @@ description: 'Use when asked to create, generate, update, or refresh an AGENTS.m
 
 ## Overview
 
-Write or refresh a single root `AGENTS.md` giving AI agents and advanced contributors only what
+Write or refresh a single root `../../../AGENTS.md` giving AI agents and advanced contributors only what
 they cannot infer from a quick file scan: verified build/test commands, project-specific
 conventions, and gotchas. Core principle: every documented command must have been executed
 successfully this session — no guessed syntax, no aspirational commands.
 
-If `AGENTS.md` already exists this is a refresh: re-verify every command, update stale facts and
+If `../../../AGENTS.md` already exists this is a refresh: re-verify every command, update stale facts and
 the verification date, keep content that is still accurate.
 
 **When not to use** — READMEs or contribution guides; repo-wide agent rules that belong in
@@ -34,7 +34,7 @@ instruction files (`.github/instructions`, `.copilot/instructions`), not per-pro
    SKILL.md) to `<repo root>/docs/rider-mcp-catalog.md`, creating `docs/` if missing. Overwrite
    any existing copy. Without this the catalog reference in the Base Agent Rules points at a
    missing file.
-6. **Clean up** — delete every file created during verification except `AGENTS.md` and
+6. **Clean up** — delete every file created during verification except `../../../AGENTS.md` and
    `docs/rider-mcp-catalog.md`; delete caches (`__pycache__`, `.pytest_cache`, bin/obj) *after*
    the final verification run, since runners regenerate them. Confirm nothing else was left
    behind (git status, or a recursive directory listing without git).
@@ -68,7 +68,7 @@ section and state the absence in one line:
 - *Stable*: only durable facts; no TODO state or details that rot within days.
 - *Machine-actionable*: an agent can copy-paste any line and succeed without extra research.
 - *Singular*: one file at the repository root, plus the shipped `docs/rider-mcp-catalog.md`;
-  nested `AGENTS.md` only to override sub-area specifics in very large monorepos.
+  nested `../../../AGENTS.md` only to override sub-area specifics in very large monorepos.
 - *Clean*: no secrets, credentials, or personal IDE artifacts referenced as convention.
 - *Multi-stack aware*: when native and managed stacks coexist, give each its own build/test
   subsection; if a suite cannot run locally (hardware, admin, registry), document the exact
@@ -86,7 +86,7 @@ section and state the absence in one line:
 |---|---|
 | Documenting commands that were never run | Execute every command first; copy real counts from output. |
 | Generic test advice ("write good tests") | Exact run command, filter syntax per runner, add-a-test recipe. |
-| Scratch tests/files left behind | Cleanup step deletes everything except `AGENTS.md` and `docs/rider-mcp-catalog.md`. |
+| Scratch tests/files left behind | Cleanup step deletes everything except `../../../AGENTS.md` and `docs/rider-mcp-catalog.md`. |
 | Catalog reference in AGENTS.md dangles | Ship the catalog step copies `references/rider-mcp-catalog.md` to `docs/` before finishing. |
 | Restating the README | Only facts an agent cannot get from a file scan. |
 | Tutorials and framework basics | Assume expertise; project-specific content only. |
@@ -106,7 +106,7 @@ Create a AGENTS.md file at the root directory that add the following base rule f
 **Important Notes**:
 - This information is intended for an advanced developer; there's no need to include basic things, only information specific to this project.
 - Сheck that the test examples work before writing the information to the file.
-- At the end delete all additional files that you created except `AGENTS.md` and `docs/rider-mcp-catalog.md`
+- At the end delete all additional files that you created except `../../../AGENTS.md` and `docs/rider-mcp-catalog.md`
 
 And add this at the bottom of the file:
 ```markdown

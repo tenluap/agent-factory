@@ -94,7 +94,7 @@ Agents don’t always get the skills directory from context. When the path isn�
 |-------------|-------------------------|
 | **Cursor** | Project: `.cursor/skills/pen-design/SKILL.md`; user-level: under `~/.cursor/skills/` |
 | **Claude Code** | Often `.claude/skills/pen-design/SKILL.md` or user-level under `~/.claude/` |
-| **OpenClaw** | Often `~/.openclaw/skills/`, workspace `.agents/skills/`, or paths in [OpenClaw skills docs](https://docs.openclaw.ai/skills/) — verify for the user’s setup |
+| **OpenClaw** | Often `~/.openclaw/skills/`, workspace `..`, or paths in [OpenClaw skills docs](https://docs.openclaw.ai/skills/) — verify for the user’s setup |
 | **Other agents (Codex, etc.)** | Use the directory your product uses for skills or prompts |
 
 Example (adjust the destination path to match your agent):

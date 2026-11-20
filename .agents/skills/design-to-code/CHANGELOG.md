@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.6.0 — 2026-11-20
+
+- Moved to `.agents/skills/` as a local lock entry (ADR 0019, superseding ADR 0012): the library, managed by the `skills` CLI and `skills-lock.json`, now owns factory-authored skills through `"sourceType": "local"`, and installation links it from here like every vendored skill. The renderer no longer copies it into `dist/<harness>/skills/`. `pen-design` moved alongside it. No behaviour change.
+
 ## 1.5.0 — 2026-11-07
 
-- Moved to `core/skills/design-to-code/` as a first-party factory skill again (ADR 0012, ADR 0018): the vendored library is now `.agents/skills/`, managed by the `skills` CLI and `skills-lock.json`, which cannot own first-party skills. The renderer copies it verbatim into `dist/<harness>/skills/` and installation links it from there. `pen-design` moved alongside it. No behaviour change.
+- Moved to `` as a first-party factory skill again (ADR 0012, ADR 0018): the vendored library is now `.agents/skills/`, managed by the `skills` CLI and `skills-lock.json`, which cannot own first-party skills. The renderer copies it verbatim into `dist/<harness>/skills/` and installation links it from there. `pen-design` moved alongside it. No behaviour change.
 
 ## 1.4.0 — 2026-11-01
 
@@ -10,7 +14,7 @@
 
 ## 1.3.0 — 2026-10-31
 
-- Moved to `core/skills/design-to-code/` as a first-party factory skill (ADR 0012): the renderer copies it verbatim into `dist/<harness>/skills/` and installation links it from there into every harness's skills root. `pen-design` moved alongside it. No behaviour change.
+- Moved to `` as a first-party factory skill (ADR 0012): the renderer copies it verbatim into `dist/<harness>/skills/` and installation links it from there into every harness's skills root. `pen-design` moved alongside it. No behaviour change.
 
 ## 1.2.1 — 2026-10-31
 

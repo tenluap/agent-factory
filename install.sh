@@ -247,22 +247,8 @@ link_skill() {
   echo "linked: $to"
 }
 
-# Link name for a rendered first-party skill: its SKILL.md frontmatter name.
-skill_name() {
-  python3 - "$1/SKILL.md" <<'PY'
-import re, sys
-try:
-    text = open(sys.argv[1]).read()
-except OSError:
-    raise SystemExit(0)
-match = re.match(r'\A---\s*\n(.*?)\n---', text, re.S)
-name = re.search(r'^name:\s*(.*?)\s*$', match.group(1), re.M) if match else None
-print(name.group(1).strip().strip("'\"") if name else "")
-PY
-}
-
 install_skills() {
-  local root="$1" dist="$2" f name target entry linked=""
+  local root="$1" f target entry
   library="$(library_entries)"
   mkdir -p "$root"
   for f in "$root"/*; do
@@ -273,8 +259,8 @@ install_skills() {
       echo "removed: $f"
     elif [[ "$target" == "$src"/core/skills/* || "$target" == "$src"/skills/* ]]; then
       # links from superseded layouts: first-party skills linked from source
-      # (the rendered distribution replaced them, ADR 0012) and the vendored
-      # library in `skills/` (`.agents/skills/` replaced it, ADR 0018)
+      # (ADR 0012, superseded by ADR 0019) and the vendored library in
+      # `skills/` (`.agents/skills/` replaced it, ADR 0018)
       rm "$f"
       echo "removed: $f"
     elif [[ "$target" == "$lib"/* ]] && ! owned_entry "$(basename "$target")"; then
@@ -283,25 +269,12 @@ install_skills() {
       echo "removed: $f"
     fi
   done
-  # First-party skills are linked from the rendered distribution (ADR 0012),
-  # ahead of the vendored and per-user layers; a per-user skill wins on name
-  # collision, a vendored one is skipped.
-  for f in "$dist"/skills/*; do
-    [ -d "$f" ] || continue
-    name="$(skill_name "$f")"
-    if [ -z "$name" ]; then
-      echo "skip: $f: no frontmatter name"
-      continue
-    fi
-    if user_skill "$name"; then
-      echo "skip: $name: per-user skill takes precedence"
-      continue
-    fi
-    linked="$linked,$name"
-    link_skill "$f" "$root/$name"
-  done
-  # Vendored skills link under their folder name (the `skills` CLI derives it
+  # Library skills link under their folder name (the `skills` CLI derives it
   # from the frontmatter name); a per-user skill with the same name wins.
+  # Factory-authored skills are lock-owned local entries, so this one loop
+  # covers vendored and factory skills alike (ADR 0019). Links into a
+  # pre-0019 rendered distribution's skills/ are library links whose target
+  # the renderer no longer creates, so the stale-link rule above prunes them.
   while IFS= read -r entry; do
     [ -n "$entry" ] || continue
     if [[ "$entry" == '!'* ]]; then
@@ -314,12 +287,6 @@ install_skills() {
       continue
     fi
     user_skill "$entry" && continue
-    case ",$linked," in
-      *",$entry,"*)
-        echo "skip: $f: the first-party skill $entry is already linked"
-        continue
-        ;;
-    esac
     link_skill "$f" "$root/$entry"
   done <<< "$library"
   for f in "$factory_home"/skills/*; do
@@ -464,7 +431,7 @@ install_one() {
     link "$f" "$agent_dir/$(basename "$f")"
     verify_link "$f" "$agent_dir/$(basename "$f")"
   done
-  install_skills "$skills_root" "$dist"
+  install_skills "$skills_root"
   case "$1" in
     opencode)
       install_plugin

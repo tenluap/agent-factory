@@ -1,6 +1,6 @@
 # Eval: qa-locked
 
-Behavioral eval for `design-to-code` `qa` mode, fidelity-locked form. `fixture/` is the `qa-html` page plus `docs/design-code-map.json`, which maps `index.html` and `styles.css` to a design. The design governs colors, so the 2.32:1 muted text is a design value.
+Behavioral eval for `design-to-code` `qa` mode, fidelity-locked form. `fixture` is the `qa-html` page plus `docs/design-code-map.json`, which maps `index.html` and `styles.css` to a design. The design governs colors, so the 2.32:1 muted text is a design value.
 
 Expected: the agent fixes the two non-visual defects (button accessible name, image `alt`), keeps `.muted` at `#aaaaaa`, and logs the contrast failure as a `design conflict`. The report still ends `Status: complete`, because logged design conflicts do not block.
 

@@ -2,18 +2,17 @@
 
 ## Skill library
 
-The installer links three layers into each harness. On a name clash, the higher layer wins.
+The installer links two layers into each harness. On a name clash, the higher layer wins.
 
 ```mermaid
 flowchart TD
     U["1 Per-user skills<br/>FACTORY_HOME/skills"] --> Out["Harness skill root"]
-    F["2 First-party skills<br/>core/skills/* rendered"] --> Out
-    V["3 Vendored skills<br/>.agents/skills, managed by the skills CLI"] --> Out
+    V["2 Library skills<br/>.agents/skills, managed by the skills CLI<br/>(vendored + the factory's own skills)"] --> Out
 ```
 
-- Vendored skills carry provenance in `skills-lock.json` and licenses in `.agents/LICENSES/`.
+- Library skills carry provenance in `skills-lock.json` and licenses in `.agents/LICENSES/`.
 - Add your own with `./install.sh --add-skill /path/to/name`. The folder needs a `SKILL.md` whose name matches the folder.
-- See [ADR 0009](../adr/0009-library-skills-are-linked-not-rendered.md), [ADR 0012](../adr/0012-first-party-skills-live-in-core-skills.md), [ADR 0018](../adr/0018-vendored-skills-are-managed-by-the-skills-cli.md).
+- See [ADR 0009](../adr/0009-library-skills-are-linked-not-rendered.md), [ADR 0018](../adr/0018-vendored-skills-are-managed-by-the-skills-cli.md), [ADR 0019](../adr/0019-factory-skills-are-local-library-entries.md).
 
 ## Design-to-code
 

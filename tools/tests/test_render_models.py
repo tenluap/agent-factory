@@ -130,8 +130,8 @@ class ModelPolicyTests(unittest.TestCase):
             },
             "codex": {"deep": "openai/gpt-6.1-sol", "standard": "openai/gpt-6.1-terra"},
             "opencode": {
-                "deep": "claude-code/claude-opus-5-5[1m]",
-                "standard": "claude-code/claude-sonnet-5-5[1m]",
+                "deep": "claude-code/claude-opus-5-5#medium",
+                "standard": "claude-code/Haiku-5-5#max",
             },
         }
         shipped = []

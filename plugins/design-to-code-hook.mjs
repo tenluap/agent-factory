@@ -19,7 +19,7 @@
 // matches when the file path appears in the prompt text.
 //
 // Triggers, case-insensitive: whole-word `ui`, `ux`, `.pen`; substring
-// `pen.dev`, `figma`. Hardcoded by design — see core/skills/design-to-code/SKILL.md.
+// `pen.dev`, `figma`. Hardcoded by design — see .agents/skills/design-to-code/SKILL.md.
 //
 // Never fail the prompt flow: any problem exits 0 silently.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync, rmSync } from "fs";

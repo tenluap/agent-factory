@@ -18,7 +18,7 @@ Behavioral eval for `design-to-code` `implement` mode on plain HTML/JS/CSS.
 
    > Implement frame dqvK9 ("Screen") from design/cards.pen in this plain HTML/CSS project, light theme, scale 2. Playwright is available in tests/visual. You may scaffold the design harness. Write your final report to report.md in this directory.
 
-3. Grade: `python3 -I check.py "$T"`. The grader re-runs `commands.launch` and `commands.capture` from the agent's map itself, then runs `bounds-diff.py` (7 nodes) and `pixel-diff.py` (0.5%) against `expected/`.
+3. Grade: `python3 -I check.py "$T"`. The grader re-runs `commands.launch` and `commands.capture` from the agent's map itself, then runs `bounds-diff.py` (7 nodes) and `pixel-diff.py` (0.5%) against `expected`.
 
 ## Results
 

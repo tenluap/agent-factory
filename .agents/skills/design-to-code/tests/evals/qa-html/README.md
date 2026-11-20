@@ -2,7 +2,7 @@
 
 Behavioral eval for `design-to-code` `qa` mode, free form. Needs no pen login and no toolchain beyond Python.
 
-`fixture/` is a plain HTML page with three seeded accessibility defects:
+`fixture` is a plain HTML page with three seeded accessibility defects:
 
 1. Icon-only menu button with no accessible name.
 2. Hero image with no `alt` attribute.

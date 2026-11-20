@@ -1,5 +1,7 @@
 # First-party skills render into the distribution
 
+2026-11-20: superseded by [ADR 0019](0019-factory-skills-are-local-library-entries.md). The factory-authored skills moved into `.agents/skills/` as local lock entries, the first-party layer is gone, and the renderer no longer produces `dist/<harness>/skills/`. The rest of this record describes the superseded design.
+
 2026-11-07: `design-to-code` and `pen-design` are first-party skills in `core/skills/` again. The 2026-11-01 move back to the vendored `skills/` folder ended when that folder was replaced by the CLI-managed `.agents/skills/`, whose `skills-lock.json` only describes third-party sources ([ADR 0018](0018-vendored-skills-are-managed-by-the-skills-cli.md)).
 
 The factory previously had exactly one skill of its own: the orchestrator, rendered into `dist/` (ADR 0005). Everything else in the skill library was vendored (`skills/`, tracked in `skills/SOURCES.md`) or per-user. The `design-to-code` skill — the write role's engine, with its modes, framework rules, scripts, tests and evals — and its `pen-design` dependency were homegrown but lived in the vendored layer, so the factory's core capability depended on folders `skills/SOURCES.md` does not own.

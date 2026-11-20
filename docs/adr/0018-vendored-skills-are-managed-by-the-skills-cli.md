@@ -1,5 +1,7 @@
 # Vendored skills are managed by the `skills` CLI in `.agents/skills/`
 
+2026-11-20: the factory-authored skills joined them: `create-project-agents-file`, `design-to-code`, `pen-design` and `prompt-optimiser` are local lock entries too ([ADR 0019](0019-factory-skills-are-local-library-entries.md)), superseding rule 5's "factory skills stay in `core/skills/`" and [ADR 0012](0012-first-party-skills-live-in-core-skills.md). Rule 5's local-entry semantics (`skills update` skips them, the license check exempts them) are unchanged and now cover all four.
+
 2026-11-07: the vendored library moved from `skills/` (hand-copied, provenance in `skills/SOURCES.md`) to `.agents/skills/`, which the [`skills` CLI](https://skills.sh) installs, updates and removes, with provenance in `skills-lock.json`. This supersedes ADR 0009's repo-layer path and the manual refresh rule; linking rather than rendering library skills (ADR 0009) still stands.
 
 ## Decision

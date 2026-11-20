@@ -1,6 +1,6 @@
 {
   "instructions": {
-    "reference": ["DESIGN.md", "CONTEXT.md"],
+    "reference": ["DESIGN.md", "CONTEXT.md", "AGENTS.md", "CONSTRAINTS.md"],
     "exclude": ["conformance/**"]
   }
 }

@@ -50,7 +50,7 @@ The flow is harness-neutral; each harness gets a thin adapter in `adapters/`.
 | Archive on PR | After the PR opens, the run folder is archived under `${FACTORY_HOME}/archive/` and removed from the branch; design evidence moves to `docs/design/<branch>/`. |
 | Retro and improvement backlog | After every PR a retro agent proposes up to three improvement candidates from the run's issues; `/factory improve` lists them as ready-made feature descriptions. |
 | Design-to-code | Pen, Figma, image or text-only design sources map to code anchors with rendered-fidelity evidence, across Avalonia and web stacks. Also usable standalone, with an auto-trigger plugin/hook. |
-| Skill library | The installer links a vendored skill library, the factory's first-party skills and your own per-user skills into each harness, with collision precedence. The vendored library is managed by the `skills` CLI. |
+| Skill library | The installer links a skill library — vendored skills and the factory's own skills — and your own per-user skills into each harness, with collision precedence. The library is managed by the `skills` CLI. |
 | Benchmark | Replays a pre-settled feature headlessly and scores runs, so factory versions can be compared before and after a change. |
 
 ## Requirements
@@ -92,11 +92,10 @@ A config file that does not parse aborts the install before anything is rendered
 
 ### Skill library
 
-The installer links three layers of skills into the selected harness's skill root:
+The installer links two layers of skills into the selected harness's skill root:
 
 1. **Per-user** skills in `${FACTORY_HOME:-~/.factory}/skills/` — they win on name collision and always link to every harness.
-2. **First-party** skills rendered from `core/skills/` (every folder with a `SKILL.md` except `factory`, including `design-to-code` and `pen-design`) into `dist/<harness>/skills/` ([ADR 0012](docs/adr/0012-first-party-skills-live-in-core-skills.md)).
-3. **Vendored** skills in this checkout's `.agents/skills/`, managed by the [`skills` CLI](https://skills.sh) with provenance in `skills-lock.json` ([ADR 0018](docs/adr/0018-vendored-skills-are-managed-by-the-skills-cli.md)) — including `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming` and `impeccable`. Every harness gets every vendored skill.
+2. **Library** skills in this checkout's `.agents/skills/`: vendored skills managed by the [`skills` CLI](https://skills.sh) with provenance in `skills-lock.json` ([ADR 0018](docs/adr/0018-vendored-skills-are-managed-by-the-skills-cli.md)) — including `grilling`, `domain-modeling`, `pr`, `ponytail`, `tdd`, `brainstorming` and `impeccable` — plus the factory's own skills (`create-project-agents-file`, `design-to-code`, `pen-design`, `prompt-optimiser`), kept there as `sourceType: local` entries ([ADR 0019](docs/adr/0019-factory-skills-are-local-library-entries.md)). Every harness gets every library skill.
 
 Add a local skill with `--add-skill /path/to/name`; the folder must contain a `SKILL.md` whose frontmatter name matches its folder. `factory` is reserved, and dot-prefixed folders are ignored.
 

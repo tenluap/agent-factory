@@ -28,6 +28,8 @@ REQUIRED = (
     "brainstorming",
     "impeccable",
 )
+# Skills the factory authors; they live in the library as local lock
+# entries (ADR 0019), edited in place like every other local skill.
 FIRST_PARTY = (
     "create-project-agents-file",
     "design-to-code",
@@ -131,13 +133,19 @@ class SkillLibraryLayoutTests(unittest.TestCase):
         # harness would shadow its RESOLVE fallbacks.
         self.assertEqual([n for n in self.lock if n.startswith("speckit-")], [])
 
-    def test_first_party_skills_live_in_core_and_old_library_is_gone(self):
+    def test_factory_skills_are_local_library_entries(self):
+        # The factory-authored skills moved out of core/skills/ (ADR 0019):
+        # lock-owned local entries, so every harness links them like any
+        # vendored skill, and `skills update` skips them.
         for name in FIRST_PARTY:
             with self.subTest(name=name):
+                self.assertIn(name, self.lock)
+                self.assertEqual(self.lock[name]["sourceType"], "local")
+                self.assertEqual(self.lock[name]["source"], ".agents/skills")
+                self.assertEqual(self.folders[name].name, name)
                 self.assertEqual(
-                    frontmatter_name(REPO / "core/skills" / name / "SKILL.md"), name
+                    frontmatter_name(self.folders[name] / "SKILL.md"), name
                 )
-                self.assertNotIn(name, self.lock)
         self.assertFalse((REPO / "skills/SOURCES.md").exists())
 
 
@@ -168,7 +176,11 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         write_skill(self.lib / "x-money-guide", "X Money guide")
         write_skill(self.lib / "speckit-plan")  # not owned by the lock
         (self.lib / "notes").mkdir()  # no SKILL.md
-        self.write_lock(*self.VENDORED, "X Money guide")
+        self.write_lock(
+            *self.VENDORED, "X Money guide", local=("design-to-code", "pen-design")
+        )
+        write_skill(self.lib / "design-to-code")
+        write_skill(self.lib / "pen-design")
         self.enterContext(
             patch.object(test_install, "INSTALL", self.checkout / "install.sh")
         )
@@ -189,7 +201,7 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         self.root = self.xdg / "opencode/skills"
         self.factory_home = self.home  # run_install exports FACTORY_HOME=$HOME
 
-    def write_lock(self, *names):
+    def write_lock(self, *names, local=()):
         skills = {
             name: {
                 "source": "owner/repo",
@@ -199,6 +211,8 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
             }
             for name in names
         }
+        for name in local:
+            skills[name] = {"source": ".agents/skills", "sourceType": "local"}
         (self.checkout / "skills-lock.json").write_text(
             json.dumps({"version": 1, "skills": skills}, indent=2)
         )
@@ -211,7 +225,13 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
     def test_locked_folders_link_idempotently_and_others_are_skipped(self):
         write_skill(self.lib / "factory")
         write_skill(self.lib / ".hidden")
-        self.write_lock(*self.VENDORED, "X Money guide", "factory", ".hidden")
+        self.write_lock(
+            *self.VENDORED,
+            "X Money guide",
+            "factory",
+            ".hidden",
+            local=("design-to-code", "pen-design"),
+        )
         first = self.ok()
         for name in self.VENDORED:
             self.assertEqual((self.root / name).readlink(), self.lib / name)
@@ -232,10 +252,7 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
             self.factory_home / "dist/opencode/skill",
         )
         for name in ("design-to-code", "pen-design"):
-            self.assertEqual(
-                (self.root / name).readlink(),
-                self.factory_home / "dist/opencode/skills" / name,
-            )
+            self.assertEqual((self.root / name).readlink(), self.lib / name)
         before = {p.name: p.readlink() for p in self.root.iterdir()}
         second = self.ok()
         self.assertEqual(before, {p.name: p.readlink() for p in self.root.iterdir()})
@@ -271,7 +288,10 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
         self.ok()
         shutil.rmtree(self.lib / "pr")
         self.write_lock(
-            "grilling", "ponytail", "X Money guide"
+            "grilling",
+            "ponytail",
+            "X Money guide",
+            local=("design-to-code", "pen-design"),
         )  # tdd dropped, folder kept
         result = self.ok()
         for name in ("pr", "tdd"):
@@ -327,7 +347,13 @@ class SkillLibraryInstallTests(test_install.InstallSandbox, unittest.TestCase):
             self.assertEqual(
                 (self.home / "CLAUDE_HOME/skills" / name).readlink(), self.lib / name
             )
-        self.write_lock("grilling", "pr", "ponytail", "X Money guide")
+        self.write_lock(
+            "grilling",
+            "pr",
+            "ponytail",
+            "X Money guide",
+            local=("design-to-code", "pen-design"),
+        )
         result = self.ok()
         self.assertFalse((mirror / "tdd").is_symlink())
         self.assertIn(f"pruned: {mirror / 'tdd'} (stale link)", result.stdout)
