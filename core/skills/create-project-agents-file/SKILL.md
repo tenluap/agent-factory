@@ -30,10 +30,14 @@ instruction files (`.github/instructions`, `.copilot/instructions`), not per-pro
    delete it during cleanup.
 4. **Write** — draft per the content spec below: dense bullets and fenced commands, ≤120 lines
    (shorter for small projects; no padding to hit a floor).
-5. **Clean up** — delete every file created during verification except `AGENTS.md`; delete
-   caches (`__pycache__`, `.pytest_cache`, bin/obj) *after* the final verification run, since
-   runners regenerate them. Confirm nothing else was left behind (git status, or a recursive
-   directory listing without git).
+5. **Ship the Rider catalog** — copy `references/rider-mcp-catalog.md` (shipped next to this
+   SKILL.md) to `<repo root>/docs/rider-mcp-catalog.md`, creating `docs/` if missing. Overwrite
+   any existing copy. Without this the catalog reference in the Base Agent Rules points at a
+   missing file.
+6. **Clean up** — delete every file created during verification except `AGENTS.md` and
+   `docs/rider-mcp-catalog.md`; delete caches (`__pycache__`, `.pytest_cache`, bin/obj) *after*
+   the final verification run, since runners regenerate them. Confirm nothing else was left
+   behind (git status, or a recursive directory listing without git).
 
 ## Content spec
 
@@ -63,8 +67,8 @@ section and state the absence in one line:
   staleness is detectable.
 - *Stable*: only durable facts; no TODO state or details that rot within days.
 - *Machine-actionable*: an agent can copy-paste any line and succeed without extra research.
-- *Singular*: one file at the repository root; nested `AGENTS.md` only to override sub-area
-  specifics in very large monorepos.
+- *Singular*: one file at the repository root, plus the shipped `docs/rider-mcp-catalog.md`;
+  nested `AGENTS.md` only to override sub-area specifics in very large monorepos.
 - *Clean*: no secrets, credentials, or personal IDE artifacts referenced as convention.
 - *Multi-stack aware*: when native and managed stacks coexist, give each its own build/test
   subsection; if a suite cannot run locally (hardware, admin, registry), document the exact
@@ -82,7 +86,8 @@ section and state the absence in one line:
 |---|---|
 | Documenting commands that were never run | Execute every command first; copy real counts from output. |
 | Generic test advice ("write good tests") | Exact run command, filter syntax per runner, add-a-test recipe. |
-| Scratch tests/files left behind | Cleanup step deletes everything except `AGENTS.md`. |
+| Scratch tests/files left behind | Cleanup step deletes everything except `AGENTS.md` and `docs/rider-mcp-catalog.md`. |
+| Catalog reference in AGENTS.md dangles | Ship the catalog step copies `references/rider-mcp-catalog.md` to `docs/` before finishing. |
 | Restating the README | Only facts an agent cannot get from a file scan. |
 | Tutorials and framework basics | Assume expertise; project-specific content only. |
 
@@ -101,17 +106,39 @@ Create a AGENTS.md file at the root directory that add the following base rule f
 **Important Notes**:
 - This information is intended for an advanced developer; there's no need to include basic things, only information specific to this project.
 - Сheck that the test examples work before writing the information to the file.
-- At the end delete all additional files that you created except `AGENTS.md`
+- At the end delete all additional files that you created except `AGENTS.md` and `docs/rider-mcp-catalog.md`
 
 And add this at the bottom of the file:
 ```markdown
-
+[//]: # (------------Custom Agent Rules starts-------------------)
 # Base Agent Rules
 
 ## 1. Session Init
 
 Invoke `/caveman ultra` on the first message of a session, before any other output. Once per
 session only.
+
+## Rider MCP
+
+Prefer Rider MCP for work on the open solution. Check the current client's Rider tool definitions first.
+Use the most specific exposed action, its exact arguments, and the intended solution root when supported.
+
+**Catalog:** If no direct Rider action fits or you need a router-only action, read `docs/rider-mcp-catalog.md`
+from the repository root. Use it to find candidate names and syntax, not as proof that an action is enabled.
+
+Use semantic tools for symbols, callers, usages, and refactorings; use text search for literal matches.
+Preview refactorings when supported and review the diff. Prefer Rider inspections, run configurations, and
+debugger controls when IDE context matters. Follow repository verification commands for checks not covered
+by Rider. Use specialized actions only when relevant and authorized.
+
+Use `execute_tool` only after verifying that the target is enabled and confirming its exact argument syntax.
+Never invent tool calls, arguments, or outputs. If a call is rejected as unknown or invalid, refresh discovery
+and retry only if you find a concrete correction. If no verified Rider action fits, stop in Rider-only mode;
+otherwise identify any authorized, documented fallback you use. Do not write a substitute script or wrapper
+without permission.
+
+Preserve unrelated changes and respect approvals. Never route around a denial. After a timeout or partial
+write, inspect the resulting state before retrying. Report only observed actions and outcomes.
 
 ## 2. Ambiguity Handling
 
@@ -184,6 +211,10 @@ When in doubt: omit it.
 
 Explicit user instruction this turn > repository instruction files > this file. On conflict,
 follow the higher rule and state the conflict in one sentence.
+
+
+[//]: # (------------Custom Agent Rules ends-------------------)
+
 ```
 
 
